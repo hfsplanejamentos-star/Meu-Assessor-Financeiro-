@@ -1,0 +1,7 @@
+MEU ASSESSOR R6.6 — ANDROID/PWA
+
+1. O ZIP contém index.html, manifest, service worker e ícones.
+2. Para aparecer como aplicativo instalável, os arquivos precisam estar publicados em HTTPS. Abrir index.html diretamente pelo gerenciador de arquivos não habilita Service Worker/PWA.
+3. No Chrome Android, abra o endereço publicado e use “Instalar app” ou Menu > Instalar app/Adicionar à tela inicial.
+4. Após a primeira carga, os arquivos essenciais ficam em cache para uso offline.
+5. Captura nativa de notificações bancárias não é recurso de PWA; exigirá a versão APK/híbrida Android.
