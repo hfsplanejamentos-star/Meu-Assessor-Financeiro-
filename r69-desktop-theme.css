@@ -26,11 +26,9 @@
   }
   .topbar .search input::selection{background:#1d6f9d!important;color:#fff!important;-webkit-text-fill-color:#fff!important;}
   .topbar .search input::placeholder{color:#8096ad!important;-webkit-text-fill-color:#8096ad!important;opacity:1!important;}
-  /* Desktop uses header refresh/cloud sync; floating cloud UI must not cover cards/actions. */
   #financeCloudPanel #fcFab{display:none!important;}
   #financeCloudPanel #fcBox{display:none!important;}
 
-  /* Dashboard: cards inferiores acompanham o conteúdo, sem caixas vazias gigantes. */
   #view-overview .dashboard{align-items:start!important;}
   #view-overview .dashboard>.card.panel:nth-of-type(3),
   #view-overview .dashboard>.card.panel:nth-of-type(4),
@@ -46,4 +44,30 @@
     min-height:0!important;
   }
   #view-overview #recurringList{max-height:420px!important;overflow-y:auto!important;overscroll-behavior:contain;}
+
+  /* Saúde Financeira: estado sem histórico deve ser compacto e legível. */
+  #view-overview #healthOverview{
+    display:block!important;
+    width:100%!important;
+    min-width:0!important;
+    height:auto!important;
+    min-height:0!important;
+  }
+  #view-overview #healthOverview .r69-health-neutral{
+    width:100%!important;
+    max-width:none!important;
+    display:grid!important;
+    grid-template-columns:minmax(220px,1.15fr) minmax(260px,1fr)!important;
+    gap:12px 22px!important;
+    align-items:center!important;
+  }
+  #view-overview #healthOverview .r69-health-neutral>div:first-child{
+    grid-column:1 / -1!important;
+    margin-bottom:0!important;
+  }
+  #view-overview #healthOverview .r69-health-neutral .notice{
+    margin-top:0!important;
+    width:auto!important;
+    max-width:none!important;
+  }
 }
