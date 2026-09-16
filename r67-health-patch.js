@@ -1,25 +1,10 @@
-/* Meu Assessor Financeiro IA — R6.7 health no-data guard */
+/* Meu Assessor Financeiro IA — health metrics guard: never show unsupported simulated score */
 (()=>{
 'use strict';
-const hasFinancialData=()=>{try{return !!((db.transactions||[]).length||(db.accounts||[]).length||(db.cards||[]).length||(db.investments||[]).length||(db.budgets||[]).length||(db.goals||[]).length||(db.recurring||[]).length);}catch(_){return false;}};
-function card(){return [...document.querySelectorAll('.card,.panel')].find(e=>/Saúde Financeira/i.test(e.textContent||''));}
-function textNodes(root){const out=[],w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;while((n=w.nextNode()))out.push(n);return out;}
-function neutralize(root){
- if(!root||hasFinancialData())return;
- textNodes(root).forEach(node=>{
-  const t=(node.nodeValue||'').trim();
-  if(t==='80')node.nodeValue=node.nodeValue.replace('80','—');
-  else if(/^Muito Boa$|^Boa$|^Excelente$/i.test(t))node.nodeValue='Aguardando dados';
-  else if(t==='100%'){
-   const p=node.parentElement?.parentElement?.textContent||'';
-   if(/Orçamentos dentro do limite/i.test(p))node.nodeValue=node.nodeValue.replace('100%','—');
-  }
- });
- const c=root.querySelector('canvas');if(c){const ctx=c.getContext('2d');if(ctx){ctx.clearRect(0,0,c.width,c.height);}}
- let n=root.querySelector('.r67-health-empty');if(!n){n=document.createElement('div');n.className='r67-health-empty notice';n.style.marginTop='10px';n.textContent='Ainda sem histórico suficiente. A nota será calculada quando houver dados financeiros reais para análise.';root.appendChild(n);}
-}
-function refresh(){const c=card();if(!c)return;if(!hasFinancialData())neutralize(c);else c.querySelectorAll('.r67-health-empty').forEach(e=>e.remove());}
-const obs=new MutationObserver(()=>{clearTimeout(obs._t);obs._t=setTimeout(refresh,120);});
-function start(){refresh();obs.observe(document.body,{subtree:true,childList:true,characterData:true});document.addEventListener('finance-cloud-status',refresh);document.addEventListener('finance-real-mode',refresh);}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();window.FinanceHealthGuard={refresh,hasFinancialData};
+function root(){return document.getElementById('healthOverview')||[...document.querySelectorAll('.card,.panel')].find(e=>/Saúde Financeira/i.test(e.textContent||''));}
+function neutralize(){const r=root();if(!r)return;if(r.dataset.realHealthGuard==='1')return;r.dataset.realHealthGuard='1';r.innerHTML=`<div class="r69-health-neutral"><div style="font-size:22px;font-weight:800;color:var(--cyan);margin-bottom:8px">Análise em formação</div><div style="color:var(--muted);line-height:1.55">Ainda não há histórico consolidado suficiente para atribuir uma nota confiável de saúde financeira.</div><div class="notice" style="margin-top:14px">Os indicadores serão calculados conforme receitas, despesas, orçamento, cartões e reserva forem consolidados com dados reais.</div></div>`;}
+let busy=false;function refresh(){if(busy)return;busy=true;requestAnimationFrame(()=>{busy=false;const r=root();if(!r)return;if(!r.querySelector('.r69-health-neutral')||/Excelente|100\s*\/100|65%|5\.5\s*mês/i.test(r.textContent||'')){delete r.dataset.realHealthGuard;neutralize();}});}
+const obs=new MutationObserver(refresh);
+function start(){neutralize();obs.observe(document.body,{subtree:true,childList:true,characterData:true});document.addEventListener('finance-cloud-status',refresh);document.addEventListener('finance-real-mode',refresh);}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();window.FinanceHealthGuard={refresh};
 })();
