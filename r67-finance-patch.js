@@ -2,31 +2,32 @@
 (()=>{
 'use strict';
 const n=v=>Number.isFinite(Number(v))?Number(v):0;
-const pct=(cur,prev)=>prev===0?(cur===0?0:100):((cur-prev)/Math.abs(prev))*100;
-const trendText=(v,invert=false)=>{v=n(v);const effective=invert?-v:v;const arrow=effective>0?'↑':effective<0?'↓':'→';return `${arrow} ${Math.abs(v).toFixed(1).replace('.',',')}%`;};
-const trendClass=(v,invert=false)=>{const effective=(invert?-1:1)*n(v);return effective>0?'up':effective<0?'down':'neutral';};
+const pct=(cur,prev,hasPrev)=>!hasPrev?null:(prev===0?(cur===0?0:null):((cur-prev)/Math.abs(prev))*100);
+const trendText=(v,invert=false)=>{if(v===null||v===undefined||!Number.isFinite(Number(v)))return '— sem histórico';v=n(v);const effective=invert?-v:v;const arrow=effective>0?'↑':effective<0?'↓':'→';return `${arrow} ${Math.abs(v).toFixed(1).replace('.',',')}%`;};
+const trendClass=(v,invert=false)=>{if(v===null||v===undefined||!Number.isFinite(Number(v)))return 'neutral';const effective=(invert?-1:1)*n(v);return effective>0?'up':effective<0?'down':'neutral';};
 const prevMonthKey=key=>{const [y,m]=String(key).split('-').map(Number),d=new Date(y,m-2,1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;};
 const expenseTx=(key,cat=null)=>(db.transactions||[]).filter(t=>n(t.value)<0&&!t.transfer&&!t.excludeFromExpense&&!t.invoicePayment&&t.kind!=='invoice_payment'&&String(t.date||'').slice(0,7)===key&&t.status!=='planned'&&(!cat||t.cat===cat));
 const categoryBreakdown=(name,key)=>{const tx=expenseTx(key,name);let account=0,card=0;tx.forEach(t=>{const v=Math.abs(n(t.value));if(t.card)card+=v;else account+=v;});return {tx,account,card,total:account+card};};
+const hasMonthData=key=>(db.transactions||[]).some(t=>String(t.date||'').slice(0,7)===key&&t.status!=='planned');
 
-window.kpiCard=function(label,val,trend='→ 0,0%',cls='neutral',sparkValue=0){
- const flat=Math.abs(n(sparkValue))<0.0001;
+window.kpiCard=function(label,val,trend='— sem histórico',cls='neutral',sparkValue=null){
+ const known=sparkValue!==null&&sparkValue!==undefined&&Number.isFinite(Number(sparkValue));
+ const flat=!known||Math.abs(n(sparkValue))<0.0001;
  const points=flat?'0,15 15,15 28,15 41,15 55,15 69,15 82,15 100,15':(n(sparkValue)>0?'0,24 15,21 28,23 41,15 55,18 69,10 82,12 100,5':'0,5 15,10 28,8 41,16 55,13 69,21 82,19 100,25');
  return `<div class="card kpi"><div class="label">${label}</div><div class="value">${val}</div><div class="${cls}">${trend}</div><svg class="spark" viewBox="0 0 100 30"><polyline points="${points}" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>`;
 };
 
 window.renderKpis=function(){
  const b=balances(),key=typeof activeMonth==='string'?activeMonth:monthKey(new Date()),prev=prevMonthKey(key);
- const curS=FinanceDomain.ledgerSummary(key),prevS=FinanceDomain.ledgerSummary(prev);
- const incTrend=pct(curS.income,prevS.income),expTrend=pct(curS.expenses,prevS.expenses);
- const hasAny=(db.transactions||[]).some(t=>String(t.date||'').slice(0,7)===key&&t.status!=='planned');
- const patrTrend=hasAny&&n(b.patrimony)!==0?0:0,liqTrend=hasAny&&n(b.liquid)!==0?0:0,invTrend=n(b.invest)!==0?0:0;
+ const curS=FinanceDomain.ledgerSummary(key),prevS=FinanceDomain.ledgerSummary(prev),hasPrev=hasMonthData(prev);
+ const incTrend=pct(curS.income,prevS.income,hasPrev),expTrend=pct(curS.expenses,prevS.expenses,hasPrev);
+ const patrTrend=null,liqTrend=null,invTrend=null;
  const box=document.getElementById('kpis');if(!box)return;
  box.innerHTML=[
   kpiCard('PATRIMÔNIO TOTAL',brl(b.patrimony),trendText(patrTrend),trendClass(patrTrend),patrTrend),
   kpiCard('DISPONÍVEL HOJE',brl(b.liquid),trendText(liqTrend),trendClass(liqTrend),liqTrend),
   kpiCard('RECEITAS (MÊS)',brl(b.inc),trendText(incTrend),trendClass(incTrend),incTrend),
-  kpiCard('DESPESAS (MÊS)',brl(b.exp),trendText(expTrend,true),trendClass(expTrend,true),-expTrend),
+  kpiCard('DESPESAS (MÊS)',brl(b.exp),trendText(expTrend,true),trendClass(expTrend,true),expTrend===null?null:-expTrend),
   kpiCard('INVESTIMENTOS',brl(b.invest),trendText(invTrend),trendClass(invTrend),invTrend)
  ].join('');
  const routes=['accounts','accounts','transactions','transactions','investments'];
