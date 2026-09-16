@@ -29,4 +29,21 @@
   /* Desktop uses header refresh/cloud sync; floating cloud UI must not cover cards/actions. */
   #financeCloudPanel #fcFab{display:none!important;}
   #financeCloudPanel #fcBox{display:none!important;}
+
+  /* Dashboard: cards inferiores acompanham o conteúdo, sem caixas vazias gigantes. */
+  #view-overview .dashboard{align-items:start!important;}
+  #view-overview .dashboard>.card.panel:nth-of-type(3),
+  #view-overview .dashboard>.card.panel:nth-of-type(4),
+  #view-overview .dashboard>.card.panel:nth-of-type(5){
+    align-self:start!important;
+    height:auto!important;
+    min-height:0!important;
+  }
+  #view-overview #commitments,
+  #view-overview #recurringList,
+  #view-overview #miniCalendar{
+    height:auto!important;
+    min-height:0!important;
+  }
+  #view-overview #recurringList{max-height:420px!important;overflow-y:auto!important;overscroll-behavior:contain;}
 }
