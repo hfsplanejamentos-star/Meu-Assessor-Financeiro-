@@ -1,0 +1,40 @@
+/* Meu Assessor Financeiro IA — R6.8 mobile card optimization */
+@media (max-width: 720px){
+ html,body{max-width:100%;overflow-x:hidden}
+ body{font-size:14px}
+ .main,.content,main{width:100%;max-width:100%;padding-left:10px!important;padding-right:10px!important;box-sizing:border-box}
+ .grid,.cards,.kpi-grid,.dashboard-grid{gap:10px!important}
+ .card,.panel,.module{max-width:100%!important;min-width:0!important;box-sizing:border-box!important;border-radius:18px!important;padding:14px!important;margin-left:0!important;margin-right:0!important}
+ .panel-head,.card-head{gap:8px!important;align-items:flex-start!important;flex-wrap:wrap!important}
+ .panel-head h2,.panel-head h3,.card h2,.card h3{font-size:18px!important;line-height:1.2!important;margin:0}
+ .kpi{min-height:0!important;padding:13px!important}
+ .kpi .label{font-size:11px!important;line-height:1.25!important;white-space:normal!important}
+ .kpi .value{font-size:clamp(20px,7vw,29px)!important;line-height:1.15!important;overflow-wrap:anywhere}
+ .kpi .spark{height:24px!important;max-height:24px!important}
+ button,.primary,.secondary{min-height:42px;max-width:100%;box-sizing:border-box}
+ input,select,textarea{max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+ table{font-size:12px}
+ .table-wrap,[style*="overflow-x"]{max-width:100%}
+ canvas{max-width:100%!important;height:auto}
+ .legend-line{gap:8px!important;font-size:12px!important}
+ #r67AiAssessor{padding:14px!important}
+ #r67AiAssessor #aiChat{max-height:36vh!important}
+ #r67AiAssessor #aiConfirm{padding:12px!important;overflow-wrap:anywhere}
+ #r67AiAssessor .panel-head small{display:block;line-height:1.35;margin-top:4px}
+ #r67AiAssessor #aiInput{font-size:14px!important}
+ .notice{overflow-wrap:anywhere}
+}
+@media (max-width: 430px){
+ .main,.content,main{padding-left:8px!important;padding-right:8px!important}
+ .card,.panel,.module{padding:12px!important;border-radius:16px!important}
+ .grid,.cards,.kpi-grid,.dashboard-grid{gap:8px!important}
+ .kpi .value{font-size:23px!important}
+ #r67AiAssessor>div:last-of-type{max-width:100%}
+ #r67AiAssessor #aiSend{padding-left:12px!important;padding-right:12px!important}
+}
+@media (max-width: 370px){
+ .card,.panel,.module{padding:10px!important}
+ .kpi .value{font-size:20px!important}
+ button,.primary,.secondary{font-size:13px!important;padding-left:9px!important;padding-right:9px!important}
+ #r67AiAssessor #aiMic{width:42px!important}
+}
