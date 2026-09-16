@@ -26,4 +26,7 @@
   }
   .topbar .search input::selection{background:#1d6f9d!important;color:#fff!important;-webkit-text-fill-color:#fff!important;}
   .topbar .search input::placeholder{color:#8096ad!important;-webkit-text-fill-color:#8096ad!important;opacity:1!important;}
+  /* Desktop uses header refresh/cloud sync; floating cloud UI must not cover cards/actions. */
+  #financeCloudPanel #fcFab{display:none!important;}
+  #financeCloudPanel #fcBox{display:none!important;}
 }
