@@ -2091,7 +2091,7 @@ importConfirmBtn.onclick=()=>{
 
 sendChat.onclick=()=>{const q=chatInput.value.trim();if(!q)return;const b=balances();let a='Posso analisar seus dados cadastrados.';const l=q.toLowerCase();if(l.includes('dispon'))a=`Seu disponível atual é ${brl(b.liquid)}.`;else if(l.includes('gaste'))a=`Suas despesas registradas somam ${brl(b.exp)}.`;else if(l.includes('invest'))a=`Seu patrimônio em investimentos é ${brl(b.invest)}.`;chat.innerHTML+=`<div class="item"><div class="ico">Você</div><div><b>${q}</b></div></div><div class="item"><div class="ico">✦</div><div><b>Assessor</b><small>${a}</small></div></div>`;chatInput.value=''};
 exportBtn.onclick=()=>{const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup_assessor_financeiro.json';a.click();URL.revokeObjectURL(a.href)};
-resetBtn.onclick=()=>{if(confirm('Restaurar dados fictícios?')){db=structuredClone(seed);save();renderAll()}};
+resetBtn.onclick=()=>{if(localStorage.getItem('assessor_r67_real_mode')==='1'){alert('Modo real ativo: a restauração de dados fictícios está desabilitada para proteger suas informações.');return}if(confirm('Restaurar dados fictícios?')){db=structuredClone(seed);save();renderAll()}};
 clearBtn.onclick=()=>{if(confirm('Zerar todos os dados?')){db={accounts:[],cards:[],categories:structuredClone(seed.categories),transactions:[],recurring:[],investments:[],invoices:[],auditLog:[],dismissedAlerts:{},budgets:[],goals:[]};save();renderAll()}};
 globalSearch.oninput=e=>{const q=e.target.value.toLowerCase();document.querySelectorAll('.item').forEach(x=>x.style.display=x.textContent.toLowerCase().includes(q)?'grid':'none')};
 window.addEventListener('resize',()=>{if(document.getElementById('view-overview').classList.contains('active'))renderCharts()});
@@ -2119,7 +2119,7 @@ editTransactionForm.onsubmit=e=>{
  const amount=Math.abs(Number(editValue.value)||0);
  t.date=editDate.value;t.desc=editDesc.value;t.value=editType.value==='income'?amount:-amount;t.cat=editCategory.value;t.sub=editSub.value;t.status=editStatus.value;t.origin=editOrigin.value;
  t.card=editCard.value||null;t.account=editAccount.value||t.account;
- if(t.card)t.invoiceMonth=cardInvoiceMonthForDate(t.card,t.date);else delete t.invoiceMonth;
+ if(t.card)t.invoiceMonth=cardInvoiceMonthForDate(t.card,t.date);else delete t.invoiceMonth;t.accountId=t.account||null;t.cardId=t.card||null;
  applyTransactionAccountEffect(t,1);
  audit('edit','transaction',before,t,{scope:t.installmentGroup?'parcela':'lançamento'});save();editTransactionModal.classList.remove('open');refreshFinancialUI(monthOfTx(t));renderAudit()
 };
