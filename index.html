@@ -1093,8 +1093,9 @@ const FinanceDomain=(()=>{
 })();
 
 function balances(key=activeMonth){
- const liquid=db.accounts.filter(a=>a.type!=='Investimento').reduce((s,a)=>s+Number(a.balance||0),0);
- const invest=db.accounts.filter(a=>a.type==='Investimento').reduce((s,a)=>s+Number(a.balance||0),0);
+ const isInv=a=>['investimento','investimentos','investment'].includes(String(a.type||'').toLowerCase());
+ const liquid=db.accounts.filter(a=>!isInv(a)).reduce((s,a)=>s+Number(a.balance||0),0);
+ const invest=db.accounts.filter(isInv).reduce((s,a)=>s+Number(a.balance||0),0);
  let inc=db.transactions.filter(t=>String(t.date||'').slice(0,7)===key&&t.value>0&&!t.transfer&&t.status!=='planned').reduce((s,t)=>s+Number(t.value||0),0);
  let exp=db.transactions.filter(t=>monthOfTx(t)===key&&t.value<0&&!t.transfer&&!t.excludeFromExpense&&t.status!=='planned').reduce((s,t)=>s+Math.abs(Number(t.value||0)),0);
  const __ledgerSummary=FinanceDomain.ledgerSummary(key);
@@ -1497,8 +1498,8 @@ function drawDonut(canvas,items){
  const c=canvas,ctx=c.getContext('2d'),dpr=devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;
  if(!w||!h){requestAnimationFrame(()=>drawDonut(canvas,items));return}
  c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
- const cx=w/2,cy=h/2,r=Math.min(w,h)*.32,total=items.reduce((s,x)=>s+x.value,0)||1;let a=-Math.PI/2;
- items.forEach((it,i)=>{let da=it.value/total*Math.PI*2;ctx.beginPath();ctx.arc(cx,cy,r,a,a+da);ctx.arc(cx,cy,r*.58,a+da,a,true);ctx.closePath();ctx.fillStyle=colors[i%colors.length];ctx.fill();a+=da});
+ const cx=w/2,cy=h/2,r=Math.min(w,h)*.32,total=items.reduce((s,x)=>s+x.value,0);let a=-Math.PI/2;
+ items.forEach((it,i)=>{if(total<=0)return;let da=it.value/total*Math.PI*2;ctx.beginPath();ctx.arc(cx,cy,r,a,a+da);ctx.arc(cx,cy,r*.58,a+da,a,true);ctx.closePath();ctx.fillStyle=colors[i%colors.length];ctx.fill();a+=da});
  ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='700 16px system-ui';ctx.fillText(brl(total),cx,cy+4);ctx.font='11px system-ui';ctx.fillStyle='#9db0c7';ctx.fillText('Total',cx,cy+22);ctx.textAlign='left';
  c._chart={type:'donut',items,total,cx,cy,r,w,h};
 }
@@ -1703,9 +1704,8 @@ function openDetail(title,rows,actions=[]){
 function openCategoryDetail(name){
  const key=scopeMonth('category');
  const tx=db.transactions.filter(t=>t.cat===name && t.value<0 && !t.transfer && monthOfTx(t)===key);
- const rec=db.recurring.filter(r=>r.cat===name);
- const total=tx.reduce((s,t)=>s+Math.abs(t.value),0)+rec.reduce((s,r)=>s+Number(r.value||0),0);
- openDetail(`Categoria · ${name}`,[['Mês',monthLabelKey(key)],['Total no período',brl(total)],['Transações',String(tx.length)],['Recorrências',String(rec.length)],['Subcategorias',[...new Set([...tx.map(t=>t.sub),...rec.map(r=>r.sub)])].filter(Boolean).join(', ')||'—']]);
+ const total=tx.reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);
+ openDetail(`Categoria · ${name}`,[['Mês',monthLabelKey(key)],['Gasto realizado',brl(total)],['Transações realizadas',String(tx.length)],['Subcategorias',[...new Set(tx.map(t=>t.sub))].filter(Boolean).join(', ')||'—']]);
 }
 
 function bindValueHover(){
