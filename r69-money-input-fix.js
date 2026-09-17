@@ -1,0 +1,6 @@
+/* Meu Assessor Financeiro — entrada monetária pt-BR segura */
+(()=>{'use strict';
+function parseMoney(raw){let s=String(raw??'').trim().replace(/\s/g,'').replace(/^R\$/i,'');if(!s)return 0;if(s.includes(',')&&s.includes('.')){if(s.lastIndexOf(',')>s.lastIndexOf('.'))s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/,/g,'');}else if(s.includes(',')){s=s.replace(/\./g,'').replace(',','.');}const n=Number(s);return Number.isFinite(n)?n:0;}
+function install(){const input=document.getElementById('fValue'),form=document.getElementById('entryForm');if(!input||!form||form.dataset.moneyFix==='1')return;form.dataset.moneyFix='1';input.type='text';input.inputMode='decimal';input.autocomplete='off';input.placeholder='0,00';const normalize=()=>{const n=parseMoney(input.value);if(input.value.trim()&&Number.isFinite(n))input.value=String(n);};input.addEventListener('change',normalize);input.addEventListener('blur',normalize);form.addEventListener('submit',normalize,true);window.parseFinanceMoney=parseMoney;}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
+})();
