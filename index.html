@@ -853,7 +853,7 @@ function refreshFinancialUI(targetMonth){
 /* v1.8.0 SIMULAÇÃO R6.5 · POPUPS EDITÁVEIS — valores acessíveis por mouse e toque */
 function bindTouchFinancialDetails(root=document){
   const selector=[
-    '[data-value-hover]','.money','.value','.kpi-value','.amount',
+    '[data-value-hover]','.money','.value',
     '.invoice-value','.projection-highlight','.budget-value','.goal-value',
     '.reconciliation-value','.health-value','.credit-card-value'
   ].join(',');
@@ -1188,7 +1188,8 @@ let txFilter='all';
 function filteredTransactions(){return transactionsForMonth(scopeMonth('transactions')).filter(t=>txFilter==='all'?true:txFilter==='credit'?!!t.card:!t.card)}
 function renderLists(){
  const rec=document.getElementById('recurringList'), page=document.getElementById('recurringPage');
- const html=db.recurring.map(r=>`<div class="item clickable recurring-card" data-detail-type="recurring" data-detail-id="${r.id}"><div class="ico">${r.icon||iconFor(r.cat,r.sub)}</div><div><b>${r.desc}</b><small>${r.freq} · Dia ${String(r.due).padStart(2,'0')} · ${r.kind} · ${(r.active??true)?'Ativa':'Inativa'}</small></div><div><div class="amount">${brl(r.value)}</div><div class="recurring-actions"><button class="secondary tx-edit-btn" data-edit-recurring="${r.id}">Editar</button></div></div></div>`).join('');
+ const recurringVisible=(db.recurring||[]).filter(r=>{const key=activeMonth,st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return (!st||key>=st)&&(!en||key<=en)});
+ const html=recurringVisible.map(r=>`<div class="item clickable recurring-card" data-detail-type="recurring" data-detail-id="${r.id}"><div class="ico">${r.icon||iconFor(r.cat,r.sub)}</div><div><b>${r.desc}</b><small>${r.freq} · Dia ${String(r.due).padStart(2,'0')} · ${r.kind} · ${(r.active??true)?'Ativa':'Inativa'}${r.endDate?' · até '+fmt(r.endDate):''}</small></div><div><div class="amount ${Number(r.value)<0?'down':''}">${brl(r.value)}</div><div class="recurring-actions"><button class="secondary tx-edit-btn" data-edit-recurring="${r.id}">Editar</button></div></div></div>`).join('');
  rec.innerHTML=html; page.innerHTML=html;document.querySelectorAll('[data-edit-recurring]').forEach(b=>b.onclick=e=>{e.stopPropagation();openRecurringEdit(b.dataset.editRecurring)});
  document.getElementById('recentList').innerHTML=transactionsForMonth(scopeMonth('recent')).slice(-5).reverse().map(t=>`<div class="item clickable" data-detail-type="transaction" data-detail-id="${t.id}"><div class="ico">${iconFor(t.cat,t.sub)}</div><div><b>${t.desc}</b><small>${fmt(t.date)} · ${t.cat} › ${t.sub||''} · ${t.origin}</small></div><div class="amount ${t.value>=0?'up':'down'}">${t.value>=0?'+ ':''}${brl(t.value)}</div></div>`).join('');
  document.getElementById('transactionTable').innerHTML=filteredTransactions().slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(t=>`<tr class="clickable" data-detail-type="transaction" data-detail-id="${t.id}"><td>${fmt(t.date)}</td><td>${t.desc}</td><td>${t.cat} › ${t.sub||''}</td><td>${db.cards.find(c=>c.id===t.card)?.name||db.accounts.find(a=>a.id===t.account)?.name||t.account||'—'}</td><td><span class="tag">${t.origin}</span></td><td class="${t.value>=0?'up':'down'}">${brl(t.value)}</td><td><button class="secondary tx-edit-btn" data-edit-tx="${t.id}">Editar</button></td></tr>`).join('');
