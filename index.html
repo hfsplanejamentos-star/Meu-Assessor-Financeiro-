@@ -1686,7 +1686,7 @@ function renderReconciliation(){
  box.querySelectorAll('[data-recon-b]').forEach(btn=>btn.onclick=()=>{const c=cases[+btn.dataset.reconB];openDetail(c.b.desc,[['Data',fmt(c.b.date)],['Valor',brl(c.b.value)],['Categoria',c.b.cat],['Origem',c.b.origin],['Status',c.b.status||'realized']])});
 }
 
-function renderAll(){fillMonthFilters();renderKpis();renderLists();renderCommitments();renderCalendar();renderInvestment();renderCardDashboard();renderInvoiceManagement();renderAudit();renderAlerts();renderBudgetsGoals();renderAndroidInbox();updateAndroidBridgeStatus();bindDetailClicks();bindValueHover();requestAnimationFrame(()=>{renderCharts();renderCardTrend();bindValueHover()});renderReconciliation()}
+function renderAll(){fillMonthFilters();renderKpis();bindKpiNavigation();renderLists();renderCommitments();renderCalendar();renderInvestment();renderCardDashboard();renderInvoiceManagement();renderAudit();renderAlerts();renderBudgetsGoals();renderAndroidInbox();updateAndroidBridgeStatus();bindDetailClicks();bindValueHover();requestAnimationFrame(()=>{renderCharts();renderCardTrend();bindValueHover()});renderReconciliation()}
 
 function hideTooltip(){const t=document.getElementById('tooltip');if(t)t.style.display='none'}
 window.addEventListener('scroll',hideTooltip,{passive:true});
@@ -1847,15 +1847,17 @@ document.getElementById('entryForm').onsubmit=e=>{
 [fValue,fDate,fCard,fInstallments,fInstallmentNo,fInstallmentMode].forEach(el=>{el.addEventListener('input',renderInstallmentPreview);el.addEventListener('change',renderInstallmentPreview)});
 
 let navHistory=['overview'];function updateBackButton(){backBtn.classList.toggle('show',navHistory.length>1)}function nav(view,push=true){document.querySelectorAll('.module').forEach(x=>x.classList.remove('active'));document.getElementById('view-'+view).classList.add('active');window.scrollTo({top:0,left:0,behavior:'instant'});const main=document.querySelector('.main');if(main)main.scrollTop=0;document.querySelectorAll('.nav button[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===view));document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');if(push&&navHistory[navHistory.length-1]!==view)navHistory.push(view);updateBackButton();if(view==='overview')requestAnimationFrame(renderCharts);if(view==='import')fillImportSelectors();if(view==='reconcile')renderReconciliation();if(view==='audit')renderAudit();if(view==='budgets')renderBudgetsGoals();if(view==='androidcaptures')renderAndroidCaptures();if(view==='alerts')renderAlerts()}
-document.addEventListener('change',e=>{if(e.target.matches('#globalMonthFilter'))setActiveMonth(e.target.value);if(e.target.matches('.individual-month-filter'))setScopeMonth(e.target.dataset.monthScope,e.target.value)});
+const globalMonthFilter=document.getElementById('globalMonthFilter');if(globalMonthFilter)globalMonthFilter.onchange=e=>setActiveMonth(e.target.value);
+document.addEventListener('change',e=>{if(e.target.matches('.individual-month-filter'))setScopeMonth(e.target.dataset.monthScope,e.target.value)});
 document.getElementById('nav').onclick=e=>{const b=e.target.closest('button[data-view]');if(b)nav(b.dataset.view)};backBtn.onclick=()=>{if(navHistory.length>1){navHistory.pop();nav(navHistory[navHistory.length-1],false)}}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-nav]');if(b){e.preventDefault();nav(b.dataset.nav)}});
+function bindKpiNavigation(){document.querySelectorAll('#kpis [data-card-nav],#cardKpis [data-card-nav]').forEach(card=>{card.style.cursor='pointer';card.style.pointerEvents='auto';card.onclick=e=>{e.preventDefault();e.stopPropagation();nav(card.dataset.cardNav)};card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();nav(card.dataset.cardNav)}}})}
 document.addEventListener('click',e=>{
  const card=e.target.closest('[data-card-nav]');
- if(!card)return;
+ if(!card||card.closest('#kpis,#cardKpis'))return;
  if(e.target.closest('button,select,input,textarea,a,canvas,[data-detail-type],[data-calendar-day],[data-edit-tx],[data-edit-recurring]'))return;
  e.preventDefault();e.stopPropagation();nav(card.dataset.cardNav);
-},true);
+});
 document.addEventListener('keydown',e=>{
  const card=e.target.closest?.('[data-card-nav]');
  if(card&&(e.key==='Enter'||e.key===' ')){e.preventDefault();nav(card.dataset.cardNav)}
