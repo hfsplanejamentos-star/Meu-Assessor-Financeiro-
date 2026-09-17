@@ -1545,7 +1545,7 @@ function attachTooltip(c){
 }
 function monthKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`}
 function monthLabel(d){return d.toLocaleDateString('pt-BR',{month:'short'}).replace('.','').replace(/^./,m=>m.toUpperCase())}
-function isInvestmentAccount(id){return db.accounts.find(a=>a.id===id)?.type==='Investimento'}
+function isInvestmentAccount(id){const t=String(db.accounts.find(a=>a.id===id)?.type||'').toLowerCase();return t==='investimento'||t==='investment'}
 function buildProjection(n){
  const b=balances(activeMonth), [sy,sm]=scopeMonth('projection').split('-').map(Number), start=new Date(sy,sm-1,1);
  let liquid=b.liquid, invest=b.invest, accumulatedCosts=0;
@@ -1565,10 +1565,13 @@ function buildProjection(n){
    // all active monthly recurring commitments are future cash outflows
    if(i>0 || true){
      db.recurring.forEach(r=>{
-       if((r.freq||'Mensal')==='Mensal') expense+=Number(r.value)||0;
-       else if(r.freq==='Trimestral' && i%3===0) expense+=Number(r.value)||0;
-       else if(r.freq==='Semestral' && i%6===0) expense+=Number(r.value)||0;
-       else if(r.freq==='Anual' && i%12===0) expense+=Number(r.value)||0;
+       const start=String(r.startDate||'').slice(0,7),end=String(r.endDate||'').slice(0,7);
+       if(r.active===false||(start&&key<start)||(end&&key>end))return;
+       const rv=Math.abs(Number(r.value)||0),freq=r.freq||r.frequency||'Mensal';
+       if(freq==='Mensal'||freq==='monthly') expense+=rv;
+       else if(freq==='Trimestral' && i%3===0) expense+=rv;
+       else if(freq==='Semestral' && i%6===0) expense+=rv;
+       else if(freq==='Anual' && i%12===0) expense+=rv;
      });
    }
    // Current month starts from "now"; commitments already represented as realized transactions should not double count perfectly,
@@ -1596,12 +1599,11 @@ function renderCharts(){
    <div><small>Patrimônio projetado ao final</small><b>${brl(last.patrimony||0)}</b></div>
    <div><small>Custos previstos no período</small><b>${brl(last.costs||0)}</b></div>
    <div><small>Aportes planejados</small><b>${brl(proj.reduce((s,x)=>s+x.investmentMove,0))}</b></div>`;
- const cats={};db.transactions.filter(t=>t.value<0&&!t.transfer&&!t.excludeFromExpense&&monthOfTx(t)===scopeMonth('category')).forEach(t=>cats[t.cat]=(cats[t.cat]||0)+Math.abs(t.value));
- db.recurring.forEach(r=>cats[r.cat]=(cats[r.cat]||0)+r.value);
+ const cats={},catMonth=scopeMonth('category');db.transactions.filter(t=>t.value<0&&!t.transfer&&!t.excludeFromExpense&&t.status!=='planned'&&monthOfTx(t)===catMonth).forEach(t=>cats[t.cat]=(cats[t.cat]||0)+Math.abs(Number(t.value)||0));
  const items=Object.entries(cats).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
  drawDonut(document.getElementById('categoryChart'),items);
  document.getElementById('categoryLegend').innerHTML=items.map((it,i)=>`<div class="legend-line clickable" onclick="openCategoryDetail('${String(it.name).replace(/'/g,"\\'")}')"><span><i class="dot" style="background:${colors[i%colors.length]}"></i>${it.name}</span><b>${brl(it.value)}</b></div>`).join('');
- const labs=db.investments.map(x=>x.month);drawBarChart(document.getElementById('investmentChart'),labs,db.investments.map(x=>x.planned),db.investments.map(x=>x.realized));
+ const invRows=(db.investments||[]).map(x=>({label:String(x.month||x.date||'').slice(0,7),planned:(x.status==='planned'?Math.abs(Number(x.planned??x.amount??x.value)||0):Math.abs(Number(x.planned)||0)),realized:(x.status!=='planned'?Math.abs(Number(x.realized??x.amount??x.value)||0):Math.abs(Number(x.realized)||0))}));const labs=invRows.map(x=>x.label);drawBarChart(document.getElementById('investmentChart'),labs,invRows.map(x=>x.planned),invRows.map(x=>x.realized));
  ['projectionChart','categoryChart','investmentChart'].forEach(id=>attachTooltip(document.getElementById(id)));bindValueHover();
 }
 
