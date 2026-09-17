@@ -832,9 +832,10 @@ function fillMonthFilters(){
  const dm=document.getElementById('distributionMonthNote');if(dm)dm.textContent=monthLabelKey(scopeMonth('purchases'));
 }
 function setActiveMonth(key){
+ if(!/^\d{4}-\d{2}$/.test(String(key||'')))return;
  activeMonth=key;MONTH_SCOPES.forEach(k=>monthScopes[k]=key);
  localStorage.setItem('assessor_active_month',key);localStorage.setItem('assessor_month_scopes',JSON.stringify(monthScopes));
- fillMonthFilters();renderAll()
+ fillMonthFilters();renderAll();requestAnimationFrame(()=>{renderCharts();renderKpis()})
 }
 function setScopeMonth(scope,key){
  monthScopes[scope]=key;localStorage.setItem('assessor_month_scopes',JSON.stringify(monthScopes));
@@ -1171,15 +1172,17 @@ function renderBudgetsGoals(){
  const gl=document.getElementById('goalList');if(gl)gl.innerHTML=goals.length?goals.map(g=>{const pct=Number(g.target)>0?Number(g.current||0)/Number(g.target):0;return `<div class="goal-card"><div class="goal-top"><div><b>${g.name}</b><small style="display:block;color:var(--muted)">${g.type||'Meta'}${g.date?' · até '+fmt(g.date):''}</small></div><span class="tag">${Math.min(100,Math.round(pct*100))}%</span></div><div class="progress"><span style="width:${Math.min(100,pct*100)}%"></span></div><div class="goal-meta"><span>${brl(g.current||0)}</span><span>Meta ${brl(g.target)}</span></div></div>`}).join(''):'<div class="notice">Nenhuma meta cadastrada.</div>';
  const ho=document.getElementById('healthOverview'),hd=document.getElementById('healthDetail');if(ho)ho.innerHTML=healthHTML();if(hd)hd.innerHTML=healthHTML();
 }
-function renderKpis(){const b=balances();const box=document.getElementById('kpis');box.innerHTML=[
- kpiCard('PATRIMÔNIO TOTAL',brl(b.patrimony),'↑ 2,4%'),
- kpiCard('DISPONÍVEL HOJE',brl(b.liquid),'↑ 1,8%','neutral'),
- kpiCard('RECEITAS (MÊS)',brl(b.inc),'↑ 8,1%'),
- kpiCard('DESPESAS (MÊS)',brl(b.exp),'↓ 3,2%','down'),
- kpiCard('INVESTIMENTOS',brl(b.invest),'↑ 5,6%')
+function renderKpis(){const b=balances(),key=activeMonth,planned=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&t.status==='planned'&&!t.transfer),plannedIncome=planned.filter(t=>Number(t.value)>0).reduce((s,t)=>s+Number(t.value||0),0),recExpense=(db.recurring||[]).filter(r=>{const st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return r.active!==false&&(!st||key>=st)&&(!en||key<=en)}).reduce((s,r)=>s+Math.abs(Number(r.value)||0),0);const box=document.getElementById('kpis');box.innerHTML=[
+ kpiCard('PATRIMÔNIO TOTAL',brl(b.patrimony),'Abrir contas','neutral'),
+ kpiCard('DISPONÍVEL HOJE',brl(b.liquid),'Abrir contas','neutral'),
+ kpiCard('RECEITAS REALIZADAS',brl(b.inc),monthLabelKey(key),'neutral'),
+ kpiCard('RECEITAS PREVISTAS',brl(plannedIncome),monthLabelKey(key),'neutral'),
+ kpiCard('DESPESAS REALIZADAS',brl(b.exp),monthLabelKey(key),'neutral'),
+ kpiCard('DESPESAS PREVISTAS',brl(recExpense),monthLabelKey(key),'neutral'),
+ kpiCard('INVESTIMENTOS',brl(b.invest),'Abrir investimentos','neutral')
 ].join('');
- const routes=['accounts','accounts','transactions','transactions','investments'];
- [...box.children].forEach((el,i)=>{el.classList.add('clickable-card');el.tabIndex=0;el.dataset.cardNav=routes[i]});
+ const routes=['accounts','accounts','transactions','transactions','transactions','recurring','investments'];
+ [...box.children].forEach((el,i)=>{el.classList.add('clickable-card');el.tabIndex=0;el.dataset.cardNav=routes[i];el.style.pointerEvents='auto'});
 }
 let txFilter='all';
 function filteredTransactions(){return transactionsForMonth(scopeMonth('transactions')).filter(t=>txFilter==='all'?true:txFilter==='credit'?!!t.card:!t.card)}
@@ -1851,8 +1854,8 @@ document.addEventListener('click',e=>{
  const card=e.target.closest('[data-card-nav]');
  if(!card)return;
  if(e.target.closest('button,select,input,textarea,a,canvas,[data-detail-type],[data-calendar-day],[data-edit-tx],[data-edit-recurring]'))return;
- nav(card.dataset.cardNav);
-});
+ e.preventDefault();e.stopPropagation();nav(card.dataset.cardNav);
+},true);
 document.addEventListener('keydown',e=>{
  const card=e.target.closest?.('[data-card-nav]');
  if(card&&(e.key==='Enter'||e.key===' ')){e.preventDefault();nav(card.dataset.cardNav)}
