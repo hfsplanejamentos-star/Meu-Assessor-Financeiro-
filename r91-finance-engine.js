@@ -50,13 +50,19 @@ function audit(){
  const cards=[...document.querySelectorAll('#kpis [data-card-nav]')].map(x=>({route:x.dataset.cardNav,pointer:getComputedStyle(x).pointerEvents}));
  const out={ok:tests.every(x=>x.ok)&&filters.every(x=>x.nov&&x.enabled)&&cards.every(x=>x.pointer!=='none'),tests,filters,cards,at:new Date().toISOString()};window.__ASSESSOR_R91_AUDIT__=out;return out;
 }
+function canonicalRenderKpis(){
+ const b=currentBalances(),k=(typeof activeMonth!=='undefined'?activeMonth:'2026-10'),s=summary(k),box=document.getElementById('kpis');if(!box||typeof kpiCard!=='function'||typeof brl!=='function')return;
+ box.innerHTML=[kpiCard('PATRIMÔNIO TOTAL',brl(b.patrimony),'Abrir contas','neutral'),kpiCard('DISPONÍVEL HOJE',brl(b.liquid),'Abrir contas','neutral'),kpiCard('RECEITAS REALIZADAS',brl(s.realizedIncome),k,'neutral'),kpiCard('RECEITAS PREVISTAS',brl(s.plannedIncome),k,'neutral'),kpiCard('DESPESAS REALIZADAS',brl(s.realizedExpense),k,'neutral'),kpiCard('DESPESAS PREVISTAS',brl(s.plannedExpense),k,'neutral'),kpiCard('INVESTIMENTOS',brl(b.invest),'Abrir investimentos','neutral')].join('');
+ const routes=['accounts','accounts','transactions','transactions','transactions','recurring','investments'];[...box.children].forEach((el,i)=>{el.classList.add('clickable-card');el.tabIndex=0;el.dataset.cardNav=routes[i];el.style.pointerEvents='auto'});
+ bind();
+}
 function bind(){
  const g=document.getElementById('globalMonthFilter');if(g){g.disabled=false;g.style.pointerEvents='auto';g.onchange=e=>{const k=e.currentTarget.value;if(/^\d{4}-\d{2}$/.test(k)&&typeof setActiveMonth==='function'){setActiveMonth(k);setTimeout(()=>{try{renderAll();renderCharts();renderKpis()}catch(_){}},20)}}}
  document.querySelectorAll('#kpis [data-card-nav]').forEach(card=>{card.style.pointerEvents='auto';card.style.cursor='pointer';card.onclick=e=>{e.preventDefault();e.stopPropagation();if(typeof nav==='function')nav(card.dataset.cardNav)}});
 }
 function install(){
  ensurePlan();
- window.FinanceCanonical={summary,projection,recurringFor,currentBalances,ensurePlan,audit,bind};
+ window.FinanceCanonical={summary,projection,recurringFor,currentBalances,ensurePlan,audit,bind,canonicalRenderKpis};window.renderKpis=canonicalRenderKpis;
  window.buildProjection=function(count){const start=(typeof scopeMonth==='function'?scopeMonth('projection'):activeMonth)||'2026-10';return projection(start,Number(count)||12)};
  bind();setTimeout(()=>{bind();try{renderAll();renderCharts();renderKpis()}catch(_){};audit()},250);
 }
