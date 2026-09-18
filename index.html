@@ -1445,11 +1445,10 @@ function renderCardForecast(){
  const btn=document.getElementById('toggleForecastBtn');if(btn)btn.textContent=cardForecastMonths===4?'Mostrar 12 meses':'Mostrar 4 meses';
 }
 function renderInvestment(){
- const b=balances(),key=scopeMonth('investment'),[yy,mm]=key.split('-').map(Number),short=new Date(yy,mm-1,1).toLocaleDateString('pt-BR',{month:'short'}).replace('.','').slice(0,3).toLowerCase();
- const selected=db.investments.filter(x=>String(x.month||'').toLowerCase().slice(0,3)===short);
- const planned=selected.reduce((s,x)=>s+Number(x.planned||0),0),realized=selected.reduce((s,x)=>s+Number(x.realized||0),0);
- document.getElementById('investmentSummary').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px"><div class="notice">Patrimônio atual<br><b style="font-size:18px;color:white">${brl(b.invest)}</b></div><div class="notice">${monthLabelKey(key)}<br><b style="font-size:18px;color:white">${brl(realized)} / ${brl(planned)}</b></div></div>`;
- document.getElementById('investmentPage').innerHTML=selected.length?selected.map(x=>`<div class="item"><div class="ico">↗</div><div><b>${x.month}</b><small>Planejado ${brl(x.planned)}</small></div><div class="amount up">Realizado ${brl(x.realized)}</div></div>`).join(''):`<div class="notice">Nenhum aporte registrado em ${monthLabelKey(key)}.</div>`;
+ const b=balances(),key=scopeMonth('investment'),selected=(db.investments||[]).filter(x=>String(x.month||x.date||'').slice(0,7)===key);
+ const planned=selected.reduce((s,x)=>s+Math.abs(Number(x.planned??(x.status==='planned'?(x.amount??x.value):0))||0),0),realized=selected.reduce((s,x)=>s+Math.abs(Number(x.realized??(x.status!=='planned'?(x.amount??x.value):0))||0),0);
+ const sum=document.getElementById('investmentSummary');if(sum)sum.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px"><div class="notice">Investimentos realizados<br><b style="font-size:18px;color:white">${brl(b.invest)}</b></div><div class="notice">${monthLabelKey(key)}<br><b style="font-size:18px;color:white">Realizado ${brl(realized)} · Planejado ${brl(planned)}</b></div></div>`;
+ const page=document.getElementById('investmentPage');if(page)page.innerHTML=selected.length?selected.map(x=>`<div class="item"><div class="ico">↗</div><div><b>${x.desc||x.name||'Aporte'}</b><small>${monthLabelKey(key)} · ${x.status==='planned'?'Planejado':'Realizado'}</small></div><div class="amount ${x.status==='planned'?'':'up'}">${brl(Math.abs(Number(x.amount??x.value??x.planned??x.realized)||0))}</div></div>`).join(''):`<div class="notice">Nenhum aporte registrado em ${monthLabelKey(key)}.</div>`;
 }
 const colors=['#4a8cff','#ff9f59','#20e7a6','#9a6cff','#ff5876','#7ed6ff','#b9c9d8'];
 function drawLineChart(canvas,series,labels){
