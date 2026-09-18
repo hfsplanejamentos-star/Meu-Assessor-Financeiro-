@@ -1,0 +1,16 @@
+/* V10 Mobile Themes — presentation only; no financial data changes */
+:root{--v10-bg:#050912;--v10-panel:rgba(10,20,36,.82);--v10-panel2:rgba(12,26,46,.92);--v10-line:rgba(100,190,255,.18);--v10-text:#eff6ff;--v10-muted:#9db0c7;--v10-accent:#20d8ff}
+html[data-mobile-theme="dark"]{--v10-bg:#090b0f;--v10-panel:#12161d;--v10-panel2:#171c24;--v10-line:#29313c;--v10-text:#f3f6fa;--v10-muted:#9aa6b2;--v10-accent:#63d9ff}
+html[data-mobile-theme="light"]{--v10-bg:#f3f6fa;--v10-panel:#fff;--v10-panel2:#fff;--v10-line:#dce4ec;--v10-text:#17202b;--v10-muted:#647386;--v10-accent:#087ca5}
+@media(max-width:820px){
+ html[data-mobile-theme="dark"] body,html[data-mobile-theme="light"] body{background:var(--v10-bg)!important;color:var(--v10-text)!important}
+ html[data-mobile-theme="dark"] .card,html[data-mobile-theme="dark"] .panel,html[data-mobile-theme="dark"] .search,
+ html[data-mobile-theme="light"] .card,html[data-mobile-theme="light"] .panel,html[data-mobile-theme="light"] .search{background:var(--v10-panel)!important;border-color:var(--v10-line)!important;color:var(--v10-text)!important;box-shadow:0 8px 24px rgba(0,0,0,.12)!important}
+ html[data-mobile-theme="dark"] .kpi .label,html[data-mobile-theme="dark"] small,html[data-mobile-theme="dark"] .muted,
+ html[data-mobile-theme="light"] .kpi .label,html[data-mobile-theme="light"] small,html[data-mobile-theme="light"] .muted{color:var(--v10-muted)!important}
+ html[data-mobile-theme="light"] input,html[data-mobile-theme="light"] select,html[data-mobile-theme="light"] button{color:var(--v10-text)}
+ .v10-theme-switch{position:fixed;right:12px;bottom:76px;z-index:150;display:flex;gap:5px;padding:6px;border:1px solid var(--v10-line);border-radius:14px;background:var(--v10-panel2);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+ .v10-theme-switch button{border:1px solid transparent;border-radius:9px;padding:7px 9px;background:transparent;color:var(--v10-text);font-size:12px}
+ .v10-theme-switch button.active{border-color:var(--v10-accent);color:var(--v10-accent)}
+}
+@media(min-width:821px){.v10-theme-switch{display:none!important}}
