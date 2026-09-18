@@ -77,6 +77,7 @@ function canonicalRenderKpis(){
  bind();
 }
 function bind(){
+ document.querySelectorAll('.month-filter').forEach(sel=>{sel.disabled=false;sel.style.pointerEvents='auto';if(sel.dataset.r94Bound!=='1'){sel.dataset.r94Bound='1';sel.addEventListener('change',()=>setTimeout(()=>{try{renderCanonicalExpenseChart()}catch(_){}},35))}});
  const g=document.getElementById('globalMonthFilter');if(g){g.disabled=false;g.style.pointerEvents='auto';g.onchange=e=>{const k=e.currentTarget.value;if(/^\d{4}-\d{2}$/.test(k)&&typeof setActiveMonth==='function'){setActiveMonth(k);setTimeout(()=>{try{renderAll();renderCharts();renderKpis()}catch(_){}},20)}}}
  document.querySelectorAll('#kpis [data-card-nav]').forEach(card=>{card.style.pointerEvents='auto';card.style.cursor='pointer';card.onclick=e=>{e.preventDefault();e.stopPropagation();if(typeof nav==='function')nav(card.dataset.cardNav)}});
 }
@@ -84,9 +85,13 @@ function install(){
  ensurePlan();
  window.FinanceCanonical={summary,projection,recurringFor,currentBalances,ensurePlan,normalizeCore,audit,bind,canonicalRenderKpis,renderCanonicalExpenseChart};window.renderKpis=canonicalRenderKpis;
  window.buildProjection=function(count){const start=(typeof scopeMonth==='function'?scopeMonth('projection'):activeMonth)||'2026-10';return projection(start,Number(count)||12)};
- bind();setTimeout(()=>{bind();try{renderAll();renderCharts();renderKpis()}catch(_){};audit()},250);
+ bind();
+ const refresh=()=>{try{renderCanonicalExpenseChart()}catch(_){}};
+ setTimeout(()=>{bind();try{renderAll();renderCharts();renderKpis();refresh()}catch(_){};audit()},250);
+ setTimeout(refresh,900);setTimeout(refresh,2200);
+
 }
-document.addEventListener('finance-cloud-status',()=>setTimeout(()=>{ensurePlan();bind();try{renderAll();renderCharts();renderKpis()}catch(_){};audit()},500));
-document.addEventListener('finance-data-changed',()=>setTimeout(()=>{bind();audit()},80));
+document.addEventListener('finance-cloud-status',()=>setTimeout(()=>{ensurePlan();bind();try{renderAll();renderCharts();renderKpis();renderCanonicalExpenseChart()}catch(_){};audit()},500));
+document.addEventListener('finance-data-changed',()=>setTimeout(()=>{bind();try{renderCanonicalExpenseChart()}catch(_){};audit()},80));
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
 })();
