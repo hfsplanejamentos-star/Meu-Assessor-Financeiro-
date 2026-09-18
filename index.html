@@ -390,6 +390,8 @@ border-left:1px solid rgba(75,190,255,.28);backdrop-filter:blur(24px);box-shadow
 #quickFinancialCards .caju-card .quick-fin-bar i{background:linear-gradient(90deg,#20e7a6,var(--cyan))}
 @media(max-width:1100px){#quickFinancialCards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){#quickFinancialCards{grid-template-columns:1fr}.quick-fin-meta{white-space:normal}}
+
+.caju-detail-panel{border-color:rgba(32,231,166,.20)}.caju-detail-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.caju-detail-kpis .card-kpi{min-height:82px}.caju-detail-panel .statement-table td{vertical-align:middle}@media(max-width:800px){.caju-detail-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:480px){.caju-detail-kpis{grid-template-columns:1fr}}
 </style>
 <link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"></head>
 <body>
@@ -483,6 +485,11 @@ border-left:1px solid rgba(75,190,255,.28);backdrop-filter:blur(24px);box-shadow
   <section class="module" id="view-accounts"><div class="card panel"><div class="panel-head"><h3>Contas e Bancos</h3><button class="primary" id="btnBank">+ Incluir banco/conta</button></div><div class="row-list" id="accountList"></div></div></section>
   <section class="module" id="view-cards">
   <div class="card-kpis" id="cardKpis"></div>
+  <div class="card panel caju-detail-panel" id="cajuDetailPanel" style="margin-bottom:12px">
+    <div class="panel-head"><div><h3>Caju Alimentação</h3><small style="color:var(--muted)">Saldo, utilização e movimentações do benefício</small></div><select class="month-filter individual-month-filter" data-month-scope="caju"></select></div>
+    <div class="caju-detail-kpis" id="cajuDetailKpis"></div>
+    <div style="overflow:auto;margin-top:12px"><table class="statement-table"><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Saldo informado</th></tr></thead><tbody id="cajuDetailTable"></tbody></table></div>
+  </div>
   <div class="card-grid">
     <div class="card panel">
       <div class="panel-head"><div><h3>Cartões de Crédito</h3><small style="color:var(--muted)">Fatura, limite e vencimentos do mês selecionado</small></div><div class="panel-head-actions"><select class="month-filter individual-month-filter" data-month-scope="cards"></select><button class="primary" id="btnCard">+ Incluir cartão</button></div></div>
@@ -1410,6 +1417,13 @@ function renderInvoiceManagement(){
  const months=new Set();cardTransactions(cardId).forEach(t=>months.add(t.invoiceMonth||cardInvoiceMonthForDate(cardId,t.date)));(db.invoices||[]).filter(i=>i.cardId===cardId).forEach(i=>months.add(i.month));
  const arr=[...months].sort().reverse();invoiceHistory.innerHTML=arr.length?arr.map(mon=>{const r=ensureInvoice(cardId,mon),amt=invoiceAmount(cardId,mon);return `<div class="invoice-row"><div class="invoice-row-top"><b>Fatura ${mon.split('-').reverse().join('/')}</b><span class="invoice-badge ${invoiceStatusClass(r.status)}">${invoiceStatusLabel(r.status)}</span></div><div class="invoice-row-grid"><div><small>Valor</small><b>${brl(amt)}</b></div><div><small>Vencimento</small><b>${fmt(r.dueDate)}</b></div><div><small>Fechada em</small><b>${r.closedAt?fmt(r.closedAt.slice(0,10)):'—'}</b></div><div><small>Paga em</small><b>${r.paidAt?fmt(r.paidAt.slice(0,10)):'—'}</b></div></div></div>`}).join(''):'<div class="notice">Nenhuma fatura registrada.</div>'
 }
+function renderCajuDetails(){
+ const card=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||String(c.name||'').toLowerCase().includes('caju'));if(!card)return;
+ const key=scopeMonth('caju')||activeMonth,all=(db.transactions||[]).filter(t=>t.cardId===card.id&&String(t.date||'').slice(0,7)===key&&Number(t.value)<0).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.time||'').localeCompare(String(a.time||'')));
+ const spent=all.reduce((s,t)=>s+Math.abs(Number(t.value)||0),0),avail=Number(card.availableLimit??card.balance??0)||0,limit=Number(card.limit||0)||0,pct=limit?avail/limit*100:0;
+ const k=document.getElementById('cajuDetailKpis');if(k)k.innerHTML=`<div class="card-kpi"><small>Saldo disponível</small><b class="up">${brl(avail)}</b></div><div class="card-kpi"><small>Gasto em ${monthLabelKey(key)}</small><b class="down">${brl(spent)}</b></div><div class="card-kpi"><small>Limite nominal</small><b>${brl(limit)}</b></div><div class="card-kpi"><small>Saldo disponível</small><b>${pct.toFixed(1)}%</b></div>`;
+ const tb=document.getElementById('cajuDetailTable');if(tb)tb.innerHTML=all.length?all.map(t=>`<tr><td>${fmt(t.date)} ${t.time||''}</td><td>${t.desc||t.description||''}</td><td>${t.cat||'Alimentação'} › ${t.sub||''}</td><td class="down">-${brl(Math.abs(Number(t.value)||0))}</td><td>${t.id==='caju_2026_09_17_marilza_2999'?brl(961.90):t.id==='caju_2026_09_17_padaria_14'?brl(991.89):t.id==='caju_2026_09_17_padaria_1'?brl(1005.89):'—'}</td></tr>`).join(''):`<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:22px">Nenhuma movimentação Caju em ${monthLabelKey(key)}.</td></tr>`;
+}
 function renderCardDashboard(){
  const cards=(db.cards||[]).filter(c=>(c.type||'Crédito')==='Crédito'||c.type==='Múltiplo');
  const totalLimit=cards.reduce((s,c)=>s+(Number(c.limit)||0),0);
@@ -1429,7 +1443,7 @@ function renderCardDashboard(){
     <div class="limit-bar"><span style="width:${c.limit?pct:0}%"></span></div><div class="limit-row"><span>${c.limit?pct.toFixed(0)+'% utilizado':'Limite não informado'}</span><span>${c.limit?'Disponível '+brl(avail):'Disponível não informado'}</span></div>
    </div>`}).join(''):'<div class="notice">Nenhum cartão de crédito cadastrado.</div>'; const benefits=(db.cards||[]).filter(c=>['benefício','beneficio','benefit'].includes(String(c.type||'').toLowerCase()));if(list&&benefits.length)list.insertAdjacentHTML('beforeend',benefits.map(c=>`<div class="credit-card-panel"><div class="credit-card-top"><div><div class="credit-card-name">${c.name}</div><div class="credit-card-meta">Benefício · não gera fatura</div></div><span class="invoice-badge invoice-closed">Benefício</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px"><div><small style="color:var(--muted)">Disponível</small><b style="display:block;font-size:18px">${brl(c.availableLimit??c.balance??0)}</b></div><div><small style="color:var(--muted)">Limite nominal</small><b style="display:block">${brl(c.limit||0)}</b></div></div><div class="limit-bar"><span style="width:${Math.max(0,Math.min(100,Number(c.limit)?Number(c.availableLimit??c.balance??0)/Number(c.limit)*100:0))}%"></span></div><div class="limit-row"><span>Fora do patrimônio</span><span>Sem vencimento/fatura</span></div></div>`).join(''));
  const select=document.getElementById('cardPurchaseFilter');if(select){const current=select.value;select.innerHTML='<option value="all">Todos os cartões</option>'+cards.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');if([...select.options].some(o=>o.value===current))select.value=current;}
- renderCardPurchases();renderCardForecast();renderCardTrend();bindDetailClicks();bindValueHover();
+ renderCajuDetails();renderCardPurchases();renderCardForecast();renderCardTrend();bindDetailClicks();bindValueHover();
 }
 
 function cardTrendRows(cardId,months=12){
