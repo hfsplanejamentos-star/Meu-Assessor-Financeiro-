@@ -1604,8 +1604,14 @@ function renderCharts(){
    <div><small>Patrimônio projetado ao final</small><b>${brl(last.patrimony||0)}</b></div>
    <div><small>Custos previstos no período</small><b>${brl(last.costs||0)}</b></div>
    <div><small>Aportes planejados</small><b>${brl(proj.reduce((s,x)=>s+x.investmentMove,0))}</b></div>`;
- const cats={},catMonth=scopeMonth('category'),currentKey=monthKey(today);db.transactions.filter(t=>t.value<0&&!t.transfer&&!t.excludeFromExpense&&t.status!=='planned'&&monthOfTx(t)===catMonth).forEach(t=>cats[t.cat]=(cats[t.cat]||0)+Math.abs(Number(t.value)||0));
- if(catMonth>currentKey){(db.recurring||[]).filter(r=>{const st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return r.active!==false&&(!st||catMonth>=st)&&(!en||catMonth<=en)}).forEach(r=>cats[r.cat]=(cats[r.cat]||0)+Math.abs(Number(r.value)||0))}
+ const cats={},catMonth=scopeMonth('category'),currentKey=monthKey(today);
+ // Realized expenses for past/current months; planned recurring commitments for future months.
+ db.transactions.filter(t=>t.value<0&&!t.transfer&&!t.excludeFromExpense&&t.status!=='planned'&&monthOfTx(t)===catMonth).forEach(t=>cats[t.cat]=(cats[t.cat]||0)+Math.abs(Number(t.value)||0));
+ if(catMonth>currentKey){
+   (db.recurring||[]).filter(r=>{const st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return r.active!==false&&(!st||catMonth>=st)&&(!en||catMonth<=en)}).forEach(r=>cats[r.cat||'Outros']=(cats[r.cat||'Outros']||0)+Math.abs(Number(r.value)||0));
+   // Include explicit planned expenses that are not transfers. Do not count investment transfers as expenses.
+   (db.transactions||[]).filter(t=>monthOfTx(t)===catMonth&&t.status==='planned'&&Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense).forEach(t=>cats[t.cat||'Outros']=(cats[t.cat||'Outros']||0)+Math.abs(Number(t.value)||0));
+ }
  const items=Object.entries(cats).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
  drawDonut(document.getElementById('categoryChart'),items);
  document.getElementById('categoryLegend').innerHTML=items.map((it,i)=>`<div class="legend-line clickable" onclick="openCategoryDetail('${String(it.name).replace(/'/g,"\\'")}')"><span><i class="dot" style="background:${colors[i%colors.length]}"></i>${it.name}</span><b>${brl(it.value)}</b></div>`).join('');
