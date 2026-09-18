@@ -395,6 +395,12 @@ border-left:1px solid rgba(75,190,255,.28);backdrop-filter:blur(24px);box-shadow
 
 /* R10.2 — cards rápidos na mesma linha de Despesas Previstas e Investimentos */
 @media(min-width:1101px){#quickFinancialCards{grid-template-columns:repeat(5,minmax(0,1fr));margin-top:-189px;pointer-events:none}#quickFinancialCards .quick-fin-card{pointer-events:auto}#quickFinancialCards .quick-fin-card:first-child{grid-column:3}#quickFinancialCards .quick-fin-card:nth-child(2){grid-column:4}}
+
+/* R10.3 — alinhamento estrutural: quick cards fazem parte da mesma grid dos KPIs */
+#kpis{align-items:stretch}
+#kpis>#quickFinancialCards.quick-fin-inline{display:contents!important;margin:0!important}
+#kpis>#quickFinancialCards .quick-fin-card{min-height:0;height:auto;margin:0;align-self:stretch}
+@media(min-width:1101px){#kpis>#quickFinancialCards .quick-fin-card:first-child{grid-column:3;grid-row:2}#kpis>#quickFinancialCards .quick-fin-card:nth-child(2){grid-column:4;grid-row:2}}
 </style>
 <link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"></head>
 <body>
@@ -434,7 +440,7 @@ border-left:1px solid rgba(75,190,255,.28);backdrop-filter:blur(24px);box-shadow
   </div>
 
   <section class="module active" id="view-overview">
-    <div class="grid-kpi" id="kpis"></div><div class="grid-kpi" id="quickFinancialCards" style="margin-top:12px"></div>
+    <div class="grid-kpi" id="kpis"></div>
     <div class="dashboard">
       <div class="card panel span2">
         <div class="panel-head"><div><h3>Evolução Patrimonial e Projeção Mensal</h3><small style="color:var(--muted)">Patrimônio destacado + custos + investimentos projetados</small></div>
@@ -1209,7 +1215,10 @@ function renderKpis(){const b=balances(),key=activeMonth,planned=(db.transaction
  [...box.children].forEach((el,i)=>{el.classList.add('clickable-card');el.tabIndex=0;el.dataset.cardNav=routes[i];el.style.pointerEvents='auto'});
 }
 function renderQuickFinancialCards(){
- const box=document.getElementById('quickFinancialCards');if(!box)return;
+ let box=document.getElementById('quickFinancialCards');
+ const kpis=document.getElementById('kpis');if(!kpis)return;
+ if(!box){box=document.createElement('div');box.id='quickFinancialCards';box.className='quick-fin-inline';kpis.appendChild(box)}
+ else if(box.parentElement!==kpis)kpis.appendChild(box);
  const key=activeMonth;
  const creditCards=(db.cards||[]).filter(c=>['Crédito','Múltiplo'].includes(c.type||'Crédito'));
  const cardSpend=creditCards.reduce((s,c)=>s+invoiceAmount(c.id,key),0);
