@@ -91,7 +91,7 @@ function install(){
  setTimeout(refresh,900);setTimeout(refresh,2200);
 
 }
-document.addEventListener('finance-cloud-status',()=>setTimeout(()=>{ensurePlan();bind();try{renderAll();renderCharts();renderKpis();renderCanonicalExpenseChart()}catch(_){};audit()},500));
+document.addEventListener('finance-cloud-status',e=>{const t=String(e.detail?.text||'');if(!/Sincronizado|Conectado|Desktop enviado/.test(t))return;setTimeout(()=>{ensurePlan();bind();try{renderCanonicalExpenseChart()}catch(_){};audit()},250)});
 document.addEventListener('finance-data-changed',()=>setTimeout(()=>{bind();try{renderCanonicalExpenseChart()}catch(_){};audit()},80));
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
 })();
