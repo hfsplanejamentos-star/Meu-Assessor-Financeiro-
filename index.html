@@ -1676,7 +1676,7 @@ function renderCharts(){
  const items=Object.entries(cats).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
  drawDonut(document.getElementById('categoryChart'),items);
  document.getElementById('categoryLegend').innerHTML=items.map((it,i)=>`<div class="legend-line clickable" onclick="openCategoryDetail('${String(it.name).replace(/'/g,"\\'")}')"><span><i class="dot" style="background:${colors[i%colors.length]}"></i>${it.name}</span><b>${brl(it.value)}</b></div>`).join('');
- const invRows=(db.investments||[]).map(x=>({label:String(x.month||x.date||'').slice(0,7),planned:(x.status==='planned'?Math.abs(Number(x.planned??x.amount??x.value)||0):Math.abs(Number(x.planned)||0)),realized:(x.status!=='planned'?Math.abs(Number(x.realized??x.amount??x.value)||0):Math.abs(Number(x.realized)||0))}));const labs=invRows.map(x=>x.label);drawBarChart(document.getElementById('investmentChart'),labs,invRows.map(x=>x.planned),invRows.map(x=>x.realized));
+ const ikey=scopeMonth('investment'),[iy,im]=ikey.split('-').map(Number),invRows=[];for(let i=-2;i<=3;i++){const d=new Date(iy,im-1+i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),xs=(db.investments||[]).filter(x=>String(x.month||x.date||'').slice(0,7)===k),planned=xs.reduce((s,x)=>s+Math.abs(Number(x.planned??(x.status==='planned'?(x.amount??x.value):0))||0),0),realized=xs.reduce((s,x)=>s+Math.abs(Number(x.realized??(x.status!=='planned'?(x.amount??x.value):0))||0),0);invRows.push({label:d.toLocaleDateString('pt-BR',{month:'short'}).replace('.',''),planned,realized})}const labs=invRows.map(x=>x.label);drawBarChart(document.getElementById('investmentChart'),labs,invRows.map(x=>x.planned),invRows.map(x=>x.realized));
  ['projectionChart','categoryChart','investmentChart'].forEach(id=>attachTooltip(document.getElementById(id)));bindValueHover();
 }
 
@@ -1755,7 +1755,7 @@ function renderReconciliation(){
  box.querySelectorAll('[data-recon-b]').forEach(btn=>btn.onclick=()=>{const c=cases[+btn.dataset.reconB];openDetail(c.b.desc,[['Data',fmt(c.b.date)],['Valor',brl(c.b.value)],['Categoria',c.b.cat],['Origem',c.b.origin],['Status',c.b.status||'realized']])});
 }
 
-function renderAll(){renderQuickFinancialCards();fillMonthFilters();renderKpis();bindKpiNavigation();renderLists();renderCommitments();renderCalendar();renderInvestment();renderCardDashboard();renderInvoiceManagement();renderAudit();renderAlerts();renderBudgetsGoals();renderAndroidInbox();updateAndroidBridgeStatus();bindDetailClicks();bindValueHover();requestAnimationFrame(()=>{renderCharts();renderCardTrend();bindValueHover()});renderReconciliation()}
+function renderAll(){fillMonthFilters();renderKpis();renderQuickFinancialCards();bindKpiNavigation();renderLists();renderCommitments();renderCalendar();renderInvestment();renderCardDashboard();renderInvoiceManagement();renderAudit();renderAlerts();renderBudgetsGoals();renderAndroidInbox();updateAndroidBridgeStatus();bindDetailClicks();bindValueHover();requestAnimationFrame(()=>{renderCharts();renderCardTrend();bindValueHover()});renderReconciliation()}
 
 function hideTooltip(){const t=document.getElementById('tooltip');if(t)t.style.display='none'}
 window.addEventListener('scroll',hideTooltip,{passive:true});
