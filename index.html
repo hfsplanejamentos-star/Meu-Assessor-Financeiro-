@@ -394,9 +394,10 @@ border-left:1px solid rgba(75,190,255,.28);backdrop-filter:blur(24px);box-shadow
 .caju-detail-panel{border-color:rgba(32,231,166,.20)}.caju-detail-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.caju-detail-kpis .card-kpi{min-height:82px}.caju-detail-panel .statement-table td{vertical-align:middle}@media(max-width:800px){.caju-detail-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:480px){.caju-detail-kpis{grid-template-columns:1fr}}
 
 /* R10.6 — cards rápidos integrados de forma estável à grade principal */
+#kpis{grid-template-columns:repeat(5,minmax(0,1fr))!important}
 #quickFinancialCards.quick-fin-inline{display:contents!important}
 #quickFinancialCards .quick-fin-card{min-height:0;height:auto;margin:0;align-self:stretch}
-@media(max-width:700px){#quickFinancialCards.quick-fin-inline{display:contents!important}}
+@media(max-width:1100px){#kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}}@media(max-width:700px){#kpis{grid-template-columns:1fr!important}#quickFinancialCards.quick-fin-inline{display:contents!important}}
 </style>
 <link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"></head>
 <body>
@@ -1213,8 +1214,8 @@ function renderKpis(){const b=balances(),key=activeMonth,planned=(db.transaction
 function renderQuickFinancialCards(){
  let box=document.getElementById('quickFinancialCards');
  const kpis=document.getElementById('kpis');if(!kpis)return;
- if(!box){box=document.createElement('div');box.id='quickFinancialCards';box.className='quick-fin-inline';kpis.appendChild(box)}
- else if(box.parentElement!==kpis)kpis.appendChild(box);
+ if(!box){box=document.createElement('div');box.id='quickFinancialCards';box.className='quick-fin-inline';}
+ if(box.parentElement!==kpis)kpis.appendChild(box);
  const key=activeMonth;
  const creditCards=(db.cards||[]).filter(c=>['Crédito','Múltiplo'].includes(c.type||'Crédito'));
  const cardSpend=creditCards.reduce((s,c)=>s+invoiceAmount(c.id,key),0);
