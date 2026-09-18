@@ -1205,7 +1205,8 @@ function renderCommitments(){
  document.getElementById('commitments').innerHTML=rows.length?rows.map(r=>`<div class="item"><div class="ico">${r.icon||iconFor(r.cat,r.sub)}</div><div><b>${r.desc}</b><small>${r.next.toLocaleDateString('pt-BR')} · ${r.kind}</small></div><div class="amount">${brl(r.value)}</div></div>`).join(''):`<div class="notice">Nenhum compromisso nos próximos ${days} dias.</div>`;
 }
 function calendarEventsForDay(day){
- return (db.recurring||[]).filter(r=>(r.active??true)&&Number(r.due)===Number(day));
+ const key=scopeMonth('calendar');
+ return (db.recurring||[]).filter(r=>{const st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return (r.active??true)&&Number(r.due)===Number(day)&&(!st||key>=st)&&(!en||key<=en)});
 }
 
 function closeRecoveryWindow(){
@@ -1255,7 +1256,7 @@ function renderCalendar(){
  };
  make('miniCalendar',true);make('fullCalendar',false);
  const key=scopeMonth('calendar');
- document.getElementById('calendarEvents').innerHTML=db.recurring.filter(r=>(r.active??true)).slice().sort((a,b)=>a.due-b.due).map(r=>`<div class="item clickable" data-calendar-recurring="${r.id}"><div class="ico">${r.icon||iconFor(r.cat,r.sub)}</div><div><b>${monthLabelKey(key)} · Dia ${String(r.due).padStart(2,'0')} · ${r.desc}</b><small>${r.cat} › ${r.sub||''} · ${r.kind} · ${r.freq}</small></div><div class="amount">${brl(r.value)}</div></div>`).join('');
+ document.getElementById('calendarEvents').innerHTML=db.recurring.filter(r=>{const st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return (r.active??true)&&(!st||key>=st)&&(!en||key<=en)}).slice().sort((a,b)=>a.due-b.due).map(r=>`<div class="item clickable" data-calendar-recurring="${r.id}"><div class="ico">${r.icon||iconFor(r.cat,r.sub)}</div><div><b>${monthLabelKey(key)} · Dia ${String(r.due).padStart(2,'0')} · ${r.desc}</b><small>${r.cat} › ${r.sub||''} · ${r.kind} · ${r.freq}</small></div><div class="amount">${brl(r.value)}</div></div>`).join('');
  document.querySelectorAll('#calendarEvents [data-calendar-recurring]').forEach(el=>el.onclick=()=>openRecurringEdit(el.dataset.calendarRecurring));
 }
 
@@ -1706,10 +1707,11 @@ function openDetail(title,rows,actions=[]){
  const bg=document.getElementById('recoveryBackdrop');if(bg){bg.classList.add('show');bg.setAttribute('aria-hidden','false')}
 }
 function openCategoryDetail(name){
- const key=scopeMonth('category');
- const tx=db.transactions.filter(t=>t.cat===name && t.value<0 && !t.transfer && monthOfTx(t)===key);
- const total=tx.reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);
- openDetail(`Categoria · ${name}`,[['Mês',monthLabelKey(key)],['Gasto realizado',brl(total)],['Transações realizadas',String(tx.length)],['Subcategorias',[...new Set(tx.map(t=>t.sub))].filter(Boolean).join(', ')||'—']]);
+ const key=scopeMonth('category'),currentKey=monthKey(today);
+ const tx=db.transactions.filter(t=>t.cat===name && t.value<0 && !t.transfer && t.status!=='planned' && monthOfTx(t)===key);
+ const recs=key>currentKey?(db.recurring||[]).filter(r=>{const st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return r.cat===name&&r.active!==false&&(!st||key>=st)&&(!en||key<=en)}):[];
+ const realized=tx.reduce((s,t)=>s+Math.abs(Number(t.value)||0),0),forecast=recs.reduce((s,r)=>s+Math.abs(Number(r.value)||0),0);
+ openDetail(`Categoria · ${name}`,[['Mês',monthLabelKey(key)],[key>currentKey?'Despesa prevista':'Gasto realizado',brl(key>currentKey?forecast:realized)],[key>currentKey?'Compromissos':'Transações realizadas',String(key>currentKey?recs.length:tx.length)],['Subcategorias',[...new Set((key>currentKey?recs:tx).map(t=>t.sub))].filter(Boolean).join(', ')||'—']]);
 }
 
 function bindValueHover(){
@@ -1749,7 +1751,7 @@ fabWrap.querySelectorAll('[data-fab]').forEach(btn=>btn.onclick=()=>{
  const a=btn.dataset.fab;fabWrap.classList.remove('open');fabMain.textContent='＋';
  if(a==='income')openModal('income');
  if(a==='expense')openModal('expense');
- if(a==='investment')openModal('investment');
+ if(a==='investment'){openModal('investment');setTimeout(()=>{if(typeof fDest!=='undefined'&&[...fDest.options].some(o=>o.value==='acc_invest_plan'))fDest.value='acc_invest_plan'},0)}
  if(a==='bank')openBankModal();
  if(a==='cardadd'){fillCardAccounts();cardModal.classList.add('open');}
  if(a==='cardexpense'){openModal('expense');fSub.value='Despesa cartão';fOrigin.value='Manual';setTimeout(()=>{const credit=db.cards.find(c=>(c.type||'Crédito')==='Crédito'||c.type==='Múltiplo');if(credit)fCard.value=credit.id;renderInstallmentPreview()},0);}
@@ -1865,7 +1867,7 @@ document.addEventListener('keydown',e=>{
 });
 
 menuBtn.onclick=()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show')};overlay.onclick=()=>{sidebar.classList.remove('open');overlay.classList.remove('show')};
-[btnNew,btnNew2].forEach(b=>b.onclick=()=>openModal('expense'));quickRecurring.onclick=btnRecurring.onclick=()=>openModal('recurring');btnInvestment.onclick=()=>openModal('investment');closeModal.onclick=cancelModal.onclick=()=>modal.classList.remove('open');commitDays.onchange=renderCommitments;periodProjection.onchange=renderCharts;projectionModeBtn.onclick=()=>{projectionFocusMode=!projectionFocusMode;projectionModeBtn.textContent=projectionFocusMode?'Área destacada':'Comparativo completo';projectionModeBtn.classList.toggle('active',projectionFocusMode);renderCharts()};
+[btnNew,btnNew2].forEach(b=>b.onclick=()=>openModal('expense'));quickRecurring.onclick=btnRecurring.onclick=()=>openModal('recurring');btnInvestment.onclick=()=>{openModal('investment');setTimeout(()=>{if(typeof fDest!=='undefined'&&[...fDest.options].some(o=>o.value==='acc_invest_plan'))fDest.value='acc_invest_plan'},0)};closeModal.onclick=cancelModal.onclick=()=>modal.classList.remove('open');commitDays.onchange=renderCommitments;periodProjection.onchange=renderCharts;projectionModeBtn.onclick=()=>{projectionFocusMode=!projectionFocusMode;projectionModeBtn.textContent=projectionFocusMode?'Área destacada':'Comparativo completo';projectionModeBtn.classList.toggle('active',projectionFocusMode);renderCharts()};
 btnCategory.onclick=()=>{const name=prompt('Nome da categoria:');if(!name)return;const icon=prompt('Ícone (emoji ou símbolo):','◈')||'◈';db.categories.push({name,icon,subs:[]});save();renderAll()};
 
 function inferNotificationData(raw){
