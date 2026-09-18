@@ -738,7 +738,7 @@ border-left:1px solid rgba(75,190,255,.28);backdrop-filter:blur(24px);box-shadow
    <input type="hidden" id="recEditId">
    <div class="form-grid">
     <div class="field"><label>Descrição</label><input id="recEditDesc" required></div>
-    <div class="field"><label>Valor</label><input id="recEditValue" type="number" min="0" step="0.01" required></div>
+    <div class="field"><label>Valor</label><input id="recEditValue" type="number" min="0" step="0.01" inputmode="decimal" required></div>
     <div class="field"><label>Categoria</label><select id="recEditCategory"></select></div>
     <div class="field"><label>Subcategoria</label><input id="recEditSub"></div>
     <div class="field"><label>Periodicidade</label><select id="recEditFreq"><option>Mensal</option><option>Semanal</option><option>Quinzenal</option><option>Trimestral</option><option>Semestral</option><option>Anual</option></select></div>
@@ -1801,7 +1801,7 @@ cardForm.onsubmit=e=>{e.preventDefault();
 
 function openRecurringEdit(id){
  const r=(db.recurring||[]).find(x=>String(x.id)===String(id));if(!r)return;
- recEditId.value=r.id;recEditDesc.value=r.desc||'';recEditValue.value=Number(r.value)||0;
+ recEditId.value=r.id;recEditDesc.value=r.desc||'';recEditValue.value=Math.abs(Number(r.value)||0);
  recEditCategory.innerHTML=db.categories.map(c=>`<option ${c.name===r.cat?'selected':''}>${c.name}</option>`).join('');
  recEditSub.value=r.sub||'';recEditFreq.value=r.freq||'Mensal';recEditDue.value=Number(r.due)||1;
  recEditKind.value=[...recEditKind.options].some(o=>o.value===r.kind)?r.kind:'Outro';
@@ -1812,7 +1812,7 @@ closeRecurringEdit.onclick=cancelRecurringEdit.onclick=()=>recurringEditModal.cl
 recurringEditForm.onsubmit=e=>{
  e.preventDefault();const r=(db.recurring||[]).find(x=>String(x.id)===String(recEditId.value));if(!r)return;
  const before=JSON.parse(JSON.stringify(r));
- r.desc=recEditDesc.value;r.value=Math.abs(Number(recEditValue.value)||0);r.cat=recEditCategory.value;r.sub=recEditSub.value;
+ r.desc=recEditDesc.value;r.value=-Math.abs(Number(recEditValue.value)||0);r.cat=recEditCategory.value;r.sub=recEditSub.value;
  r.freq=recEditFreq.value;r.due=Math.max(1,Math.min(31,Number(recEditDue.value)||1));r.kind=recEditKind.value;r.active=recEditActive.value==='true';
  r.icon=iconFor(r.cat,r.sub);audit('edit','recurring',before,r,{scope:'recorrência'});
  save();recurringEditModal.classList.remove('open');renderAll();renderAudit();
