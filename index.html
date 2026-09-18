@@ -415,7 +415,7 @@ border-left:1px solid rgba(75,190,255,.28);backdrop-filter:blur(24px);box-shadow
   </div>
 
   <section class="module active" id="view-overview">
-    <div class="grid-kpi" id="kpis"></div>
+    <div class="grid-kpi" id="kpis"></div><div class="grid-kpi" id="quickFinancialCards" style="margin-top:12px"></div>
     <div class="dashboard">
       <div class="card panel span2">
         <div class="panel-head"><div><h3>Evolução Patrimonial e Projeção Mensal</h3><small style="color:var(--muted)">Patrimônio destacado + custos + investimentos projetados</small></div>
@@ -1184,6 +1184,17 @@ function renderKpis(){const b=balances(),key=activeMonth,planned=(db.transaction
  const routes=['accounts','accounts','transactions','transactions','transactions','recurring','investments'];
  [...box.children].forEach((el,i)=>{el.classList.add('clickable-card');el.tabIndex=0;el.dataset.cardNav=routes[i];el.style.pointerEvents='auto'});
 }
+function renderQuickFinancialCards(){
+ const box=document.getElementById('quickFinancialCards');if(!box)return;
+ const key=activeMonth;
+ const creditCards=(db.cards||[]).filter(c=>['Crédito','Múltiplo'].includes(c.type||'Crédito'));
+ const cardSpend=creditCards.reduce((s,c)=>s+invoiceAmount(c.id,key),0);
+ const caju=(db.cards||[]).find(c=>['benefício','beneficio','benefit'].includes(String(c.type||'').toLowerCase())&&String(c.name||'').toLowerCase().includes('caju'));
+ const cajuAvail=Number(caju?.availableLimit??caju?.balance??0)||0,cajuLimit=Number(caju?.limit||0)||0;
+ box.innerHTML=`
+  <div class="kpi clickable-card" data-card-nav="cards" tabindex="0"><small>GASTOS COM CARTÃO · ${monthLabelKey(key)}</small><strong>${brl(cardSpend)}</strong><span>Abrir cartões</span></div>
+  <div class="kpi clickable-card" data-card-nav="cards" tabindex="0"><small>CAJU ALIMENTAÇÃO · DISPONÍVEL</small><strong>${brl(cajuAvail)}</strong><span>${cajuLimit?'Limite nominal '+brl(cajuLimit):'Benefício fora do patrimônio'}</span></div>`;
+}
 let txFilter='all';
 function filteredTransactions(){return transactionsForMonth(scopeMonth('transactions')).filter(t=>txFilter==='all'?true:txFilter==='credit'?!!t.card:!t.card)}
 function renderLists(){
@@ -1448,7 +1459,7 @@ function renderCardForecast(){
 function renderInvestment(){
  const b=balances(),key=scopeMonth('investment'),selected=(db.investments||[]).filter(x=>String(x.month||x.date||'').slice(0,7)===key);
  const planned=selected.reduce((s,x)=>s+Math.abs(Number(x.planned??(x.status==='planned'?(x.amount??x.value):0))||0),0),realized=selected.reduce((s,x)=>s+Math.abs(Number(x.realized??(x.status!=='planned'?(x.amount??x.value):0))||0),0);
- const sum=document.getElementById('investmentSummary');if(sum)sum.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px"><div class="notice">Investimentos realizados<br><b style="font-size:18px;color:white">${brl(b.invest)}</b></div><div class="notice">${monthLabelKey(key)}<br><b style="font-size:18px;color:white">Realizado ${brl(realized)} · Planejado ${brl(planned)}</b></div></div>`;
+ const sum=document.getElementById('investmentSummary');if(sum)sum.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px"><div class="notice"><small>Carteira atual</small><br><b style="font-size:18px;color:white">${brl(b.invest)}</b></div><div class="notice"><small>Realizado · ${monthLabelKey(key)}</small><br><b style="font-size:18px;color:#20e7a6">${brl(realized)}</b></div><div class="notice"><small>Planejado · ${monthLabelKey(key)}</small><br><b style="font-size:18px;color:#9a6cff">${brl(planned)}</b></div></div>`;
  const page=document.getElementById('investmentPage');if(page)page.innerHTML=selected.length?selected.map(x=>`<div class="item"><div class="ico">↗</div><div><b>${x.desc||x.name||'Aporte'}</b><small>${monthLabelKey(key)} · ${x.status==='planned'?'Planejado':'Realizado'}</small></div><div class="amount ${x.status==='planned'?'':'up'}">${brl(Math.abs(Number(x.amount??x.value??x.planned??x.realized)||0))}</div></div>`).join(''):`<div class="notice">Nenhum aporte registrado em ${monthLabelKey(key)}.</div>`;
 }
 const colors=['#4a8cff','#ff9f59','#20e7a6','#9a6cff','#ff5876','#7ed6ff','#b9c9d8'];
@@ -1694,7 +1705,7 @@ function renderReconciliation(){
  box.querySelectorAll('[data-recon-b]').forEach(btn=>btn.onclick=()=>{const c=cases[+btn.dataset.reconB];openDetail(c.b.desc,[['Data',fmt(c.b.date)],['Valor',brl(c.b.value)],['Categoria',c.b.cat],['Origem',c.b.origin],['Status',c.b.status||'realized']])});
 }
 
-function renderAll(){fillMonthFilters();renderKpis();bindKpiNavigation();renderLists();renderCommitments();renderCalendar();renderInvestment();renderCardDashboard();renderInvoiceManagement();renderAudit();renderAlerts();renderBudgetsGoals();renderAndroidInbox();updateAndroidBridgeStatus();bindDetailClicks();bindValueHover();requestAnimationFrame(()=>{renderCharts();renderCardTrend();bindValueHover()});renderReconciliation()}
+function renderAll(){renderQuickFinancialCards();fillMonthFilters();renderKpis();bindKpiNavigation();renderLists();renderCommitments();renderCalendar();renderInvestment();renderCardDashboard();renderInvoiceManagement();renderAudit();renderAlerts();renderBudgetsGoals();renderAndroidInbox();updateAndroidBridgeStatus();bindDetailClicks();bindValueHover();requestAnimationFrame(()=>{renderCharts();renderCardTrend();bindValueHover()});renderReconciliation()}
 
 function hideTooltip(){const t=document.getElementById('tooltip');if(t)t.style.display='none'}
 window.addEventListener('scroll',hideTooltip,{passive:true});
