@@ -376,6 +376,20 @@ border-left:1px solid rgba(75,190,255,.28);backdrop-filter:blur(24px);box-shadow
  .detail-popup-actions{position:sticky;bottom:0;background:rgba(7,18,33,.96);padding-bottom:4px}
 }
 
+
+/* R9.9 — cards financeiros rápidos */
+#quickFinancialCards{grid-template-columns:repeat(5,minmax(0,1fr));align-items:stretch;margin-top:12px}
+#quickFinancialCards .quick-fin-card{display:flex;flex-direction:column;justify-content:flex-start;min-height:126px;padding:16px}
+#quickFinancialCards .quick-fin-card .label{font-size:12px;color:#adc1d9;letter-spacing:.01em}
+#quickFinancialCards .quick-fin-card .value{font-size:25px;font-weight:800;line-height:1.15;margin:9px 0 8px;color:#f3f8ff}
+.quick-fin-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--cyan);font-size:12px;white-space:nowrap}
+.quick-fin-bar{height:5px;border-radius:999px;background:rgba(148,163,184,.14);overflow:hidden;margin-top:12px}
+.quick-fin-bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--cyan),#9a6cff)}
+.quick-fin-foot{margin-top:8px;color:var(--muted);font-size:11px;line-height:1.35}
+#quickFinancialCards .caju-card{border-color:rgba(32,231,166,.22)}
+#quickFinancialCards .caju-card .quick-fin-bar i{background:linear-gradient(90deg,#20e7a6,var(--cyan))}
+@media(max-width:1100px){#quickFinancialCards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){#quickFinancialCards{grid-template-columns:1fr}.quick-fin-meta{white-space:normal}}
 </style>
 <link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"></head>
 <body>
@@ -1191,9 +1205,19 @@ function renderQuickFinancialCards(){
  const cardSpend=creditCards.reduce((s,c)=>s+invoiceAmount(c.id,key),0);
  const caju=(db.cards||[]).find(c=>['benefício','beneficio','benefit'].includes(String(c.type||'').toLowerCase())&&String(c.name||'').toLowerCase().includes('caju'));
  const cajuAvail=Number(caju?.availableLimit??caju?.balance??0)||0,cajuLimit=Number(caju?.limit||0)||0;
+ const cajuUsed=Math.max(0,cajuLimit-cajuAvail),cajuPct=cajuLimit?Math.max(0,Math.min(100,cajuAvail/cajuLimit*100)):0;
  box.innerHTML=`
-  <div class="kpi clickable-card" data-card-nav="cards" tabindex="0"><small>GASTOS COM CARTÃO · ${monthLabelKey(key)}</small><strong>${brl(cardSpend)}</strong><span>Abrir cartões</span></div>
-  <div class="kpi clickable-card" data-card-nav="cards" tabindex="0"><small>CAJU ALIMENTAÇÃO · DISPONÍVEL</small><strong>${brl(cajuAvail)}</strong><span>${cajuLimit?'Limite nominal '+brl(cajuLimit):'Benefício fora do patrimônio'}</span></div>`;
+  <div class="card kpi quick-fin-card clickable-card" data-card-nav="cards" tabindex="0">
+    <div class="label">GASTOS COM CARTÃO</div><div class="value">${brl(cardSpend)}</div>
+    <div class="quick-fin-meta"><span>${monthLabelKey(key)}</span><span>Abrir cartões →</span></div>
+    <div class="quick-fin-bar"><i style="width:${cardSpend>0?'100':'0'}%"></i></div>
+  </div>
+  <div class="card kpi quick-fin-card caju-card clickable-card" data-card-nav="cards" tabindex="0">
+    <div class="label">CAJU ALIMENTAÇÃO</div><div class="value">${brl(cajuAvail)}</div>
+    <div class="quick-fin-meta"><span>Disponível</span><span>Limite ${brl(cajuLimit)}</span></div>
+    <div class="quick-fin-bar"><i style="width:${cajuPct}%"></i></div>
+    <div class="quick-fin-foot">Utilizado: ${brl(cajuUsed)} · benefício fora do patrimônio</div>
+  </div>`;
 }
 let txFilter='all';
 function filteredTransactions(){return transactionsForMonth(scopeMonth('transactions')).filter(t=>txFilter==='all'?true:txFilter==='credit'?!!t.card:!t.card)}
