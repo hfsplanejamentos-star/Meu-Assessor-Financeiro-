@@ -28,8 +28,14 @@ function projection(start='2026-10',count=12){
    liq+=income-expense-move;inv+=move;p+=income-expense;costs+=expense;rows.push({...s,date:d,label:d.toLocaleDateString('pt-BR',{month:'short'}).replace('.',''),income,expense,investmentMove:move,liquid:liq,invest,patrimony:p,costs});
  }return rows;
 }
+function normalizeCore(){
+ db.accounts=db.accounts||[];db.transactions=db.transactions||[];db.investments=db.investments||[];db.recurring=db.recurring||[];let changed=false;
+ db.transactions.forEach(t=>{if(/^sal_/.test(String(t.id||''))||/salário/i.test(String(t.desc||t.description||''))){if(t.cat!=='Receitas'){t.cat='Receitas';changed=true}if(t.sub!=='Salário'){t.sub='Salário';changed=true}}if(String(t.id||'')==='decimo_2026'&&t.cat!=='Receitas'){t.cat='Receitas';changed=true}});
+ db.recurring.forEach(r=>{if(n(r.value)>0){r.value=-Math.abs(n(r.value));changed=true}});
+ return changed;
+}
 function ensurePlan(){
- db.accounts=db.accounts||[];db.transactions=db.transactions||[];db.investments=db.investments||[];let changed=false;
+ db.accounts=db.accounts||[];db.transactions=db.transactions||[];db.investments=db.investments||[];let changed=normalizeCore();
  let ia=db.accounts.find(a=>a.id===INV);if(!ia){ia={id:INV,name:'Investimentos planejados',type:'Investimento',balance:0,openingBalance:0,source:PLAN_SOURCE};db.accounts.push(ia);changed=true}else if(ia.type!=='Investimento'){ia.type='Investimento';changed=true}
  for(let i=0;i<9;i++){const d=new Date(2026,10+i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),id='aporte_'+k.replace('-','_');
    const same=(db.transactions||[]).filter(t=>t.source===PLAN_SOURCE&&keyOf(t.date)===k&&t.transfer);if(same.length>1){const keep=same.find(t=>t.id===id)||same[0];db.transactions=db.transactions.filter(t=>t===keep||!(t.source===PLAN_SOURCE&&keyOf(t.date)===k&&t.transfer));changed=true}if(!db.transactions.some(t=>t.source===PLAN_SOURCE&&keyOf(t.date)===k&&t.transfer)){db.transactions.push({id,date:k+'-10',desc:'Aporte mensal de investimento',cat:'Investimentos',sub:'Aporte mensal',value:-3000,status:'planned',source:PLAN_SOURCE,origin:'Planejamento real',account:'acc_c6',accountId:'acc_c6',dest:INV,destAccountId:INV,transfer:true,kind:'transfer',excludeFromExpense:true});changed=true}
@@ -62,7 +68,7 @@ function bind(){
 }
 function install(){
  ensurePlan();
- window.FinanceCanonical={summary,projection,recurringFor,currentBalances,ensurePlan,audit,bind,canonicalRenderKpis};window.renderKpis=canonicalRenderKpis;
+ window.FinanceCanonical={summary,projection,recurringFor,currentBalances,ensurePlan,normalizeCore,audit,bind,canonicalRenderKpis};window.renderKpis=canonicalRenderKpis;
  window.buildProjection=function(count){const start=(typeof scopeMonth==='function'?scopeMonth('projection'):activeMonth)||'2026-10';return projection(start,Number(count)||12)};
  bind();setTimeout(()=>{bind();try{renderAll();renderCharts();renderKpis()}catch(_){};audit()},250);
 }
