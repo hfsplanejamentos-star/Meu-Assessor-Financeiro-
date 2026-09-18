@@ -393,14 +393,10 @@ border-left:1px solid rgba(75,190,255,.28);backdrop-filter:blur(24px);box-shadow
 
 .caju-detail-panel{border-color:rgba(32,231,166,.20)}.caju-detail-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.caju-detail-kpis .card-kpi{min-height:82px}.caju-detail-panel .statement-table td{vertical-align:middle}@media(max-width:800px){.caju-detail-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:480px){.caju-detail-kpis{grid-template-columns:1fr}}
 
-/* R10.2 — cards rápidos na mesma linha de Despesas Previstas e Investimentos */
-@media(min-width:1101px){#quickFinancialCards{grid-template-columns:repeat(5,minmax(0,1fr));margin-top:-189px;pointer-events:none}#quickFinancialCards .quick-fin-card{pointer-events:auto}#quickFinancialCards .quick-fin-card:first-child{grid-column:3}#quickFinancialCards .quick-fin-card:nth-child(2){grid-column:4}}
-
-/* R10.3 — alinhamento estrutural: quick cards fazem parte da mesma grid dos KPIs */
-#kpis{align-items:stretch}
-#kpis>#quickFinancialCards.quick-fin-inline{display:contents!important;margin:0!important}
-#kpis>#quickFinancialCards .quick-fin-card{min-height:0;height:auto;margin:0;align-self:stretch}
-@media(min-width:1101px){#kpis>#quickFinancialCards .quick-fin-card:first-child{grid-column:3;grid-row:2}#kpis>#quickFinancialCards .quick-fin-card:nth-child(2){grid-column:4;grid-row:2}}
+/* R10.6 — cards rápidos integrados de forma estável à grade principal */
+#quickFinancialCards.quick-fin-inline{display:contents!important}
+#quickFinancialCards .quick-fin-card{min-height:0;height:auto;margin:0;align-self:stretch}
+@media(max-width:700px){#quickFinancialCards.quick-fin-inline{display:contents!important}}
 </style>
 <link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"></head>
 <body>
@@ -474,7 +470,7 @@ border-left:1px solid rgba(75,190,255,.28);backdrop-filter:blur(24px);box-shadow
       </div>
       <div class="card panel clickable-card" data-card-nav="investments" tabindex="0">
         <div class="panel-head"><h3>Investimentos</h3><div class="panel-head-actions"><select class="month-filter individual-month-filter" data-month-scope="investment" title="Filtrar investimentos por mês"></select><button data-nav="investments">Detalhes</button></div></div>
-        <div id="investmentSummary"></div><div class="chart-wrap" style="height:150px"><canvas id="investmentChart"></canvas></div>
+        <div id="investmentSummary"></div><div class="chart-wrap investment-chart-wrap" style="height:180px;min-height:180px"><canvas id="investmentChart" style="display:block;width:100%;height:180px"></canvas></div>
       </div>
       <div class="card panel clickable-card" data-card-nav="alerts" tabindex="0">
         <div class="panel-head"><h3>Alertas Financeiros</h3><button data-nav="alerts">Ver todos</button></div>
@@ -1510,6 +1506,7 @@ function renderInvestment(){
  const b=balances(),key=scopeMonth('investment'),selected=(db.investments||[]).filter(x=>String(x.month||x.date||'').slice(0,7)===key);
  const planned=selected.reduce((s,x)=>s+Math.abs(Number(x.planned??(x.status==='planned'?(x.amount??x.value):0))||0),0),realized=selected.reduce((s,x)=>s+Math.abs(Number(x.realized??(x.status!=='planned'?(x.amount??x.value):0))||0),0);
  const sum=document.getElementById('investmentSummary');if(sum)sum.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px"><div class="notice"><small>Carteira atual</small><br><b style="font-size:18px;color:white">${brl(b.invest)}</b></div><div class="notice"><small>Realizado · ${monthLabelKey(key)}</small><br><b style="font-size:18px;color:#20e7a6">${brl(realized)}</b></div><div class="notice"><small>Planejado · ${monthLabelKey(key)}</small><br><b style="font-size:18px;color:#9a6cff">${brl(planned)}</b></div></div>`;
+ const canvas=document.getElementById('investmentChart');if(canvas){const [iy,im]=key.split('-').map(Number),rows=[];for(let i=-2;i<=3;i++){const d=new Date(iy,im-1+i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),xs=(db.investments||[]).filter(x=>String(x.month||x.date||'').slice(0,7)===k);rows.push({label:d.toLocaleDateString('pt-BR',{month:'short'}).replace('.',''),planned:xs.reduce((s,x)=>s+Math.abs(Number(x.planned??(x.status==='planned'?(x.amount??x.value):0))||0),0),realized:xs.reduce((s,x)=>s+Math.abs(Number(x.realized??(x.status!=='planned'?(x.amount??x.value):0))||0),0)})}requestAnimationFrame(()=>{drawBarChart(canvas,rows.map(x=>x.label),rows.map(x=>x.planned),rows.map(x=>x.realized));attachTooltip(canvas)})}
  const page=document.getElementById('investmentPage');if(page)page.innerHTML=selected.length?selected.map(x=>`<div class="item"><div class="ico">↗</div><div><b>${x.desc||x.name||'Aporte'}</b><small>${monthLabelKey(key)} · ${x.status==='planned'?'Planejado':'Realizado'}</small></div><div class="amount ${x.status==='planned'?'':'up'}">${brl(Math.abs(Number(x.amount??x.value??x.planned??x.realized)||0))}</div></div>`).join(''):`<div class="notice">Nenhum aporte registrado em ${monthLabelKey(key)}.</div>`;
 }
 const colors=['#4a8cff','#ff9f59','#20e7a6','#9a6cff','#ff5876','#7ed6ff','#b9c9d8'];
