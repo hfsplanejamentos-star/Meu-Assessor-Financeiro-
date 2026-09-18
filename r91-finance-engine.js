@@ -56,6 +56,20 @@ function audit(){
  const cards=[...document.querySelectorAll('#kpis [data-card-nav]')].map(x=>({route:x.dataset.cardNav,pointer:getComputedStyle(x).pointerEvents}));
  const out={ok:tests.every(x=>x.ok)&&filters.every(x=>x.nov&&x.enabled)&&cards.every(x=>x.pointer!=='none'),tests,filters,cards,at:new Date().toISOString()};window.__ASSESSOR_R91_AUDIT__=out;return out;
 }
+function renderCanonicalExpenseChart(){
+ const key=typeof scopeMonth==='function'?scopeMonth('category'):activeMonth;
+ const current=typeof monthKey==='function'?monthKey(today):new Date().toISOString().slice(0,7),cats={};
+ (db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense&&t.status!=='planned').forEach(t=>cats[t.cat||'Outros']=(cats[t.cat||'Outros']||0)+Math.abs(n(t.value)));
+ if(key>current){
+   recurringFor(key).forEach(r=>cats[r.cat||'Outros']=(cats[r.cat||'Outros']||0)+Math.abs(n(r.value)));
+   (db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&t.status==='planned'&&Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense).forEach(t=>cats[t.cat||'Outros']=(cats[t.cat||'Outros']||0)+Math.abs(n(t.value)));
+ }
+ const items=Object.entries(cats).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
+ const canvas=document.getElementById('categoryChart'),legend=document.getElementById('categoryLegend');
+ if(canvas&&typeof drawDonut==='function')drawDonut(canvas,items);
+ if(legend)legend.innerHTML=items.length?items.map((it,i)=>`<div class="legend-line clickable" data-canonical-category="${String(it.name).replace(/"/g,'&quot;')}"><span><i class="dot" style="background:${(typeof colors!=='undefined'?colors:['#20d8ff','#9a6cff','#2ce6b8','#ffb74d'])[i%(typeof colors!=='undefined'?colors.length:4)]}"></i>${it.name}</span><b>${brl(it.value)}</b></div>`).join(''):`<div class="notice">Sem despesas ${key>current?'previstas':'realizadas'} em ${typeof monthLabelKey==='function'?monthLabelKey(key):key}.</div>`;
+ if(legend)legend.querySelectorAll('[data-canonical-category]').forEach(el=>el.onclick=()=>typeof openCategoryDetail==='function'&&openCategoryDetail(el.dataset.canonicalCategory));
+}
 function canonicalRenderKpis(){
  const b=currentBalances(),k=(typeof activeMonth!=='undefined'?activeMonth:'2026-10'),s=summary(k),box=document.getElementById('kpis');if(!box||typeof kpiCard!=='function'||typeof brl!=='function')return;
  box.innerHTML=[kpiCard('PATRIMÔNIO TOTAL',brl(b.patrimony),'Abrir contas','neutral'),kpiCard('DISPONÍVEL HOJE',brl(b.liquid),'Abrir contas','neutral'),kpiCard('RECEITAS REALIZADAS',brl(s.realizedIncome),k,'neutral'),kpiCard('RECEITAS PREVISTAS',brl(s.plannedIncome),k,'neutral'),kpiCard('DESPESAS REALIZADAS',brl(s.realizedExpense),k,'neutral'),kpiCard('DESPESAS PREVISTAS',brl(s.plannedExpense),k,'neutral'),kpiCard('INVESTIMENTOS',brl(b.invest),'Abrir investimentos','neutral')].join('');
@@ -68,7 +82,7 @@ function bind(){
 }
 function install(){
  ensurePlan();
- window.FinanceCanonical={summary,projection,recurringFor,currentBalances,ensurePlan,normalizeCore,audit,bind,canonicalRenderKpis};window.renderKpis=canonicalRenderKpis;
+ window.FinanceCanonical={summary,projection,recurringFor,currentBalances,ensurePlan,normalizeCore,audit,bind,canonicalRenderKpis,renderCanonicalExpenseChart};window.renderKpis=canonicalRenderKpis;
  window.buildProjection=function(count){const start=(typeof scopeMonth==='function'?scopeMonth('projection'):activeMonth)||'2026-10';return projection(start,Number(count)||12)};
  bind();setTimeout(()=>{bind();try{renderAll();renderCharts();renderKpis()}catch(_){};audit()},250);
 }
