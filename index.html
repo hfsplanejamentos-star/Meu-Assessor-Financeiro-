@@ -392,6 +392,9 @@ border-left:1px solid rgba(75,190,255,.28);backdrop-filter:blur(24px);box-shadow
 @media(max-width:600px){#quickFinancialCards{grid-template-columns:1fr}.quick-fin-meta{white-space:normal}}
 
 .caju-detail-panel{border-color:rgba(32,231,166,.20)}.caju-detail-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.caju-detail-kpis .card-kpi{min-height:82px}.caju-detail-panel .statement-table td{vertical-align:middle}@media(max-width:800px){.caju-detail-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:480px){.caju-detail-kpis{grid-template-columns:1fr}}
+
+/* R10.1 — posiciona os cards rápidos abaixo das duas receitas */
+@media(min-width:1101px){#quickFinancialCards{grid-template-columns:repeat(5,minmax(0,1fr));margin-top:-189px;pointer-events:none}#quickFinancialCards .quick-fin-card{pointer-events:auto}#quickFinancialCards .quick-fin-card:first-child{grid-column:3}#quickFinancialCards .quick-fin-card:nth-child(2){grid-column:4}}
 </style>
 <link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"></head>
 <body>
