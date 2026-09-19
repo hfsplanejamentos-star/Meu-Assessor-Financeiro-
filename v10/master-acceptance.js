@@ -32,7 +32,7 @@
       test(48, 'Validação matemática cruzada', engine.projection(store, '2026-10', 12).every((row) => near(row.patrimony, row.liquid + row.invest)));
     } else [12, 13, 14, 15, 16, 17, 18, 44, 48].forEach((id) => test(id, 'FinanceEngine indisponível', false));
     const monthFilters = window.MonthSyncV10?.filters?.() || [];
-    test(19, 'Filtros mensais sincronizados', monthFilters.length >= 2 && monthFilters.every((filter) => filter.dataset.v10MonthBound === '1'));
+    test(19, 'Filtros mensais sincronizados', monthFilters.length >= 2 && monthFilters.every((filter) => filter.dataset.v10MonthBound === '1' && filter.options.length >= 12 && filter.value === window.activeMonth));
     const cards = [...document.querySelectorAll('#kpis [data-v10-route]')]; test(20, 'Cards clicáveis e por teclado', cards.length >= 4 && cards.every((card) => card.tabIndex === 0));
     test(21, 'Gráficos interativos', [...document.querySelectorAll('#categoryChart,#projectionChart')].every((canvas) => canvas.tabIndex === 0));
     test(22, 'Agenda ligada ao motor', (experience?.agendaEvents?.('2026-10') || []).some((item) => item.type === 'recurring') && Boolean(document.getElementById('calendarEvents')));
