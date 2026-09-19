@@ -517,7 +517,7 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
 
 /* R10.5 mobile shell — topo limpo + navegação flutuante */
 .mobile-bottom-nav{display:none}
-@media(max-width:820px){body{padding-bottom:88px}.topbar{grid-template-columns:auto 1fr auto!important;gap:8px!important;padding:10px 12px!important}.topbar .back-btn,.topbar .search,.topbar #globalMonthFilter,.topbar #mobileRefreshBtn{display:none!important}.topbar .menu-btn{display:inline-flex!important}.topbar:after{content:'Meu Assessor Financeiro IA';font-weight:800;font-size:15px;align-self:center;color:#eef7ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.topbar .top-actions{margin-left:auto}.topbar .top-actions #btnNew{display:none!important}.mobile-month-nav{grid-column:1/-1!important}.mobile-bottom-nav{position:fixed;display:grid;grid-template-columns:repeat(5,1fr);left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));z-index:260;background:rgba(5,15,30,.94);border:1px solid rgba(67,193,255,.24);border-radius:22px;padding:8px 5px;box-shadow:0 18px 45px rgba(0,0,0,.45);backdrop-filter:blur(20px)}.mobile-bottom-nav button{border:0;background:transparent;color:#8fa7bf;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 2px}.mobile-bottom-nav button i{font-style:normal;font-size:20px;line-height:22px}.mobile-bottom-nav button.active{color:#eaf8ff}.mobile-bottom-nav .mobile-add{width:48px;height:48px;border-radius:50%;margin:-22px auto 0;background:linear-gradient(145deg,#19d7ff,#2676ff);color:white;font-size:29px;box-shadow:0 8px 24px rgba(26,176,255,.35);display:grid;place-items:center}.mobile-bottom-nav .mobile-add span{display:none}.main{padding-bottom:90px!important}}
+@media(max-width:820px){body{padding-bottom:88px}.topbar{grid-template-columns:auto 1fr auto!important;gap:8px!important;padding:10px 12px!important}.topbar .back-btn,.topbar .search,.topbar #globalMonthFilter,.topbar #mobileRefreshBtn{display:none!important}.topbar .menu-btn{display:none!important}.topbar:before{content:'Meu Assessor Financeiro IA';font-weight:800;font-size:15px;align-self:center;color:#eef7ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.topbar .top-actions{margin-left:auto}.topbar:before{grid-column:1/-1;grid-row:1;text-align:left}.mobile-month-nav{grid-row:2}.topbar .top-actions #btnNew{display:none!important}.mobile-month-nav{grid-column:1/-1!important}.mobile-bottom-nav{position:fixed;display:grid;grid-template-columns:repeat(5,1fr);left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));z-index:260;background:rgba(5,15,30,.94);border:1px solid rgba(67,193,255,.24);border-radius:22px;padding:8px 5px;box-shadow:0 18px 45px rgba(0,0,0,.45);backdrop-filter:blur(20px)}.mobile-bottom-nav button{border:0;background:transparent;color:#8fa7bf;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 2px}.mobile-bottom-nav button i{font-style:normal;font-size:20px;line-height:22px}.mobile-bottom-nav button.active{color:#eaf8ff}.mobile-bottom-nav .mobile-add{width:48px;height:48px;border-radius:50%;margin:-22px auto 0;background:linear-gradient(145deg,#19d7ff,#2676ff);color:white;font-size:29px;box-shadow:0 8px 24px rgba(26,176,255,.35);display:grid;place-items:center}.mobile-bottom-nav .mobile-add span{display:none}.main{padding-bottom:90px!important}.fab-wrap,#cloudFloat,.cloud-fab,[data-cloud-float]{bottom:96px!important;right:14px!important}}
 </style>
 <link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-2026.09.19.1530';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
 </head>
@@ -1319,8 +1319,8 @@ function renderBudgetsGoals(){
 function accountBrandCard(kind,key){
  const rules={c6account:{rx:/c6/i,label:'C6 BANK',cls:'acct-c6',fallback:'C6 Bank'},itauaccount:{rx:/ita[uú]/i,label:'Itaú',cls:'acct-itau',fallback:'Itaú'},xpaccount:{rx:/\bxp\b/i,label:'XP',cls:'acct-xp',fallback:'XP'}},r=rules[kind];if(!r)return '';
  const a=(db.accounts||[]).find(x=>r.rx.test(String(x.name||x.institution||'')));
- const aid=a?.id,tx=(db.transactions||[]).filter(t=>aid&&(t.account===aid||t.accountId===aid)&&String(t.date||'').slice(0,7)===key&&!t.benefit),inc=tx.filter(t=>Number(t.value)>0).reduce((s,t)=>s+Number(t.value||0),0),exp=tx.filter(t=>Number(t.value)<0).reduce((s,t)=>s+Math.abs(Number(t.value||0)),0),bal=Number(a?.balance||0);
- return `<div class="brand-fin-card account-brand ${r.cls} clickable-card" data-card-nav="accounts" data-kpi-id="${kind}" tabindex="0"><div class="brand-top"><span class="brand-type">● CONTA</span><b class="brand-logo">${r.label}</b></div><div class="brand-name">${a?.name||r.fallback}</div><div class="brand-stats"><div><small>Saldo</small><strong>${brl(bal)}</strong></div><div><small>${monthLabelKey(key)}</small><strong>Conta</strong></div></div><div class="brand-foot">Entradas ${brl(inc)} · Saídas ${brl(exp)} · Abrir conta →</div></div>`;
+ const aid=a?.id,tx=(db.transactions||[]).filter(t=>aid&&(t.account===aid||t.accountId===aid)&&String(t.date||'').slice(0,7)===key&&!t.benefit),realTx=tx.filter(t=>t.status!=='planned'),planTx=tx.filter(t=>t.status==='planned'),inc=realTx.filter(t=>Number(t.value)>0).reduce((s,t)=>s+Number(t.value||0),0),exp=realTx.filter(t=>Number(t.value)<0).reduce((s,t)=>s+Math.abs(Number(t.value||0)),0),pinc=planTx.filter(t=>Number(t.value)>0).reduce((s,t)=>s+Number(t.value||0),0),bal=Number(a?.balance||0);
+ return `<div class="brand-fin-card account-brand ${r.cls} clickable-card" data-card-nav="accounts" data-kpi-id="${kind}" tabindex="0"><div class="brand-top"><span class="brand-type">● CONTA</span><b class="brand-logo">${r.label}</b></div><div class="brand-name">${a?.name||r.fallback}</div><div class="brand-stats"><div><small>Saldo</small><strong>${brl(bal)}</strong></div><div><small>${monthLabelKey(key)}</small><strong>Conta</strong></div></div><div class="brand-foot">Realizado: +${brl(inc)} · -${brl(exp)}${pinc?` · Previsto +${brl(pinc)}`:''} · Abrir →</div></div>`;
 }
 function financeBrandCard(kind,key){
  const isCaju=kind==='caju',card=isCaju?(db.cards||[]).find(x=>String(x.id)==='card_caju_alimentacao'||/caju/i.test(String(x.name||''))):(db.cards||[]).find(x=>['Crédito','Múltiplo'].includes(x.type||'Crédito'));
@@ -1616,17 +1616,17 @@ function ensureMonthlyIncomeAutomation(){
    const salaryId='auto_salary_'+key,cajuId='auto_caju_'+key;
    if(!db.transactions.some(t=>String(t.id)===salaryId)){
      let planned=db.transactions.find(t=>String(t.date||'').slice(0,7)===key&&t.status==='planned'&&Number(t.value)>0&&/sal[aá]rio/i.test(String(t.desc||'')));
-     if(planned){planned.status='realized';planned.date=date;planned.origin='Automação mensal';planned.id=salaryId}
-     else db.transactions.push({id:salaryId,date,desc:'Salário',value:6500,cat:'Receita',sub:'Salário',origin:'Automação mensal',status:'realized'});
+     if(planned){planned.date=date;planned.origin='Automação mensal prevista'}
+     else db.transactions.push({id:salaryId,date,desc:'Salário previsto',value:6500,cat:'Receitas',sub:'Salário',origin:'Automação mensal prevista',status:'planned'});
    }
-   if(!db.transactions.some(t=>String(t.id)===cajuId))db.transactions.push({id:cajuId,date,desc:'Crédito Caju Alimentação',value:1500,cat:'Alimentação',sub:'Crédito benefício',card:caju.id,cardId:caju.id,origin:'Automação mensal',status:'realized',benefit:true,excludeFromExpense:true});
+   if(!db.transactions.some(t=>String(t.id)===cajuId))db.transactions.push({id:cajuId,date,desc:'Crédito Caju Alimentação previsto',value:1500,cat:'Alimentação',sub:'Crédito benefício',card:caju.id,cardId:caju.id,origin:'Automação mensal prevista',status:'planned',benefit:true,excludeFromExpense:true});
  }}
  const movements=db.transactions.filter(t=>t.cardId===caju.id||t.card===caju.id).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
  caju.balance=movements.reduce((s,t)=>s+Number(t.value||0),0);caju.availableLimit=caju.balance;
  db.automationState.monthlyIncome={enabled:true,start:'2026-10-01',salary:6500,caju:1500,day:1};
  save();
 }
-function cajuBalanceAt(cardId,key){return (db.transactions||[]).filter(t=>(t.cardId===cardId||t.card===cardId)&&String(t.date||'').slice(0,7)<=key).reduce((s,t)=>s+Number(t.value||0),0)}
+function cajuBalanceAt(cardId,key){return (db.transactions||[]).filter(t=>(t.cardId===cardId||t.card===cardId)&&String(t.date||'').slice(0,7)<=key&&t.status!=='planned').reduce((s,t)=>s+Number(t.value||0),0)}
 function renderCajuDetails(){
  const card=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||String(c.name||'').toLowerCase().includes('caju'));if(!card)return;
  const key=scopeMonth('caju')||activeMonth,all=(db.transactions||[]).filter(t=>t.cardId===card.id&&String(t.date||'').slice(0,7)===key&&Number(t.value)<0).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.time||'').localeCompare(String(a.time||'')));
@@ -2488,7 +2488,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r105',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r106',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
