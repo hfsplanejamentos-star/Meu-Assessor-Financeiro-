@@ -1,6 +1,6 @@
 # V10 — Checklist mestre dos 50 itens
 
-Status desta revisão: **não homologar 50/50 ainda**. O checklist abaixo distingue implementação real de pendência.
+Status desta revisão: **legado concorrente removido do carregamento; 50/50 ainda bloqueado pelos itens pendentes abaixo**. O checklist abaixo distingue implementação real de pendência.
 
 1. [ ] Eliminar patches empilhados
 2. [x] Modularizar Store/motor
@@ -40,7 +40,7 @@ Status desta revisão: **não homologar 50/50 ainda**. O checklist abaixo distin
 36. [ ] confirmação de operações sensíveis pela IA
 37. [ ] Cloud Sync V10 consolidado
 38. [ ] conflitos/revisões Desktop-Mobile
-39. [ ] Service Worker/cache V10 consolidado
+39. [x] Service Worker/cache V10 consolidado
 40. [ ] diagnóstico completo de dependências
 41. [ ] build de produção consolidado
 42. [ ] build portátil opcional
@@ -51,7 +51,7 @@ Status desta revisão: **não homologar 50/50 ainda**. O checklist abaixo distin
 47. [ ] testes físicos Desktop/Mobile
 48. [x] validação matemática base
 49. [x] diagnóstico HealthV10 + resultados globais
-50. [ ] remover de produção os r67/r68/r69/r70/r75/r80/r91 concorrentes
+50. [x] remover de produção os r67/r68/r69/r70/r75/r80/r91 concorrentes
 
 ## Regra de homologação
 Um item só é 100% homologado quando o código está implementado e o teste aplicável passa. Os itens 46/47 exigem execução real em navegador; inspeção estática não substitui clique E2E.
