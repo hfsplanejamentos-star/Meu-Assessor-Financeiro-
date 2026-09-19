@@ -1491,10 +1491,42 @@ function renderInvoiceManagement(){
  const months=new Set();cardTransactions(cardId).forEach(t=>months.add(t.invoiceMonth||cardInvoiceMonthForDate(cardId,t.date)));(db.invoices||[]).filter(i=>i.cardId===cardId).forEach(i=>months.add(i.month));
  const arr=[...months].sort().reverse();invoiceHistory.innerHTML=arr.length?arr.map(mon=>{const r=ensureInvoice(cardId,mon),amt=invoiceAmount(cardId,mon);return `<div class="invoice-row"><div class="invoice-row-top"><b>Fatura ${mon.split('-').reverse().join('/')}</b><span class="invoice-badge ${invoiceStatusClass(r.status)}">${invoiceStatusLabel(r.status)}</span></div><div class="invoice-row-grid"><div><small>Valor</small><b>${brl(amt)}</b></div><div><small>Vencimento</small><b>${fmt(r.dueDate)}</b></div><div><small>Fechada em</small><b>${r.closedAt?fmt(r.closedAt.slice(0,10)):'—'}</b></div><div><small>Paga em</small><b>${r.paidAt?fmt(r.paidAt.slice(0,10)):'—'}</b></div></div></div>`}).join(''):'<div class="notice">Nenhuma fatura registrada.</div>'
 }
+/* Caju acumulativo + efetivação mensal automática a partir de 01/10/2026 */
+function ensureMonthlyIncomeAutomation(){
+ db.automationState=db.automationState||{};db.transactions=db.transactions||[];db.cards=db.cards||[];
+ let caju=db.cards.find(c=>String(c.id)==='card_caju_alimentacao'||String(c.name||'').toLowerCase().includes('caju'));
+ if(!caju){caju={id:'card_caju_alimentacao',name:'Caju Alimentação',type:'Benefício',limit:1500,balance:0};db.cards.push(caju)}
+ caju.type='Benefício';caju.limit=1500;caju.accumulative=true;
+ const hist=[
+  ['caju_2026_09_17_credit','2026-09-17','Caju Benefícios',1006.89,'Crédito benefício'],
+  ['caju_2026_09_17_padaria_1','2026-09-17','PADARIA E CONFEITARIA',-1.00,'Alimentação'],
+  ['caju_2026_09_17_padaria_14','2026-09-17','PADARIA E CONFEITARIA',-14.00,'Alimentação'],
+  ['caju_2026_09_17_marilza_2999','2026-09-17','IFD*60.939.734 MARI...',-29.99,'Alimentação'],
+  ['caju_2026_09_18_padaria_3090','2026-09-18','PADARIA E CONFEITARIA',-30.90,'Alimentação'],
+  ['caju_2026_09_18_kaique_4905','2026-09-18','IFD*64802138 KAIQUE...',-49.05,'Alimentação'],
+  ['caju_2026_09_19_restaurante_7800','2026-09-19','Restaurante MACAE BR',-78.00,'Alimentação']
+ ];
+ hist.forEach(([id,date,desc,value,sub])=>{if(!db.transactions.some(t=>String(t.id)===id))db.transactions.push({id,date,desc,value,cat:'Alimentação',sub,card:caju.id,cardId:caju.id,origin:'Extrato Caju',status:'realized',benefit:true,excludeFromExpense:true})});
+ const now=new Date(),start=new Date(2026,9,1);
+ if(now>=start){for(let d=new Date(start);d<=now;d=new Date(d.getFullYear(),d.getMonth()+1,1)){const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),date=key+'-01';
+   const salaryId='auto_salary_'+key,cajuId='auto_caju_'+key;
+   if(!db.transactions.some(t=>String(t.id)===salaryId)){
+     let planned=db.transactions.find(t=>String(t.date||'').slice(0,7)===key&&t.status==='planned'&&Number(t.value)>0&&/sal[aá]rio/i.test(String(t.desc||'')));
+     if(planned){planned.status='realized';planned.date=date;planned.origin='Automação mensal';planned.id=salaryId}
+     else db.transactions.push({id:salaryId,date,desc:'Salário',value:6500,cat:'Receita',sub:'Salário',origin:'Automação mensal',status:'realized'});
+   }
+   if(!db.transactions.some(t=>String(t.id)===cajuId))db.transactions.push({id:cajuId,date,desc:'Crédito Caju Alimentação',value:1500,cat:'Alimentação',sub:'Crédito benefício',card:caju.id,cardId:caju.id,origin:'Automação mensal',status:'realized',benefit:true,excludeFromExpense:true});
+ }}
+ const movements=db.transactions.filter(t=>t.cardId===caju.id||t.card===caju.id).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+ caju.balance=movements.reduce((s,t)=>s+Number(t.value||0),0);caju.availableLimit=caju.balance;
+ db.automationState.monthlyIncome={enabled:true,start:'2026-10-01',salary:6500,caju:1500,day:1};
+ save();
+}
+function cajuBalanceAt(cardId,key){return (db.transactions||[]).filter(t=>(t.cardId===cardId||t.card===cardId)&&String(t.date||'').slice(0,7)<=key).reduce((s,t)=>s+Number(t.value||0),0)}
 function renderCajuDetails(){
  const card=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||String(c.name||'').toLowerCase().includes('caju'));if(!card)return;
  const key=scopeMonth('caju')||activeMonth,all=(db.transactions||[]).filter(t=>t.cardId===card.id&&String(t.date||'').slice(0,7)===key&&Number(t.value)<0).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.time||'').localeCompare(String(a.time||'')));
- const spent=all.reduce((s,t)=>s+Math.abs(Number(t.value)||0),0),avail=Number(card.availableLimit??card.balance??0)||0,limit=Number(card.limit||0)||0,pct=limit?avail/limit*100:0;
+ const spent=all.reduce((s,t)=>s+(Number(t.value)<0?Math.abs(Number(t.value)||0):0),0),avail=cajuBalanceAt(card.id,key),limit=1500,pct=limit?avail/limit*100:0;
  const k=document.getElementById('cajuDetailKpis');if(k)k.innerHTML=`<div class="card-kpi"><small>Saldo disponível</small><b class="up">${brl(avail)}</b></div><div class="card-kpi"><small>Gasto em ${monthLabelKey(key)}</small><b class="down">${brl(spent)}</b></div><div class="card-kpi"><small>Limite nominal</small><b>${brl(limit)}</b></div><div class="card-kpi"><small>Saldo disponível</small><b>${pct.toFixed(1)}%</b></div>`;
  const tb=document.getElementById('cajuDetailTable');if(tb)tb.innerHTML=all.length?all.map(t=>`<tr><td>${fmt(t.date)} ${t.time||''}</td><td>${t.desc||t.description||''}</td><td>${t.cat||'Alimentação'} › ${t.sub||''}</td><td class="down">-${brl(Math.abs(Number(t.value)||0))}</td><td>${t.id==='caju_2026_09_17_marilza_2999'?brl(961.90):t.id==='caju_2026_09_17_padaria_14'?brl(991.89):t.id==='caju_2026_09_17_padaria_1'?brl(1005.89):'—'}</td></tr>`).join(''):`<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:22px">Nenhuma movimentação Caju em ${monthLabelKey(key)}.</td></tr>`;
 }
@@ -1826,7 +1858,7 @@ function tagHomeBlocks(){const dash=document.querySelector('#view-overview .dash
 function applyHomeLayout(){tagHomeBlocks();const dash=document.querySelector('#view-overview .dashboard');if(!dash)return;homeLayout.forEach(x=>{const el=dash.querySelector('[data-home-block="'+x.id+'"]');if(el){dash.appendChild(el);el.classList.toggle('dashboard-hidden',x.visible===false)}})}
 function renderCustomize(){renderCustomizeKpis();const box=document.getElementById('customizeList');if(!box)return;const names=Object.fromEntries(HOME_BLOCKS);box.innerHTML=homeLayout.map((x,i)=>'<div class="customize-row"><div class="customize-move"><button data-home-up="'+i+'">↑</button><button data-home-down="'+i+'">↓</button></div><b>'+names[x.id]+'</b><label><input type="checkbox" data-home-visible="'+i+'" '+(x.visible!==false?'checked':'')+'> Exibir</label></div>').join('');box.querySelectorAll('[data-home-up]').forEach(b=>b.onclick=()=>{const i=+b.dataset.homeUp;if(i>0){[homeLayout[i-1],homeLayout[i]]=[homeLayout[i],homeLayout[i-1]];renderCustomize()}});box.querySelectorAll('[data-home-down]').forEach(b=>b.onclick=()=>{const i=+b.dataset.homeDown;if(i<homeLayout.length-1){[homeLayout[i+1],homeLayout[i]]=[homeLayout[i],homeLayout[i+1]];renderCustomize()}});box.querySelectorAll('[data-home-visible]').forEach(b=>b.onchange=()=>homeLayout[+b.dataset.homeVisible].visible=b.checked)}
 document.getElementById('saveHomeLayout')?.addEventListener('click',()=>{localStorage.setItem('assessor_home_layout',JSON.stringify(homeLayout));localStorage.setItem('assessor_kpi_layout',JSON.stringify(kpiLayout));renderKpis();applyHomeLayout();nav('overview')});document.getElementById('resetHomeLayout')?.addEventListener('click',()=>{homeLayout=HOME_BLOCKS.map(x=>({id:x[0],visible:true}));kpiLayout=KPI_ITEMS.map(x=>({id:x[0],visible:true}));renderCustomize()});
-function renderAll(){fillMonthFilters();renderKpis();renderQuickFinancialCards();applyHomeLayout();bindKpiNavigation();renderLists();renderCommitments();renderCalendar();renderInvestment();renderCardDashboard();renderInvoiceManagement();renderAudit();renderAlerts();renderBudgetsGoals();renderAndroidInbox();updateAndroidBridgeStatus();bindDetailClicks();bindValueHover();requestAnimationFrame(()=>{renderCharts();renderCardTrend();bindValueHover()});renderReconciliation()}
+function renderAll(){ensureMonthlyIncomeAutomation();fillMonthFilters();renderKpis();renderQuickFinancialCards();applyHomeLayout();bindKpiNavigation();renderLists();renderCommitments();renderCalendar();renderInvestment();renderCardDashboard();renderInvoiceManagement();renderAudit();renderAlerts();renderBudgetsGoals();renderAndroidInbox();updateAndroidBridgeStatus();bindDetailClicks();bindValueHover();requestAnimationFrame(()=>{renderCharts();renderCardTrend();bindValueHover()});renderReconciliation()}
 
 function hideTooltip(){const t=document.getElementById('tooltip');if(t)t.style.display='none'}
 window.addEventListener('scroll',hideTooltip,{passive:true});
