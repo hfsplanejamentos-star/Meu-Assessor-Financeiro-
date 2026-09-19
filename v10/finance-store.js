@@ -27,8 +27,8 @@ function seedKnownReal(){
  {id:'caju_20260918_bakery_3090',date:'2026-09-18',time:'10:26',desc:'Bakery and Confectionery Real',cat:'Alimentação',sub:'Padaria',value:-30.90,status:'posted',source:'Caju',origin:'Caju Crédito',cardId:'card_caju_alimentacao',excludeFromPatrimony:true},
  {id:'caju_20260918_4905',date:'2026-09-18',time:'12:42',desc:'Compra Caju',cat:'Alimentação',value:-49.05,status:'posted',source:'Caju',origin:'Caju Crédito',cardId:'card_caju_alimentacao',excludeFromPatrimony:true}
  ];tx.forEach(t=>{const i=s.transactions.findIndex(x=>x.id===t.id);if(i<0)s.transactions.push(t);else s.transactions[i]={...s.transactions[i],...t}});
- let cj=s.cards.find(c=>c.id==='card_caju_alimentacao');if(cj){cj.limit=1500;cj.balance=881.95;cj.availableLimit=881.95;cj.excludeFromPatrimony=true}
- s.meta={...(s.meta||{}),cajuKnownBalance:881.95,cajuKnownBalanceAt:'2026-09-18T12:42:00-03:00'};
+ let cj=s.cards.find(c=>c.id==='card_caju_alimentacao');if(cj){cj.limit=1500;cj.balance=881.95;cj.availableLimit=881.95;cj.excludeFromPatrimony=true}\n let c6=s.accounts.find(a=>a.id==='acc_c6');if(c6&&(!c6.balanceDate||c6.balanceDate<'2026-09-18')){c6.balance=1103.67;c6.balanceDate='2026-09-18';c6.source='statement + user-confirmed rescisao'}
+ s.meta={...(s.meta||{}),cajuKnownBalance:881.95,cajuKnownBalanceAt:'2026-09-18T12:42:00-03:00',c6KnownBalance:1103.67,c6KnownBalanceAt:'2026-09-18'};
  },'known-real-data')
 }
 seedKnownReal();window.db=state;
