@@ -79,7 +79,8 @@ function canonicalRenderKpis(){
   ['income_planned','RECEITAS PREVISTAS',s.plannedIncome,k,'transactions'],
   ['expense','DESPESAS REALIZADAS',s.realizedExpense,k,'transactions'],
   ['expense_planned','DESPESAS PREVISTAS',s.plannedExpense,k,'recurring'],
-  ['cards','CARTÕES',typeof invoiceAmount==='function'?(db.cards||[]).filter(c=>['Crédito','Múltiplo'].includes(c.type||'Crédito')).reduce((z,c)=>z+invoiceAmount(c.id,k),0):0,(()=>{const cc=(db.cards||[]).find(c=>/caju/i.test(String(c.name||c.id||'')));if(!cc)return 'Fatura do mês';const bal=(db.transactions||[]).filter(t=>(t.cardId===cc.id||t.card===cc.id||/caju/i.test(String(t.origin||t.source||'')))&&keyOf(t.date)<=k).reduce((z,t)=>z+n(t.value),0);return 'Caju disponível '+brl(bal)})(),'cards'],
+  ['creditcard','CARTÃO DE CRÉDITO',typeof invoiceAmount==='function'?(db.cards||[]).filter(c=>['Crédito','Múltiplo'].includes(c.type||'Crédito')).reduce((z,c)=>z+invoiceAmount(c.id,k),0):0,'Fatura do mês · ver limite e lançamentos','cards'],
+  ['caju','CAJU ALIMENTAÇÃO',(()=>{const cc=(db.cards||[]).find(c=>/caju/i.test(String(c.name||c.id||'')));if(!cc)return 0;return (db.transactions||[]).filter(t=>(t.cardId===cc.id||t.card===cc.id||/caju/i.test(String(t.origin||t.source||'')))&&keyOf(t.date)<=k).reduce((z,t)=>z+n(t.value),0)})(),(()=>{const cc=(db.cards||[]).find(c=>/caju/i.test(String(c.name||c.id||'')));const spent=(db.transactions||[]).filter(t=>cc&&(t.cardId===cc.id||t.card===cc.id)&&keyOf(t.date)===k&&n(t.value)<0).reduce((z,t)=>z+Math.abs(n(t.value)),0);return 'Gasto '+brl(spent)+' · saldo disponível'})(),'cards'],
   ['investments','INVESTIMENTOS',b.invest,'Abrir investimentos','investments']
  ];
  let pref;try{pref=JSON.parse(localStorage.getItem('assessor_kpi_layout')||'[]')}catch(_){pref=[]}
