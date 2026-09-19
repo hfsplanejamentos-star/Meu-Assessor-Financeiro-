@@ -427,6 +427,27 @@ border-left:1px solid rgba(75,190,255,.28);backdrop-filter:blur(24px);box-shadow
 .summary-edit-card{cursor:pointer;transition:.18s;position:relative}.summary-edit-card:hover{border-color:rgba(32,216,255,.5);transform:translateY(-1px)}
 .summary-edit-card:after{content:'Toque para gerenciar';display:block;margin-top:5px;font-size:9px;color:var(--muted)}
 @media(max-width:520px){.investment-chart-wrap{height:210px!important;min-height:210px!important}}
+
+/* Mobile dashboard refinado conforme mockup aprovado */
+@media(max-width:520px){
+ #view-overview .dashboard{gap:10px}
+ #view-overview .panel{padding:12px;border-radius:17px}
+ #view-overview .panel-head{gap:8px;margin-bottom:8px}
+ #view-overview .panel-head h3{font-size:18px}
+ #view-overview .span2 .panel-head small{display:none}
+ .projection-toolbar{display:grid;grid-template-columns:1fr 1fr;width:100%;gap:8px}
+ #projectionModeBtn{grid-column:1 / -1}
+ .projection-highlights{grid-template-columns:1fr 1fr!important;gap:8px!important}
+ .projection-highlight{min-height:76px;padding:10px!important}
+ .projection-highlight small{font-size:11px}.projection-highlight b{font-size:17px!important}
+ #view-overview .span2 .chart-wrap.tall{height:260px;min-height:260px}
+ .projection-explain{grid-template-columns:1fr 1fr!important;gap:8px!important}
+ .projection-explain>div{padding:10px!important}.projection-explain>div:last-child{grid-column:1 / -1}
+ #categoryLegend{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}
+ #categoryLegend .legend-line{min-width:0;font-size:12px}
+ #categoryLegend .legend-line span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ #categoryLegend .legend-line b{white-space:nowrap}
+}
 </style>
 <link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"></head>
 <body>
@@ -475,7 +496,7 @@ border-left:1px solid rgba(75,190,255,.28);backdrop-filter:blur(24px);box-shadow
     <div class="dashboard">
       <div class="card panel span2">
         <div class="panel-head"><div><h3>Evolução Patrimonial e Projeção Mensal</h3><small style="color:var(--muted)">Patrimônio destacado + custos + investimentos projetados</small></div>
-          <div class="projection-toolbar"><button type="button" id="projectionModeBtn" class="active">Área destacada</button>
+          <div class="projection-toolbar"><button type="button" id="projectionModeBtn" class="active">Linha acumulada</button>
           <select class="month-filter individual-month-filter" data-month-scope="projection" title="Mês de referência"></select><select id="periodProjection"><option value="3">3 meses</option><option value="6">6 meses</option><option value="12" selected>12 meses</option></select></div></div>
         <div class="projection-highlights" id="projectionHighlights"></div>
         <div class="chart-wrap tall"><canvas id="projectionChart"></canvas></div><div class="chart-note">Projeção calculada a partir dos saldos atuais, lançamentos previstos, recorrências e aportes planejados. Clique diretamente sobre um ponto para ver os valores.</div><div class="projection-explain" id="projectionExplain"></div>
@@ -1691,18 +1712,17 @@ let projectionFocusMode=true;
 function renderCharts(){
  const n=+document.getElementById('periodProjection').value;
  const proj=buildProjection(n),labels=proj.map(x=>x.label);
+ const incomeAccum=[];let ia=0;proj.forEach(x=>incomeAccum.push(ia+=Number(x.income)||0));
  const projectionSeries=projectionFocusMode?
- [{name:'Patrimônio projetado',data:proj.map(x=>x.patrimony),color:'#20d8ff'}]:
- [{name:'Patrimônio projetado',data:proj.map(x=>x.patrimony),color:'#20d8ff'},
-  {name:'Custos acumulados',data:proj.map(x=>x.costs),color:'#ff5876'},
-  {name:'Investimentos projetados',data:proj.map(x=>x.invest),color:'#9a6cff'}];
+ [{name:'Patrimônio',data:proj.map(x=>x.patrimony),color:'#20d8ff'},{name:'Receitas acumuladas',data:incomeAccum,color:'#20e7a6'},{name:'Despesas acumuladas',data:proj.map(x=>x.costs),color:'#ff5876'}]:
+ [{name:'Patrimônio',data:proj.map(x=>x.patrimony),color:'#20d8ff'},{name:'Despesas acumuladas',data:proj.map(x=>x.costs),color:'#ff5876'},{name:'Investimentos projetados',data:proj.map(x=>x.invest),color:'#9a6cff'}];
  drawLineChart(document.getElementById('projectionChart'),projectionSeries,labels);
  const first=proj[0]||{},last=proj[proj.length-1]||{};
  document.getElementById('projectionHighlights').innerHTML=`<div class="projection-highlight"><small>Patrimônio atual</small><b>${brl(balances().patrimony)}</b></div><div class="projection-highlight"><small>Patrimônio projetado</small><b>${brl(last.patrimony||0)}</b></div><div class="projection-highlight"><small>Custos no período</small><b>${brl(last.costs||0)}</b></div><div class="projection-highlight"><small>Investimentos projetados</small><b>${brl(last.invest||0)}</b></div>`;
  document.getElementById('projectionExplain').innerHTML=`
-   <div><small>Patrimônio projetado ao final</small><b>${brl(last.patrimony||0)}</b></div>
-   <div><small>Custos previstos no período</small><b>${brl(last.costs||0)}</b></div>
-   <div><small>Aportes planejados</small><b>${brl(proj.reduce((s,x)=>s+x.investmentMove,0))}</b></div>`;
+   <div><small>Total de receitas no período</small><b>${brl(incomeAccum[incomeAccum.length-1]||0)}</b></div>
+   <div><small>Total de despesas no período</small><b>${brl(last.costs||0)}</b></div>
+   <div><small>Saldo / patrimônio projetado</small><b>${brl(last.patrimony||0)}</b></div>`;
  const cats={},catMonth=scopeMonth('category'),currentKey=monthKey(today);
  // Realized expenses for past/current months; planned recurring commitments for future months.
  db.transactions.filter(t=>t.value<0&&!t.transfer&&!t.excludeFromExpense&&t.status!=='planned'&&monthOfTx(t)===catMonth).forEach(t=>cats[t.cat]=(cats[t.cat]||0)+Math.abs(Number(t.value)||0));
@@ -1714,7 +1734,7 @@ function renderCharts(){
  const items=Object.entries(cats).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
  drawDonut(document.getElementById('categoryChart'),items);
  document.getElementById('categoryLegend').innerHTML=items.map((it,i)=>`<div class="legend-line clickable" onclick="openCategoryDetail('${String(it.name).replace(/'/g,"\\'")}')"><span><i class="dot" style="background:${colors[i%colors.length]}"></i>${it.name}</span><b>${brl(it.value)}</b></div>`).join('');
- const ikey=scopeMonth('investment'),[iy,im]=ikey.split('-').map(Number),invRows=[];for(let i=-2;i<=3;i++){const d=new Date(iy,im-1+i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),xs=(db.investments||[]).filter(x=>String(x.month||x.date||'').slice(0,7)===k),planned=xs.reduce((s,x)=>s+Math.abs(Number(x.planned??(x.status==='planned'?(x.amount??x.value):0))||0),0),realized=xs.reduce((s,x)=>s+Math.abs(Number(x.realized??(x.status!=='planned'?(x.amount??x.value):0))||0),0);invRows.push({label:d.toLocaleDateString('pt-BR',{month:'short'}).replace('.',''),planned,realized})}const labs=invRows.map(x=>x.label);drawBarChart(document.getElementById('investmentChart'),labs,invRows.map(x=>x.planned),invRows.map(x=>x.realized));
+ const ikey=scopeMonth('investment'),[iy,im]=ikey.split('-').map(Number),invRows=[];for(let i=-2;i<=3;i++){const d=new Date(iy,im-1+i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),xs=(db.investments||[]).filter(x=>String(x.month||x.date||'').slice(0,7)===k),planned=xs.reduce((s,x)=>s+Math.abs(Number(x.planned??(x.status==='planned'?(x.amount??x.value):0))||0),0),realized=xs.reduce((s,x)=>s+Math.abs(Number(x.realized??(x.status!=='planned'?(x.amount??x.value):0))||0),0);invRows.push({label:d.toLocaleDateString('pt-BR',{month:'short'}).replace('.',''),planned,realized})}const labs=invRows.map(x=>x.label);let ip=0,ir=0;drawLineChart(document.getElementById('investmentChart'),[{name:'Realizado acumulado',data:invRows.map(x=>ir+=x.realized),color:'#20e7a6'},{name:'Planejado acumulado',data:invRows.map(x=>ip+=x.planned),color:'#9a6cff'}],labs);
  ['projectionChart','categoryChart','investmentChart'].forEach(id=>attachTooltip(document.getElementById(id)));bindValueHover();
 }
 
