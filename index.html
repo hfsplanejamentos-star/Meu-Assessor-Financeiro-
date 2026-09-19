@@ -1491,6 +1491,42 @@ function renderInvoiceManagement(){
  const months=new Set();cardTransactions(cardId).forEach(t=>months.add(t.invoiceMonth||cardInvoiceMonthForDate(cardId,t.date)));(db.invoices||[]).filter(i=>i.cardId===cardId).forEach(i=>months.add(i.month));
  const arr=[...months].sort().reverse();invoiceHistory.innerHTML=arr.length?arr.map(mon=>{const r=ensureInvoice(cardId,mon),amt=invoiceAmount(cardId,mon);return `<div class="invoice-row"><div class="invoice-row-top"><b>Fatura ${mon.split('-').reverse().join('/')}</b><span class="invoice-badge ${invoiceStatusClass(r.status)}">${invoiceStatusLabel(r.status)}</span></div><div class="invoice-row-grid"><div><small>Valor</small><b>${brl(amt)}</b></div><div><small>Vencimento</small><b>${fmt(r.dueDate)}</b></div><div><small>Fechada em</small><b>${r.closedAt?fmt(r.closedAt.slice(0,10)):'—'}</b></div><div><small>Paga em</small><b>${r.paidAt?fmt(r.paidAt.slice(0,10)):'—'}</b></div></div></div>`}).join(''):'<div class="notice">Nenhuma fatura registrada.</div>'
 }
+/* Extrato C6 validado pelo usuário — somente setembro/2026 */
+(function migrateC6September2026(){
+ const migrationId='c6_sep_2026_statement_v1';db.migrations=db.migrations||{};if(db.migrations[migrationId])return;
+ db.transactions=db.transactions||[];db.accounts=db.accounts||[];
+ let acc=db.accounts.find(a=>a.id==='acc_c6'||/c6/i.test(String(a.name||a.institution||'')));
+ if(!acc){acc={id:'acc_c6',name:'C6 Conta Corrente',institution:'C6 Bank',type:'Conta corrente',balance:909.86};db.accounts.push(acc)}
+ const aid=acc.id;
+ // limpa somente os lançamentos C6 de setembro; demais contas, Caju, cartões e meses são preservados
+ db.transactions=db.transactions.filter(t=>!(String(t.date||'').slice(0,7)==='2026-09'&&(t.account===aid||t.account==='c6'||t.account==='acc_c6')&&!t.benefit));
+ const rows=[
+ ['c6_260910_pix_in','2026-09-10','PIX recebido',304.57,'Receita','PIX recebido'],
+ ['c6_260910_recarga','2026-09-10','Recarga celular',-20.00,'Comunicação','Recarga celular'],
+ ['c6_260910_estorno','2026-09-10','Estorno recarga celular',20.00,'Estorno','Recarga celular'],
+ ['c6_260911_super_norte','2026-09-11','PIX Super Norte',-79.06,'Alimentação','Mercado'],
+ ['c6_260911_agencia','2026-09-11','Agenciamento/Publicidade',-14.85,'Serviços','Publicidade'],
+ ['c6_260911_deposito','2026-09-11','Depósito Cego Duque de Caxias',-71.50,'Alimentação','Mercado'],
+ ['c6_260911_drogaria','2026-09-11','Drogaria Duque de Caxias',-12.99,'Saúde','Farmácia'],
+ ['c6_260912_lavland','2026-09-12','Lavland',-19.89,'Serviços','Lavanderia'],
+ ['c6_260913_lavland','2026-09-13','Lavland',-19.90,'Serviços','Lavanderia'],
+ ['c6_260913_nexa','2026-09-13','PIX NEXA Intermediações',-24.99,'Serviços','Outros'],
+ ['c6_260913_jm','2026-09-13','JM.COM',-2.50,'Outros','Outros'],
+ ['c6_260915_posto','2026-09-15','Auto Posto Jardim',-30.00,'Transporte','Combustível'],
+ ['c6_260915_jm','2026-09-15','JM.COM',-4.00,'Outros','Outros'],
+ ['c6_260916_posto','2026-09-16','Auto Posto Jardim',-30.00,'Transporte','Combustível'],
+ ['c6_260918_pix_in','2026-09-18','PIX recebido',2315.05,'Receita','PIX recebido'],
+ ['c6_260918_aluguel','2026-09-18','PIX Justa Ferreira Adelino',-1250.00,'Moradia','Aluguel'],
+ ['c6_260918_posto','2026-09-18','Posto de Gasolina',-100.00,'Transporte','Combustível'],
+ ['c6_260918_pb','2026-09-18','PB Guapimirim',-21.00,'Alimentação','Restaurante'],
+ ['c6_260918_pista4','2026-09-18','Pista 4 Auto Pista Flu Niterói',-10.80,'Transporte','Pedágio'],
+ ['c6_260918_lanche','2026-09-18','Lanchonete Rio Macaé Casimiro',-16.90,'Alimentação','Restaurante'],
+ ['c6_260918_pista3','2026-09-18','Pista 3 Auto Pista Flu Niterói',-10.80,'Transporte','Pedágio']
+ ];
+ rows.forEach(([id,date,desc,value,cat,sub])=>db.transactions.push({id,date,desc,value,account:aid,cat,sub,origin:'Extrato C6 · Setembro/2026',status:'realized',statementVerified:true}));
+ acc.balance=909.86;acc.statementBalanceDate='2026-09-18';acc.statementVerified=true;
+ db.migrations[migrationId]=true;save();
+})();
 /* Caju acumulativo + efetivação mensal automática a partir de 01/10/2026 */
 function ensureMonthlyIncomeAutomation(){
  db.automationState=db.automationState||{};db.transactions=db.transactions||[];db.cards=db.cards||[];
