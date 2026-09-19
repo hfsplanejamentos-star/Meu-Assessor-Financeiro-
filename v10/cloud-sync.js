@@ -1,0 +1,8 @@
+/* V10 Cloud adapter: Store is authoritative; optimistic version conflicts preserve local state. */
+(()=>{'use strict';const API='https://effervescent-marlin-88.convex.site/finance/state',K='assessor_cloud_sync_key',V='assessor_v10_cloud_version',D='assessor_v10_device';let busy=false;
+const device=localStorage.getItem(D)||('v10-'+crypto.randomUUID());localStorage.setItem(D,device);const key=()=>localStorage.getItem(K)||'';
+async function req(method,body){const r=await fetch(API,{method,headers:{'Content-Type':'application/json','X-Sync-Key':key()},body:body?JSON.stringify(body):undefined,cache:'no-store'}),d=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(d.error||'cloud');e.status=r.status;e.data=d;throw e}return d}
+async function sync(){if(busy||!key())return{ok:false,reason:'not_ready'};busy=true;try{const remote=(await req('GET')).state,lv=Number(localStorage.getItem(V)||0);if(remote&&remote.version>lv){FinanceStoreV10.set(remote.payload,'cloud-pull');localStorage.setItem(V,String(remote.version));return{ok:true,direction:'pull',version:remote.version}}const base=Number(remote?.version||0),payload=FinanceStoreV10.get();const out=await req('POST',{payload,baseVersion:base,deviceId:device});localStorage.setItem(V,String(out.version));return{ok:true,direction:'push',version:out.version}}catch(e){return{ok:false,conflict:e.status===409,preserved:true,error:e.message}}finally{busy=false}}
+function configure(v){if(String(v||'').trim().length<12)throw Error('Chave deve ter pelo menos 12 caracteres');localStorage.setItem(K,String(v).trim());return sync()}
+window.CloudSyncV10={sync,configure,configured:()=>!!key(),disconnect:()=>{localStorage.removeItem(K);localStorage.removeItem(V)}};
+})();
