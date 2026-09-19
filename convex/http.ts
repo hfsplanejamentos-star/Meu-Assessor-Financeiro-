@@ -24,4 +24,32 @@ http.route({ path: "/finance/state", method: "POST", handler: httpAction(async (
   return json(result, result.ok ? 200 : 409);
 }) });
 
+http.route({ path: "/ai/finance", method: "OPTIONS", handler: httpAction(async () => new Response(null, { status: 204, headers: cors })) });
+http.route({ path: "/ai/finance", method: "POST", handler: httpAction(async (_ctx, req) => {
+  const body = await req.json();
+  const text = String(body?.text || "").trim();
+  if (!text) return json({ ok:false, error:"missing_text" }, 400);
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return json({ ok:false, error:"ai_not_configured" }, 503);
+  const prompt = [
+    "Você é o motor de interpretação do Meu Assessor Financeiro.",
+    "Responda SOMENTE JSON válido.",
+    "Nunca execute transações. Apenas interprete ou responda.",
+    "Para lançamento: {intent:'transaction',draft:{date:'YYYY-MM-DD',value:number,cat:string,sub:string,desc:string,status:'draft'}}.",
+    "Despesa deve ter value negativo; receita positivo.",
+    "Para pergunta: {intent:'answer',answer:string}.",
+    "Contexto financeiro:", JSON.stringify(body?.context || {}),
+    "Usuário:", text
+  ].join("\n");
+  const r = await fetch("https://api.openai.com/v1/responses", {
+    method:"POST",
+    headers:{"Authorization":`Bearer ${apiKey}`,"Content-Type":"application/json"},
+    body:JSON.stringify({model:"gpt-5-mini",input:prompt})
+  });
+  if (!r.ok) return json({ ok:false, error:"provider_error", status:r.status }, 502);
+  const data:any = await r.json();
+  const output = String(data?.output_text || data?.output?.flatMap((x:any)=>x.content||[]).map((x:any)=>x.text||"").join("") || "").trim();
+  try { return json(JSON.parse(output)); } catch { return json({intent:"answer",answer:output}); }
+}) });
+
 export default http;
