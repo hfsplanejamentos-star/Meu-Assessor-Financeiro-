@@ -1,7 +1,7 @@
 /* V10 Render Controller — authoritative, one RAF per state/UI change */
 (()=>{'use strict';let raf=0,pending=new Set(),running=false,last=0,count=0;
 function perform(){raf=0;if(running)return;running=true;const reasons=[...pending];pending.clear();try{
- const ui=window.RuntimeUIV10;if(ui){ui.renderKpis?.();ui.renderCategory?.();ui.renderProjection?.()}
+ const ui=window.RuntimeUIV10;if(ui){ui.renderKpis?.();ui.renderCategory?.();ui.renderProjection?.();window.FinancialCardsV10?.render?.()}
  else {try{window.renderKpis?.()}catch(_){} try{window.renderLists?.()}catch(_){} try{window.renderCommitments?.()}catch(_){} try{window.renderCalendar?.()}catch(_){} try{window.renderInvestment?.()}catch(_){} try{window.renderCharts?.()}catch(_){}}
  last=performance.now();count++;window.dispatchEvent(new CustomEvent('v10-render-complete',{detail:{reasons,count}}));
 }finally{running=false;if(pending.size)schedule('queued')}}

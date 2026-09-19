@@ -6,7 +6,7 @@ if(S&&E){const oct=E.summary(S,'2026-10'),nov=E.summary(S,'2026-11'),jun=E.summa
 t('Oct recurring',near(oct.recurringExpense,4209.90),oct.recurringExpense);t('Nov recurring',near(nov.recurringExpense,4209.90),nov.recurringExpense);t('Jun recurring',near(jun.recurringExpense,3909.90),jun.recurringExpense);
 t('Nov investment',near(nov.investment,3000),nov.investment);t('Investment not expense',near(nov.plannedExpense,4209.90),nov.plannedExpense);
 const cats=E.categoryTotals(S,'2026-11','planned'),sum=cats.reduce((a,x)=>a+x.value,0);t('Categories equal planned expense',near(sum,nov.plannedExpense),sum);
-const c=S.cards.find(x=>x.id==='card_caju_alimentacao');t('Caju excluded patrimony',!!c?.excludeFromPatrimony);t('Caju balance',near(c?.balance,881.95),c?.balance);
+const c=S.cards.find(x=>x.id==='card_caju_alimentacao');t('Caju excluded patrimony',!!c?.excludeFromPatrimony);t('Caju balance',near(c?.balance,803.95),c?.balance);
 const aportes=S.transactions.filter(x=>x.transfer&&x.destAccountId==='acc_invest_plan');t('9 canonical investments',aportes.length===9,aportes.length);
 }
 const out={ok:R.every(x=>x.ok),passed:R.filter(x=>x.ok).length,total:R.length,results:R,at:new Date().toISOString()};window.__V10_FINANCE_TESTS__=out;return out}

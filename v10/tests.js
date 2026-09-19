@@ -5,7 +5,7 @@ add(2,'modular store',!!window.FinanceStoreV10);add(4,'single V10 engine',!!E);a
 add(12,'canonical recurrence',!!E?.recurringFor&&eq(E.summary(S,'2026-10').recurringExpense,4209.90));add(14,'canonical investment',!!E&&E.investmentPlanFor(S,'2026-11').length===1&&eq(E.summary(S,'2026-11').investment,3000));
 add(17,'consistent categories',!!E?.categoryTotals&&eq(E.categoryTotals(S,'2026-10','planned').reduce((a,x)=>a+x.value,0),4209.90));
 const ser=E?.chartSeries?.(S,'2026-10',12)||[];add(18,'future charts',ser.length===12&&ser.every(x=>Array.isArray(x.categories)));
-add(20,'clickable cards',!!window.MobileDashboardV10);const cj=(S?.cards||[]).find(x=>x.id==='card_caju_alimentacao');add(24,'Caju separate',!!cj&&cj.excludeFromPatrimony===true&&eq(cj.balance,881.95));
+add(20,'clickable cards',!!window.MobileDashboardV10);const cj=(S?.cards||[]).find(x=>x.id==='card_caju_alimentacao');add(24,'Caju separate',!!cj&&cj.excludeFromPatrimony===true&&eq(cj.balance,803.95));
 add(25,'mobile-first dashboard',!!window.MobileDashboardV10&&!!document.getElementById('v10BottomNav'));add(29,'desktop/mobile same engine',!!S&&!!E);add(30,'original identity theme',!!window.MobileThemeV10&&['current','dark','light'].includes(MobileThemeV10.get()));
 add(31,'optional light theme',!!window.MobileThemeV10);
 add(43,'unit test harness',true);add(49,'diagnostic object',!!window.RenderControllerV10);add(50,'source-fix V10 path',!!window.FinanceStoreV10&&!!window.FinanceEngineV10&&!!window.RenderControllerV10);

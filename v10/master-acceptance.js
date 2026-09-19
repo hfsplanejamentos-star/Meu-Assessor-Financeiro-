@@ -38,7 +38,7 @@
     test(21, 'Gráfico com despesas individuais', [...document.querySelectorAll('#categoryChart,#projectionChart')].every((canvas) => canvas.tabIndex === 0) && individualExpenses.length === 6 && individualExpenses.some((item) => item.name === 'Pensão alimentícia' && near(item.value, 1500)) && individualExpenses.some((item) => item.name === 'Plano TIM' && near(item.value, 79.90)));
     test(22, 'Agenda ligada ao motor', (experience?.agendaEvents?.('2026-10') || []).some((item) => item.type === 'recurring') && Boolean(document.getElementById('calendarEvents')));
     test(23, 'Conciliação explícita', Array.isArray(experience?.reconcile?.('2026-09')?.cases) && Boolean(document.getElementById('reconcileStats')));
-    const caju = experience?.cajuStatus?.(); test(24, 'Caju separado', caju?.excludeFromPatrimony === true && near(caju?.balance, 881.95));
+    const caju = experience?.cajuStatus?.(); test(24, 'Caju separado', caju?.excludeFromPatrimony === true && near(caju?.balance, 803.95) && near(caju?.spent, 202.94) && Boolean(window.FinancialCardsV10 && document.getElementById('v10FinancialCardsPanel')));
     test(25, 'Dashboard mobile-first', Boolean(window.MobileDashboardV10 && document.getElementById('v10BottomNav')));
     test(26, 'KPIs mobile 2x2', Boolean(document.querySelector('link[href*="mobile-dashboard.css"]')));
     test(27, 'Hierarquia mobile própria', Boolean(document.querySelector('#v10BottomNav [data-mobile-route="overview"]')));

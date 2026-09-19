@@ -3,7 +3,7 @@
  add(21,'Gráficos interativos',!!window.ExperienceV10?.bindCharts);
  const agenda=window.ExperienceV10?.agendaEvents('2026-10')||[];add(22,'Agenda ligada ao motor',agenda.some(x=>x.type==='recurring'),agenda.length);
  const rec=window.ExperienceV10?.reconcile('2026-09');add(23,'Conciliação explícita',!!rec&&Array.isArray(rec.cases),rec?.cases?.length);
- const cj=window.ExperienceV10?.cajuStatus();add(24,'Caju separado',!!cj&&cj.excludeFromPatrimony&&Math.abs(cj.balance-881.95)<.02,cj);
+ const cj=window.ExperienceV10?.cajuStatus();add(24,'Caju separado',!!cj&&cj.excludeFromPatrimony&&Math.abs(cj.balance-803.95)<.02,cj);
  add(25,'Mobile-first',!!window.MobileDashboardV10);
  add(26,'KPI mobile 2x2',!!document.querySelector('link[href*="mobile-dashboard.css"]'));
  add(27,'Hierarquia mobile',!!document.querySelector('link[href*="mobile-dashboard.css"]'));

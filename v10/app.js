@@ -9,6 +9,7 @@ import './render-controller.js';
 import './month-sync.js';
 import './runtime-ui.js';
 import './experience.js';
+import './financial-cards.js';
 import './finance-tests.js';
 import './ai-tests.js';
 import './diagnostics.js';

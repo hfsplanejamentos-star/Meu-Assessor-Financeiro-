@@ -3,10 +3,10 @@
   'use strict';
   const KEY = 'meu_assessor_financeiro_v10_real';
   const LEGACY_KEYS = ['assessor_v180_simulacao_ficticia', 'meu_assessor_financeiro'];
-  const SCHEMA = 6;
+  const SCHEMA = 7;
   const COLLECTIONS = ['accounts', 'cards', 'transactions', 'recurring', 'investments', 'invoices', 'budgets', 'goals'];
   const clone = (value) => JSON.parse(JSON.stringify(value ?? {}));
-  const KNOWN_REAL = Object.freeze({ c6OpeningBalance: 34.31, severance: 1069.36, c6Balance: 1103.67, cajuBalance: 881.95, cajuLimit: 1500 });
+  const KNOWN_REAL = Object.freeze({ c6OpeningBalance: 34.31, severance: 1069.36, c6Balance: 1103.67, cajuOpeningCredit: 1006.89, cajuBalance: 803.95, cajuLimit: 1500 });
 
   function dedupeById(rows) {
     const seen = new Map();
@@ -56,8 +56,40 @@
     upsert(state.accounts, { id: 'acc_c6', name: 'C6 Bank', type: 'Conta corrente', balance: KNOWN_REAL.c6Balance, openingBalance: KNOWN_REAL.c6OpeningBalance, balanceDate: '2026-09-18', source: 'user-confirmed' });
     upsert(state.cards, { id: 'card_caju_alimentacao', name: 'Caju Alimentação', type: 'Benefício', limit: KNOWN_REAL.cajuLimit, balance: KNOWN_REAL.cajuBalance, availableLimit: KNOWN_REAL.cajuBalance, excludeFromPatrimony: true, source: 'user-confirmed' });
     upsert(state.transactions, { id: 'real_rescisao_20260918', date: '2026-09-18', desc: 'Rescisão Contratual', cat: 'Receitas', sub: 'Rescisão', value: KNOWN_REAL.severance, status: 'posted', source: 'user-confirmed', accountId: 'acc_c6' });
-    upsert(state.transactions, { id: 'caju_20260918_bakery_3090', date: '2026-09-18', time: '10:26', desc: 'Bakery and Confectionery Real', cat: 'Alimentação', sub: 'Padaria', value: -30.90, status: 'posted', source: 'Caju', origin: 'Caju Crédito', cardId: 'card_caju_alimentacao', excludeFromPatrimony: true });
-    upsert(state.transactions, { id: 'caju_20260918_4905', date: '2026-09-18', time: '12:42', desc: 'Compra Caju', cat: 'Alimentação', value: -49.05, status: 'posted', source: 'Caju', origin: 'Caju Crédito', cardId: 'card_caju_alimentacao', excludeFromPatrimony: true });
+    state.transactions = state.transactions.filter((item) => ![
+      'caju_20260918_bakery_3090', 'caju_20260918_4905', 'caju_2026_09_17_padaria_xanxere',
+      'caju_202609_0100', 'caju_202609_2999', 'caju_202609_7800',
+    ].includes(item.id));
+    [
+      ['caju_2026_09_17_credit', '2026-09-17', 'Caju Benefícios', 1006.89, 'Crédito benefício'],
+      ['caju_2026_09_17_padaria_1', '2026-09-17', 'PADARIA E CONFEITARIA', -1, 'Alimentação'],
+      ['caju_2026_09_17_padaria_14', '2026-09-17', 'PADARIA E CONFEITARIA', -14, 'Alimentação'],
+      ['caju_2026_09_17_marilza_2999', '2026-09-17', 'IFD*60.939.734 MARI...', -29.99, 'Alimentação'],
+      ['caju_2026_09_18_padaria_3090', '2026-09-18', 'PADARIA E CONFEITARIA', -30.90, 'Alimentação'],
+      ['caju_2026_09_18_kaique_4905', '2026-09-18', 'IFD*64802138 KAIQUE...', -49.05, 'Alimentação'],
+      ['caju_2026_09_19_restaurante_7800', '2026-09-19', 'Restaurante MACAE BR', -78, 'Alimentação'],
+    ].forEach(([id, date, desc, value, sub]) => upsert(state.transactions, {
+      id, date, desc, description: desc, cat: 'Alimentação', sub, value, status: 'posted',
+      source: 'user-confirmed', origin: 'Extrato Caju', card: 'card_caju_alimentacao',
+      cardId: 'card_caju_alimentacao', benefit: true, excludeFromExpense: true,
+      excludeFromPatrimony: true,
+    }));
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    if (currentMonth >= '2026-10') {
+      const [cy, cm] = currentMonth.split('-').map(Number);
+      for (let date = new Date(2026, 9, 1); date <= new Date(cy, cm - 1, 1); date.setMonth(date.getMonth() + 1)) {
+        const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        upsert(state.transactions, { id: `auto_caju_${month.replace('-', '_')}`, date: `${month}-01`, desc: 'Crédito Caju Alimentação', cat: 'Alimentação', sub: 'Crédito benefício', value: 1500, status: 'posted', source: 'automation', origin: 'Automação mensal', card: 'card_caju_alimentacao', cardId: 'card_caju_alimentacao', benefit: true, excludeFromExpense: true, excludeFromPatrimony: true });
+      }
+    }
+    const cajuBalance = state.transactions
+      .filter((item) => item.cardId === 'card_caju_alimentacao')
+      .reduce((sum, item) => sum + Number(item.value || 0), 0);
+    const cajuCard = state.cards.find((item) => item.id === 'card_caju_alimentacao');
+    if (cajuCard) {
+      cajuCard.balance = Number(cajuBalance.toFixed(2));
+      cajuCard.availableLimit = cajuCard.balance;
+    }
     const statementVersion = 'c6-2026-09-full-v1';
     if (state.meta?.statementVersion !== statementVersion) {
       state.transactions = state.transactions.filter((item) => !(item.source === 'C6 Bank statement' && String(item.date || '').startsWith('2026-09')));
@@ -91,7 +123,6 @@
       accountId: 'acc_c6', statementPeriod: '2026-09-01/2026-09-18',
       classificationPending: pending, excludeFromExpense: excluded,
     }));
-    upsert(state.transactions, { id: 'caju_2026_09_17_padaria_xanxere', date: '2026-09-17', desc: 'Padaria e Confeit Xanxere', description: 'Padaria e Confeit Xanxere', merchant: 'Padaria e Confeit Xanxere', cat: 'Alimentação', sub: 'Padaria', value: -14, status: 'posted', source: 'Caju', origin: 'Caju Crédito', cardId: 'card_caju_alimentacao', excludeFromPatrimony: true });
     const income = [['2026-10', 6500, 'Salário outubro'], ...['2026-11', '2026-12', '2027-01', '2027-02', '2027-03', '2027-04', '2027-05', '2027-06', '2027-07'].map((month) => [month, 10104.50, 'Salário líquido'])];
     for (const [month, value, desc] of income) upsert(state.transactions, { id: `receita_${String(month).replace('-', '_')}`, date: `${month}-05`, desc, cat: 'Receitas', value, status: 'planned', source: 'user-approved-plan', accountId: 'acc_c6' });
     upsert(state.transactions, { id: 'decimo_terceiro_2026', date: '2026-12-20', desc: '13º salário líquido estimado', cat: 'Receitas', value: 3893.44, status: 'planned', source: 'user-approved-plan', accountId: 'acc_c6' });
@@ -107,7 +138,7 @@
       { id: 'rec_tim', desc: 'Plano TIM', cat: 'Comunicação', value: -79.90, endDate: '2027-07-10' },
       { id: 'rec_emp_mae', desc: 'Empréstimo mãe', cat: 'Empréstimos/Compromissos', value: -300, endDate: '2027-05-10', installments: 8 },
     ].forEach((item) => upsert(state.recurring, { ...item, dueDay: 10, due: 10, startDate: '2026-10-10', frequency: 'monthly', active: true, source: 'user-approved' }));
-    state.meta = { ...state.meta, c6KnownBalance: KNOWN_REAL.c6Balance, c6KnownBalanceAt: '2026-09-18', cajuKnownBalance: KNOWN_REAL.cajuBalance, cajuKnownBalanceAt: '2026-09-18T12:42:00-03:00', realDataProtected: true };
+    state.meta = { ...state.meta, c6KnownBalance: KNOWN_REAL.c6Balance, c6KnownBalanceAt: '2026-09-18', cajuOpeningCredit: KNOWN_REAL.cajuOpeningCredit, cajuKnownBalance: Number(cajuBalance.toFixed(2)), cajuKnownBalanceAt: currentMonth, cajuAutomation: { enabled: true, start: '2026-10-01', value: 1500, day: 1, accumulative: true }, realDataProtected: true };
     return state;
   }
 

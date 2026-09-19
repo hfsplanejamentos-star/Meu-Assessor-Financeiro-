@@ -6,10 +6,10 @@
   'use strict';
   const KEY = 'meu_assessor_financeiro_v10_real';
   const LEGACY_KEYS = ['assessor_v180_simulacao_ficticia', 'meu_assessor_financeiro'];
-  const SCHEMA = 6;
+  const SCHEMA = 7;
   const COLLECTIONS = ['accounts', 'cards', 'transactions', 'recurring', 'investments', 'invoices', 'budgets', 'goals'];
   const clone = (value) => JSON.parse(JSON.stringify(value ?? {}));
-  const KNOWN_REAL = Object.freeze({ c6OpeningBalance: 34.31, severance: 1069.36, c6Balance: 1103.67, cajuBalance: 881.95, cajuLimit: 1500 });
+  const KNOWN_REAL = Object.freeze({ c6OpeningBalance: 34.31, severance: 1069.36, c6Balance: 1103.67, cajuOpeningCredit: 1006.89, cajuBalance: 803.95, cajuLimit: 1500 });
 
   function dedupeById(rows) {
     const seen = new Map();
@@ -59,8 +59,40 @@
     upsert(state.accounts, { id: 'acc_c6', name: 'C6 Bank', type: 'Conta corrente', balance: KNOWN_REAL.c6Balance, openingBalance: KNOWN_REAL.c6OpeningBalance, balanceDate: '2026-09-18', source: 'user-confirmed' });
     upsert(state.cards, { id: 'card_caju_alimentacao', name: 'Caju Alimentação', type: 'Benefício', limit: KNOWN_REAL.cajuLimit, balance: KNOWN_REAL.cajuBalance, availableLimit: KNOWN_REAL.cajuBalance, excludeFromPatrimony: true, source: 'user-confirmed' });
     upsert(state.transactions, { id: 'real_rescisao_20260918', date: '2026-09-18', desc: 'Rescisão Contratual', cat: 'Receitas', sub: 'Rescisão', value: KNOWN_REAL.severance, status: 'posted', source: 'user-confirmed', accountId: 'acc_c6' });
-    upsert(state.transactions, { id: 'caju_20260918_bakery_3090', date: '2026-09-18', time: '10:26', desc: 'Bakery and Confectionery Real', cat: 'Alimentação', sub: 'Padaria', value: -30.90, status: 'posted', source: 'Caju', origin: 'Caju Crédito', cardId: 'card_caju_alimentacao', excludeFromPatrimony: true });
-    upsert(state.transactions, { id: 'caju_20260918_4905', date: '2026-09-18', time: '12:42', desc: 'Compra Caju', cat: 'Alimentação', value: -49.05, status: 'posted', source: 'Caju', origin: 'Caju Crédito', cardId: 'card_caju_alimentacao', excludeFromPatrimony: true });
+    state.transactions = state.transactions.filter((item) => ![
+      'caju_20260918_bakery_3090', 'caju_20260918_4905', 'caju_2026_09_17_padaria_xanxere',
+      'caju_202609_0100', 'caju_202609_2999', 'caju_202609_7800',
+    ].includes(item.id));
+    [
+      ['caju_2026_09_17_credit', '2026-09-17', 'Caju Benefícios', 1006.89, 'Crédito benefício'],
+      ['caju_2026_09_17_padaria_1', '2026-09-17', 'PADARIA E CONFEITARIA', -1, 'Alimentação'],
+      ['caju_2026_09_17_padaria_14', '2026-09-17', 'PADARIA E CONFEITARIA', -14, 'Alimentação'],
+      ['caju_2026_09_17_marilza_2999', '2026-09-17', 'IFD*60.939.734 MARI...', -29.99, 'Alimentação'],
+      ['caju_2026_09_18_padaria_3090', '2026-09-18', 'PADARIA E CONFEITARIA', -30.90, 'Alimentação'],
+      ['caju_2026_09_18_kaique_4905', '2026-09-18', 'IFD*64802138 KAIQUE...', -49.05, 'Alimentação'],
+      ['caju_2026_09_19_restaurante_7800', '2026-09-19', 'Restaurante MACAE BR', -78, 'Alimentação'],
+    ].forEach(([id, date, desc, value, sub]) => upsert(state.transactions, {
+      id, date, desc, description: desc, cat: 'Alimentação', sub, value, status: 'posted',
+      source: 'user-confirmed', origin: 'Extrato Caju', card: 'card_caju_alimentacao',
+      cardId: 'card_caju_alimentacao', benefit: true, excludeFromExpense: true,
+      excludeFromPatrimony: true,
+    }));
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    if (currentMonth >= '2026-10') {
+      const [cy, cm] = currentMonth.split('-').map(Number);
+      for (let date = new Date(2026, 9, 1); date <= new Date(cy, cm - 1, 1); date.setMonth(date.getMonth() + 1)) {
+        const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        upsert(state.transactions, { id: `auto_caju_${month.replace('-', '_')}`, date: `${month}-01`, desc: 'Crédito Caju Alimentação', cat: 'Alimentação', sub: 'Crédito benefício', value: 1500, status: 'posted', source: 'automation', origin: 'Automação mensal', card: 'card_caju_alimentacao', cardId: 'card_caju_alimentacao', benefit: true, excludeFromExpense: true, excludeFromPatrimony: true });
+      }
+    }
+    const cajuBalance = state.transactions
+      .filter((item) => item.cardId === 'card_caju_alimentacao')
+      .reduce((sum, item) => sum + Number(item.value || 0), 0);
+    const cajuCard = state.cards.find((item) => item.id === 'card_caju_alimentacao');
+    if (cajuCard) {
+      cajuCard.balance = Number(cajuBalance.toFixed(2));
+      cajuCard.availableLimit = cajuCard.balance;
+    }
     const statementVersion = 'c6-2026-09-full-v1';
     if (state.meta?.statementVersion !== statementVersion) {
       state.transactions = state.transactions.filter((item) => !(item.source === 'C6 Bank statement' && String(item.date || '').startsWith('2026-09')));
@@ -94,7 +126,6 @@
       accountId: 'acc_c6', statementPeriod: '2026-09-01/2026-09-18',
       classificationPending: pending, excludeFromExpense: excluded,
     }));
-    upsert(state.transactions, { id: 'caju_2026_09_17_padaria_xanxere', date: '2026-09-17', desc: 'Padaria e Confeit Xanxere', description: 'Padaria e Confeit Xanxere', merchant: 'Padaria e Confeit Xanxere', cat: 'Alimentação', sub: 'Padaria', value: -14, status: 'posted', source: 'Caju', origin: 'Caju Crédito', cardId: 'card_caju_alimentacao', excludeFromPatrimony: true });
     const income = [['2026-10', 6500, 'Salário outubro'], ...['2026-11', '2026-12', '2027-01', '2027-02', '2027-03', '2027-04', '2027-05', '2027-06', '2027-07'].map((month) => [month, 10104.50, 'Salário líquido'])];
     for (const [month, value, desc] of income) upsert(state.transactions, { id: `receita_${String(month).replace('-', '_')}`, date: `${month}-05`, desc, cat: 'Receitas', value, status: 'planned', source: 'user-approved-plan', accountId: 'acc_c6' });
     upsert(state.transactions, { id: 'decimo_terceiro_2026', date: '2026-12-20', desc: '13º salário líquido estimado', cat: 'Receitas', value: 3893.44, status: 'planned', source: 'user-approved-plan', accountId: 'acc_c6' });
@@ -110,7 +141,7 @@
       { id: 'rec_tim', desc: 'Plano TIM', cat: 'Comunicação', value: -79.90, endDate: '2027-07-10' },
       { id: 'rec_emp_mae', desc: 'Empréstimo mãe', cat: 'Empréstimos/Compromissos', value: -300, endDate: '2027-05-10', installments: 8 },
     ].forEach((item) => upsert(state.recurring, { ...item, dueDay: 10, due: 10, startDate: '2026-10-10', frequency: 'monthly', active: true, source: 'user-approved' }));
-    state.meta = { ...state.meta, c6KnownBalance: KNOWN_REAL.c6Balance, c6KnownBalanceAt: '2026-09-18', cajuKnownBalance: KNOWN_REAL.cajuBalance, cajuKnownBalanceAt: '2026-09-18T12:42:00-03:00', realDataProtected: true };
+    state.meta = { ...state.meta, c6KnownBalance: KNOWN_REAL.c6Balance, c6KnownBalanceAt: '2026-09-18', cajuOpeningCredit: KNOWN_REAL.cajuOpeningCredit, cajuKnownBalance: Number(cajuBalance.toFixed(2)), cajuKnownBalanceAt: currentMonth, cajuAutomation: { enabled: true, start: '2026-10-01', value: 1500, day: 1, accumulative: true }, realDataProtected: true };
     return state;
   }
 
@@ -287,7 +318,7 @@ if(window.FinanceStoreV10){FinanceStoreV10.update(s=>ensureInvestmentPlan(s),'ca
 /* V10 Render Controller — authoritative, one RAF per state/UI change */
 (()=>{'use strict';let raf=0,pending=new Set(),running=false,last=0,count=0;
 function perform(){raf=0;if(running)return;running=true;const reasons=[...pending];pending.clear();try{
- const ui=window.RuntimeUIV10;if(ui){ui.renderKpis?.();ui.renderCategory?.();ui.renderProjection?.()}
+ const ui=window.RuntimeUIV10;if(ui){ui.renderKpis?.();ui.renderCategory?.();ui.renderProjection?.();window.FinancialCardsV10?.render?.()}
  else {try{window.renderKpis?.()}catch(_){} try{window.renderLists?.()}catch(_){} try{window.renderCommitments?.()}catch(_){} try{window.renderCalendar?.()}catch(_){} try{window.renderInvestment?.()}catch(_){} try{window.renderCharts?.()}catch(_){}}
  last=performance.now();count++;window.dispatchEvent(new CustomEvent('v10-render-complete',{detail:{reasons,count}}));
 }finally{running=false;if(pending.size)schedule('queued')}}
@@ -402,6 +433,49 @@ document.addEventListener('finance-store-changed',()=>window.RenderControllerV10
   window.ExperienceV10 = { bindCharts, agendaEvents, renderAgenda, reconcile, renderReconciliation, cajuStatus, architecture, refresh };
 })();
 
+/* source: v10/financial-cards.js */
+/* V10 financial cards — C6 and Caju home/detail presentation. */
+(() => {
+  'use strict';
+  const HIDDEN_KEY = 'assessor_v10_financial_cards_hidden';
+  const brl = (value) => Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const state = () => window.FinanceStoreV10?.get?.();
+  const month = () => window.activeMonth || new Date().toISOString().slice(0, 7);
+  const cajuRows = (store, key = month()) => (store.transactions || []).filter((item) => item.cardId === 'card_caju_alimentacao' && String(item.date || '').slice(0, 7) <= key);
+  const cajuBalanceAt = (store, key = month()) => cajuRows(store, key).reduce((sum, item) => sum + Number(item.value || 0), 0);
+  const cajuSpent = (store, key = month()) => cajuRows(store, key).filter((item) => String(item.date).slice(0, 7) === key && Number(item.value) < 0).reduce((sum, item) => sum + Math.abs(Number(item.value)), 0);
+  function ensurePanel() {
+    const overview = document.getElementById('view-overview'); const kpis = document.getElementById('kpis'); if (!overview || !kpis) return null;
+    let panel = document.getElementById('v10FinancialCardsPanel');
+    if (!panel) {
+      panel = document.createElement('section'); panel.id = 'v10FinancialCardsPanel'; panel.className = 'card panel v10-financial-panel';
+      panel.innerHTML = '<div class="panel-head"><div><h3>Contas e benefícios</h3><small>Resumo rápido C6 Bank e Caju</small></div><button type="button" id="v10ToggleFinancialCards">Ocultar cartões</button></div><div id="quickFinancialCards" class="v10-financial-grid"></div>';
+      kpis.insertAdjacentElement('afterend', panel);
+      panel.querySelector('#v10ToggleFinancialCards').addEventListener('click', () => { localStorage.setItem(HIDDEN_KEY, localStorage.getItem(HIDDEN_KEY) === '1' ? '0' : '1'); render(); });
+    }
+    return panel;
+  }
+  function renderDetails(store, key) {
+    const kpis = document.getElementById('cajuDetailKpis'); const table = document.getElementById('cajuDetailTable'); if (!kpis || !table) return;
+    const expenses = cajuRows(store, key).filter((item) => String(item.date).slice(0, 7) === key && Number(item.value) < 0).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    const balance = cajuBalanceAt(store, key); const spent = cajuSpent(store, key);
+    kpis.innerHTML = `<div class="card-kpi"><small>Saldo disponível</small><b class="up">${brl(balance)}</b></div><div class="card-kpi"><small>Gasto no mês</small><b class="down">${brl(spent)}</b></div><div class="card-kpi"><small>Crédito mensal</small><b>${brl(store.meta?.cajuAutomation?.value || 1500)}</b></div><div class="card-kpi"><small>Automação</small><b>Ativa · dia 01</b></div>`;
+    table.innerHTML = expenses.length ? expenses.map((item) => `<tr><td>${String(item.date).split('-').reverse().join('/')}</td><td>${item.desc}</td><td>Alimentação</td><td class="down">-${brl(Math.abs(item.value))}</td><td>—</td></tr>`).join('') : '<tr><td colspan="5">Nenhuma movimentação Caju neste mês.</td></tr>';
+  }
+  function render() {
+    const store = state(); const panel = ensurePanel(); if (!store || !panel) return;
+    const key = month(); const hidden = localStorage.getItem(HIDDEN_KEY) === '1'; const box = panel.querySelector('#quickFinancialCards'); const toggle = panel.querySelector('#v10ToggleFinancialCards');
+    panel.classList.toggle('cards-hidden', hidden); toggle.textContent = hidden ? 'Mostrar cartões' : 'Ocultar cartões';
+    const c6 = (store.accounts || []).find((item) => item.id === 'acc_c6'); const card = (store.cards || []).find((item) => item.id === 'card_caju_alimentacao');
+    const cajuBalance = cajuBalanceAt(store, key); const spent = cajuSpent(store, key); const base = Number(store.meta?.cajuOpeningCredit || card?.limit || 0); const percent = base ? Math.max(0, Math.min(100, cajuBalance / base * 100)) : 0;
+    box.innerHTML = `<button type="button" class="v10-bank-card c6" data-v10-route="accounts"><span class="brand-mark">C6 BANK</span><small>Conta corrente</small><b>${brl(c6?.balance)}</b><em>Saldo disponível</em></button><button type="button" class="v10-bank-card caju" data-v10-route="cards"><span class="brand-mark">caju</span><small>Alimentação · benefício</small><b>${brl(cajuBalance)}</b><em>Gasto em ${key}: ${brl(spent)}</em><i><u style="width:${percent}%"></u></i></button>`;
+    renderDetails(store, key);
+  }
+  function install() { render(); document.addEventListener('v10-month-changed', render); document.addEventListener('finance-store-changed', render); document.addEventListener('v10-render-complete', render); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install); else install();
+  window.FinancialCardsV10 = { render, cajuBalanceAt, cajuSpent };
+})();
+
 /* source: v10/finance-tests.js */
 /* V10 pure finance regression tests */
 (()=>{'use strict';const near=(a,b)=>Math.abs(Number(a)-Number(b))<.02;
@@ -411,7 +485,7 @@ if(S&&E){const oct=E.summary(S,'2026-10'),nov=E.summary(S,'2026-11'),jun=E.summa
 t('Oct recurring',near(oct.recurringExpense,4209.90),oct.recurringExpense);t('Nov recurring',near(nov.recurringExpense,4209.90),nov.recurringExpense);t('Jun recurring',near(jun.recurringExpense,3909.90),jun.recurringExpense);
 t('Nov investment',near(nov.investment,3000),nov.investment);t('Investment not expense',near(nov.plannedExpense,4209.90),nov.plannedExpense);
 const cats=E.categoryTotals(S,'2026-11','planned'),sum=cats.reduce((a,x)=>a+x.value,0);t('Categories equal planned expense',near(sum,nov.plannedExpense),sum);
-const c=S.cards.find(x=>x.id==='card_caju_alimentacao');t('Caju excluded patrimony',!!c?.excludeFromPatrimony);t('Caju balance',near(c?.balance,881.95),c?.balance);
+const c=S.cards.find(x=>x.id==='card_caju_alimentacao');t('Caju excluded patrimony',!!c?.excludeFromPatrimony);t('Caju balance',near(c?.balance,803.95),c?.balance);
 const aportes=S.transactions.filter(x=>x.transfer&&x.destAccountId==='acc_invest_plan');t('9 canonical investments',aportes.length===9,aportes.length);
 }
 const out={ok:R.every(x=>x.ok),passed:R.filter(x=>x.ok).length,total:R.length,results:R,at:new Date().toISOString()};window.__V10_FINANCE_TESTS__=out;return out}
@@ -451,7 +525,7 @@ window.FinanceTestsV10={run};})();
  add(21,'Gráficos interativos',!!window.ExperienceV10?.bindCharts);
  const agenda=window.ExperienceV10?.agendaEvents('2026-10')||[];add(22,'Agenda ligada ao motor',agenda.some(x=>x.type==='recurring'),agenda.length);
  const rec=window.ExperienceV10?.reconcile('2026-09');add(23,'Conciliação explícita',!!rec&&Array.isArray(rec.cases),rec?.cases?.length);
- const cj=window.ExperienceV10?.cajuStatus();add(24,'Caju separado',!!cj&&cj.excludeFromPatrimony&&Math.abs(cj.balance-881.95)<.02,cj);
+ const cj=window.ExperienceV10?.cajuStatus();add(24,'Caju separado',!!cj&&cj.excludeFromPatrimony&&Math.abs(cj.balance-803.95)<.02,cj);
  add(25,'Mobile-first',!!window.MobileDashboardV10);
  add(26,'KPI mobile 2x2',!!document.querySelector('link[href*="mobile-dashboard.css"]'));
  add(27,'Hierarquia mobile',!!document.querySelector('link[href*="mobile-dashboard.css"]'));
@@ -470,7 +544,7 @@ add(2,'modular store',!!window.FinanceStoreV10);add(4,'single V10 engine',!!E);a
 add(12,'canonical recurrence',!!E?.recurringFor&&eq(E.summary(S,'2026-10').recurringExpense,4209.90));add(14,'canonical investment',!!E&&E.investmentPlanFor(S,'2026-11').length===1&&eq(E.summary(S,'2026-11').investment,3000));
 add(17,'consistent categories',!!E?.categoryTotals&&eq(E.categoryTotals(S,'2026-10','planned').reduce((a,x)=>a+x.value,0),4209.90));
 const ser=E?.chartSeries?.(S,'2026-10',12)||[];add(18,'future charts',ser.length===12&&ser.every(x=>Array.isArray(x.categories)));
-add(20,'clickable cards',!!window.MobileDashboardV10);const cj=(S?.cards||[]).find(x=>x.id==='card_caju_alimentacao');add(24,'Caju separate',!!cj&&cj.excludeFromPatrimony===true&&eq(cj.balance,881.95));
+add(20,'clickable cards',!!window.MobileDashboardV10);const cj=(S?.cards||[]).find(x=>x.id==='card_caju_alimentacao');add(24,'Caju separate',!!cj&&cj.excludeFromPatrimony===true&&eq(cj.balance,803.95));
 add(25,'mobile-first dashboard',!!window.MobileDashboardV10&&!!document.getElementById('v10BottomNav'));add(29,'desktop/mobile same engine',!!S&&!!E);add(30,'original identity theme',!!window.MobileThemeV10&&['current','dark','light'].includes(MobileThemeV10.get()));
 add(31,'optional light theme',!!window.MobileThemeV10);
 add(43,'unit test harness',true);add(49,'diagnostic object',!!window.RenderControllerV10);add(50,'source-fix V10 path',!!window.FinanceStoreV10&&!!window.FinanceEngineV10&&!!window.RenderControllerV10);
@@ -538,7 +612,7 @@ window.Acceptance40to50V10={run};window.addEventListener('load',()=>setTimeout(r
     test(21, 'Gráfico com despesas individuais', [...document.querySelectorAll('#categoryChart,#projectionChart')].every((canvas) => canvas.tabIndex === 0) && individualExpenses.length === 6 && individualExpenses.some((item) => item.name === 'Pensão alimentícia' && near(item.value, 1500)) && individualExpenses.some((item) => item.name === 'Plano TIM' && near(item.value, 79.90)));
     test(22, 'Agenda ligada ao motor', (experience?.agendaEvents?.('2026-10') || []).some((item) => item.type === 'recurring') && Boolean(document.getElementById('calendarEvents')));
     test(23, 'Conciliação explícita', Array.isArray(experience?.reconcile?.('2026-09')?.cases) && Boolean(document.getElementById('reconcileStats')));
-    const caju = experience?.cajuStatus?.(); test(24, 'Caju separado', caju?.excludeFromPatrimony === true && near(caju?.balance, 881.95));
+    const caju = experience?.cajuStatus?.(); test(24, 'Caju separado', caju?.excludeFromPatrimony === true && near(caju?.balance, 803.95) && near(caju?.spent, 202.94) && Boolean(window.FinancialCardsV10 && document.getElementById('v10FinancialCardsPanel')));
     test(25, 'Dashboard mobile-first', Boolean(window.MobileDashboardV10 && document.getElementById('v10BottomNav')));
     test(26, 'KPIs mobile 2x2', Boolean(document.querySelector('link[href*="mobile-dashboard.css"]')));
     test(27, 'Hierarquia mobile própria', Boolean(document.querySelector('#v10BottomNav [data-mobile-route="overview"]')));

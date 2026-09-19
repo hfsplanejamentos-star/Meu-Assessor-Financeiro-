@@ -3,7 +3,7 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const sources = [
   'finance-store.js', 'finance-engine.js', 'cloud-sync.js', 'ai-gateway.js', 'mobile-theme.js',
-  'mobile-dashboard.js', 'render-controller.js', 'month-sync.js', 'runtime-ui.js', 'experience.js',
+  'mobile-dashboard.js', 'render-controller.js', 'month-sync.js', 'runtime-ui.js', 'experience.js', 'financial-cards.js',
   'finance-tests.js', 'ai-tests.js', 'diagnostics.js', 'health.js', 'test-21-30.js', 'tests.js',
   'acceptance-40-50.js', 'master-acceptance.js',
 ];

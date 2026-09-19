@@ -33,7 +33,7 @@ Data: 19/09/2026. Branch: `v10-consolidacao`.
 | 21 | Gráficos interativos | Dois canvases com foco por teclado. |
 | 22 | Agenda integrada | Outubro gera eventos recorrentes; três itens renderizados. |
 | 23 | Conciliação integrada | Casos explícitos; painel renderizado sem alteração automática. |
-| 24 | Caju separado | Saldo R$ 881,95 fora de patrimônio/caixa. |
+| 24 | Caju separado | Saldo R$ 803,95 fora de patrimônio/caixa; seis gastos totalizando R$ 202,94. |
 | 25 | Dashboard mobile-first | Controller e navegação Mobile presentes. |
 | 26 | KPIs Mobile 2x2 | CSS computado confirmou duas colunas. |
 | 27 | Hierarquia Mobile | Rota Visão Geral presente e operável. |
@@ -65,7 +65,7 @@ Data: 19/09/2026. Branch: `v10-consolidacao`.
 
 - C6: abertura R$ 34,31; saldo preservado R$ 1.103,67.
 - Rescisão de 18/09/2026: R$ 1.069,36 preservada.
-- Caju: R$ 881,95, excluído do patrimônio.
+- Caju: crédito inicial confirmado R$ 1.006,89; seis gastos de setembro somando R$ 202,94; saldo R$ 803,95, excluído do patrimônio.
 - Salário: outubro R$ 6.500,00; novembro/2026 a julho/2027 R$ 10.104,50.
 - 13º: R$ 3.893,44 em dezembro.
 - Compromissos: R$ 4.209,90 até maio; R$ 3.909,90 em junho/julho.
