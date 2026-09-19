@@ -422,6 +422,11 @@ border-left:1px solid rgba(75,190,255,.28);backdrop-filter:blur(24px);box-shadow
  #kpis>.kpi:after{width:75px;height:75px;right:-28px;top:-28px}
  #kpis .quick-fin-inline{grid-column:1 / -1}
 }
+
+/* Gestão clicável + gráfico acumulado (mobile aprovado) */
+.summary-edit-card{cursor:pointer;transition:.18s;position:relative}.summary-edit-card:hover{border-color:rgba(32,216,255,.5);transform:translateY(-1px)}
+.summary-edit-card:after{content:'Toque para gerenciar';display:block;margin-top:5px;font-size:9px;color:var(--muted)}
+@media(max-width:520px){.investment-chart-wrap{height:210px!important;min-height:210px!important}}
 </style>
 <link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"></head>
 <body>
@@ -1541,8 +1546,8 @@ function renderCardForecast(){
 function renderInvestment(){
  const b=balances(),key=scopeMonth('investment'),selected=(db.investments||[]).filter(x=>String(x.month||x.date||'').slice(0,7)===key);
  const planned=selected.reduce((s,x)=>s+Math.abs(Number(x.planned??(x.status==='planned'?(x.amount??x.value):0))||0),0),realized=selected.reduce((s,x)=>s+Math.abs(Number(x.realized??(x.status!=='planned'?(x.amount??x.value):0))||0),0);
- const sum=document.getElementById('investmentSummary');if(sum)sum.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px"><div class="notice"><small>Carteira atual</small><br><b style="font-size:18px;color:white">${brl(b.invest)}</b></div><div class="notice"><small>Realizado · ${monthLabelKey(key)}</small><br><b style="font-size:18px;color:#20e7a6">${brl(realized)}</b></div><div class="notice"><small>Planejado · ${monthLabelKey(key)}</small><br><b style="font-size:18px;color:#9a6cff">${brl(planned)}</b></div></div>`;
- const canvas=document.getElementById('investmentChart');if(canvas){const [iy,im]=key.split('-').map(Number),rows=[];for(let i=-2;i<=3;i++){const d=new Date(iy,im-1+i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),xs=(db.investments||[]).filter(x=>String(x.month||x.date||'').slice(0,7)===k);rows.push({label:d.toLocaleDateString('pt-BR',{month:'short'}).replace('.',''),planned:xs.reduce((s,x)=>s+Math.abs(Number(x.planned??(x.status==='planned'?(x.amount??x.value):0))||0),0),realized:xs.reduce((s,x)=>s+Math.abs(Number(x.realized??(x.status!=='planned'?(x.amount??x.value):0))||0),0)})}requestAnimationFrame(()=>{drawBarChart(canvas,rows.map(x=>x.label),rows.map(x=>x.planned),rows.map(x=>x.realized));attachTooltip(canvas)})}
+ const sum=document.getElementById('investmentSummary');if(sum)sum.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px"><div class="notice summary-edit-card" data-invest-summary="portfolio" tabindex="0"><small>Carteira atual</small><br><b style="font-size:18px;color:white">${brl(b.invest)}</b></div><div class="notice summary-edit-card" data-invest-summary="realized" tabindex="0"><small>Realizado · ${monthLabelKey(key)}</small><br><b style="font-size:18px;color:#20e7a6">${brl(realized)}</b></div><div class="notice summary-edit-card" data-invest-summary="planned" tabindex="0"><small>Planejado · ${monthLabelKey(key)}</small><br><b style="font-size:18px;color:#9a6cff">${brl(planned)}</b></div></div>`;
+ const canvas=document.getElementById('investmentChart');if(canvas){const [iy,im]=key.split('-').map(Number),rows=[];for(let i=-2;i<=3;i++){const d=new Date(iy,im-1+i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),xs=(db.investments||[]).filter(x=>String(x.month||x.date||'').slice(0,7)===k);rows.push({label:d.toLocaleDateString('pt-BR',{month:'short'}).replace('.',''),planned:xs.reduce((s,x)=>s+Math.abs(Number(x.planned??(x.status==='planned'?(x.amount??x.value):0))||0),0),realized:xs.reduce((s,x)=>s+Math.abs(Number(x.realized??(x.status!=='planned'?(x.amount??x.value):0))||0),0)})}let ap=0,ar=0;const plannedAccum=rows.map(x=>ap+=x.planned),realizedAccum=rows.map(x=>ar+=x.realized);requestAnimationFrame(()=>{drawLineChart(canvas,[{name:'Realizado acumulado',data:realizedAccum,color:'#20e7a6'},{name:'Planejado acumulado',data:plannedAccum,color:'#9a6cff'}],rows.map(x=>x.label));attachTooltip(canvas)})}
  const page=document.getElementById('investmentPage');if(page)page.innerHTML=selected.length?selected.map(x=>`<div class="item"><div class="ico">↗</div><div><b>${x.desc||x.name||'Aporte'}</b><small>${monthLabelKey(key)} · ${x.status==='planned'?'Planejado':'Realizado'}</small></div><div class="amount ${x.status==='planned'?'':'up'}">${brl(Math.abs(Number(x.amount??x.value??x.planned??x.realized)||0))}</div></div>`).join(''):`<div class="notice">Nenhum aporte registrado em ${monthLabelKey(key)}.</div>`;
 }
 const colors=['#4a8cff','#ff9f59','#20e7a6','#9a6cff','#ff5876','#7ed6ff','#b9c9d8'];
@@ -1966,6 +1971,15 @@ document.addEventListener('change',e=>{if(e.target.matches('.individual-month-fi
 document.getElementById('nav').onclick=e=>{const b=e.target.closest('button[data-view]');if(b)nav(b.dataset.view)};backBtn.onclick=()=>{if(navHistory.length>1){navHistory.pop();nav(navHistory[navHistory.length-1],false)}}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-nav]');if(b){e.preventDefault();nav(b.dataset.nav)}});
 function bindKpiNavigation(){document.querySelectorAll('#kpis [data-card-nav],#cardKpis [data-card-nav]').forEach(card=>{card.style.cursor='pointer';card.style.pointerEvents='auto';card.onclick=e=>{e.preventDefault();e.stopPropagation();nav(card.dataset.cardNav)};card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();nav(card.dataset.cardNav)}}})}
+document.addEventListener('click',e=>{
+ const s=e.target.closest('[data-invest-summary]');if(!s)return;
+ e.preventDefault();e.stopPropagation();
+ const mode=s.dataset.investSummary;
+ if(mode==='portfolio'){nav('investments');return}
+ const key=scopeMonth('investment'),rows=(db.investments||[]).filter(x=>String(x.month||x.date||'').slice(0,7)===key&&((mode==='planned')?x.status==='planned':x.status!=='planned'));
+ if(rows.length===1){const linked=(db.transactions||[]).find(t=>String(t.id)===String(rows[0].transactionId||rows[0].id));if(linked){openEditTransaction(linked.id);return}}
+ nav('investments');
+});
 document.addEventListener('click',e=>{
  const card=e.target.closest('[data-card-nav]');
  if(!card||card.closest('#kpis,#cardKpis'))return;
