@@ -1,1 +1,11 @@
-const C='assessor-hotfix-stable-20260919-1440';const A=['./index.html','./manifest.webmanifest','./v10/finance-store.js','./v10/finance-engine.js','./v10/cloud-sync.js','./v10/ai-gateway.js','./v10/mobile-themes.css','./v10/mobile-theme.js','./v10/mobile-dashboard.css','./v10/mobile-dashboard.js','./v10/experience.js','./v10/test-21-30.js','./v10/render-controller.js','./v10/month-sync.js','./v10/tests.js','./v10/diagnostics.js','./v10/finance-tests.js','./v10/health.js','./v10/acceptance-40-50.js'];self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(A)).then(()=>self.skipWaiting())));self.addEventListener('activate',e=>e.waitUntil((async()=>{for(const k of await caches.keys())if(k!==C)await caches.delete(k);await self.clients.claim()})()));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;if(e.request.mode==='navigate'){e.respondWith(fetch(e.request,{cache:'no-store'}).catch(()=>caches.match('./index.html')));return}e.respondWith(caches.match(e.request,{ignoreSearch:true}).then(c=>c||fetch(e.request).then(r=>{if(r.ok)caches.open(C).then(x=>x.put(e.request,r.clone()));return r})))});
+const C='assessor-live-20260919-1450';
+const A=['./index.html','./manifest.webmanifest'];
+self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(A)).then(()=>self.skipWaiting())));
+self.addEventListener('activate',e=>e.waitUntil((async()=>{for(const k of await caches.keys())if(k!==C)await caches.delete(k);await self.clients.claim()})()));
+self.addEventListener('fetch',e=>{
+ if(e.request.method!=='GET')return;
+ const u=new URL(e.request.url);
+ const live=e.request.mode==='navigate'||u.pathname.endsWith('.js')||u.pathname.endsWith('.css')||u.pathname.endsWith('.html');
+ if(live){e.respondWith(fetch(e.request,{cache:'no-store'}).then(r=>{if(r.ok)caches.open(C).then(x=>x.put(e.request,r.clone()));return r}).catch(()=>caches.match(e.request,{ignoreSearch:true}).then(x=>x||caches.match('./index.html'))));return}
+ e.respondWith(caches.match(e.request,{ignoreSearch:true}).then(c=>c||fetch(e.request).then(r=>{if(r.ok)caches.open(C).then(x=>x.put(e.request,r.clone()));return r})));
+});
