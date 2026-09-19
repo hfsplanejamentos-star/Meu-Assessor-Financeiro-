@@ -30,7 +30,7 @@ function projection(start='2026-10',count=12){
 }
 function normalizeCore(){
  db.accounts=db.accounts||[];db.transactions=db.transactions||[];db.investments=db.investments||[];db.recurring=db.recurring||[];let changed=false;
- db.transactions.forEach(t=>{if(/^sal_/.test(String(t.id||''))||/salário/i.test(String(t.desc||t.description||''))){if(t.cat!=='Receitas'){t.cat='Receitas';changed=true}if(t.sub!=='Salário'){t.sub='Salário';changed=true}}if(String(t.id||'')==='decimo_2026'&&t.cat!=='Receitas'){t.cat='Receitas';changed=true}});
+ db.transactions.forEach(t=>{if(/^sal_/.test(String(t.id||''))||/salário/i.test(String(t.desc||t.description||''))){if(t.cat!=='Receitas'){t.cat='Receitas';changed=true}if(t.sub!=='Salário'){t.sub='Salário';changed=true}}if(String(t.id||'')==='decimo_2026'&&t.cat!=='Receitas'){t.cat='Receitas';changed=true}const caju=/caju/i.test(String(t.cardId||t.card||t.origin||t.source||''))||t.benefit===true;if(caju&&t.excludeFromExpense!==true){t.excludeFromExpense=true;changed=true}});
  db.recurring.forEach(r=>{if(n(r.value)>0){r.value=-Math.abs(n(r.value));changed=true}});
  return changed;
 }
@@ -79,7 +79,7 @@ function canonicalRenderKpis(){
   ['income_planned','RECEITAS PREVISTAS',s.plannedIncome,k,'transactions'],
   ['expense','DESPESAS REALIZADAS',s.realizedExpense,k,'transactions'],
   ['expense_planned','DESPESAS PREVISTAS',s.plannedExpense,k,'recurring'],
-  ['cards','CARTÕES',typeof invoiceAmount==='function'?(db.cards||[]).filter(c=>['Crédito','Múltiplo'].includes(c.type||'Crédito')).reduce((z,c)=>z+invoiceAmount(c.id,k),0):0,'Fatura do mês','cards'],
+  ['cards','CARTÕES',typeof invoiceAmount==='function'?(db.cards||[]).filter(c=>['Crédito','Múltiplo'].includes(c.type||'Crédito')).reduce((z,c)=>z+invoiceAmount(c.id,k),0):0,(()=>{const cc=(db.cards||[]).find(c=>/caju/i.test(String(c.name||c.id||'')));if(!cc)return 'Fatura do mês';const bal=(db.transactions||[]).filter(t=>(t.cardId===cc.id||t.card===cc.id||/caju/i.test(String(t.origin||t.source||'')))&&keyOf(t.date)<=k).reduce((z,t)=>z+n(t.value),0);return 'Caju disponível '+brl(bal)})(),'cards'],
   ['investments','INVESTIMENTOS',b.invest,'Abrir investimentos','investments']
  ];
  let pref;try{pref=JSON.parse(localStorage.getItem('assessor_kpi_layout')||'[]')}catch(_){pref=[]}
