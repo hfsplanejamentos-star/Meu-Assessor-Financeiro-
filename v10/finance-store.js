@@ -6,6 +6,8 @@ const arrays=['accounts','cards','transactions','recurring','investments','invoi
 function clean(s){s=s&&typeof s==='object'?clone(s):{};arrays.forEach(k=>s[k]=Array.isArray(s[k])?s[k]:[]);
  s.accounts=s.accounts.filter(a=>!/nubank|btg/i.test(String(a.name||'')));
  s.transactions=s.transactions.filter(t=>!/(demo|fict[ií]ci|simula[cç][aã]o)/i.test([t.source,t.origin,t.desc].join(' ')));
+ /* User reset 2026-09-19: remove imported C6 statement rows and severance; keep other real sources such as Caju. */
+ s.transactions=s.transactions.filter(t=>{const src=[t.source,t.origin,t.statementPeriod].join(' ');const isC6Statement=/C6 Bank statement/i.test(src)||/^c6_/i.test(String(t.id||''));const isSeverance=String(t.id||'')==='real_rescisao_20260918'||/rescis[aã]o contratual/i.test(String(t.desc||t.description||''));return !isC6Statement&&!isSeverance});
  s.meta={...(s.meta||{}),schemaVersion:SCHEMA,environment:'production',dataMode:'real'};
  return s}
 function valid(s){return !!(s&&s.meta?.schemaVersion===SCHEMA&&s.meta?.environment==='production'&&s.meta?.dataMode==='real'&&Array.isArray(s.transactions))}
@@ -23,7 +25,6 @@ function upsertTx(tx){return update(s=>{const i=s.transactions.findIndex(x=>x.id
 function seedKnownReal(){
  update(s=>{
  const tx=[
- {id:'real_rescisao_20260918',date:'2026-09-18',desc:'Rescisão Contratual',cat:'Receitas',sub:'Rescisão',value:1069.36,status:'posted',source:'user-confirmed',account:'acc_c6',accountId:'acc_c6'},
  {id:'caju_20260918_bakery_3090',date:'2026-09-18',time:'10:26',desc:'Bakery and Confectionery Real',cat:'Alimentação',sub:'Padaria',value:-30.90,status:'posted',source:'Caju',origin:'Caju Crédito',cardId:'card_caju_alimentacao',excludeFromPatrimony:true},
  {id:'caju_20260918_4905',date:'2026-09-18',time:'12:42',desc:'Compra Caju',cat:'Alimentação',value:-49.05,status:'posted',source:'Caju',origin:'Caju Crédito',cardId:'card_caju_alimentacao',excludeFromPatrimony:true}
  ];tx.forEach(t=>{const i=s.transactions.findIndex(x=>x.id===t.id);if(i<0)s.transactions.push(t);else s.transactions[i]={...s.transactions[i],...t}});
