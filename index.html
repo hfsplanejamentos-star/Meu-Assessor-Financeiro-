@@ -1090,9 +1090,9 @@ const FinanceDomain=(()=>{
  const monthKey=d=>String(d||'').slice(0,7);
  const isIncome=t=>num(t?.value)>0, isExpense=t=>num(t?.value)<0;
  const isCardPurchase=t=>!!t?.card&&isExpense(t);
- const isRealized=t=>!t?.status||t.status==='realized';
+ const isRealized=t=>!t?.status||['realized','real','paid','received'].includes(String(t.status).toLowerCase());
  function normalizeTransaction(t){return {...t,id:t.id??('tx_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)),date:t.date||new Date().toISOString().slice(0,10),desc:String(t.desc||'Lançamento').trim(),value:num(t.value),account:t.account||null,card:t.card||null,cat:t.cat||'Outros',sub:t.sub||'',origin:t.origin||'Manual',status:t.status||'realized'}}
- function transactions(month){const a=(db.transactions||[]).map(normalizeTransaction);return month?a.filter(t=>monthKey(t.date)===month):a}
+ function transactions(month){const a=(db.transactions||[]).map(t=>normalizeTransaction(t.statementVerified?{...t,status:'realized'}:t));return month?a.filter(t=>monthKey(t.date)===month):a}
  function monthlySummary(month){const a=transactions(month).filter(isRealized),income=a.filter(isIncome).reduce((s,t)=>s+num(t.value),0),expenses=a.filter(isExpense).reduce((s,t)=>s+Math.abs(num(t.value)),0),cardPurchases=a.filter(isCardPurchase).reduce((s,t)=>s+Math.abs(num(t.value)),0);return {month,income,expenses,net:income-expenses,cardPurchases,count:a.length}}
  function cardInvoice(cardId,month){return transactions(month).filter(t=>t.card===cardId&&isExpense(t)&&isRealized(t)).reduce((s,t)=>s+Math.abs(num(t.value)),0)}
  function accountCashMovement(accountId,month){return transactions(month).filter(t=>t.account===accountId&&!isCardPurchase(t)&&isRealized(t)).reduce((s,t)=>s+num(t.value),0)}
