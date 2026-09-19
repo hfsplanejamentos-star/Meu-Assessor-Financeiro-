@@ -3,7 +3,7 @@
   'use strict';
   const KEY = 'meu_assessor_financeiro_v10_real';
   const LEGACY_KEYS = ['assessor_v180_simulacao_ficticia', 'meu_assessor_financeiro'];
-  const SCHEMA = 4;
+  const SCHEMA = 5;
   const COLLECTIONS = ['accounts', 'cards', 'transactions', 'recurring', 'investments', 'invoices', 'budgets', 'goals'];
   const clone = (value) => JSON.parse(JSON.stringify(value ?? {}));
   const KNOWN_REAL = Object.freeze({ c6OpeningBalance: 34.31, severance: 1069.36, c6Balance: 1103.67, cajuBalance: 881.95, cajuLimit: 1500 });
@@ -61,8 +61,18 @@
     const income = [['2026-10', 6500, 'Salário outubro'], ...['2026-11', '2026-12', '2027-01', '2027-02', '2027-03', '2027-04', '2027-05', '2027-06', '2027-07'].map((month) => [month, 10104.50, 'Salário líquido'])];
     for (const [month, value, desc] of income) upsert(state.transactions, { id: `receita_${String(month).replace('-', '_')}`, date: `${month}-05`, desc, cat: 'Receitas', value, status: 'planned', source: 'user-approved-plan', accountId: 'acc_c6' });
     upsert(state.transactions, { id: 'decimo_terceiro_2026', date: '2026-12-20', desc: '13º salário líquido estimado', cat: 'Receitas', value: 3893.44, status: 'planned', source: 'user-approved-plan', accountId: 'acc_c6' });
-    upsert(state.recurring, { id: 'compromissos_base_2026_2027', desc: 'Compromissos mensais', cat: 'Compromissos', value: -3909.90, dueDay: 10, startDate: '2026-10-01', endDate: '2027-07-31', active: true, source: 'user-approved-plan' });
-    upsert(state.recurring, { id: 'compromissos_adicionais_ate_maio', desc: 'Compromissos adicionais até maio', cat: 'Compromissos', value: -300, dueDay: 10, startDate: '2026-10-01', endDate: '2027-05-31', active: true, source: 'user-approved-plan' });
+    // Schema 5 replaces the two former aggregate seed rows with the real
+    // individual commitments supplied by the user. Only the known aggregate
+    // seed IDs are removed; other real/user-created recurring rows are kept.
+    state.recurring = state.recurring.filter((item) => !['compromissos_base_2026_2027', 'compromissos_adicionais_ate_maio'].includes(item.id));
+    [
+      { id: 'rec_pensao_1500', desc: 'Pensão', cat: 'Família', value: -1500, endDate: '2027-07-31' },
+      { id: 'rec_prestacao_carro_1000', desc: 'Prestação do carro', cat: 'Transporte', value: -1000, endDate: '2027-07-31' },
+      { id: 'rec_aluguel_1250', desc: 'Aluguel', cat: 'Moradia', value: -1250, endDate: '2027-07-31' },
+      { id: 'rec_internet_80', desc: 'Internet', cat: 'Moradia', value: -80, endDate: '2027-07-31' },
+      { id: 'rec_plano_tim_7990', desc: 'Plano TIM', cat: 'Comunicação', value: -79.90, endDate: '2027-07-31' },
+      { id: 'rec_emprestimo_300', desc: 'Empréstimo', cat: 'Dívidas', value: -300, endDate: '2027-05-31' },
+    ].forEach((item) => upsert(state.recurring, { ...item, dueDay: 10, startDate: '2026-10-01', active: true, source: 'user-approved-plan' }));
     state.meta = { ...state.meta, c6KnownBalance: KNOWN_REAL.c6Balance, c6KnownBalanceAt: '2026-09-18', cajuKnownBalance: KNOWN_REAL.cajuBalance, cajuKnownBalanceAt: '2026-09-18T12:42:00-03:00', realDataProtected: true };
     return state;
   }
