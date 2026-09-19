@@ -25,7 +25,7 @@ function currentBalances(){
 function projection(start='2026-10',count=12){
  let p=currentBalances().patrimony,liq=currentBalances().liquid,inv=currentBalances().invest,costs=0;const [y,m]=start.split('-').map(Number),rows=[];
  for(let i=0;i<count;i++){const d=new Date(y,m-1+i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),s=summary(k),income=s.plannedIncome,expense=s.plannedExpense,move=s.investment;
-   liq+=income-expense-move;inv+=move;p+=income-expense;costs+=expense;rows.push({...s,date:d,label:d.toLocaleDateString('pt-BR',{month:'short'}).replace('.',''),income,expense,investmentMove:move,liquid:liq,invest,patrimony:p,costs});
+   liq+=income-expense-move;inv+=move;p+=income-expense;costs+=expense;rows.push({...s,date:d,label:d.toLocaleDateString('pt-BR',{month:'short'}).replace('.',''),income,expense,investmentMove:move,liquid:liq,invest:inv,patrimony:p,costs});
  }return rows;
 }
 function normalizeCore(){
