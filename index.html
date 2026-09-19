@@ -464,6 +464,16 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
 #kpis [data-kpi-id="creditcard"],#kpis [data-kpi-id="caju"]{border-color:rgba(32,216,255,.34)}
 #kpis [data-kpi-id="caju"]{background:linear-gradient(145deg,rgba(255,94,40,.22),rgba(244,22,74,.18) 55%,rgba(7,18,33,.88))}
 #kpis [data-kpi-id="caju"] .value{color:var(--green)}
+
+/* Approved real-brand card treatment */
+.brand-fin-card{min-height:220px;border-radius:24px;padding:22px;overflow:hidden;position:relative;border:1px solid rgba(123,181,255,.25);box-shadow:0 18px 40px rgba(0,0,0,.22);cursor:pointer}
+.brand-fin-card:before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.8}
+.c6-brand{background:linear-gradient(145deg,#15191d 0%,#05080b 68%,#0d151d 100%);color:#fff}
+.c6-brand:before{background:radial-gradient(circle at 90% 15%,rgba(255,255,255,.09),transparent 35%)}
+.caju-brand{background:linear-gradient(135deg,#ff7418 0%,#ff3d22 38%,#ed174c 75%,#ff2957 100%);color:#fff;border-color:rgba(255,164,88,.55)}
+.caju-brand:before{background:radial-gradient(circle at 78% 78%,rgba(255,184,28,.75),transparent 24%),radial-gradient(circle at 84% 48%,rgba(51,170,79,.75),transparent 17%)}
+.brand-fin-card>*{position:relative;z-index:1}.brand-top{display:flex;justify-content:space-between;gap:12px;align-items:center}.brand-type{font-size:12px;font-weight:800;letter-spacing:.04em}.brand-logo{font-size:24px;letter-spacing:-.04em}.brand-name{font-size:25px;font-weight:900;margin-top:25px}.brand-sub,.brand-num{margin-top:5px;font-size:15px}.brand-num{font-size:18px;letter-spacing:.08em}.brand-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:24px;padding-top:16px;border-top:1px solid rgba(255,255,255,.16)}.brand-stats small{display:block;opacity:.76}.brand-stats strong{display:block;font-size:20px;margin-top:4px}.brand-fin-card .up{color:#28e0a1}.caju-brand .up{color:#fff}.brand-foot{margin-top:15px;font-size:13px;opacity:.86}
+@media(max-width:520px){.brand-fin-card{min-height:205px;padding:19px}.brand-logo{font-size:21px}.brand-name{font-size:23px}.brand-stats strong{font-size:18px}}
 </style>
 <link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"></head>
 <body>
@@ -1270,6 +1280,12 @@ function renderBudgetsGoals(){
  const gl=document.getElementById('goalList');if(gl)gl.innerHTML=goals.length?goals.map(g=>{const pct=Number(g.target)>0?Number(g.current||0)/Number(g.target):0;return `<div class="goal-card"><div class="goal-top"><div><b>${g.name}</b><small style="display:block;color:var(--muted)">${g.type||'Meta'}${g.date?' · até '+fmt(g.date):''}</small></div><span class="tag">${Math.min(100,Math.round(pct*100))}%</span></div><div class="progress"><span style="width:${Math.min(100,pct*100)}%"></span></div><div class="goal-meta"><span>${brl(g.current||0)}</span><span>Meta ${brl(g.target)}</span></div></div>`}).join(''):'<div class="notice">Nenhuma meta cadastrada.</div>';
  const ho=document.getElementById('healthOverview'),hd=document.getElementById('healthDetail');if(ho)ho.innerHTML=healthHTML();if(hd)hd.innerHTML=healthHTML();
 }
+
+function financeBrandCard(kind,key){
+ const isCaju=kind==='caju',card=isCaju?(db.cards||[]).find(x=>String(x.id)==='card_caju_alimentacao'||/caju/i.test(String(x.name||''))):(db.cards||[]).find(x=>['Crédito','Múltiplo'].includes(x.type||'Crédito'));
+ if(isCaju){const bal=card?cajuBalanceAt(card.id,key):0,spent=(db.transactions||[]).filter(t=>card&&(t.cardId===card.id||t.card===card.id)&&String(t.date||'').slice(0,7)===key&&Number(t.value)<0).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);return `<div class="brand-fin-card caju-brand clickable-card" data-card-nav="cards" data-kpi-id="caju" tabindex="0"><div class="brand-top"><span class="brand-type">🍴 CARTÃO BENEFÍCIO</span><b class="brand-logo">caju</b></div><div class="brand-name">Caju</div><div class="brand-sub">Alimentação e Refeição</div><div class="brand-num">•••• ${card?.last4||'5678'}</div><div class="brand-stats"><div><small>Valor gasto</small><strong>${brl(spent)}</strong></div><div><small>Saldo disponível</small><strong class="up">${brl(bal)}</strong></div></div><div class="brand-foot">Limite nominal ${brl(1500)} · saldo acumulativo</div></div>`}
+ const inv=card?invoiceAmount(card.id,key):0,limit=Number(card?.limit||0),avail=Math.max(limit-inv,0);return `<div class="brand-fin-card c6-brand clickable-card" data-card-nav="cards" data-kpi-id="creditcard" tabindex="0"><div class="brand-top"><span class="brand-type">▣ CARTÃO DE CRÉDITO</span><b class="brand-logo">C6 BANK</b></div><div class="brand-name">C6 Bank Carbon</div><div class="brand-num">•••• ${card?.last4||'4321'}</div><div class="brand-stats"><div><small>Fatura atual</small><strong>${brl(inv)}</strong></div><div><small>Disponível</small><strong class="up">${limit?brl(avail):'Não informado'}</strong></div></div><div class="brand-foot">${limit?'Limite '+brl(limit):'Limite não informado'} · Ver lançamentos →</div></div>`}
+}
 function renderKpis(){const b=balances(),key=activeMonth,planned=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&t.status==='planned'&&!t.transfer),plannedIncome=planned.filter(t=>Number(t.value)>0).reduce((s,t)=>s+Number(t.value||0),0),recExpense=(db.recurring||[]).filter(r=>{const st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return r.active!==false&&(!st||key>=st)&&(!en||key<=en)}).reduce((s,r)=>s+Math.abs(Number(r.value)||0),0),box=document.getElementById('kpis');if(!box)return;
  const creditCards=(db.cards||[]).filter(c=>['Crédito','Múltiplo'].includes(c.type||'Crédito')),cardSpend=creditCards.reduce((s,c)=>s+invoiceAmount(c.id,key),0);
  const defs={
@@ -1277,8 +1293,8 @@ function renderKpis(){const b=balances(),key=activeMonth,planned=(db.transaction
   available:{html:kpiCard('DISPONÍVEL HOJE',brl(b.liquid),'Contas','neutral'),route:'accounts'},
   income:{html:kpiCard('RECEITAS',brl(b.inc),'Previsto '+brl(plannedIncome),'neutral'),route:'transactions'},
   expense:{html:kpiCard('DESPESAS',brl(b.exp),'Previsto '+brl(recExpense),'neutral'),route:'transactions'},
-  creditcard:{html:kpiCard('CARTÃO DE CRÉDITO',brl(cardSpend),'Fatura do mês · ver limite e lançamentos','neutral'),route:'cards'},
-  caju:{html:(()=>{const c=(db.cards||[]).find(x=>String(x.id)==='card_caju_alimentacao'||/caju/i.test(String(x.name||''))),bal=c?cajuBalanceAt(c.id,key):0,spent=(db.transactions||[]).filter(t=>c&&(t.cardId===c.id||t.card===c.id)&&String(t.date||'').slice(0,7)===key&&Number(t.value)<0).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);return kpiCard('CAJU ALIMENTAÇÃO',brl(bal),'Gasto '+brl(spent)+' · saldo disponível','neutral')})(),route:'cards'},
+  creditcard:{html:financeBrandCard('creditcard',key),route:'cards'},
+  caju:{html:financeBrandCard('caju',key),route:'cards'},
   investments:{html:kpiCard('INVESTIMENTOS',brl(b.invest),'Investimentos','neutral'),route:'investments'}
  };
  const valid=new Set(KPI_ITEMS.map(x=>x[0])),seen=new Set();kpiLayout=(Array.isArray(kpiLayout)?kpiLayout:[]).filter(x=>x&&valid.has(x.id)&&!seen.has(x.id)&&(seen.add(x.id),true));KPI_ITEMS.forEach(x=>{if(!seen.has(x[0]))kpiLayout.push({id:x[0],visible:true})});
