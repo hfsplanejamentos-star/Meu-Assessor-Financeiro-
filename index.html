@@ -410,6 +410,18 @@ border-left:1px solid rgba(75,190,255,.28);backdrop-filter:blur(24px);box-shadow
  .mobile-month-label{border:0!important;background:transparent!important;color:#f2f7ff!important;font-weight:800;font-size:18px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:10px 4px!important;text-align:center}
  .top-actions{display:none}
 }
+
+/* Mobile: KPIs compactos aprovados */
+@media(max-width:520px){
+ #kpis.grid-kpi{grid-template-columns:1fr 1fr;gap:9px}
+ #kpis>.kpi{min-height:88px;padding:11px 12px;border-radius:15px}
+ #kpis>.kpi .label{font-size:10px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #kpis>.kpi .value{font-size:20px;margin:6px 0 3px}
+ #kpis>.kpi .spark{display:none}
+ #kpis>.kpi .neutral,#kpis>.kpi .up,#kpis>.kpi .down{font-size:10px;color:var(--muted)}
+ #kpis>.kpi:after{width:75px;height:75px;right:-28px;top:-28px}
+ #kpis .quick-fin-inline{grid-column:1 / -1}
+}
 </style>
 <link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"></head>
 <body>
@@ -1216,17 +1228,23 @@ function renderBudgetsGoals(){
  const gl=document.getElementById('goalList');if(gl)gl.innerHTML=goals.length?goals.map(g=>{const pct=Number(g.target)>0?Number(g.current||0)/Number(g.target):0;return `<div class="goal-card"><div class="goal-top"><div><b>${g.name}</b><small style="display:block;color:var(--muted)">${g.type||'Meta'}${g.date?' · até '+fmt(g.date):''}</small></div><span class="tag">${Math.min(100,Math.round(pct*100))}%</span></div><div class="progress"><span style="width:${Math.min(100,pct*100)}%"></span></div><div class="goal-meta"><span>${brl(g.current||0)}</span><span>Meta ${brl(g.target)}</span></div></div>`}).join(''):'<div class="notice">Nenhuma meta cadastrada.</div>';
  const ho=document.getElementById('healthOverview'),hd=document.getElementById('healthDetail');if(ho)ho.innerHTML=healthHTML();if(hd)hd.innerHTML=healthHTML();
 }
-function renderKpis(){const b=balances(),key=activeMonth,planned=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&t.status==='planned'&&!t.transfer),plannedIncome=planned.filter(t=>Number(t.value)>0).reduce((s,t)=>s+Number(t.value||0),0),recExpense=(db.recurring||[]).filter(r=>{const st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return r.active!==false&&(!st||key>=st)&&(!en||key<=en)}).reduce((s,r)=>s+Math.abs(Number(r.value)||0),0);const box=document.getElementById('kpis');box.innerHTML=[
- kpiCard('PATRIMÔNIO TOTAL',brl(b.patrimony),'Abrir contas','neutral'),
- kpiCard('DISPONÍVEL HOJE',brl(b.liquid),'Abrir contas','neutral'),
- kpiCard('RECEITAS REALIZADAS',brl(b.inc),monthLabelKey(key),'neutral'),
- kpiCard('RECEITAS PREVISTAS',brl(plannedIncome),monthLabelKey(key),'neutral'),
- kpiCard('DESPESAS REALIZADAS',brl(b.exp),monthLabelKey(key),'neutral'),
- kpiCard('DESPESAS PREVISTAS',brl(recExpense),monthLabelKey(key),'neutral'),
- kpiCard('INVESTIMENTOS',brl(b.invest),'Abrir investimentos','neutral')
-].join('');
- const routes=['accounts','accounts','transactions','transactions','transactions','recurring','investments'];
- [...box.children].forEach((el,i)=>{el.classList.add('clickable-card');el.tabIndex=0;el.dataset.cardNav=routes[i];el.style.pointerEvents='auto'});
+function renderKpis(){const b=balances(),key=activeMonth,planned=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&t.status==='planned'&&!t.transfer),plannedIncome=planned.filter(t=>Number(t.value)>0).reduce((s,t)=>s+Number(t.value||0),0),recExpense=(db.recurring||[]).filter(r=>{const st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return r.active!==false&&(!st||key>=st)&&(!en||key<=en)}).reduce((s,r)=>s+Math.abs(Number(r.value)||0),0);const box=document.getElementById('kpis');
+ const mobile=window.matchMedia('(max-width:520px)').matches;
+ if(mobile){
+   const creditCards=(db.cards||[]).filter(c=>['Crédito','Múltiplo'].includes(c.type||'Crédito')),cardSpend=creditCards.reduce((s,c)=>s+invoiceAmount(c.id,key),0);
+   box.innerHTML=[
+    kpiCard('PATRIMÔNIO TOTAL',brl(b.patrimony),'Contas','neutral'),
+    kpiCard('DISPONÍVEL HOJE',brl(b.liquid),'Contas','neutral'),
+    kpiCard('RECEITAS',brl(plannedIncome),'Realizado '+brl(b.inc)+' · Previsto '+brl(plannedIncome),'neutral'),
+    kpiCard('DESPESAS',brl(recExpense),'Realizado '+brl(b.exp)+' · Previsto '+brl(recExpense),'neutral'),
+    kpiCard('CARTÕES',brl(cardSpend),'Fatura do mês','neutral'),
+    kpiCard('INVESTIMENTOS',brl(b.invest),'Investimentos','neutral')
+   ].join('');
+   const routes=['accounts','accounts','transactions','recurring','cards','investments'];[...box.children].forEach((el,i)=>{el.classList.add('clickable-card');el.tabIndex=0;el.dataset.cardNav=routes[i];el.style.pointerEvents='auto'});
+ }else{
+   box.innerHTML=[kpiCard('PATRIMÔNIO TOTAL',brl(b.patrimony),'Abrir contas','neutral'),kpiCard('DISPONÍVEL HOJE',brl(b.liquid),'Abrir contas','neutral'),kpiCard('RECEITAS REALIZADAS',brl(b.inc),monthLabelKey(key),'neutral'),kpiCard('RECEITAS PREVISTAS',brl(plannedIncome),monthLabelKey(key),'neutral'),kpiCard('DESPESAS REALIZADAS',brl(b.exp),monthLabelKey(key),'neutral'),kpiCard('DESPESAS PREVISTAS',brl(recExpense),monthLabelKey(key),'neutral'),kpiCard('INVESTIMENTOS',brl(b.invest),'Abrir investimentos','neutral')].join('');
+   const routes=['accounts','accounts','transactions','transactions','transactions','recurring','investments'];[...box.children].forEach((el,i)=>{el.classList.add('clickable-card');el.tabIndex=0;el.dataset.cardNav=routes[i];el.style.pointerEvents='auto'});
+ }
 }
 function renderQuickFinancialCards(){
  let box=document.getElementById('quickFinancialCards');
