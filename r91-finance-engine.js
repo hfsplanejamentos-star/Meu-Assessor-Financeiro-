@@ -79,8 +79,8 @@ function canonicalRenderKpis(){
   ['income_planned','RECEITAS PREVISTAS',s.plannedIncome,k,'transactions'],
   ['expense','DESPESAS REALIZADAS',s.realizedExpense,k,'transactions'],
   ['expense_planned','DESPESAS PREVISTAS',s.plannedExpense,k,'recurring'],
-  ['creditcard','CARTÃO DE CRÉDITO',typeof invoiceAmount==='function'?(db.cards||[]).filter(c=>['Crédito','Múltiplo'].includes(c.type||'Crédito')).reduce((z,c)=>z+invoiceAmount(c.id,k),0):0,'Fatura do mês · ver limite e lançamentos','cards'],
-  ['caju','CAJU ALIMENTAÇÃO',(()=>{const cc=(db.cards||[]).find(c=>/caju/i.test(String(c.name||c.id||'')));if(!cc)return 0;return (db.transactions||[]).filter(t=>(t.cardId===cc.id||t.card===cc.id||/caju/i.test(String(t.origin||t.source||'')))&&keyOf(t.date)<=k).reduce((z,t)=>z+n(t.value),0)})(),(()=>{const cc=(db.cards||[]).find(c=>/caju/i.test(String(c.name||c.id||'')));const spent=(db.transactions||[]).filter(t=>cc&&(t.cardId===cc.id||t.card===cc.id)&&keyOf(t.date)===k&&n(t.value)<0).reduce((z,t)=>z+Math.abs(n(t.value)),0);return 'Gasto '+brl(spent)+' · saldo disponível'})(),'cards'],
+  ['creditcard','',0,'','cards'],
+  ['caju','',0,'','cards'],
   ['investments','INVESTIMENTOS',b.invest,'Abrir investimentos','investments']
  ];
  let pref;try{pref=JSON.parse(localStorage.getItem('assessor_kpi_layout')||'[]')}catch(_){pref=[]}
@@ -88,7 +88,7 @@ function canonicalRenderKpis(){
  const order=(Array.isArray(pref)&&pref.length?pref:KPI_ITEMS.map(x=>({id:x[0],visible:true})));
  const rank=new Map(order.map((x,i)=>[x.id,i])),visible=new Map(order.map(x=>[x.id,x.visible!==false]));
  const rows=items.filter(x=>visible.get(group(x[0]))!==false).sort((a,b)=>(rank.get(group(a[0]))??99)-(rank.get(group(b[0]))??99));
- box.innerHTML=rows.map(x=>kpiCard(x[1],brl(x[2]),x[3],'neutral')).join('');
+ box.innerHTML=rows.map(x=>x[0]==='creditcard'&&typeof financeBrandCard==='function'?financeBrandCard('creditcard',k):x[0]==='caju'&&typeof financeBrandCard==='function'?financeBrandCard('caju',k):kpiCard(x[1],brl(x[2]),x[3],'neutral')).join('');
  [...box.children].forEach((el,i)=>{el.classList.add('clickable-card');el.tabIndex=0;el.dataset.cardNav=rows[i][4];el.dataset.kpiId=group(rows[i][0]);el.style.pointerEvents='auto'});
  bind();
 }
