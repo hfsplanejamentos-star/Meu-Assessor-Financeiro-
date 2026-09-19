@@ -6,10 +6,10 @@
     const results = []; const test = (id, name, ok, detail = '') => results.push({ id, name, ok: Boolean(ok), detail });
     const storeApi = window.FinanceStoreV10; const store = storeApi?.get?.(); const engine = window.FinanceEngineV10; const experience = window.ExperienceV10;
     const legacy = [...document.scripts].filter((script) => /\/r(?:67|68|69|70|75|80|91)-/.test(script.src));
-    const moduleEntry = [...document.scripts].find((script) => script.type === 'module' && /v10\/app\.js/.test(script.src));
+    const moduleEntry = document.querySelector('link[rel="modulepreload"][href*="v10/app.js"]');
     test(1, 'Sem patches empilhados', legacy.length === 0, legacy.map((item) => item.src));
     test(2, 'Store e motor modularizados', Boolean(storeApi && engine && window.RuntimeUIV10));
-    test(3, 'Entrada ES module import/export', Boolean(moduleEntry && window.V10App?.version === '10.0.0'));
+    test(3, 'Fonte ES module + bundle de produção', Boolean(moduleEntry && window.V10App?.version === '10.0.0'));
     test(4, 'FinanceEngine único', Boolean(engine && window.RuntimeUIV10));
     test(5, 'FinanceStore único', Boolean(storeApi && window.db === store));
     test(6, 'Cálculo separado da UI', Boolean(engine && !('document' in engine)));

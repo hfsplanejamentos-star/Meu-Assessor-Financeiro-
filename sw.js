@@ -1,7 +1,7 @@
 const CACHE = 'assessor-v10-production-10.0.0';
 const ASSETS = [
   './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png',
-  './v10/app.js', './v10/finance-store.js', './v10/finance-engine.js', './v10/cloud-sync.js',
+  './v10/app.js', './v10/app.bundle.js', './v10/finance-store.js', './v10/finance-engine.js', './v10/cloud-sync.js',
   './v10/ai-gateway.js', './v10/mobile-themes.css', './v10/mobile-theme.js',
   './v10/mobile-dashboard.css', './v10/mobile-dashboard.js', './v10/render-controller.js',
   './v10/month-sync.js', './v10/runtime-ui.js', './v10/experience.js', './v10/finance-tests.js',
