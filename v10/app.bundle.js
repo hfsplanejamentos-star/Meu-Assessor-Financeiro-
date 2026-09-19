@@ -200,7 +200,8 @@ if(window.FinanceStoreV10){FinanceStoreV10.update(s=>ensureInvestmentPlan(s),'ca
  const KEY='assessor_mobile_theme_v10',VALID=new Set(['current','dark','light']);
  function get(){const v=localStorage.getItem(KEY)||'current';return VALID.has(v)?v:'current'}
  function apply(v){v=VALID.has(v)?v:'current';document.documentElement.dataset.mobileTheme=v;localStorage.setItem(KEY,v);document.querySelectorAll('[data-v10-theme]').forEach(b=>b.classList.toggle('active',b.dataset.v10Theme===v));return v}
- function mount(){if(document.getElementById('v10ThemeSwitch'))return;const box=document.createElement('div');box.id='v10ThemeSwitch';box.className='v10-theme-switch';box.setAttribute('aria-label','Tema do aplicativo');[['current','Atual'],['dark','Escuro'],['light','Claro']].forEach(([v,l])=>{const b=document.createElement('button');b.type='button';b.dataset.v10Theme=v;b.textContent=l;b.onclick=()=>apply(v);box.appendChild(b)});document.body.appendChild(box);apply(get())}
+ function onThemeClick(event){const button=event.target.closest?.('[data-v10-theme]');if(!button)return;event.preventDefault();apply(button.dataset.v10Theme)}
+ function mount(){if(document.getElementById('v10ThemeSwitch'))return;const box=document.createElement('div');box.id='v10ThemeSwitch';box.className='v10-theme-switch';box.setAttribute('aria-label','Tema do aplicativo');[['current','Atual'],['dark','Escuro'],['light','Claro']].forEach(([v,l])=>{const b=document.createElement('button');b.type='button';b.dataset.v10Theme=v;b.textContent=l;box.appendChild(b)});box.addEventListener('click',onThemeClick);document.body.appendChild(box);apply(get())}
  apply(get());if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
  window.MobileThemeV10={get,apply,mount};
 })();
@@ -214,15 +215,22 @@ if(window.FinanceStoreV10){FinanceStoreV10.update(s=>ensureInvestmentPlan(s),'ca
     return window.RuntimeUIV10?.go?.(name) ?? false;
   }
   function activate(name) { document.querySelectorAll('#v10BottomNav button').forEach((button) => button.classList.toggle('active', button.dataset.mobileRoute === name)); }
+  function onNavigate(event) {
+    const button = event.target.closest?.('[data-mobile-route]'); if (!button) return;
+    event.preventDefault(); const name = button.dataset.mobileRoute;
+    if (name === 'add') document.querySelector('.fab-main')?.click();
+    else if (name === 'more') document.getElementById('menuBtn')?.click();
+    else route(name);
+    activate(name);
+  }
   function mountNav() {
     if (document.getElementById('v10BottomNav')) return;
     const nav = document.createElement('nav'); nav.id = 'v10BottomNav'; nav.className = 'v10-bottom-nav'; nav.setAttribute('aria-label', 'Navegação principal móvel');
     [['overview', 'Visão Geral', '⌂'], ['transactions', 'Transações', '⇄'], ['add', 'Adicionar', '+'], ['reports', 'Relatórios', '▥'], ['more', 'Mais', '☰']].forEach(([name, label, icon]) => {
       const button = document.createElement('button'); button.type = 'button'; button.dataset.mobileRoute = name; button.setAttribute('aria-label', label); button.innerHTML = `<b>${icon}</b><span>${label}</span>`;
-      button.onclick = () => { if (name === 'add') document.querySelector('.fab-main')?.click(); else if (name === 'more') document.getElementById('menuBtn')?.click(); else route(name); activate(name); };
       nav.appendChild(button);
     });
-    document.body.appendChild(nav); activate('overview');
+    nav.addEventListener('click', onNavigate); document.body.appendChild(nav); activate('overview');
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountNav); else mountNav();
   window.MobileDashboardV10 = { mountNav, route, activate };
