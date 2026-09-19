@@ -1,33 +1,56 @@
-# Auditoria integrada V10 — 50 itens
-Data: 2026-09-18
+# V10 — Auditoria dos 50 requisitos
 
-## Resultado
-- OK comprovado por estrutura/código: 22/50
-- PARCIAL: 11/50
-- PENDENTE: 15/50
-- BLOQUEADO para validação completa nesta execução: 2/50
-- Gate de produção: REPROVADO até todos os itens críticos ficarem OK.
+Data: 2026-09-19. Regra: OK somente quando implementado e verificável na branch V10.
 
-## OK
-2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 24, 26, 28, 30, 31, 34, 49.
+1 Patches empilhados — PENDENTE
+2 Modularizar — OK
+3 ES6 modules — PENDENTE
+4 FinanceEngine único — OK V10
+5 FinanceStore único — OK V10
+6 Cálculo/UI separados — OK V10
+7 Demo fora da produção — OK V10
+8 Chave real — OK
+9 environment/dataMode — OK
+10 schema versionado — OK
+11 migração segura — OK
+12 recorrência unificada — OK
+13 previsto x realizado — OK V10
+14 investimentos unificados — OK
+15 patrimônio unificado — OK V10
+16 disponível unificado — OK V10
+17 categorias consistentes — OK
+18 gráficos futuros — OK fonte V10
+19 filtros mensais sincronizados — PENDENTE UI
+20 cards clicáveis — OK Mobile
+21 gráficos interativos — PENDENTE integração
+22 agenda ligada ao Engine — PENDENTE
+23 conciliação explícita — PENDENTE V10
+24 Caju separado — OK
+25 mobile-first — OK estrutural
+26 cards 2x2 — OK
+27 hierarquia mobile — OK
+28 bottom nav — OK
+29 Desktop/Mobile mesmo Engine — OK arquitetural
+30 identidade original — OK tema Atual
+31 tema claro — OK
+32 upgrade IA — PENDENTE
+33 LLM backend — PENDENTE
+34 sem chave IA pública — PENDENTE
+35 IA interpretação/execução separadas — PENDENTE
+36 confirmação sensível — PENDENTE
+37 Cloud Sync reforçado — PENDENTE
+38 conflitos Desktop/Mobile — PENDENTE
+39 SW/cache V10 — PENDENTE
+40 dependência ausente — PARCIAL
+41 build produção — PENDENTE
+42 HTML portátil opcional — PENDENTE
+43 testes unitários — PARCIAL
+44 regressão mensal — PARCIAL
+45 integridade — PARCIAL
+46 E2E UI — PENDENTE
+47 Desktop/Mobile testes separados — PENDENTE
+48 validação matemática cruzada — PARCIAL
+49 health/diagnóstico — OK
+50 correção na fonte sem patches — PENDENTE
 
-## PARCIAL
-18, 20, 25, 27, 29, 40, 43, 44, 45, 47, 48.
-
-## PENDENTE
-1, 3, 19, 21, 22, 23, 32, 35, 36, 37, 38, 39, 41, 42, 50.
-
-## BLOQUEADO
-33 — LLM backend exige definição/conexão de provedor e credencial de servidor; nenhuma chave deve ir para JS público.
-46 — E2E físico de interface exige navegador/runner E2E; revisão estática não substitui cliques reais.
-
-## Achados críticos
-1. A entrada ainda carrega scripts r67/r68/r69/r70/r75/r80/r91; portanto itens 1 e 50 não podem ser homologados.
-2. V10 ainda usa IIFEs e objetos window para compatibilidade; item 3 não está concluído.
-3. Render legado ainda pode concorrer com RenderControllerV10; item 18 não está totalmente homologado e o risco de redraw permanece até retirada dos gatilhos legados.
-4. Cloud Sync legado ainda não foi substituído pelo Store V10 com revisão/conflito; itens 37/38 pendentes.
-5. SW/build ainda referencia arquitetura antiga; itens 39/41/42 pendentes.
-6. A suíte financeira existe, mas não há evidência de execução em navegador/CI nesta auditoria; itens 43–48 não podem ser promovidos apenas pela existência dos arquivos.
-
-## Regra de auditoria
-Documentos STATUS anteriores que marcaram itens como [x] representam implementação declarada, não homologação final. Esta auditoria integrada prevalece quando houver divergência.
+Resultado desta auditoria: 24 OK, 5 PARCIAIS, 21 PENDENTES. Não aprovado para declarar 50/50.
