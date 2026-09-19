@@ -1005,17 +1005,6 @@ document.addEventListener('touchstart',e=>{
   if(!e.target.closest('.touch-value,canvas,.tooltip')){try{hideTooltip()}catch(_){}}
 },{passive:true});
 
-renderAll();
-bindTouchFinancialDetails();
- try{renderCardPurchases()}catch(e){}
- try{renderInvoiceManagement()}catch(e){}
- try{renderCardForecast()}catch(e){}
- try{renderCardDashboard()}catch(e){}
- try{renderBudgetsGoals()}catch(e){}
- try{renderAlerts()}catch(e){}
- try{renderReconciliation()}catch(e){}
- requestAnimationFrame(()=>{try{renderCharts()}catch(e){}});
-
 function monthOfTx(t){return t?.card?(t.invoiceMonth||String(t.date||'').slice(0,7)):String(t.date||'').slice(0,7)}
 function transactionsForMonth(key=activeMonth){return (db.transactions||[]).filter(t=>monthOfTx(t)===key)}
 
@@ -2447,7 +2436,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-20260919-2',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r98',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
@@ -2457,6 +2446,8 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 }
 
 renderAll();
+bindTouchFinancialDetails();
+requestAnimationFrame(()=>{try{renderCharts()}catch(e){}});
 
 /* R6.4: eventos touch são vinculados no ciclo normal de renderização; sem observer contínuo. */
 /* R6.3 Recovery — fechamento simples, sem observação contínua do DOM */
