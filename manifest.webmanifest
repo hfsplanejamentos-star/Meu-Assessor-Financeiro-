@@ -2,7 +2,7 @@
   "name": "Meu Assessor Financeiro · Atual",
   "short_name": "Meu Assessor Atual",
   "description": "Assistente financeiro pessoal",
-  "start_url": "./index.html?release=atual-20260919-r93",
+  "start_url": "./atual.html?release=atual-r97",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",

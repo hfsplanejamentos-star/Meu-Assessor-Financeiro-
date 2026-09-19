@@ -1,6 +1,0 @@
-/* V10 internal health diagnostics */
-(()=>{'use strict';function audit(){const s=FinanceStoreV10?.get(),issues=[];const req=(ok,msg)=>{if(!ok)issues.push(msg)};
-req(!!s,'Store indisponível');req(s?.meta?.environment==='production'&&s?.meta?.dataMode==='real','Modo real inválido');req(!!window.FinanceEngineV10,'FinanceEngine indisponível');req(!!window.RenderControllerV10,'RenderController indisponível');req(!!window.MobileThemeV10,'Temas indisponíveis');
-if(s){req(!s.accounts.some(a=>/nubank|btg/i.test(a.name||'')),'Conta demo encontrada');const a=s.transactions.filter(t=>t.transfer&&t.destAccountId==='acc_invest_plan'),m=new Set(a.map(t=>String(t.date).slice(0,7)));req(a.length===9&&m.size===9,'Aportes duplicados/incompletos');const c=s.cards.find(x=>x.id==='card_caju_alimentacao');req(!!c?.excludeFromPatrimony,'Caju incluído no patrimônio')}
-const tests=window.FinanceTestsV10?.run?.();req(tests?.ok,'Regressão financeira falhou');const out={ok:issues.length===0,issues,tests,at:new Date().toISOString()};window.__V10_HEALTH__=out;return out}
-window.HealthV10={audit};})();

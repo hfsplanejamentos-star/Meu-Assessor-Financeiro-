@@ -1,2 +1,0 @@
-/* V10 startup diagnostics */
-(()=>{'use strict';function run(){const checks={store:!!window.FinanceStoreV10,engine:!!window.FinanceEngineV10,render:!!window.RenderControllerV10,theme:!!window.MobileThemeV10,mobile:!!window.MobileDashboardV10,ai:!!window.FinanceAIV10,cloud:!!window.CloudSyncV10,serviceWorker:'serviceWorker'in navigator,realMode:FinanceStoreV10?.get()?.meta?.dataMode==='real'};return{ok:Object.values(checks).every(Boolean),checks,at:new Date().toISOString()}}window.V10Diagnostics={run};})();
