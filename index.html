@@ -7,6 +7,17 @@
 <meta name="application-name" content="Meu Assessor Financeiro · Versão Atual">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#071221">
+<script>
+/* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
+(()=>{try{
+ const RELEASE='atual-ui-20260919-r92';
+ if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
+   ['assessor_home_layout','assessor_kpi_layout','assessor_month_scopes'].forEach(k=>localStorage.removeItem(k));
+   localStorage.setItem('assessor_active_month','2026-09');
+   localStorage.setItem('assessor_current_ui_release',RELEASE);
+ }
+}catch(_){}})();
+</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -2494,8 +2505,7 @@ document.addEventListener('click',function(e){
 <script src="./r69-money-input-fix.js?v=1"></script>
 <script src="./r69-final-cleanup.js?v=3"></script>
 <script src="./r69-real-budget-repair.js?v=2"></script>
-<script src="./r70-assessor-dashboard.js?v=4"></script>
-<script src="./r70-real-reset.js?v=10"></script>
-<script src="./r75-final-validation-fix.js?v=5"></script>
+<script src="./r70-real-reset.js?v=11"></script>
+<script src="./r75-final-validation-fix.js?v=6"></script>
 <script src="./r80-investment-status-fix.js?v=8"></script>
-<div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=9"></script></body></html>
+<div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=10"></script></body></html>
