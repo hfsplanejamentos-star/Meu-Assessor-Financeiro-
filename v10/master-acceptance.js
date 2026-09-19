@@ -35,7 +35,7 @@
     test(19, 'Filtros mensais sincronizados', monthFilters.length >= 2 && monthFilters.every((filter) => filter.dataset.v10MonthBound === '1' && filter.options.length >= 12 && filter.value === window.activeMonth));
     const cards = [...document.querySelectorAll('#kpis [data-v10-route]')]; test(20, 'Cards clicáveis e por teclado', cards.length >= 4 && cards.every((card) => card.tabIndex === 0));
     const individualExpenses = engine?.expenseItems?.(store, '2026-10', 'planned') || [];
-    test(21, 'Gráfico com despesas individuais', [...document.querySelectorAll('#categoryChart,#projectionChart')].every((canvas) => canvas.tabIndex === 0) && individualExpenses.length === 6 && individualExpenses.some((item) => item.name === 'Pensão' && near(item.value, 1500)) && individualExpenses.some((item) => item.name === 'Plano TIM' && near(item.value, 79.90)));
+    test(21, 'Gráfico com despesas individuais', [...document.querySelectorAll('#categoryChart,#projectionChart')].every((canvas) => canvas.tabIndex === 0) && individualExpenses.length === 6 && individualExpenses.some((item) => item.name === 'Pensão alimentícia' && near(item.value, 1500)) && individualExpenses.some((item) => item.name === 'Plano TIM' && near(item.value, 79.90)));
     test(22, 'Agenda ligada ao motor', (experience?.agendaEvents?.('2026-10') || []).some((item) => item.type === 'recurring') && Boolean(document.getElementById('calendarEvents')));
     test(23, 'Conciliação explícita', Array.isArray(experience?.reconcile?.('2026-09')?.cases) && Boolean(document.getElementById('reconcileStats')));
     const caju = experience?.cajuStatus?.(); test(24, 'Caju separado', caju?.excludeFromPatrimony === true && near(caju?.balance, 881.95));

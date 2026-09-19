@@ -30,11 +30,15 @@ assert.equal(engine.summary(state, '2026-12').plannedIncome, 13997.94);
 assert.equal(engine.summary(state, '2027-05').plannedExpense, 4209.9);
 assert.equal(engine.summary(state, '2027-06').plannedExpense, 3909.9);
 assert.deepEqual(Array.from(engine.expenseItems(state, '2026-10', 'planned'), (item) => [item.name, item.value]), [
-  ['Pensão', 1500], ['Aluguel', 1250], ['Prestação do carro', 1000], ['Empréstimo', 300], ['Internet', 80], ['Plano TIM', 79.9],
+  ['Pensão alimentícia', 1500], ['Aluguel', 1250], ['Prestação do carro', 1000], ['Empréstimo mãe', 300], ['Internet', 80], ['Plano TIM', 79.9],
 ]);
 assert.equal(engine.expenseItems(state, '2027-06', 'planned').length, 5);
 assert.equal(engine.expenseItems(state, '2026-10', 'planned').reduce((sum, item) => sum + item.value, 0), 4209.9);
+assert.equal(state.transactions.filter((item) => item.source === 'C6 Bank statement' && item.value < 0).length, 18);
+assert.equal(state.transactions.filter((item) => item.source === 'C6 Bank statement' && item.value < 0).reduce((sum, item) => sum + Math.abs(item.value), 0), 1739.18);
+assert.equal(state.transactions.find((item) => item.id === 'c6_justa_ferreira_adelino').cat, 'Moradia');
+assert.equal(state.transactions.find((item) => item.id === 'caju_2026_09_17_padaria_xanxere').value, -14);
 assert.equal(engine.summary(state, '2026-11').investment, 3000);
 assert.equal(engine.projection(state, '2026-10', 12).every((row) => Math.abs(row.patrimony - (row.liquid + row.invest)) < 0.02), true);
 assert.equal(context.FinanceTestsV10.run().ok, true);
-console.log(JSON.stringify({ ok: true, assertions: 16, finance: context.FinanceTestsV10.run() }, null, 2));
+console.log(JSON.stringify({ ok: true, assertions: 20, finance: context.FinanceTestsV10.run() }, null, 2));
