@@ -2022,7 +2022,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
  const s=document.getElementById('pwaStatus');if(s)s.textContent=location.protocol==='file:'?'Versão offline aberta. Para instalar, use o pacote PWA em HTTPS/localhost.':'Service Worker não suportado neste navegador.';
 }
 
-renderAll();
+window.RenderControllerV10?.schedule?.('startup');
 
 /* R6.4: eventos touch são vinculados no ciclo normal de renderização; sem observer contínuo. */
 /* R6.3 Recovery — fechamento simples, sem observação contínua do DOM */
@@ -2042,14 +2042,7 @@ document.addEventListener('keydown',function(e){
 });
 
 
-let __chartResizeTimer=null;
-window.addEventListener('resize',()=>{
- clearTimeout(__chartResizeTimer);
- __chartResizeTimer=setTimeout(()=>{
-   try{renderCharts();renderCardTrend();renderCardPurchases()}catch(e){console.warn('[R6.4] resize charts:',e)}
- },180);
-},{passive:true});
-
+/* V10: resize rendering is handled only by RenderControllerV10. */
 
 document.addEventListener('click',function(e){
  const modal=e.target.closest('.modal.open');
