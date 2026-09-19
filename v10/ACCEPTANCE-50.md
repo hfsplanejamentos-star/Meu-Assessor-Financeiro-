@@ -1,57 +1,57 @@
-# V10 - Master acceptance checklist (50)
+# V10 — Auditoria dos 50 itens (19/09/2026)
 
-DONE = implemented in V10. TODO = not safe to claim complete.
+Legenda: OK = implementado no caminho V10 e verificável por código/teste; PARCIAL = existe implementação, mas critério integral ainda não está fechado; PENDENTE = não implementado no padrão V10.
 
-1 TODO Remove legacy patch stack from production entrypoint
-2 DONE Modularize financial state and engine
-3 TODO ES module imports/exports
-4 DONE Single FinanceEngine V10
-5 DONE Single FinanceStore V10
-6 DONE Separate financial calculation from presentation
-7 DONE Remove demo financial data from V10 state
-8 DONE Production real storage key
-9 DONE Explicit environment/dataMode
-10 DONE Versioned schema
-11 DONE Safe legacy migration
-12 DONE Unified recurrence
-13 DONE Planned vs realized rule
-14 DONE Unified investments
-15 DONE Unified patrimony
-16 DONE Unified available/liquid
-17 DONE Consistent category totals
-18 DONE Future chart series
-19 TODO Sync every legacy month filter
-20 DONE Clickable V10 KPI cards
-21 TODO Consolidate legacy chart interactions
-22 TODO Calendar fully driven by V10 engine
-23 TODO Reconciliation fully driven by V10 Store
-24 DONE Caju separate
-25 DONE Mobile-first overview
-26 DONE 2x2 mobile KPI layout
-27 DONE Mobile hierarchy
-28 DONE Mobile bottom navigation
-29 DONE Desktop/mobile share Store/Engine
-30 DONE Current theme preserves identity
-31 DONE Light and Dark optional themes
-32 TODO Upgrade AI architecture
-33 TODO Backend LLM
-34 TODO Guarantee no public AI key
-35 TODO Separate AI interpretation/execution
-36 TODO Confirmation for sensitive AI mutations
-37 TODO Cloud sync on FinanceStore
-38 TODO Revision/conflict control
-39 TODO Service worker/cache consolidation
-40 TODO Startup/dependency diagnostics
-41 TODO Production build without legacy patches
-42 TODO Portable single HTML optional build
-43 DONE V10 smoke/unit harness
-44 TODO Full Sep/2026-Jul/2027 monthly regression
-45 TODO Full integrity suite
-46 TODO Browser E2E suite
-47 TODO Separate Desktop/Mobile browser tests
-48 TODO Independent math cross-validation
-49 DONE Internal diagnostics baseline
-50 IN_PROGRESS Fix at source: V10 path exists, legacy patch stack remains loaded
+1. Eliminar patches empilhados — OK (entrada V10 não carrega rXX externos)
+2. Modularizar — OK
+3. ES6 modules — PENDENTE (arquivos V10 ainda usam IIFE/globais)
+4. FinanceEngine único — OK no caminho V10
+5. FinanceStore — OK
+6. Separar cálculo/UI — OK
+7. Remover demo da produção — PARCIAL (Store limpa demo, mas index ainda contém seed/storage legado inline)
+8. Trocar storage de simulação — OK
+9. environment/dataMode explícitos — OK
+10. schema versionado — OK
+11. migração segura — OK
+12. recorrência unificada — OK
+13. planned vs realized — OK
+14. investimentos unificados — OK
+15. patrimônio unificado — OK
+16. disponível unificado — OK
+17. categorias consistentes — OK
+18. gráficos futuros — OK no motor
+19. filtros de mês sincronizados — PARCIAL
+20. cards clicáveis — OK no mobile V10
+21. gráficos interativos — PARCIAL
+22. agenda ligada ao motor — PENDENTE
+23. conciliação explícita — PARCIAL/legado
+24. Caju separado — OK
+25. mobile-first — OK
+26. cards mobile 2x2 — OK
+27. hierarquia mobile — OK
+28. bottom nav — OK
+29. Desktop/Mobile mesmo engine — OK estruturalmente
+30. identidade original — OK via tema Atual
+31. tema claro — OK
+32. upgrade IA — PENDENTE
+33. backend LLM — PENDENTE
+34. sem chave IA pública — OK (não há chave LLM V10 pública)
+35. separar interpretação/executação IA — PENDENTE
+36. confirmação operações sensíveis — PENDENTE
+37. cloud sync forte — PENDENTE
+38. conflito Desktop/Mobile — PENDENTE
+39. service worker/cache — PENDENTE
+40. detectar dependência ausente — OK via Health V10, cobertura parcial
+41. build produção completo — PENDENTE
+42. build HTML portátil opcional — PENDENTE
+43. testes unitários — OK (harness financeiro)
+44. regressão mensal — PARCIAL (meses-chave cobertos; matriz integral a fechar)
+45. integridade — OK básico
+46. E2E UI — PENDENTE (não executado em navegador real)
+47. testes Desktop/Mobile — PENDENTE
+48. validação matemática cruzada — PARCIAL
+49. health/diagnóstico — OK
+50. corrigir na fonte — PARCIAL: V10 está limpa externamente, mas index monolítico/inline legado ainda precisa ser removido.
 
-Current audit: 29 DONE, 20 TODO, 1 IN_PROGRESS.
-Do not claim 50/50 until all TODO/IN_PROGRESS items are implemented and tested.
+## Conclusão
+Não é correto declarar 50/50 OK ainda. A auditoria encontrou pendências reais, principalmente 3, 7, 19, 21-23, 32-39, 41-42, 44, 46-48 e 50. Este documento é o gate de release: produção só deve ser promovida após todos virarem OK.
