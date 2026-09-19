@@ -1,7 +1,7 @@
-import { mutation, query } from "./_generated/server";
+import { internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 
-export const get = query({
+export const get = internalQuery({
   args: { ownerKey: v.string() },
   returns: v.union(v.null(), v.object({ payload: v.any(), version: v.number(), updatedAt: v.number(), deviceId: v.optional(v.string()) })),
   handler: async (ctx, { ownerKey }) => {
@@ -10,7 +10,7 @@ export const get = query({
   },
 });
 
-export const save = mutation({
+export const save = internalMutation({
   args: {
     ownerKey: v.string(),
     payload: v.any(),
@@ -37,7 +37,7 @@ export const save = mutation({
   },
 });
 
-export const reset = mutation({
+export const reset = internalMutation({
   args: { ownerKey: v.string(), emptyPayload: v.any(), deviceId: v.optional(v.string()) },
   returns: v.object({ ok: v.literal(true), version: v.number(), updatedAt: v.number() }),
   handler: async (ctx, args) => {
