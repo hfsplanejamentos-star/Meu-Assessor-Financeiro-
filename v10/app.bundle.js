@@ -492,7 +492,11 @@ window.Acceptance40to50V10={run};window.addEventListener('load',()=>setTimeout(r
     test(50, 'Correção na fonte', legacy.length === 0 && Boolean(moduleEntry));
     results.sort((a, b) => Number(a.id) - Number(b.id));
     const output = { ok: results.length === 50 && results.every((item) => item.ok), passed: results.filter((item) => item.ok).length, total: 50, failed: results.filter((item) => !item.ok), results, at: new Date().toISOString() };
-    window.__V10_MASTER_ACCEPTANCE__ = output; return output;
+    window.__V10_MASTER_ACCEPTANCE__ = output;
+    document.documentElement.dataset.v10Gate = `${output.passed}/50`;
+    document.documentElement.dataset.v10GateStatus = output.ok ? 'ok' : 'failed';
+    document.documentElement.dataset.v10GateFailed = output.failed.map((item) => item.id).join(',');
+    return output;
   }
   window.V10MasterAcceptance = { run };
   if (document.readyState === 'complete') setTimeout(run, 500); else window.addEventListener('load', () => setTimeout(run, 500));
