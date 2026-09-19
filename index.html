@@ -456,6 +456,9 @@ border-left:1px solid rgba(75,190,255,.28);backdrop-filter:blur(24px);box-shadow
 /* Mobile modal: trava fundo e rola conteúdo do popup */
 body.modal-lock{overflow:hidden!important;touch-action:none}
 @media(max-width:520px){.modal{padding:10px;overflow:hidden;overscroll-behavior:contain}.modal-card,.modal-box{width:100%!important;max-width:100%!important;max-height:calc(100dvh - 20px)!important;overflow-y:auto!important;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:calc(22px + env(safe-area-inset-bottom))}.modal-head{position:sticky;top:-1px;z-index:4;background:#071221;padding:4px 0 10px}.edit-actions{position:sticky;bottom:-1px;z-index:4;background:#071221;padding:10px 0 calc(4px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}}
+
+/* Mobile: fonte única dos cards iniciais personalizáveis */
+@media(max-width:520px){#kpis.grid-kpi{grid-template-columns:repeat(2,minmax(0,1fr))!important}#kpis>.kpi{display:block!important;min-width:0!important}#quickFinancialCards{display:none!important}}
 </style>
 <link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"></head>
 <body>
@@ -1273,6 +1276,7 @@ function renderKpis(){const b=balances(),key=activeMonth,planned=(db.transaction
  }
 }
 function renderQuickFinancialCards(){
+ if(window.matchMedia('(max-width:520px)').matches){document.getElementById('quickFinancialCards')?.remove();return}
  let box=document.getElementById('quickFinancialCards');
  const kpis=document.getElementById('kpis');if(!kpis)return;
  if(!box){box=document.createElement('div');box.id='quickFinancialCards';box.className='quick-fin-inline';}
@@ -1822,7 +1826,7 @@ function tagHomeBlocks(){const dash=document.querySelector('#view-overview .dash
 function applyHomeLayout(){tagHomeBlocks();const dash=document.querySelector('#view-overview .dashboard');if(!dash)return;homeLayout.forEach(x=>{const el=dash.querySelector('[data-home-block="'+x.id+'"]');if(el){dash.appendChild(el);el.classList.toggle('dashboard-hidden',x.visible===false)}})}
 function renderCustomize(){renderCustomizeKpis();const box=document.getElementById('customizeList');if(!box)return;const names=Object.fromEntries(HOME_BLOCKS);box.innerHTML=homeLayout.map((x,i)=>'<div class="customize-row"><div class="customize-move"><button data-home-up="'+i+'">↑</button><button data-home-down="'+i+'">↓</button></div><b>'+names[x.id]+'</b><label><input type="checkbox" data-home-visible="'+i+'" '+(x.visible!==false?'checked':'')+'> Exibir</label></div>').join('');box.querySelectorAll('[data-home-up]').forEach(b=>b.onclick=()=>{const i=+b.dataset.homeUp;if(i>0){[homeLayout[i-1],homeLayout[i]]=[homeLayout[i],homeLayout[i-1]];renderCustomize()}});box.querySelectorAll('[data-home-down]').forEach(b=>b.onclick=()=>{const i=+b.dataset.homeDown;if(i<homeLayout.length-1){[homeLayout[i+1],homeLayout[i]]=[homeLayout[i],homeLayout[i+1]];renderCustomize()}});box.querySelectorAll('[data-home-visible]').forEach(b=>b.onchange=()=>homeLayout[+b.dataset.homeVisible].visible=b.checked)}
 document.getElementById('saveHomeLayout')?.addEventListener('click',()=>{localStorage.setItem('assessor_home_layout',JSON.stringify(homeLayout));localStorage.setItem('assessor_kpi_layout',JSON.stringify(kpiLayout));renderKpis();applyHomeLayout();nav('overview')});document.getElementById('resetHomeLayout')?.addEventListener('click',()=>{homeLayout=HOME_BLOCKS.map(x=>({id:x[0],visible:true}));kpiLayout=KPI_ITEMS.map(x=>({id:x[0],visible:true}));renderCustomize()});
-function renderAll(){applyHomeLayout();fillMonthFilters();renderKpis();renderQuickFinancialCards();bindKpiNavigation();renderLists();renderCommitments();renderCalendar();renderInvestment();renderCardDashboard();renderInvoiceManagement();renderAudit();renderAlerts();renderBudgetsGoals();renderAndroidInbox();updateAndroidBridgeStatus();bindDetailClicks();bindValueHover();requestAnimationFrame(()=>{renderCharts();renderCardTrend();bindValueHover()});renderReconciliation()}
+function renderAll(){fillMonthFilters();renderKpis();renderQuickFinancialCards();applyHomeLayout();bindKpiNavigation();renderLists();renderCommitments();renderCalendar();renderInvestment();renderCardDashboard();renderInvoiceManagement();renderAudit();renderAlerts();renderBudgetsGoals();renderAndroidInbox();updateAndroidBridgeStatus();bindDetailClicks();bindValueHover();requestAnimationFrame(()=>{renderCharts();renderCardTrend();bindValueHover()});renderReconciliation()}
 
 function hideTooltip(){const t=document.getElementById('tooltip');if(t)t.style.display='none'}
 window.addEventListener('scroll',hideTooltip,{passive:true});
