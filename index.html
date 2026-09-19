@@ -448,6 +448,10 @@ border-left:1px solid rgba(75,190,255,.28);backdrop-filter:blur(24px);box-shadow
  #categoryLegend .legend-line span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
  #categoryLegend .legend-line b{white-space:nowrap}
 }
+
+/* Personalizar Início + despesas categoria horizontal */
+.customize-list{display:grid;gap:8px;margin:12px 0}.customize-row{display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;padding:11px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.025)}.customize-move{display:grid;gap:3px}.customize-move button{padding:2px 8px;background:#081320;color:#dce9f8;border:1px solid var(--line);border-radius:7px}.customize-row label{display:flex;align-items:center;gap:8px}.customize-actions{display:flex;gap:8px;flex-wrap:wrap}.dashboard-hidden{display:none!important}
+@media(max-width:520px){#categoryPanel .category-content{display:grid;grid-template-columns:44% 56%;gap:10px;align-items:center}#categoryPanel .chart-wrap{height:190px;min-height:190px}#categoryPanel #categoryLegend{display:grid;grid-template-columns:1fr;gap:7px}#categoryPanel .chart-note{grid-column:1 / -1;font-size:10px;margin-top:4px}}
 </style>
 <link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"></head>
 <body>
@@ -473,7 +477,7 @@ border-left:1px solid rgba(75,190,255,.28);backdrop-filter:blur(24px);box-shadow
     <button data-view="budgets">◎  Orçamentos & Metas</button>
     <button data-view="assistant">✦  Assistente IA</button>
     <div class="sep"></div>
-    <button data-view="settings">⚙  Configurações</button>
+    <button data-view="customize">↕  Personalizar Início</button><button data-view="settings">⚙  Configurações</button>
   </div>
   <div class="sidefoot"><div class="badge-card">📱 Integração Android v1.8.0 SIMULAÇÃO R6.5 · POPUPS EDITÁVEIS<br><b>Notification Listener / Google Wallet</b></div></div>
 </aside>
@@ -494,17 +498,16 @@ border-left:1px solid rgba(75,190,255,.28);backdrop-filter:blur(24px);box-shadow
   <section class="module active" id="view-overview">
     <div class="grid-kpi" id="kpis"></div>
     <div class="dashboard">
-      <div class="card panel span2">
+      <div class="card panel span2" data-home-block="projection">
         <div class="panel-head"><div><h3>Evolução Patrimonial e Projeção Mensal</h3><small style="color:var(--muted)">Patrimônio destacado + custos + investimentos projetados</small></div>
           <div class="projection-toolbar"><button type="button" id="projectionModeBtn" class="active">Linha acumulada</button>
           <select class="month-filter individual-month-filter" data-month-scope="projection" title="Mês de referência"></select><select id="periodProjection"><option value="3">3 meses</option><option value="6">6 meses</option><option value="12" selected>12 meses</option></select></div></div>
         <div class="projection-highlights" id="projectionHighlights"></div>
         <div class="chart-wrap tall"><canvas id="projectionChart"></canvas></div><div class="chart-note">Projeção calculada a partir dos saldos atuais, lançamentos previstos, recorrências e aportes planejados. Clique diretamente sobre um ponto para ver os valores.</div><div class="projection-explain" id="projectionExplain"></div>
       </div>
-      <div class="card panel">
+      <div class="card panel" id="categoryPanel" data-home-block="category">
         <div class="panel-head"><h3>Despesas por Categoria</h3><select class="month-filter individual-month-filter" data-month-scope="category" title="Filtrar este gráfico por mês"></select></div>
-        <div class="chart-wrap"><canvas id="categoryChart"></canvas></div><div class="chart-note">Mês atual/passado: gastos realizados. Meses futuros: compromissos previstos por categoria. Clique em uma fatia para detalhes.</div>
-        <div class="legend" id="categoryLegend"></div>
+        <div class="category-content"><div class="chart-wrap"><canvas id="categoryChart"></canvas></div><div class="legend" id="categoryLegend"></div><div class="chart-note">Mês atual/passado: gastos realizados. Meses futuros: compromissos previstos por categoria. Clique em uma fatia para detalhes.</div></div>
       </div>
 
       <div class="card panel clickable-card" data-card-nav="recurring" tabindex="0">
@@ -725,7 +728,8 @@ border-left:1px solid rgba(75,190,255,.28);backdrop-filter:blur(24px);box-shadow
   </section>
 
 <section class="module" id="view-assistant"><div class="card panel"><div class="panel-head"><h3>Assistente Financeiro IA</h3></div><div class="row-list" id="chat"></div><div style="display:flex;gap:8px;margin-top:12px"><input id="chatInput" style="flex:1;background:#081320;border:1px solid var(--line);color:white;border-radius:12px;padding:12px" placeholder="Ex.: quanto posso gastar este mês?"><button class="primary" id="sendChat">Enviar</button></div></div></section>
-  <section class="module" id="view-settings">
+  <section class="module" id="view-customize"><div class="card panel"><div class="panel-head"><div><h3>Personalizar Início</h3><small style="color:var(--muted)">Reorganize os blocos do dashboard. As preferências ficam salvas neste dispositivo.</small></div></div><div class="customize-list" id="customizeList"></div><div class="customize-actions"><button class="secondary" id="resetHomeLayout">↶ Restaurar padrão</button><button class="primary" id="saveHomeLayout">✓ Salvar alterações</button></div></div></section>
+<section class="module" id="view-settings">
   <div class="card panel">
     <div class="panel-head"><h3>Configurações</h3></div>
     <div class="quick"><button id="exportBtn">Exportar backup</button><button id="resetBtn">Restaurar demonstração</button><button id="clearBtn">Zerar dados</button><button>🔐 Segurança</button></div>
@@ -1813,7 +1817,13 @@ function renderReconciliation(){
  box.querySelectorAll('[data-recon-b]').forEach(btn=>btn.onclick=()=>{const c=cases[+btn.dataset.reconB];openDetail(c.b.desc,[['Data',fmt(c.b.date)],['Valor',brl(c.b.value)],['Categoria',c.b.cat],['Origem',c.b.origin],['Status',c.b.status||'realized']])});
 }
 
-function renderAll(){fillMonthFilters();renderKpis();renderQuickFinancialCards();bindKpiNavigation();renderLists();renderCommitments();renderCalendar();renderInvestment();renderCardDashboard();renderInvoiceManagement();renderAudit();renderAlerts();renderBudgetsGoals();renderAndroidInbox();updateAndroidBridgeStatus();bindDetailClicks();bindValueHover();requestAnimationFrame(()=>{renderCharts();renderCardTrend();bindValueHover()});renderReconciliation()}
+const HOME_BLOCKS=[['projection','Evolução do Patrimônio'],['category','Despesas por Categoria'],['commitments','Próximos Compromissos'],['recurring','Recorrências Ativas'],['calendar','Agenda Financeira'],['recent','Últimas Transações'],['investments','Investimentos'],['alerts','Alertas Financeiros'],['health','Saúde Financeira']];
+let homeLayout=(()=>{try{return JSON.parse(localStorage.getItem('assessor_home_layout'))||HOME_BLOCKS.map(x=>({id:x[0],visible:true}))}catch(e){return HOME_BLOCKS.map(x=>({id:x[0],visible:true}))}})();
+function tagHomeBlocks(){const dash=document.querySelector('#view-overview .dashboard');if(!dash)return;const ids=['projection','category','commitments','recurring','calendar','recent','investments','alerts','health'];[...dash.children].forEach((el,i)=>{if(!el.dataset.homeBlock&&ids[i])el.dataset.homeBlock=ids[i]})}
+function applyHomeLayout(){tagHomeBlocks();const dash=document.querySelector('#view-overview .dashboard');if(!dash)return;homeLayout.forEach(x=>{const el=dash.querySelector('[data-home-block="'+x.id+'"]');if(el){dash.appendChild(el);el.classList.toggle('dashboard-hidden',x.visible===false)}})}
+function renderCustomize(){const box=document.getElementById('customizeList');if(!box)return;const names=Object.fromEntries(HOME_BLOCKS);box.innerHTML=homeLayout.map((x,i)=>'<div class="customize-row"><div class="customize-move"><button data-home-up="'+i+'">↑</button><button data-home-down="'+i+'">↓</button></div><b>'+names[x.id]+'</b><label><input type="checkbox" data-home-visible="'+i+'" '+(x.visible!==false?'checked':'')+'> Exibir</label></div>').join('');box.querySelectorAll('[data-home-up]').forEach(b=>b.onclick=()=>{const i=+b.dataset.homeUp;if(i>0){[homeLayout[i-1],homeLayout[i]]=[homeLayout[i],homeLayout[i-1]];renderCustomize()}});box.querySelectorAll('[data-home-down]').forEach(b=>b.onclick=()=>{const i=+b.dataset.homeDown;if(i<homeLayout.length-1){[homeLayout[i+1],homeLayout[i]]=[homeLayout[i],homeLayout[i+1]];renderCustomize()}});box.querySelectorAll('[data-home-visible]').forEach(b=>b.onchange=()=>homeLayout[+b.dataset.homeVisible].visible=b.checked)}
+document.getElementById('saveHomeLayout')?.addEventListener('click',()=>{localStorage.setItem('assessor_home_layout',JSON.stringify(homeLayout));applyHomeLayout();nav('overview')});document.getElementById('resetHomeLayout')?.addEventListener('click',()=>{homeLayout=HOME_BLOCKS.map(x=>({id:x[0],visible:true}));renderCustomize()});
+function renderAll(){applyHomeLayout();fillMonthFilters();renderKpis();renderQuickFinancialCards();bindKpiNavigation();renderLists();renderCommitments();renderCalendar();renderInvestment();renderCardDashboard();renderInvoiceManagement();renderAudit();renderAlerts();renderBudgetsGoals();renderAndroidInbox();updateAndroidBridgeStatus();bindDetailClicks();bindValueHover();requestAnimationFrame(()=>{renderCharts();renderCardTrend();bindValueHover()});renderReconciliation()}
 
 function hideTooltip(){const t=document.getElementById('tooltip');if(t)t.style.display='none'}
 window.addEventListener('scroll',hideTooltip,{passive:true});
@@ -1974,7 +1984,7 @@ document.getElementById('entryForm').onsubmit=e=>{
 };
 [fValue,fDate,fCard,fInstallments,fInstallmentNo,fInstallmentMode].forEach(el=>{el.addEventListener('input',renderInstallmentPreview);el.addEventListener('change',renderInstallmentPreview)});
 
-let navHistory=['overview'];function updateBackButton(){backBtn.classList.toggle('show',navHistory.length>1)}function nav(view,push=true){document.querySelectorAll('.module').forEach(x=>x.classList.remove('active'));document.getElementById('view-'+view).classList.add('active');window.scrollTo({top:0,left:0,behavior:'instant'});const main=document.querySelector('.main');if(main)main.scrollTop=0;document.querySelectorAll('.nav button[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===view));document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');if(push&&navHistory[navHistory.length-1]!==view)navHistory.push(view);updateBackButton();if(view==='overview')requestAnimationFrame(renderCharts);if(view==='import')fillImportSelectors();if(view==='reconcile')renderReconciliation();if(view==='audit')renderAudit();if(view==='budgets')renderBudgetsGoals();if(view==='androidcaptures')renderAndroidCaptures();if(view==='alerts')renderAlerts()}
+let navHistory=['overview'];function updateBackButton(){backBtn.classList.toggle('show',navHistory.length>1)}function nav(view,push=true){document.querySelectorAll('.module').forEach(x=>x.classList.remove('active'));document.getElementById('view-'+view).classList.add('active');window.scrollTo({top:0,left:0,behavior:'instant'});const main=document.querySelector('.main');if(main)main.scrollTop=0;document.querySelectorAll('.nav button[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===view));document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');if(push&&navHistory[navHistory.length-1]!==view)navHistory.push(view);updateBackButton();if(view==='overview'){applyHomeLayout();requestAnimationFrame(renderCharts)}if(view==='customize')renderCustomize();if(view==='import')fillImportSelectors();if(view==='reconcile')renderReconciliation();if(view==='audit')renderAudit();if(view==='budgets')renderBudgetsGoals();if(view==='androidcaptures')renderAndroidCaptures();if(view==='alerts')renderAlerts()}
 const globalMonthFilter=document.getElementById('globalMonthFilter');if(globalMonthFilter)globalMonthFilter.onchange=e=>setActiveMonth(e.target.value);
 // Mobile: setas + swipe para trocar o mês sem interferir no gesto da borda do Android.
 const mobileMonthNav=document.getElementById('mobileMonthNav'), mobileMonthLabel=document.getElementById('mobileMonthLabel');
