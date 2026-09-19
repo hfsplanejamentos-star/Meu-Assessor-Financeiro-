@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Meu Assessor Financeiro IA</title>
+<title>Meu Assessor Financeiro IA · Atual</title>
+<meta name="application-name" content="Meu Assessor Financeiro · Versão Atual">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#071221">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2429,9 +2430,17 @@ if(installBtn)installBtn.onclick=async()=>{
  alert(location.protocol==='file:'?'Para instalar como PWA, abra a versão do pacote por HTTPS ou localhost. O HTML offline continua funcionando normalmente.':'Use o menu do navegador → Instalar aplicativo / Adicionar à tela inicial.');
 };
 if('serviceWorker' in navigator && location.protocol!=='file:'){
- window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').then(()=>{
-   const s=document.getElementById('pwaStatus');if(s)s.textContent='Modo offline preparado. Use “Instalar app” quando disponível.';
- }).catch(()=>{}));
+ window.addEventListener('load',async()=>{
+   try{
+     if('caches' in window){
+       const keys=await caches.keys();
+       await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
+     }
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-20260919-2',{updateViaCache:'none'});
+     await registration.update();
+     const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
+   }catch(_){}
+ });
 }else{
  const s=document.getElementById('pwaStatus');if(s)s.textContent=location.protocol==='file:'?'Versão offline aberta. Para instalar, use o pacote PWA em HTTPS/localhost.':'Service Worker não suportado neste navegador.';
 }
@@ -2489,4 +2498,4 @@ document.addEventListener('click',function(e){
 <script src="./r70-real-reset.js?v=10"></script>
 <script src="./r75-final-validation-fix.js?v=5"></script>
 <script src="./r80-investment-status-fix.js?v=8"></script>
-<div class="sim-badge">MEU ASSESSOR FINANCEIRO · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=9"></script></body></html>
+<div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=9"></script></body></html>
