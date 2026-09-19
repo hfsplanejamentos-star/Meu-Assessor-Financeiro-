@@ -477,6 +477,8 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
 #kpis [data-kpi-id="caju"]{background:linear-gradient(145deg,rgba(255,94,40,.22),rgba(244,22,74,.18) 55%,rgba(7,18,33,.88))}
 #kpis [data-kpi-id="caju"] .value{color:var(--green)}
 
+.mobile-refresh-btn{display:none}
+@media(max-width:820px){.mobile-refresh-btn{display:flex;align-items:center;justify-content:center;gap:7px;grid-column:1/-1;width:100%;padding:11px 14px;border:1px solid rgba(32,216,255,.32);border-radius:14px;background:rgba(8,24,43,.86);color:#dff8ff;font-weight:700;font-size:14px}.mobile-refresh-btn:active{transform:scale(.985)}.mobile-refresh-btn.refreshing{opacity:.72;pointer-events:none}.mobile-refresh-btn.refreshing::first-letter{animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}}
 /* Mobile dashboard R9.8 — contas no topo em grade 2xN, ordem definida na Personalização */
 #kpis [data-kpi-id="c6account"],#kpis [data-kpi-id="itauaccount"],#kpis [data-kpi-id="xpaccount"],#kpis [data-kpi-id="creditcard"],#kpis [data-kpi-id="caju"]{order:-10}
 .account-brand{color:#fff}.acct-c6{background:linear-gradient(145deg,#171b20,#05080b 70%,#101820)}.acct-itau{background:linear-gradient(145deg,#5d2913,#073778 58%,#06499b)}.acct-xp{background:linear-gradient(145deg,#17191c,#08090b 68%,#24282d)}.acct-itau .brand-logo{color:#ffb322}.acct-xp .brand-logo{color:#fff}
@@ -546,6 +548,7 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
     <button class="back-btn" id="backBtn">← Voltar</button>
     <button class="menu-btn" id="menuBtn">☰</button>
     <div class="search">⌕ <input id="globalSearch" placeholder="Buscar transações, contas, categorias..."></div><select id="globalMonthFilter" class="month-filter" title="Filtro mensal geral — aplica o mês a todos os painéis"></select>
+    <button type="button" id="mobileRefreshBtn" class="mobile-refresh-btn" aria-label="Atualizar dados" title="Atualizar dados">↻ <span>Atualizar</span></button>
     <div class="mobile-month-nav" id="mobileMonthNav" aria-label="Navegação mensal">
       <button type="button" id="mobilePrevMonth" aria-label="Mês anterior">‹</button>
       <button type="button" id="mobileMonthLabel" class="mobile-month-label" aria-label="Selecionar mês"></button>
@@ -1954,6 +1957,16 @@ function tagHomeBlocks(){const dash=document.querySelector('#view-overview .dash
 function applyHomeLayout(){tagHomeBlocks();const dash=document.querySelector('#view-overview .dashboard');if(!dash)return;homeLayout.forEach(x=>{const el=dash.querySelector('[data-home-block="'+x.id+'"]');if(el){dash.appendChild(el);el.classList.toggle('dashboard-hidden',x.visible===false)}})}
 function renderCustomize(){renderCustomizeKpis();const box=document.getElementById('customizeList');if(!box)return;const names=Object.fromEntries(HOME_BLOCKS);box.innerHTML=homeLayout.map((x,i)=>'<div class="customize-row"><div class="customize-move"><button data-home-up="'+i+'">↑</button><button data-home-down="'+i+'">↓</button></div><b>'+names[x.id]+'</b><label><input type="checkbox" data-home-visible="'+i+'" '+(x.visible!==false?'checked':'')+'> Exibir</label></div>').join('');box.querySelectorAll('[data-home-up]').forEach(b=>b.onclick=()=>{const i=+b.dataset.homeUp;if(i>0){[homeLayout[i-1],homeLayout[i]]=[homeLayout[i],homeLayout[i-1]];renderCustomize()}});box.querySelectorAll('[data-home-down]').forEach(b=>b.onclick=()=>{const i=+b.dataset.homeDown;if(i<homeLayout.length-1){[homeLayout[i+1],homeLayout[i]]=[homeLayout[i],homeLayout[i+1]];renderCustomize()}});box.querySelectorAll('[data-home-visible]').forEach(b=>b.onchange=()=>homeLayout[+b.dataset.homeVisible].visible=b.checked)}
 document.getElementById('saveHomeLayout')?.addEventListener('click',()=>{localStorage.setItem('assessor_home_layout',JSON.stringify(homeLayout));localStorage.setItem('assessor_kpi_layout',JSON.stringify(kpiLayout));renderKpis();applyHomeLayout();nav('overview')});document.getElementById('resetHomeLayout')?.addEventListener('click',()=>{homeLayout=HOME_BLOCKS.map(x=>({id:x[0],visible:true}));kpiLayout=KPI_ITEMS.map(x=>({id:x[0],visible:true}));renderCustomize()});
+async function mobileRefresh(){
+ const b=document.getElementById('mobileRefreshBtn');if(b){b.classList.add('refreshing');b.querySelector('span').textContent='Atualizando...'}
+ try{
+  try{if(window.FinanceCloud?.configured?.()&&typeof window.FinanceCloud.pull==='function')await window.FinanceCloud.pull()}catch(_){}
+  try{if(typeof migrateSep26==='function')migrateSep26()}catch(_){}
+  renderAll();try{window.FinanceCanonical?.canonicalRenderKpis?.()}catch(_){}
+  document.dispatchEvent(new CustomEvent('finance-data-changed',{detail:{reason:'manual_mobile_refresh'}}));
+ }finally{setTimeout(()=>{if(b){b.classList.remove('refreshing');b.querySelector('span').textContent='Atualizar'}},450)}
+}
+document.getElementById('mobileRefreshBtn')?.addEventListener('click',mobileRefresh);
 function renderAll(){ensureMonthlyIncomeAutomation();fillMonthFilters();renderKpis();renderQuickFinancialCards();applyHomeLayout();bindKpiNavigation();renderLists();renderCommitments();renderCalendar();renderInvestment();renderCardDashboard();renderInvoiceManagement();renderAudit();renderAlerts();renderBudgetsGoals();renderAndroidInbox();updateAndroidBridgeStatus();bindDetailClicks();bindValueHover();requestAnimationFrame(()=>{renderCharts();renderCardTrend();bindValueHover()});renderReconciliation()}
 
 function hideTooltip(){const t=document.getElementById('tooltip');if(t)t.style.display='none'}
