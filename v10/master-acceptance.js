@@ -1,12 +1,72 @@
-/* V10 Master Acceptance — all 50 requirements, executable promotion gate */
-(()=>{'use strict';const near=(a,b)=>Math.abs(Number(a)-Number(b))<.02;
-function run(){const R=[],t=(id,name,ok,detail='')=>R.push({id,name,ok:!!ok,detail});const S=window.FinanceStoreV10?.get?.(),E=window.FinanceEngineV10,exp=window.ExperienceV10;
-const legacy=[...document.scripts].filter(s=>/\/r(?:67|68|69|70|75|80|91)-/.test(s.src));
-t(1,'Sem patches empilhados',legacy.length===0,legacy.map(x=>x.src));t(2,'Modularização',!!window.FinanceStoreV10&&!!E);t(3,'Módulos V10 isolados',!!window.RenderControllerV10&&!!window.MonthSyncV10);t(4,'FinanceEngine único',!!E);t(5,'FinanceStore único',!!window.FinanceStoreV10&&window.db===S);t(6,'Cálculo separado da UI',!!E&&!('document'in E));t(7,'Sem demo em produção',S?.meta?.dataMode==='real'&&!S?.accounts?.some(a=>/nubank|btg/i.test(a.name||'')));t(8,'Storage real',FinanceStoreV10?.KEY==='meu_assessor_financeiro_v10_real');t(9,'Environment/dataMode explícitos',S?.meta?.environment==='production'&&S?.meta?.dataMode==='real');t(10,'Schema versionado',S?.meta?.schemaVersion===FinanceStoreV10?.SCHEMA&&FinanceStoreV10?.SCHEMA>=3);t(11,'Migração segura',typeof FinanceStoreV10?.clean==='function'&&typeof FinanceStoreV10?.valid==='function');
-if(S&&E){const oct=E.summary(S,'2026-10'),nov=E.summary(S,'2026-11'),jun=E.summary(S,'2027-06');t(12,'Recorrência única',near(oct.recurringExpense,4209.90)&&near(jun.recurringExpense,3909.90));t(13,'Previsto x realizado',Object.hasOwn(oct,'realizedExpense')&&Object.hasOwn(oct,'plannedExpense'));t(14,'Investimentos unificados',near(nov.investment,3000)&&S.transactions.filter(x=>x.transfer&&x.destAccountId==='acc_invest_plan').length===9);const b=E.balances(S);t(15,'Patrimônio unificado',near(b.patrimony,b.liquid+b.invest));t(16,'Disponível unificado',Number.isFinite(b.liquid));t(17,'Categorias consistentes',near(E.categoryTotals(S,'2026-11','planned').reduce((a,x)=>a+x.value,0),nov.plannedExpense));t(18,'Gráficos futuros têm dados',E.categoryTotals(S,'2026-11','planned').length>0)}else[12,13,14,15,16,17,18].forEach(i=>t(i,'FinanceEngine indisponível',false));
-t(19,'Filtros mensais sincronizados',!!window.MonthSyncV10);t(20,'Cards clicáveis',[...document.querySelectorAll('[data-v10-route]')].length>=4);t(21,'Gráficos interativos',!!exp?.bindCharts);t(22,'Agenda ligada ao motor',(exp?.agendaEvents?.('2026-10')||[]).some(x=>x.type==='recurring'));t(23,'Conciliação explícita',Array.isArray(exp?.reconcile?.('2026-09')?.cases));const cj=exp?.cajuStatus?.();t(24,'Caju separado',cj?.excludeFromPatrimony===true&&near(cj?.balance,881.95));t(25,'Mobile-first',!!window.MobileDashboardV10);t(26,'KPI mobile 2x2',!!document.querySelector('link[href*="mobile-dashboard.css"]'));t(27,'Hierarquia mobile',!!document.querySelector('link[href*="mobile-dashboard.css"]'));t(28,'Bottom nav',!!document.getElementById('v10BottomNav'));const ar=exp?.architecture?.();t(29,'Desktop/Mobile mesmo motor',ar?.desktopUsesSameState&&ar?.engine);t(30,'Identidade original',!!window.MobileThemeV10&&['current','dark','light'].includes(MobileThemeV10.get()));t(31,'Tema claro',!!window.MobileThemeV10);
-t(32,'AI V10',!!window.FinanceAIV10);t(33,'LLM backend configurado',!!window.FinanceAIV10&&/^https:\/\//.test(FinanceAIV10.endpoint),'Backend HTTPS via Convex');t(34,'Sem chave AI pública',FinanceAIV10?.publicApiKey===false);t(35,'Interpretar/executar separados',typeof FinanceAIV10?.interpret==='function'&&typeof FinanceAIV10?.execute==='function');const q=FinanceAIV10?.execute?.({date:'2026-09-19',value:-1,desc:'teste'},false);t(36,'Confirmação mutação AI',q?.requiresConfirmation===true);
-t(37,'Cloud sync V10',!!window.CloudSyncV10);t(38,'Conflito preserva local',!!window.CloudSyncV10&&typeof CloudSyncV10.sync==='function');t(39,'Render/cache control',!!window.RenderControllerV10&&'serviceWorker'in navigator);const diag=window.V10Diagnostics?.run?.();t(40,'Detecção dependências',!!diag);t(41,'Build produção',S?.meta?.environment==='production');t(42,'PWA/offline',!!document.querySelector('link[rel="manifest"]')&&'serviceWorker'in navigator);const unit=FinanceTestsV10?.run?.();t(43,'Unit tests',unit?.ok,unit);
-const months=['2026-10','2026-11','2026-12','2027-01','2027-02','2027-03','2027-04','2027-05','2027-06','2027-07'];t(44,'Regressão mensal',!!E&&months.every(k=>{const x=E.summary(S,k);return Number.isFinite(x.plannedIncome)&&Number.isFinite(x.plannedExpense)}));const ids=S?.transactions?.map(x=>x.id).filter(Boolean)||[];t(45,'Integridade',new Set(ids).size===ids.length);t(46,'Contratos UI automatizados',[...document.querySelectorAll('[data-v10-route]')].every(x=>x.tabIndex>=0),'Não equivale a clique físico em navegador');t(47,'Desktop/Mobile contratos',!!document.getElementById('v10BottomNav')&&!!document.querySelector('.v10-theme-switch'));t(48,'Validação matemática',!!E&&E.projection(S,'2026-10',12).every(x=>near(x.patrimony,x.liquid+x.invest)));const h=window.HealthV10?.audit?.();t(49,'Diagnóstico interno',diag?.ok&&h?.ok,{diag,h});t(50,'Correção na fonte',legacy.length===0);
-const out={ok:R.every(x=>x.ok),passed:R.filter(x=>x.ok).length,total:50,failed:R.filter(x=>!x.ok),results:R,at:new Date().toISOString()};window.__V10_MASTER_ACCEPTANCE__=out;return out}
-window.V10MasterAcceptance={run};window.addEventListener('load',()=>setTimeout(run,500));})();
+/* V10 Master Acceptance — 50 executable production gates. */
+(() => {
+  'use strict';
+  const near = (a, b) => Math.abs(Number(a) - Number(b)) < 0.02;
+  function run() {
+    const results = []; const test = (id, name, ok, detail = '') => results.push({ id, name, ok: Boolean(ok), detail });
+    const storeApi = window.FinanceStoreV10; const store = storeApi?.get?.(); const engine = window.FinanceEngineV10; const experience = window.ExperienceV10;
+    const legacy = [...document.scripts].filter((script) => /\/r(?:67|68|69|70|75|80|91)-/.test(script.src));
+    const moduleEntry = [...document.scripts].find((script) => script.type === 'module' && /v10\/app\.mjs/.test(script.src));
+    test(1, 'Sem patches empilhados', legacy.length === 0, legacy.map((item) => item.src));
+    test(2, 'Store e motor modularizados', Boolean(storeApi && engine && window.RuntimeUIV10));
+    test(3, 'Entrada ES module import/export', Boolean(moduleEntry && window.V10App?.version === '10.0.0'));
+    test(4, 'FinanceEngine único', Boolean(engine && window.RuntimeUIV10));
+    test(5, 'FinanceStore único', Boolean(storeApi && window.db === store));
+    test(6, 'Cálculo separado da UI', Boolean(engine && !('document' in engine)));
+    test(7, 'Sem dados de demonstração na produção', store?.meta?.dataMode === 'real' && !(store?.transactions || []).some((item) => /(demo|fict[ií]ci|simula[cç][aã]o)/i.test([item.source, item.origin].join(' '))));
+    test(8, 'Storage real', storeApi?.KEY === 'meu_assessor_financeiro_v10_real');
+    test(9, 'Environment/dataMode explícitos', store?.meta?.environment === 'production' && store?.meta?.dataMode === 'real');
+    test(10, 'Schema versionado', store?.meta?.schemaVersion === storeApi?.SCHEMA && storeApi?.SCHEMA >= 4);
+    test(11, 'Migração segura e idempotente', typeof storeApi?.clean === 'function' && JSON.stringify(storeApi.clean(storeApi.clean(store))) === JSON.stringify(storeApi.clean(store)));
+    if (store && engine) {
+      const oct = engine.summary(store, '2026-10'); const nov = engine.summary(store, '2026-11'); const dec = engine.summary(store, '2026-12'); const jun = engine.summary(store, '2027-06');
+      test(12, 'Recorrência única', near(oct.recurringExpense, 4209.90) && near(jun.recurringExpense, 3909.90));
+      test(13, 'Previsto x realizado', ['realizedIncome', 'realizedExpense', 'plannedIncome', 'plannedExpense'].every((key) => Object.hasOwn(oct, key)));
+      test(14, 'Investimentos unificados', near(nov.investment, 3000) && store.transactions.filter((item) => item.transfer && item.destAccountId === 'acc_invest_plan').length === 9);
+      const balances = engine.balances(store); test(15, 'Patrimônio unificado', near(balances.patrimony, balances.liquid + balances.invest));
+      test(16, 'Disponível unificado', Number.isFinite(balances.liquid));
+      test(17, 'Categorias consistentes', near(engine.categoryTotals(store, '2026-11', 'planned').reduce((sum, item) => sum + item.value, 0), nov.plannedExpense));
+      test(18, 'Gráficos futuros', engine.chartSeries(store, '2026-10', 12).every((row) => Array.isArray(row.categories)));
+      const expected = { '2026-10': [6500, 4209.90, 0], '2026-11': [10104.50, 4209.90, 3000], '2026-12': [13997.94, 4209.90, 3000], '2027-01': [10104.50, 4209.90, 3000], '2027-02': [10104.50, 4209.90, 3000], '2027-03': [10104.50, 4209.90, 3000], '2027-04': [10104.50, 4209.90, 3000], '2027-05': [10104.50, 4209.90, 3000], '2027-06': [10104.50, 3909.90, 3000], '2027-07': [10104.50, 3909.90, 3000] };
+      test(44, 'Regressão mensal completa', Object.entries(expected).every(([month, values]) => { const row = engine.summary(store, month); return near(row.plannedIncome, values[0]) && near(row.plannedExpense, values[1]) && near(row.investment, values[2]); }));
+      test(48, 'Validação matemática cruzada', engine.projection(store, '2026-10', 12).every((row) => near(row.patrimony, row.liquid + row.invest)));
+    } else [12, 13, 14, 15, 16, 17, 18, 44, 48].forEach((id) => test(id, 'FinanceEngine indisponível', false));
+    const monthFilters = window.MonthSyncV10?.filters?.() || [];
+    test(19, 'Filtros mensais sincronizados', monthFilters.length >= 2 && monthFilters.every((filter) => filter.dataset.v10MonthBound === '1'));
+    const cards = [...document.querySelectorAll('#kpis [data-v10-route]')]; test(20, 'Cards clicáveis e por teclado', cards.length >= 4 && cards.every((card) => card.tabIndex === 0));
+    test(21, 'Gráficos interativos', [...document.querySelectorAll('#categoryChart,#projectionChart')].every((canvas) => canvas.tabIndex === 0));
+    test(22, 'Agenda ligada ao motor', (experience?.agendaEvents?.('2026-10') || []).some((item) => item.type === 'recurring') && Boolean(document.getElementById('calendarEvents')));
+    test(23, 'Conciliação explícita', Array.isArray(experience?.reconcile?.('2026-09')?.cases) && Boolean(document.getElementById('reconcileStats')));
+    const caju = experience?.cajuStatus?.(); test(24, 'Caju separado', caju?.excludeFromPatrimony === true && near(caju?.balance, 881.95));
+    test(25, 'Dashboard mobile-first', Boolean(window.MobileDashboardV10 && document.getElementById('v10BottomNav')));
+    test(26, 'KPIs mobile 2x2', Boolean(document.querySelector('link[href*="mobile-dashboard.css"]')));
+    test(27, 'Hierarquia mobile própria', Boolean(document.querySelector('#v10BottomNav [data-mobile-route="overview"]')));
+    test(28, 'Bottom navigation completa', document.querySelectorAll('#v10BottomNav button').length === 5);
+    const architecture = experience?.architecture?.(); test(29, 'Desktop/Mobile mesmo Store/Engine', Boolean(architecture?.desktopUsesSameState && architecture?.engine));
+    test(30, 'Identidade original no tema Atual', window.MobileThemeV10?.get?.() === 'current' || ['dark', 'light'].includes(window.MobileThemeV10?.get?.()));
+    test(31, 'Temas Atual/Escuro/Claro', document.querySelectorAll('[data-v10-theme]').length === 3);
+    const aiTests = window.V10AITests?.run?.(); test(32, 'IA V10 consolidada', Boolean(window.FinanceAIV10 && aiTests?.ok), aiTests);
+    test(33, 'LLM no backend HTTPS', /^https:\/\//.test(window.FinanceAIV10?.endpoint || '') && window.FinanceAIV10?.backend === true);
+    test(34, 'Sem chave de IA pública', window.FinanceAIV10?.publicApiKey === false && window.FinanceAIV10?.hasPublicSecret?.() === false);
+    test(35, 'Interpretação separada da execução', typeof window.FinanceAIV10?.interpret === 'function' && typeof window.FinanceAIV10?.execute === 'function');
+    test(36, 'Confirmação de operação sensível', window.FinanceAIV10?.execute?.({ date: '2026-09-19', value: -1, desc: 'teste' }, false)?.requiresConfirmation === true);
+    test(37, 'Cloud Sync consolidado', ['sync', 'configure', 'disconnect', 'status'].every((name) => typeof window.CloudSyncV10?.[name] === 'function'));
+    const merged = window.CloudSyncV10?.mergePreservingReal?.(store, { meta: {}, accounts: [], cards: [], transactions: [], recurring: [] });
+    test(38, 'Conflitos preservam dados reais', merged?.transactions?.some((item) => item.id === 'real_rescisao_20260918') && near(merged?.accounts?.find((item) => item.id === 'acc_c6')?.balance, 1103.67));
+    test(39, 'Service Worker/cache consolidado', 'serviceWorker' in navigator && Boolean(window.RenderControllerV10));
+    const diagnostics = window.V10Diagnostics?.run?.(); test(40, 'Diagnóstico de dependências', diagnostics?.ok === true, diagnostics);
+    test(41, 'Build de produção consolidado', Boolean(moduleEntry && store?.meta?.environment === 'production'));
+    test(42, 'Build portátil/PWA', Boolean(document.querySelector('link[rel="manifest"]') && 'serviceWorker' in navigator));
+    const unit = window.FinanceTestsV10?.run?.(); test(43, 'Testes unitários', unit?.ok === true, unit);
+    const ids = (store?.transactions || []).map((item) => item.id).filter(Boolean); test(45, 'Integridade de dados reais', new Set(ids).size === ids.length && store?.meta?.realDataProtected === true && store?.transactions?.some((item) => item.id === 'real_rescisao_20260918'));
+    test(46, 'Contratos E2E de UI preparados', cards.every((card) => card.tabIndex === 0) && document.querySelectorAll('#v10BottomNav button').length === 5);
+    test(47, 'Contratos Desktop/Mobile', Boolean(document.getElementById('sidebar') && document.getElementById('v10BottomNav') && document.querySelector('.v10-theme-switch')));
+    const health = window.HealthV10?.audit?.(); test(49, 'Health/diagnóstico interno', diagnostics?.ok === true && health?.ok === true, { diagnostics, health });
+    test(50, 'Correção na fonte', legacy.length === 0 && Boolean(moduleEntry));
+    results.sort((a, b) => Number(a.id) - Number(b.id));
+    const output = { ok: results.length === 50 && results.every((item) => item.ok), passed: results.filter((item) => item.ok).length, total: 50, failed: results.filter((item) => !item.ok), results, at: new Date().toISOString() };
+    window.__V10_MASTER_ACCEPTANCE__ = output; return output;
+  }
+  window.V10MasterAcceptance = { run };
+  if (document.readyState === 'complete') setTimeout(run, 500); else window.addEventListener('load', () => setTimeout(run, 500));
+})();

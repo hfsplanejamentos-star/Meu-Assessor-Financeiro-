@@ -9,6 +9,8 @@ html[data-mobile-theme="light"]{--v10-bg:#f3f6fa;--v10-panel:#fff;--v10-panel2:#
  html[data-mobile-theme="dark"] .kpi .label,html[data-mobile-theme="dark"] small,html[data-mobile-theme="dark"] .muted,
  html[data-mobile-theme="light"] .kpi .label,html[data-mobile-theme="light"] small,html[data-mobile-theme="light"] .muted{color:var(--v10-muted)!important}
  html[data-mobile-theme="light"] input,html[data-mobile-theme="light"] select,html[data-mobile-theme="light"] button{color:var(--v10-text)}
+ html[data-mobile-theme="light"] .search input,html[data-mobile-theme="light"] .value,html[data-mobile-theme="light"] .item b,html[data-mobile-theme="light"] .amount{color:#17202b!important}
+ html[data-mobile-theme="light"] .item,html[data-mobile-theme="light"] .field input,html[data-mobile-theme="light"] .field select{background:#f8fafc!important;border-color:#cbd6e2!important;color:#17202b!important}
  .v10-theme-switch{position:fixed;right:12px;bottom:76px;z-index:150;display:flex;gap:5px;padding:6px;border:1px solid var(--v10-line);border-radius:14px;background:var(--v10-panel2);box-shadow:0 8px 24px rgba(0,0,0,.2)}
  .v10-theme-switch button{border:1px solid transparent;border-radius:9px;padding:7px 9px;background:transparent;color:var(--v10-text);font-size:12px}
  .v10-theme-switch button.active{border-color:var(--v10-accent);color:var(--v10-accent)}

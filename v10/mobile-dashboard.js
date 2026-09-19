@@ -1,8 +1,21 @@
-/* V10 Mobile Dashboard — layout/navigation only; RuntimeUI is the sole renderer */
-(()=>{'use strict';
-function route(r){if(typeof window.RuntimeUIV10?.go==='function')return RuntimeUIV10.go(r);if(typeof window.nav==='function')window.nav(r)}
-function mountNav(){if(document.getElementById('v10BottomNav'))return;const n=document.createElement('nav');n.id='v10BottomNav';n.className='v10-bottom-nav';[['overview','Visão Geral','⌂'],['transactions','Transações','⇄'],['add','+','+'],['projection','Relatórios','▥'],['more','Mais','☰']].forEach(([r,l,i])=>{const b=document.createElement('button');b.type='button';b.innerHTML='<b>'+i+'</b><span>'+l+'</span>';b.onclick=()=>r==='add'?(document.querySelector('.fab-main')?.click()):r==='more'?(document.querySelector('.menu-btn')?.click()):route(r);n.appendChild(b)});document.body.appendChild(n)}
-function install(){mountNav()}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
-window.MobileDashboardV10={mountNav};
+/* V10 Mobile Dashboard — navigation only; RuntimeUI remains the sole renderer. */
+(() => {
+  'use strict';
+  function route(name) {
+    if (name === 'reports') { window.RuntimeUIV10?.go?.('overview'); requestAnimationFrame(() => document.getElementById('projectionChart')?.scrollIntoView({ behavior: 'smooth', block: 'center' })); return true; }
+    return window.RuntimeUIV10?.go?.(name) ?? false;
+  }
+  function activate(name) { document.querySelectorAll('#v10BottomNav button').forEach((button) => button.classList.toggle('active', button.dataset.mobileRoute === name)); }
+  function mountNav() {
+    if (document.getElementById('v10BottomNav')) return;
+    const nav = document.createElement('nav'); nav.id = 'v10BottomNav'; nav.className = 'v10-bottom-nav'; nav.setAttribute('aria-label', 'Navegação principal móvel');
+    [['overview', 'Visão Geral', '⌂'], ['transactions', 'Transações', '⇄'], ['add', 'Adicionar', '+'], ['reports', 'Relatórios', '▥'], ['more', 'Mais', '☰']].forEach(([name, label, icon]) => {
+      const button = document.createElement('button'); button.type = 'button'; button.dataset.mobileRoute = name; button.setAttribute('aria-label', label); button.innerHTML = `<b>${icon}</b><span>${label}</span>`;
+      button.onclick = () => { if (name === 'add') document.querySelector('.fab-main')?.click(); else if (name === 'more') document.getElementById('menuBtn')?.click(); else route(name); activate(name); };
+      nav.appendChild(button);
+    });
+    document.body.appendChild(nav); activate('overview');
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mountNav); else mountNav();
+  window.MobileDashboardV10 = { mountNav, route, activate };
 })();
