@@ -72,8 +72,23 @@ function renderCanonicalExpenseChart(){
 }
 function canonicalRenderKpis(){
  const b=currentBalances(),k=(typeof activeMonth!=='undefined'?activeMonth:'2026-10'),s=summary(k),box=document.getElementById('kpis');if(!box||typeof kpiCard!=='function'||typeof brl!=='function')return;
- box.innerHTML=[kpiCard('PATRIMÔNIO TOTAL',brl(b.patrimony),'Abrir contas','neutral'),kpiCard('DISPONÍVEL HOJE',brl(b.liquid),'Abrir contas','neutral'),kpiCard('RECEITAS REALIZADAS',brl(s.realizedIncome),k,'neutral'),kpiCard('RECEITAS PREVISTAS',brl(s.plannedIncome),k,'neutral'),kpiCard('DESPESAS REALIZADAS',brl(s.realizedExpense),k,'neutral'),kpiCard('DESPESAS PREVISTAS',brl(s.plannedExpense),k,'neutral'),kpiCard('INVESTIMENTOS',brl(b.invest),'Abrir investimentos','neutral')].join('');
- const routes=['accounts','accounts','transactions','transactions','transactions','recurring','investments'];[...box.children].forEach((el,i)=>{el.classList.add('clickable-card');el.tabIndex=0;el.dataset.cardNav=routes[i];el.style.pointerEvents='auto'});
+ const items=[
+  ['patrimony','PATRIMÔNIO TOTAL',b.patrimony,'Abrir contas','accounts'],
+  ['available','DISPONÍVEL HOJE',b.liquid,'Abrir contas','accounts'],
+  ['income','RECEITAS REALIZADAS',s.realizedIncome,k,'transactions'],
+  ['income_planned','RECEITAS PREVISTAS',s.plannedIncome,k,'transactions'],
+  ['expense','DESPESAS REALIZADAS',s.realizedExpense,k,'transactions'],
+  ['expense_planned','DESPESAS PREVISTAS',s.plannedExpense,k,'recurring'],
+  ['cards','CARTÕES',typeof invoiceAmount==='function'?(db.cards||[]).filter(c=>['Crédito','Múltiplo'].includes(c.type||'Crédito')).reduce((z,c)=>z+invoiceAmount(c.id,k),0):0,'Fatura do mês','cards'],
+  ['investments','INVESTIMENTOS',b.invest,'Abrir investimentos','investments']
+ ];
+ let pref;try{pref=JSON.parse(localStorage.getItem('assessor_kpi_layout')||'[]')}catch(_){pref=[]}
+ const group=id=>id==='income_planned'?'income':id==='expense_planned'?'expense':id;
+ const order=(Array.isArray(pref)&&pref.length?pref:KPI_ITEMS.map(x=>({id:x[0],visible:true})));
+ const rank=new Map(order.map((x,i)=>[x.id,i])),visible=new Map(order.map(x=>[x.id,x.visible!==false]));
+ const rows=items.filter(x=>visible.get(group(x[0]))!==false).sort((a,b)=>(rank.get(group(a[0]))??99)-(rank.get(group(b[0]))??99));
+ box.innerHTML=rows.map(x=>kpiCard(x[1],brl(x[2]),x[3],'neutral')).join('');
+ [...box.children].forEach((el,i)=>{el.classList.add('clickable-card');el.tabIndex=0;el.dataset.cardNav=rows[i][4];el.dataset.kpiId=group(rows[i][0]);el.style.pointerEvents='auto'});
  bind();
 }
 function bind(){
