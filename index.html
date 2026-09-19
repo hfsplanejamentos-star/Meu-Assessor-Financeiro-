@@ -477,9 +477,21 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
 #kpis [data-kpi-id="caju"]{background:linear-gradient(145deg,rgba(255,94,40,.22),rgba(244,22,74,.18) 55%,rgba(7,18,33,.88))}
 #kpis [data-kpi-id="caju"] .value{color:var(--green)}
 
-/* Mobile account/card rail: selectable, hideable and reorderable */
-@media(max-width:520px){#kpis.grid-kpi{display:flex!important;overflow-x:auto!important;scroll-snap-type:x mandatory;gap:10px!important;padding:2px 2px 10px;scrollbar-width:none}#kpis.grid-kpi::-webkit-scrollbar{display:none}#kpis.grid-kpi>div{flex:0 0 86%!important;scroll-snap-align:start;min-width:0!important}#kpis.grid-kpi>.kpi{min-height:150px!important}#kpis .brand-fin-card{min-height:190px!important}}
-.account-brand{color:#fff}.acct-c6{background:linear-gradient(145deg,#171b20,#05080b 70%,#101820)}.acct-itau{background:linear-gradient(145deg,#082d70,#064ca5 58%,#ff7a00)}.acct-xp{background:linear-gradient(145deg,#17191c,#08090b 68%,#24282d)}.acct-itau .brand-logo{color:#ff9d21}.acct-xp .brand-logo{color:#fff}
+/* Mobile dashboard R9.8 — contas no topo em grade 2xN, ordem definida na Personalização */
+#kpis [data-kpi-id="c6account"],#kpis [data-kpi-id="itauaccount"],#kpis [data-kpi-id="xpaccount"],#kpis [data-kpi-id="creditcard"],#kpis [data-kpi-id="caju"]{order:-10}
+.account-brand{color:#fff}.acct-c6{background:linear-gradient(145deg,#171b20,#05080b 70%,#101820)}.acct-itau{background:linear-gradient(145deg,#5d2913,#073778 58%,#06499b)}.acct-xp{background:linear-gradient(145deg,#17191c,#08090b 68%,#24282d)}.acct-itau .brand-logo{color:#ffb322}.acct-xp .brand-logo{color:#fff}
+@media(max-width:520px){
+ #kpis.grid-kpi{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;overflow:visible!important;gap:10px!important;padding:2px 0 10px}
+ #kpis.grid-kpi>div{min-width:0!important;width:auto!important}
+ #kpis .brand-fin-card{min-height:180px!important;padding:14px!important;border-radius:18px!important}
+ #kpis .brand-fin-card .brand-logo{font-size:18px!important}
+ #kpis .brand-fin-card .brand-name{font-size:18px!important;margin-top:14px!important}
+ #kpis .brand-fin-card .brand-sub,#kpis .brand-fin-card .brand-num{font-size:12px!important}
+ #kpis .brand-fin-card .brand-stats{gap:6px!important;margin-top:14px!important;padding-top:10px!important}
+ #kpis .brand-fin-card .brand-stats strong{font-size:14px!important}
+ #kpis .brand-fin-card .brand-foot{font-size:10px!important;margin-top:10px!important;line-height:1.25}
+ #kpis>.kpi{min-height:145px!important}
+}
 
 /* Approved real-brand card treatment */
 .brand-fin-card{min-height:220px;border-radius:24px;padding:22px;overflow:hidden;position:relative;border:1px solid rgba(123,181,255,.25);box-shadow:0 18px 40px rgba(0,0,0,.22);cursor:pointer}
