@@ -1,6 +1,6 @@
 /* V10 FinanceStore — production/real state, versioned and migration-safe */
 (()=>{'use strict';
-const KEY='meu_assessor_financeiro_v10_real',LEGACY='assessor_v180_simulacao_ficticia',SCHEMA=2;
+const KEY='meu_assessor_financeiro_v10_real',LEGACY='assessor_v180_simulacao_ficticia',SCHEMA=3;
 const clone=x=>JSON.parse(JSON.stringify(x));
 const arrays=['accounts','cards','transactions','recurring','investments','invoices','budgets','goals'];
 function clean(s){s=s&&typeof s==='object'?clone(s):{};arrays.forEach(k=>s[k]=Array.isArray(s[k])?s[k]:[]);
@@ -9,8 +9,9 @@ function clean(s){s=s&&typeof s==='object'?clone(s):{};arrays.forEach(k=>s[k]=Ar
  s.meta={...(s.meta||{}),schemaVersion:SCHEMA,environment:'production',dataMode:'real'};
  return s}
 function valid(s){return !!(s&&s.meta?.schemaVersion===SCHEMA&&s.meta?.environment==='production'&&s.meta?.dataMode==='real'&&Array.isArray(s.transactions))}
+function migrateSchema(s){s=clean(s);s.meta={...(s.meta||{}),schemaVersion:SCHEMA,environment:'production',dataMode:'real',migratedAt:s.meta?.migratedAt||new Date().toISOString()};return s}
 function migrate(){let s;try{s=JSON.parse(localStorage.getItem(KEY)||'null')}catch(_){}
- if(!valid(s)){try{s=JSON.parse(localStorage.getItem(LEGACY)||'null')}catch(_){};s=clean(s);localStorage.setItem(KEY,JSON.stringify(s))}
+ if(!valid(s)){if(!s){try{s=JSON.parse(localStorage.getItem(LEGACY)||'null')}catch(_){}};s=migrateSchema(s);localStorage.setItem(KEY,JSON.stringify(s))}
  return clean(s)}
 let state=migrate(),listeners=new Set();
 function persist(reason='save'){state=clean(state);localStorage.setItem(KEY,JSON.stringify(state));try{window.db=state}catch(_){};listeners.forEach(fn=>fn(state,reason));document.dispatchEvent(new CustomEvent('finance-store-changed',{detail:{reason}}));return state}
@@ -31,5 +32,5 @@ function seedKnownReal(){
  },'known-real-data')
 }
 seedKnownReal();window.db=state;
-window.FinanceStoreV10={KEY,SCHEMA,get,set,update,subscribe,upsertTx,persist,valid,clean};
+window.FinanceStoreV10={KEY,SCHEMA,get,set,update,subscribe,upsertTx,persist,valid,clean,migrateSchema};
 })();
