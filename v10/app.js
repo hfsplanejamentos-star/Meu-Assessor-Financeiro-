@@ -21,6 +21,5 @@ import './master-acceptance.js';
 export const version = '10.0.0';
 export const release = 'v10-consolidacao';
 export function runAcceptance() { return window.V10MasterAcceptance?.run?.(); }
-
 window.V10App = { version, release, runAcceptance };
 window.dispatchEvent(new CustomEvent('v10-app-ready', { detail: { version, release } }));
