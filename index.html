@@ -1015,7 +1015,6 @@ bindTouchFinancialDetails();
  try{renderAlerts()}catch(e){}
  try{renderReconciliation()}catch(e){}
  requestAnimationFrame(()=>{try{renderCharts()}catch(e){}});
-}
 
 function monthOfTx(t){return t?.card?(t.invoiceMonth||String(t.date||'').slice(0,7)):String(t.date||'').slice(0,7)}
 function transactionsForMonth(key=activeMonth){return (db.transactions||[]).filter(t=>monthOfTx(t)===key)}
