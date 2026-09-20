@@ -1,4 +1,4 @@
-const C='assessor-atual-20260920-r114-month-dock';
+const C='assessor-atual-20260920-r115-canonical-mobile';
 const A=['./index.html','./atual.html','./manifest.webmanifest'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(A)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil((async()=>{for(const k of await caches.keys())if(k!==C)await caches.delete(k);await self.clients.claim()})()));
