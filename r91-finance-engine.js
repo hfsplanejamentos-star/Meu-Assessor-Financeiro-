@@ -139,54 +139,53 @@ function bind(){
  document.querySelectorAll('#kpis [data-card-nav]').forEach(card=>{card.style.pointerEvents='auto';card.style.cursor='pointer';if(card.dataset.r1019Click!=='1'){card.dataset.r1019Click='1';card.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if(typeof nav==='function')nav(card.dataset.cardNav)},true)}});
 }
 
+function refreshCanonicalMonth(){
+ try{renderAll()}catch(_){}
+ requestAnimationFrame(()=>{try{renderCharts()}catch(_){};try{canonicalRenderKpis()}catch(_){};try{renderCanonicalExpenseChart()}catch(_){};try{renderMobileFinSummary()}catch(_){};try{bind()}catch(_){}});
+}
 function renderMobileFinSummary(){
  if(!window.matchMedia('(max-width:820px)').matches)return;
  const k=(typeof activeMonth!=='undefined'?activeMonth:'2026-09');
  const cur=(typeof monthKey==='function'?monthKey(today):new Date().toISOString().slice(0,7));
  const sum=summary(k),acc=accumulatedRealized(k),future=k>cur;
  const entry=future?sum.plannedIncome:sum.realizedIncome;
- const isCajuTx=t=>{const aid=String(t.account||t.accountId||'');const acc=(db.accounts||[]).find(a=>String(a.id)===aid);return /caju|benef[ií]cio/i.test([aid,acc?.name,acc?.type,t.origin,t.source].filter(Boolean).join(' '))};
- const isInvoicePayment=t=>!!(t.invoicePayment||t.cardPayment)||/pagamento.*fatura|fatura.*pagamento/i.test(String(t.desc||t.description||''));
- const topExpenseRows=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===k&&Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense&&!isCajuTx(t)&&!isInvoicePayment(t));
- const realizedStatus=t=>!t.status||['realized','real','paid','received'].includes(String(t.status).toLowerCase());
- const plannedStatus=t=>['planned','pending','forecast','previsto'].includes(String(t.status||'').toLowerCase());
- const out=topExpenseRows.filter(t=>future?plannedStatus(t):realizedStatus(t)).reduce((s,t)=>s+Math.abs(n(t.value)),0);
+ const out=future?sum.plannedExpense:sum.realizedExpense;
  const center=future?acc.balance:currentBalances().liquid;
  const host=document.getElementById('kpis');if(!host)return;
+ let dock=document.getElementById('mobileMonthDock');
+ if(!dock){dock=document.createElement('section');dock.id='mobileMonthDock';dock.className='mobile-month-dock';host.parentNode.insertBefore(dock,host)}
  let box=document.getElementById('mobileFinSummary');
  if(!box){box=document.createElement('section');box.id='mobileFinSummary';box.className='mobile-fin-summary';host.parentNode.insertBefore(box,host)}
  const label=typeof monthLabelKey==='function'?monthLabelKey(k):k;
-
- // Janela semanal: 7 dias. O último dia acompanha o dia atual (ex.: 14–20).
  const [yy,mm]=k.split('-').map(Number),daysInMonth=new Date(yy,mm,0).getDate();
  const anchor=Math.min(today.getDate(),daysInMonth),first=Math.max(1,anchor-6);
  const days=Array.from({length:anchor-first+1},(_,i)=>first+i);
- const tx=topExpenseRows;
- const rec=(db.recurring||[]).filter(r=>r.active!==false);
+ const isCajuTx=t=>{const aid=String(t.account||t.accountId||'');const a=(db.accounts||[]).find(x=>String(x.id)===aid);return /caju|benef[ií]cio/i.test([aid,a?.name,a?.type,t.card,t.cardId,t.origin,t.source].filter(Boolean).join(' '))||t.benefit===true};
+ const isInvoicePayment=t=>!!(t.invoicePayment||t.cardPayment)||/pagamento.*fatura|fatura.*pagamento/i.test(String(t.desc||t.description||''));
+ const realizedStatus=t=>!t.status||['realized','real','paid','received','posted','confirmada','confirmado'].includes(String(t.status).toLowerCase());
+ const plannedStatus=t=>planned(t.status)||['pending','forecast'].includes(String(t.status||'').toLowerCase());
+ const tx=(db.transactions||[]).filter(t=>keyOf(t.date)===k&&n(t.value)<0&&!t.transfer&&!t.excludeFromExpense&&!isCajuTx(t)&&!isInvoicePayment(t));
+ const rec=recurringFor(k);
  const daily=days.map(day=>{
-   let realized=0,planned=0;
-   tx.forEach(t=>{if((Number(String(t.date||'').slice(8,10))||0)!==day)return;const v=Math.abs(n(t.value));if(realizedStatus(t))realized+=v;else if(plannedStatus(t))planned+=v});
-   // Recorrências entram como previstas quando ainda não existe lançamento equivalente no dia.
-   if(k>=cur) rec.forEach(r=>{const due=Number(r.day||r.dueDay||r.dayOfMonth||0);if(due!==day)return;const exists=tx.some(t=>(Number(String(t.date||'').slice(8,10))||0)===day&&String(t.desc||'').toLowerCase().includes(String(r.name||r.desc||'').toLowerCase()));if(!exists)planned+=Math.abs(n(r.value))});
-   return {day,realized,planned,total:realized+planned};
+   let realized=0,forecast=0;
+   tx.forEach(t=>{if((Number(String(t.date||'').slice(8,10))||0)!==day)return;const v=abs(t.value);if(realizedStatus(t))realized+=v;else if(plannedStatus(t))forecast+=v});
+   if(k>=cur)rec.forEach(r=>{const due=Number(r.day||r.due||r.dueDay||r.dayOfMonth||0);if(due!==day)return;const rv=abs(r.value),name=String(r.name||r.desc||'').trim().toLowerCase();const exists=tx.some(t=>(Number(String(t.date||'').slice(8,10))||0)===day&&((r.id&&String(t.recurringId||'')===String(r.id))||(name&&String(t.desc||t.description||'').trim().toLowerCase()===name&&Math.abs(abs(t.value)-rv)<.02)));if(!exists)forecast+=rv});
+   return {day,realized,planned:forecast,total:realized+forecast};
  });
- const max=Math.max(1,...daily.map(p=>p.total)),w=560,h=86,padX=12,padTop=10,padBottom=20;
- const x=i=>daily.length===1?w/2:padX+i*(w-padX*2)/(daily.length-1);
- const y=v=>h-padBottom-(v/max)*(h-padTop-padBottom);
- const points=daily.map((p,i)=>[x(i),y(p.total)]);
- const path=points.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+ const max=Math.max(1,...daily.map(p=>p.total)),w=560,h=110,padX=12,padTop=10,padBottom=22;
+ const x=i=>daily.length===1?w/2:padX+i*(w-padX*2)/(daily.length-1),y=v=>h-padBottom-(v/max)*(h-padTop-padBottom);
+ const points=daily.map((p,i)=>[x(i),y(p.total)]),path=points.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
  const area=points.length?path+' L '+points.at(-1)[0].toFixed(1)+' '+(h-padBottom)+' L '+points[0][0].toFixed(1)+' '+(h-padBottom)+' Z':'';
- box.innerHTML=`<div class="mfs-month"><button type="button" data-mfs-step="-1">‹</button><div class="mfs-label">▣ <span>${label}</span></div><button type="button" data-mfs-step="1">›</button></div>
- <div class="mfs-values"><div class="mfs-metric in"><small><b class="mfs-ico">↓</b> Entrada</small><strong>${brl(entry)}</strong></div><div class="mfs-metric mid"><small><b class="mfs-ico">●</b> ${future?'Previsto':'Saldo'}</small><strong>${brl(center)}</strong><div class="mfs-sub">${future?'Saldo acumulado projetado':'Conta principal disponível'}</div></div><div class="mfs-metric out"><small><b class="mfs-ico">↑</b> Saída</small><strong>${brl(out)}</strong></div></div>
- <div class="mfs-chart"><svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="Despesas diárias da semana"><defs><linearGradient id="mfsFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5876" stop-opacity=".35"/><stop offset="1" stop-color="#ff5876" stop-opacity="0"/></linearGradient></defs>${area?`<path d="${area}" fill="url(#mfsFill)"/><path d="${path}" fill="none" stroke="#ff5876" stroke-width="3"/>`:''}${points.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="${daily[i].realized>0?'#ff5876':'#9b6cff'}"/><text x="${p[0]}" y="${h-3}" text-anchor="middle" fill="#8fa4ba" font-size="9">${String(daily[i].day).padStart(2,'0')}/${String(mm).padStart(2,'0')}</text>`).join('')}</svg></div>`;
- box.querySelectorAll('[data-mfs-step]').forEach(b=>b.onclick=()=>{
+ dock.innerHTML=`<div class="mfs-month"><button type="button" data-mfs-step="-1" aria-label="Mês anterior">‹</button><div class="mfs-label">▣ <span>${label}</span></div><button type="button" data-mfs-step="1" aria-label="Próximo mês">›</button></div>`;
+ box.innerHTML=`<div class="mfs-values"><div class="mfs-metric in"><small><b class="mfs-ico">↓</b> Entrada</small><strong>${brl(entry)}</strong></div><div class="mfs-metric mid"><small><b class="mfs-ico">●</b> ${future?'Previsto':'Saldo'}</small><strong>${brl(center)}</strong><div class="mfs-sub">${future?'Saldo acumulado projetado':'Conta principal disponível'}</div></div><div class="mfs-metric out"><small><b class="mfs-ico">↑</b> Saída</small><strong>${brl(out)}</strong></div></div><div class="mfs-chart"><svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="Despesas diárias da semana"><defs><linearGradient id="mfsFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5876" stop-opacity=".35"/><stop offset="1" stop-color="#ff5876" stop-opacity="0"/></linearGradient></defs>${area?`<path d="${area}" fill="url(#mfsFill)"/><path d="${path}" fill="none" stroke="#ff5876" stroke-width="3"/>`:''}${points.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="${daily[i].realized>0?'#ff5876':'#9b6cff'}"/><text x="${p[0]}" y="${h-3}" text-anchor="middle" fill="#8fa4ba" font-size="9">${String(daily[i].day).padStart(2,'0')}/${String(mm).padStart(2,'0')}</text>`).join('')}</svg></div>`;
+ dock.querySelectorAll('[data-mfs-step]').forEach(b=>b.onclick=()=>{
    const d=new Date(yy,mm-1+Number(b.dataset.mfsStep),1),nk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-   if(typeof setActiveMonth==='function'){setActiveMonth(nk);setTimeout(()=>{try{renderAll();renderCharts();canonicalRenderKpis();renderCanonicalExpenseChart();renderMobileFinSummary();bind()}catch(_){renderMobileFinSummary()}},0)}
+   if(typeof setActiveMonth==='function'){setActiveMonth(nk);setTimeout(refreshCanonicalMonth,25)}
  });
 }
 function install(){
  ensurePlan();
- window.FinanceCanonical={summary,projection,recurringFor,currentBalances,accumulatedRealized,ensurePlan,normalizeCore,audit,bind,canonicalRenderKpis,renderCanonicalExpenseChart,renderMobileFinSummary};window.renderKpis=canonicalRenderKpis;
+ window.FinanceCanonical={summary,projection,recurringFor,currentBalances,accumulatedRealized,ensurePlan,normalizeCore,audit,bind,canonicalRenderKpis,renderCanonicalExpenseChart,renderMobileFinSummary,refreshCanonicalMonth};window.renderKpis=canonicalRenderKpis;
  if(typeof window.renderCharts==='function'&&!window.renderCharts.__canonicalExpenseWrapped){
    const baseRenderCharts=window.renderCharts;
    const wrappedRenderCharts=function(...args){const out=baseRenderCharts.apply(this,args);try{renderCanonicalExpenseChart()}catch(_){}return out};
