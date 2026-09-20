@@ -16,8 +16,12 @@ body{display:grid;place-items:center;padding:14px}
 </head>
 <body>
 <div class="preview">
-<h1>MEU ASSESSOR FINANCEIRO · MOBILE R10.11</h1>
-<div class="phone"><iframe title="Meu Assessor Mobile" src="./index.html?release=atual-r1011-phone-frame"></iframe></div>
+<h1>MEU ASSESSOR FINANCEIRO · MOBILE R10.12</h1>
+<div class="phone"><iframe id="mobileFrame" title="Meu Assessor Mobile" src="./index.html?release=atual-r1012-phone-frame"></iframe></div>
 </div>
+<script>
+const frame=document.getElementById('mobileFrame');
+frame.addEventListener('load',()=>{if(new URLSearchParams(location.search).get('focus')!=='summary')return;setTimeout(()=>{const target=frame.contentDocument?.querySelector('[data-kpi-id="patrimony"]');target?.scrollIntoView({block:'start'});frame.contentWindow?.scrollBy(0,-8)},2200)});
+</script>
 </body>
 </html>
