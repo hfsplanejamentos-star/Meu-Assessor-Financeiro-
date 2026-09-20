@@ -145,7 +145,12 @@ function renderMobileFinSummary(){
  const cur=(typeof monthKey==='function'?monthKey(today):new Date().toISOString().slice(0,7));
  const sum=summary(k),acc=accumulatedRealized(k),future=k>cur;
  const entry=future?sum.plannedIncome:sum.realizedIncome;
- const out=future?sum.plannedExpense:sum.realizedExpense;
+ const isCajuTx=t=>{const aid=String(t.account||t.accountId||'');const acc=(db.accounts||[]).find(a=>String(a.id)===aid);return /caju|benef[ií]cio/i.test([aid,acc?.name,acc?.type,t.origin,t.source].filter(Boolean).join(' '))};
+ const isInvoicePayment=t=>!!(t.invoicePayment||t.cardPayment)||/pagamento.*fatura|fatura.*pagamento/i.test(String(t.desc||t.description||''));
+ const topExpenseRows=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===k&&Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense&&!isCajuTx(t)&&!isInvoicePayment(t));
+ const realizedStatus=t=>!t.status||['realized','real','paid','received'].includes(String(t.status).toLowerCase());
+ const plannedStatus=t=>['planned','pending','forecast','previsto'].includes(String(t.status||'').toLowerCase());
+ const out=topExpenseRows.filter(t=>future?plannedStatus(t):realizedStatus(t)).reduce((s,t)=>s+Math.abs(n(t.value)),0);
  const center=future?acc.balance:currentBalances().liquid;
  const host=document.getElementById('kpis');if(!host)return;
  let box=document.getElementById('mobileFinSummary');
@@ -156,9 +161,7 @@ function renderMobileFinSummary(){
  const [yy,mm]=k.split('-').map(Number),daysInMonth=new Date(yy,mm,0).getDate();
  const anchor=Math.min(today.getDate(),daysInMonth),first=Math.max(1,anchor-6);
  const days=Array.from({length:anchor-first+1},(_,i)=>first+i);
- const realizedStatus=t=>!t.status||['realized','real','paid','received'].includes(String(t.status).toLowerCase());
- const plannedStatus=t=>['planned','pending','forecast','previsto'].includes(String(t.status||'').toLowerCase());
- const tx=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===k&&!t.transfer&&!t.excludeFromExpense&&Number(t.value)<0);
+ const tx=topExpenseRows;
  const rec=(db.recurring||[]).filter(r=>r.active!==false);
  const daily=days.map(day=>{
    let realized=0,planned=0;
