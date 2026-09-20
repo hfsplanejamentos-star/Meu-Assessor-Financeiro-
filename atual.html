@@ -531,7 +531,7 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
 }
 .category-empty-message{padding:18px 14px;border:1px dashed rgba(130,180,220,.22);border-radius:14px;color:var(--muted);text-align:center}
 </style>
-<link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-R10.8-2026.09.20';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
+<link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R10.9-2026.09.20';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
 </head>
 <body>
 <div class="tooltip" id="tooltip"></div>
@@ -2500,7 +2500,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r108',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r109',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
@@ -2570,7 +2570,7 @@ document.addEventListener('click',function(e){
 <script src="./r69-money-input-fix.js?v=1"></script>
 <script src="./r69-final-cleanup.js?v=3"></script>
 <script src="./r69-real-budget-repair.js?v=2"></script>
-<script src="./r70-real-reset.js?v=17"></script>
+<script src="./r70-real-reset.js?v=18"></script>
 <script src="./r75-final-validation-fix.js?v=9"></script>
 <script src="./r80-investment-status-fix.js?v=8"></script>
 <div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=13"></script></body></html>
