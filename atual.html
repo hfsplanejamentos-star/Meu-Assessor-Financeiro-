@@ -582,6 +582,14 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
  .main{padding-bottom:155px!important}
  .mobile-bottom-nav{z-index:500!important}
 }
+
+/* R10.21 financial consistency */
+@media(max-width:820px){
+ #kpis [data-kpi-id="caju"] .brand-stats{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)!important}
+ #kpis [data-kpi-id="caju"] .brand-stats strong{font-size:15px!important;letter-spacing:-.4px!important}
+ #kpis [data-kpi-id="caju"] .brand-stats small{font-size:10px!important}
+ #kpis [data-kpi-id="caju"] .brand-foot{font-size:10px!important}
+}
 </style>
 <link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R10.18-2026.09.20';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
 </head>
@@ -1419,8 +1427,8 @@ function renderQuickFinancialCards(){
  const creditCards=(db.cards||[]).filter(c=>['Crédito','Múltiplo'].includes(c.type||'Crédito'));
  const cardSpend=creditCards.reduce((s,c)=>s+invoiceAmount(c.id,key),0);
  const caju=(db.cards||[]).find(c=>['benefício','beneficio','benefit'].includes(String(c.type||'').toLowerCase())&&String(c.name||'').toLowerCase().includes('caju'));
- const cajuAvail=Number(caju?.availableLimit??caju?.balance??0)||0,cajuLimit=Number(caju?.limit||0)||0;
- const cajuUsed=Math.max(0,cajuLimit-cajuAvail),cajuPct=cajuLimit?Math.max(0,Math.min(100,cajuAvail/cajuLimit*100)):0;
+ const cajuAvail=caju?cajuBalanceAt(caju.id,key):0,cajuLimit=key==='2026-09'?1006.89:1500;
+ const cajuUsed=(db.transactions||[]).filter(t=>caju&&(t.cardId===caju.id||t.card===caju.id)&&String(t.date||'').slice(0,7)===key&&t.status!=='planned'&&Number(t.value)<0&&!t.excludeFromBalance).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0),cajuPct=cajuLimit?Math.max(0,Math.min(100,cajuAvail/cajuLimit*100)):0;
  box.innerHTML=`
   <div class="card kpi quick-fin-card clickable-card" data-card-nav="cards" tabindex="0">
     <div class="label">GASTOS COM CARTÃO</div><div class="value">${brl(cardSpend)}</div>
@@ -1692,7 +1700,14 @@ function ensureMonthlyIncomeAutomation(){
  db.automationState.monthlyIncome={enabled:true,start:'2026-10-01',salary:6500,caju:1500,day:1};
  save();
 }
-function cajuBalanceAt(cardId,key){return (db.transactions||[]).filter(t=>(t.cardId===cardId||t.card===cardId)&&String(t.date||'').slice(0,7)<=key&&t.status!=='planned').reduce((s,t)=>s+Number(t.value||0),0)}
+function cajuBalanceAt(cardId,key){
+ const card=(db.cards||[]).find(c=>c.id===cardId),baseMonth='2026-09';
+ // Setembro/26 é extrato validado: crédito 1.006,89 - gastos 202,94 = 803,95.
+ if(key===baseMonth)return 803.95;
+ let bal=803.95;
+ (db.transactions||[]).filter(t=>(t.cardId===cardId||t.card===cardId)&&String(t.date||'').slice(0,7)>baseMonth&&String(t.date||'').slice(0,7)<=key&&t.status!=='planned'&&!t.excludeFromBalance).forEach(t=>bal+=Number(t.value||0));
+ return bal;
+}
 function renderCajuDetails(){
  const card=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||String(c.name||'').toLowerCase().includes('caju'));if(!card)return;
  const key=scopeMonth('caju')||activeMonth,all=(db.transactions||[]).filter(t=>t.cardId===card.id&&String(t.date||'').slice(0,7)===key&&t.status!=='planned'&&Number(t.value)<0).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.time||'').localeCompare(String(a.time||'')));
@@ -1877,43 +1892,7 @@ function attachTooltip(c){
 function monthKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`}
 function monthLabel(d){return d.toLocaleDateString('pt-BR',{month:'short'}).replace('.','').replace(/^./,m=>m.toUpperCase())}
 function isInvestmentAccount(id){const t=String(db.accounts.find(a=>a.id===id)?.type||'').toLowerCase();return t==='investimento'||t==='investment'}
-function buildProjection(n){
- const b=balances(activeMonth), [sy,sm]=scopeMonth('projection').split('-').map(Number), start=new Date(sy,sm-1,1);
- let liquid=b.liquid, invest=b.invest, accumulatedCosts=0;
- const rows=[];
- for(let i=0;i<n;i++){
-   const d=new Date(start.getFullYear(),start.getMonth()+i,1), key=monthKey(d);
-   let income=0,expense=0,investmentMove=0;
-   // planned / future transactions for the month; current month also includes realized transactions for context
-   db.transactions.forEach(t=>{
-     if(!t.date || t.date.slice(0,7)!==key || t.excludeFromExpense)return;
-     if(t.transfer){
-       if(isInvestmentAccount(t.dest) && t.status==='planned') investmentMove+=Math.abs(t.value);
-       return;
-     }
-     if(t.status==='planned'){ if(t.value>=0)income+=t.value; else expense+=Math.abs(t.value); }
-   });
-   // all active monthly recurring commitments are future cash outflows
-   if(i>0 || true){
-     db.recurring.forEach(r=>{
-       const start=String(r.startDate||'').slice(0,7),end=String(r.endDate||'').slice(0,7);
-       if(r.active===false||(start&&key<start)||(end&&key>end))return;
-       const rv=Math.abs(Number(r.value)||0),freq=r.freq||r.frequency||'Mensal';
-       if(freq==='Mensal'||freq==='monthly') expense+=rv;
-       else if(freq==='Trimestral' && i%3===0) expense+=rv;
-       else if(freq==='Semestral' && i%6===0) expense+=rv;
-       else if(freq==='Anual' && i%12===0) expense+=rv;
-     });
-   }
-   // Current month starts from "now"; commitments already represented as realized transactions should not double count perfectly,
-   // so this projection intentionally treats recurrence as remaining/planned commitments.
-   liquid = liquid + income - expense - investmentMove;
-   invest = invest + investmentMove;
-   accumulatedCosts += expense;
-   rows.push({date:d,label:monthLabel(d),income,expense,investmentMove,liquid,invest,patrimony:liquid+invest,costs:accumulatedCosts});
- }
- return rows;
-}
+function buildProjection(n){const start=scopeMonth('projection');if(window.FinanceCanonical?.projection)return window.FinanceCanonical.projection(start,n).map(r=>({...r,invest:r.invest,costs:r.costs}));return []}
 let projectionFocusMode=true;
 function renderCharts(){
  const n=+document.getElementById('periodProjection').value;
@@ -2554,7 +2533,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r1020',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r1021',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
@@ -2624,7 +2603,7 @@ document.addEventListener('click',function(e){
 <script src="./r69-money-input-fix.js?v=1"></script>
 <script src="./r69-final-cleanup.js?v=3"></script>
 <script src="./r69-real-budget-repair.js?v=2"></script>
-<script src="./r70-real-reset.js?v=19"></script>
+<script src="./r70-real-reset.js?v=20"></script>
 <script src="./r75-final-validation-fix.js?v=10"></script>
 <script src="./r80-investment-status-fix.js?v=8"></script>
-<div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=20"></script></body></html>
+<div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=21"></script></body></html>
