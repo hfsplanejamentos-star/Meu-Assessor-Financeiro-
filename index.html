@@ -615,7 +615,7 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
  #kpis .brand-fin-card.caju-card .brand-fin-stat b{font-size:17px!important;white-space:nowrap!important}
 }
 </style>
-<link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R11.8-2026.09.20';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
+<link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R11.9-2026.09.20';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
 <style id="atual-r11-fintech">
 /* ATUAL R11 · MOBILE FINTECH APROVADO */
 @media(max-width:820px){
@@ -796,6 +796,20 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
   top:max(8px,env(safe-area-inset-top))!important;
  }
  #mobileFinSummary{margin-top:92px!important}
+}
+</style><style id="atual-r119-month-browser-edge">
+@media(max-width:820px){
+ #mobileMonthDock{
+  top:0!important;
+  left:0!important;right:0!important;
+  width:100%!important;max-width:none!important;
+  border-radius:0 0 28px 28px!important;
+  border-top:0!important;
+  padding:6px 18px 8px!important;
+  margin:0!important;
+ }
+ #mobileMonthDock .mfs-month{max-width:620px;margin:0 auto!important}
+ #mobileFinSummary{margin-top:78px!important}
 }
 </style></head>
 <body>
@@ -2738,7 +2752,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r118',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r119',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
