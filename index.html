@@ -616,6 +616,50 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
 }
 </style>
 <link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R10.18-2026.09.20';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
+<style id="atual-r11-fintech">
+/* ATUAL R11 · MOBILE FINTECH APROVADO */
+@media(max-width:820px){
+ body{background:radial-gradient(circle at 78% 8%,rgba(16,104,255,.16),transparent 30%),linear-gradient(180deg,#020914 0%,#04101d 55%,#020a13 100%)!important}
+ .main{padding:10px 18px 118px!important}
+ .topbar{display:none!important}
+ #overview{padding-top:0!important}
+ .mobile-fin-summary{position:sticky;top:0;z-index:145;margin:0 -4px 16px;padding:10px 12px 12px;border:1px solid rgba(30,161,255,.48);border-radius:22px;background:rgba(2,14,28,.91);backdrop-filter:blur(22px);box-shadow:0 14px 38px rgba(0,0,0,.34)}
+ .mfs-month{display:grid;grid-template-columns:52px 1fr 52px;align-items:center;gap:8px;margin-bottom:10px}
+ .mfs-month button{height:48px;border-radius:15px;border:1px solid rgba(32,216,255,.45);background:#06172a;color:#dff5ff;font-size:30px}
+ .mfs-month .mfs-label{justify-self:center;display:flex;align-items:center;gap:9px;padding:10px 18px;border:1px solid rgba(32,216,255,.28);border-radius:999px;background:#061426;font-size:18px;font-weight:800;white-space:nowrap}
+ .mfs-values{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;align-items:start}
+ .mfs-metric{text-align:center;padding:3px 7px;min-width:0}
+ .mfs-metric+ .mfs-metric{border-left:1px solid rgba(112,177,255,.16)}
+ .mfs-metric small{display:flex;justify-content:center;align-items:center;gap:5px;font-size:12px;color:#a9c2dc}
+ .mfs-metric strong{display:block;margin-top:4px;font-size:20px;line-height:1.1;white-space:nowrap}
+ .mfs-metric.in small,.mfs-metric.in .mfs-ico{color:#20e7a6}.mfs-metric.out small,.mfs-metric.out .mfs-ico{color:#ff647d}
+ .mfs-metric.mid strong{font-size:24px}.mfs-sub{margin-top:4px;font-size:10px;color:#9db0c7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .mfs-chart{height:92px;margin-top:7px;border-top:1px solid rgba(100,190,255,.08);padding-top:5px}
+ .mfs-chart svg{width:100%;height:100%;overflow:visible}
+ #kpis.grid-kpi{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+ #kpis .brand-fin-card{min-height:210px!important;border-radius:20px!important;padding:16px!important}
+ #kpis .kpi{min-height:105px!important;border-radius:18px!important;padding:14px!important}
+ #kpis .kpi .value{font-size:22px!important}
+ .brand-fin-card .brand-name{font-size:22px!important}.brand-fin-card .brand-stats strong{font-size:18px!important}
+ .brand-fin-card .brand-foot{font-size:11px!important}
+ #categoryPanel{min-height:auto!important;height:auto!important}
+ #categoryPanel .chart-wrap{height:210px!important}
+ #categoryPanel .legend{grid-template-columns:1fr!important;gap:0!important}
+ #categoryPanel .legend-line{min-height:42px!important;padding:8px 0!important;white-space:normal!important;gap:8px}
+ #categoryPanel .legend-line span{min-width:0;overflow-wrap:anywhere}
+ #categoryPanel .legend-line b{white-space:nowrap}
+ .dashboard{gap:10px!important}
+ .panel{border-radius:20px!important}
+ .mobile-bottom-nav{left:18px!important;right:18px!important;bottom:max(10px,env(safe-area-inset-bottom))!important;border-radius:28px!important;background:rgba(2,15,28,.94)!important;border:1px solid rgba(32,216,255,.3)!important;box-shadow:0 18px 55px rgba(0,0,0,.55)!important;backdrop-filter:blur(22px)!important}
+ .mobile-bottom-nav button{color:#a9bfd6!important}.mobile-bottom-nav button.active{color:#35b9ff!important}
+ .mobile-bottom-nav .mobile-add{background:linear-gradient(180deg,#35d5ff,#078eff)!important;box-shadow:0 0 28px rgba(32,216,255,.4)!important}
+ .fab-wrap{display:none!important}
+}
+@media(max-width:520px){
+ .mfs-month .mfs-label{font-size:16px;padding:9px 12px}.mfs-values strong{font-size:17px}.mfs-metric.mid strong{font-size:21px}
+ .mfs-chart{height:82px}
+}
+</style>
 </head>
 <body>
 <div class="tooltip" id="tooltip"></div>
