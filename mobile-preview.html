@@ -21,7 +21,7 @@ body{display:grid;place-items:center;padding:14px}
 </div>
 <script>
 const frame=document.getElementById('mobileFrame');
-frame.addEventListener('load',()=>{const focus=new URLSearchParams(location.search).get('focus');if(!focus)return;setTimeout(()=>{const selector=focus==='expenses'?'#categoryPanel':'[data-kpi-id="patrimony"]',target=frame.contentDocument?.querySelector(selector);target?.scrollIntoView({block:'start'});frame.contentWindow?.scrollBy(0,-8)},2200)});
+frame.addEventListener('load',()=>{const params=new URLSearchParams(location.search),focus=params.get('focus');setTimeout(()=>{if(focus){const selector=focus==='expenses'?'#categoryPanel':'[data-kpi-id="patrimony"]',target=frame.contentDocument?.querySelector(selector);target?.scrollIntoView({block:'start'});frame.contentWindow?.scrollBy(0,-8)}if(params.get('debug')==='1'){try{document.title='DBG '+frame.contentWindow.eval(`JSON.stringify({activeMonth,scope:scopeMonth('category'),today:monthKey(today),recurring:(db.recurring||[]).map(r=>({desc:r.desc,value:r.value,cat:r.cat,active:r.active,startDate:r.startDate,endDate:r.endDate}))})`)}catch(e){document.title='DBG ERROR '+e.message}}},2200)});
 </script>
 </body>
 </html>
