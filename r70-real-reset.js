@@ -54,8 +54,8 @@ function migrateSep26(){
   ['c6_2026_09_20_marlon_borracheiro_4000','2026-09-20','PIX Marlon Ferreira Faria — Borracheiro',-40.00,'Transporte','Borracheiro']
  ];
  confirmed.forEach(([id,date,desc,value,cat,sub])=>{if(!db.transactions.some(t=>String(t.id)===id))db.transactions.push({id,date,desc,description:desc,value,cat,sub,status:'realized',origin:'Débito C6 confirmado pelo usuário',source:'Extrato C6 confirmado pelo usuário',account:aid,accountId:aid,paymentMethod:'Débito',statementVerified:true})});
- const a=db.accounts.find(x=>x.id===aid);if(a){a.balance=632.61;a.openingBalance=632.61;a.balanceDate='2026-09-20';a.statementVerified=true}
- db.meta.c6Sep2026Validated=version;db.meta.statementInReported=2639.62;db.meta.statementOutReported=2028.42;db.meta.realBase='R10.15';
+ const a=db.accounts.find(x=>x.id===aid);if(a){a.balance=632.61;a.openingBalance=21.41;a.balanceDate='2026-09-20';a.statementVerified=true}
+ db.meta.c6Sep2026Validated=version;db.meta.statementInReported=2639.62;db.meta.statementOutReported=2028.42;db.meta.statementOutVisible=2028.42;db.meta.statementDifference=0;db.meta.realBase='R10.15';
  try{save()}catch(_){localStorage.setItem(KEY,JSON.stringify(db))}
  return true
 }

@@ -28,7 +28,7 @@ function accumulatedRealized(key){
  // Meses posteriores: considera receitas, despesas e recorrências do próprio mês como efetivadas.
  const until=String(key||'9999-12'),base='2026-09';
  let income=0,expense=0,investment=0;
- const openingBalance=9.42; // saldo inicial validado antes das movimentações de setembro/2026
+ const openingBalance=21.41; // 632,61 atual - 2.639,62 entradas + 2.028,42 saídas
  const accountType=id=>String((db.accounts||[]).find(a=>a.id===id)?.type||'').toLowerCase();
  const months=[];let d=new Date(base+'-01T12:00:00'),last=new Date(until+'-01T12:00:00');
  while(d<=last){months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));d=new Date(d.getFullYear(),d.getMonth()+1,1)}
@@ -73,10 +73,10 @@ function ensurePlan(){
  return changed;
 }
 const expected={
- '2026-10':[6500,4209.90,0,2324.41],'2026-11':[10104.50,4209.90,3000,8219.01],'2026-12':[13997.94,4209.90,3000,18007.05],
- '2027-01':[10104.50,4209.90,3000,23901.65],'2027-02':[10104.50,4209.90,3000,29796.25],'2027-03':[10104.50,4209.90,3000,35690.85],
- '2027-04':[10104.50,4209.90,3000,41585.45],'2027-05':[10104.50,4209.90,3000,47480.05],'2027-06':[10104.50,3909.90,3000,53674.65],
- '2027-07':[10104.50,3909.90,3000,59869.25],'2027-08':[0,0,0,59869.25],'2027-09':[0,0,0,59869.25]
+ '2026-10':[6500,4209.90,0,2922.71],'2026-11':[10104.50,4209.90,3000,8817.31],'2026-12':[13997.94,4209.90,3000,18605.35],
+ '2027-01':[10104.50,4209.90,3000,24499.95],'2027-02':[10104.50,4209.90,3000,30394.55],'2027-03':[10104.50,4209.90,3000,36289.15],
+ '2027-04':[10104.50,4209.90,3000,42183.75],'2027-05':[10104.50,4209.90,3000,48078.35],'2027-06':[10104.50,3909.90,3000,54272.95],
+ '2027-07':[10104.50,3909.90,3000,60467.55],'2027-08':[0,0,0,60467.55],'2027-09':[0,0,0,60467.55]
 };
 function audit(){
  const rows=projection('2026-10',12),tests=[];for(const r of rows){const e=expected[r.key];tests.push({month:r.key,income:r.income,expense:r.expense,investment:r.investmentMove,patrimony:r.patrimony,ok:!!e&&Math.abs(r.income-e[0])<.02&&Math.abs(r.expense-e[1])<.02&&Math.abs(r.investmentMove-e[2])<.02&&Math.abs(r.patrimony-e[3])<.02})}
@@ -169,6 +169,18 @@ function renderMobileFinSummary(){
  const daily=days.map(day=>{
    let realized=0,forecast=0;
    tx.forEach(t=>{if((Number(String(t.date||'').slice(8,10))||0)!==day)return;const v=abs(t.value);if(realizedStatus(t))realized+=v;else if(plannedStatus(t))forecast+=v});
+   if(k>=cur)rec.forEach(r=>{const due=Number(r.day||r.due||r.dueDay||r.dayOfMonth||0);if(due!==day)return;const rv=abs(r.value),name=String(r.name||r.desc||'').trim().toLowerCase();const exists=tx.some(t=>(Number(String(t.date||'').slice(8,10))||0)===day&&((r.id&&String(t.recurringId||'')===String(r.id))||(name&&String(t.desc||t.description||'']=k.split('-').map(Number),daysInMonth=new Date(yy,mm,0).getDate();
+ const anchor=Math.min(today.getDate(),daysInMonth),first=Math.max(1,anchor-6);
+ const days=Array.from({length:anchor-first+1},(_,i)=>first+i);
+ const isCajuTx=t=>{const aid=String(t.account||t.accountId||'');const a=(db.accounts||[]).find(x=>String(x.id)===aid);return /caju|benef[ií]cio/i.test([aid,a?.name,a?.type,t.card,t.cardId,t.origin,t.source].filter(Boolean).join(' '))||t.benefit===true};
+ const isInvoicePayment=t=>!!(t.invoicePayment||t.cardPayment)||/pagamento.*fatura|fatura.*pagamento/i.test(String(t.desc||t.description||''));
+ const plannedStatus=t=>planned(t.status)||['pending','forecast','prevista','previsto','planejada','planejado'].includes(String(t.status||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase());
+ const realizedStatus=t=>!plannedStatus(t);
+ const tx=(db.transactions||[]).filter(t=>keyOf(t.date)===k&&n(t.value)<0&&!t.transfer&&!t.excludeFromExpense&&!isCajuTx(t)&&!isInvoicePayment(t));
+ const rec=recurringFor(k);
+ const daily=days.map(day=>{
+   let realized=0,forecast=0;
+   tx.forEach(t=>{if((Number(String(t.date||'').slice(8,10))||0)!==day)return;const v=abs(t.value);if(realizedStatus(t))realized+=v;else if(plannedStatus(t))forecast+=v});
    if(k>=cur)rec.forEach(r=>{const due=Number(r.day||r.due||r.dueDay||r.dayOfMonth||0);if(due!==day)return;const rv=abs(r.value),name=String(r.name||r.desc||'').trim().toLowerCase();const exists=tx.some(t=>(Number(String(t.date||'').slice(8,10))||0)===day&&((r.id&&String(t.recurringId||'')===String(r.id))||(name&&String(t.desc||t.description||'').trim().toLowerCase()===name&&Math.abs(abs(t.value)-rv)<.02)));if(!exists)forecast+=rv});
    return {day,realized,planned:forecast,total:realized+forecast};
  });
@@ -195,13 +207,4 @@ function install(){
    wrappedRenderCharts.__canonicalExpenseWrapped=true;window.renderCharts=wrappedRenderCharts;
  }
  window.buildProjection=function(count){const start=(typeof scopeMonth==='function'?scopeMonth('projection'):activeMonth)||'2026-10';return projection(start,Number(count)||12)};
- bind();
- const refresh=()=>{try{renderCanonicalExpenseChart()}catch(_){}};
- setTimeout(()=>{bind();try{renderAll();renderCharts();renderKpis();renderMobileFinSummary();refresh()}catch(_){};audit()},250);
- setTimeout(refresh,900);setTimeout(refresh,2200);
-
-}
-document.addEventListener('finance-cloud-status',e=>{const t=String(e.detail?.text||'');if(!/Sincronizado|Conectado|Desktop enviado/.test(t))return;setTimeout(()=>{ensurePlan();bind();try{renderCanonicalExpenseChart()}catch(_){};audit()},250)});
-document.addEventListener('finance-data-changed',()=>setTimeout(()=>{bind();try{renderCanonicalExpenseChart();renderMobileFinSummary()}catch(_){};audit()},80));
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
-})();
+ bi
