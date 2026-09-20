@@ -519,6 +519,21 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
 .mobile-bottom-nav{display:none}
 @media(max-width:820px){body{padding-bottom:88px}.topbar{grid-template-columns:auto 1fr auto!important;gap:8px!important;padding:10px 12px!important}.topbar .back-btn,.topbar .search,.topbar #globalMonthFilter,.topbar #mobileRefreshBtn{display:none!important}.topbar .menu-btn{display:none!important}.topbar:before{content:'Meu Assessor Financeiro IA';font-weight:800;font-size:15px;align-self:center;color:#eef7ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.topbar .top-actions{margin-left:auto}.topbar:before{grid-column:1/-1;grid-row:1;text-align:left}.mobile-month-nav{grid-row:2}.topbar .top-actions #btnNew{display:none!important}.mobile-month-nav{grid-column:1/-1!important}.mobile-bottom-nav{position:fixed;display:grid;grid-template-columns:repeat(5,1fr);left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));z-index:260;background:rgba(5,15,30,.94);border:1px solid rgba(67,193,255,.24);border-radius:22px;padding:8px 5px;box-shadow:0 18px 45px rgba(0,0,0,.45);backdrop-filter:blur(20px)}.mobile-bottom-nav button{border:0;background:transparent;color:#8fa7bf;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 2px}.mobile-bottom-nav button i{font-style:normal;font-size:20px;line-height:22px}.mobile-bottom-nav button.active{color:#eaf8ff}.mobile-bottom-nav .mobile-add{width:48px;height:48px;border-radius:50%;margin:-22px auto 0;background:linear-gradient(145deg,#19d7ff,#2676ff);color:white;font-size:29px;box-shadow:0 8px 24px rgba(26,176,255,.35);display:grid;place-items:center}.mobile-bottom-nav .mobile-add span{display:none}.main{padding-bottom:90px!important}.fab-wrap,#fcFab,#cloudFloat,.cloud-fab,[data-cloud-float]{bottom:104px!important;right:14px!important}}
 
+/* R10.11 mobile — distribuição simétrica e controles sem sobreposição */
+@media(max-width:820px){
+ .mobile-bottom-nav{grid-template-columns:repeat(5,minmax(0,1fr));align-items:end}
+ .mobile-bottom-nav button{width:100%;min-width:0;min-height:48px;justify-content:center}
+ .mobile-bottom-nav .mobile-add{width:48px;min-width:48px;height:48px;min-height:48px}
+ #fcFab{bottom:112px!important;right:16px!important;width:48px!important;height:48px!important}
+ #kpis.grid-kpi{grid-template-columns:repeat(auto-fit,minmax(145px,1fr))!important;grid-auto-rows:1fr;align-items:stretch!important}
+ #kpis.grid-kpi>div{height:100%;min-height:0}
+ #kpis .brand-fin-card{display:flex;flex-direction:column}
+ #kpis .brand-fin-card .brand-foot{margin-top:auto;padding-top:10px}
+ #categoryPanel .category-content{height:auto!important;min-height:0!important}
+ #categoryPanel #categoryLegend{grid-template-columns:repeat(auto-fit,minmax(138px,1fr))!important;align-items:stretch}
+ #categoryPanel #categoryLegend .legend-line{height:100%;min-height:44px}
+}
+
 /* R10.7 fixes verified from mobile screenshots */
 @media(max-width:820px){
  #categoryPanel.category-empty .category-content{min-height:0!important;height:auto!important}
@@ -531,7 +546,7 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
 }
 .category-empty-message{padding:18px 14px;border:1px dashed rgba(130,180,220,.22);border-radius:14px;color:var(--muted);text-align:center}
 </style>
-<link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R10.10-2026.09.20';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
+<link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R10.11-2026.09.20';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
 </head>
 <body>
 <div class="tooltip" id="tooltip"></div>
@@ -2500,7 +2515,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r1010',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r1011',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
@@ -2511,7 +2526,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 
 
 
-function syncEmptyCategoryState(){try{const p=document.getElementById('categoryPanel'),legend=document.getElementById('categoryLegend'),canvas=document.getElementById('categoryChart');if(!p)return;const key=(document.querySelector('[data-month-scope="category"]')?.value||activeMonth),tx=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)<0&&t.status!=='planned'&&!t.transfer&&!t.excludeFromExpense);const empty=tx.length===0;p.classList.toggle('category-empty',empty);if(empty&&legend)legend.innerHTML='<div class="category-empty-message">Nenhuma despesa realizada neste mês.</div>'}catch(_){}}
+function syncEmptyCategoryState(){try{const p=document.getElementById('categoryPanel'),legend=document.getElementById('categoryLegend');if(!p)return;const key=(document.querySelector('[data-month-scope="category"]')?.value||activeMonth),current=monthKey(today),realized=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)<0&&t.status!=='planned'&&!t.transfer&&!t.excludeFromExpense),planned=key>current?(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)<0&&t.status==='planned'&&!t.transfer&&!t.excludeFromExpense):[],recurring=key>current?(db.recurring||[]).filter(r=>{const st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return r.active!==false&&(!st||key>=st)&&(!en||key<=en)}):[],empty=!realized.length&&!planned.length&&!recurring.length;p.classList.toggle('category-empty',empty);if(empty&&legend)legend.innerHTML='<div class="category-empty-message">Nenhuma despesa '+(key>current?'prevista':'realizada')+' neste mês.</div>'}catch(_){}}
 
 // R10.5 mobile bottom navigation
 const mobileBottomNav=document.getElementById('mobileBottomNav');
