@@ -558,7 +558,7 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
 }
 .category-empty-message{padding:18px 14px;border:1px dashed rgba(130,180,220,.22);border-radius:14px;color:var(--muted);text-align:center}
 </style>
-<link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R10.15-2026.09.20';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
+<link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R10.16-2026.09.20';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
 </head>
 <body>
 <div class="tooltip" id="tooltip"></div>
@@ -1908,7 +1908,7 @@ function renderCharts(){
  // Realized expenses for past/current months; planned recurring commitments for future months.
  db.transactions.filter(t=>t.value<0&&!t.transfer&&!t.excludeFromExpense&&t.status!=='planned'&&monthOfTx(t)===catMonth).forEach(t=>cats[t.cat]=(cats[t.cat]||0)+Math.abs(Number(t.value)||0));
  if(catMonth>=currentKey){
-   (db.recurring||[]).filter(r=>{const st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return r.active!==false&&(!st||catMonth>=st)&&(!en||catMonth<=en)}).forEach(r=>cats[r.cat||'Outros']=(cats[r.cat||'Outros']||0)+Math.abs(Number(r.value)||0));
+   (db.recurring||[]).filter(r=>r.active!==false).forEach(r=>cats[r.cat||'Outros']=(cats[r.cat||'Outros']||0)+Math.abs(Number(r.value)||0));
    // Include explicit planned expenses that are not transfers. Do not count investment transfers as expenses.
    (db.transactions||[]).filter(t=>monthOfTx(t)===catMonth&&t.status==='planned'&&Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense).forEach(t=>cats[t.cat||'Outros']=(cats[t.cat||'Outros']||0)+Math.abs(Number(t.value)||0));
  }
@@ -2035,7 +2035,7 @@ function openDetail(title,rows,actions=[]){
 function openCategoryDetail(name){
  const key=scopeMonth('category'),currentKey=monthKey(today);
  const tx=db.transactions.filter(t=>t.cat===name && t.value<0 && !t.transfer && t.status!=='planned' && monthOfTx(t)===key);
- const recs=key>=currentKey?(db.recurring||[]).filter(r=>{const st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return r.cat===name&&r.active!==false&&(!st||key>=st)&&(!en||key<=en)}):[];
+ const recs=key>=currentKey?(db.recurring||[]).filter(r=>r.cat===name&&r.active!==false):[];
  const realized=tx.reduce((s,t)=>s+Math.abs(Number(t.value)||0),0),forecast=recs.reduce((s,r)=>s+Math.abs(Number(r.value)||0),0);
  openDetail(`Categoria · ${name}`,[['Mês',monthLabelKey(key)],[key>=currentKey?'Despesa prevista':'Gasto realizado',brl(key>=currentKey?forecast:realized)],[key>=currentKey?'Compromissos':'Transações realizadas',String(key>=currentKey?recs.length:tx.length)],['Subcategorias',[...new Set((key>=currentKey?recs:tx).map(t=>t.sub))].filter(Boolean).join(', ')||'—']]);
 }
@@ -2529,7 +2529,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r1015',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r1016',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
@@ -2540,7 +2540,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
 
 
 
-function syncEmptyCategoryState(){try{const p=document.getElementById('categoryPanel'),legend=document.getElementById('categoryLegend');if(!p)return;const key=(document.querySelector('[data-month-scope="category"]')?.value||activeMonth),current=monthKey(today),realized=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)<0&&t.status!=='planned'&&!t.transfer&&!t.excludeFromExpense),planned=key>=current?(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)<0&&t.status==='planned'&&!t.transfer&&!t.excludeFromExpense):[],recurring=key>=current?(db.recurring||[]).filter(r=>{const st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return r.active!==false&&(!st||key>=st)&&(!en||key<=en)}):[],empty=!realized.length&&!planned.length&&!recurring.length;p.classList.toggle('category-empty',empty);if(empty&&legend)legend.innerHTML='<div class="category-empty-message">Nenhuma despesa '+(key>=current?'prevista':'realizada')+' neste mês.</div>'}catch(_){}}
+function syncEmptyCategoryState(){try{const p=document.getElementById('categoryPanel'),legend=document.getElementById('categoryLegend');if(!p)return;const key=(document.querySelector('[data-month-scope="category"]')?.value||activeMonth),current=monthKey(today),realized=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)<0&&t.status!=='planned'&&!t.transfer&&!t.excludeFromExpense),planned=key>=current?(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)<0&&t.status==='planned'&&!t.transfer&&!t.excludeFromExpense):[],recurring=key>=current?(db.recurring||[]).filter(r=>r.active!==false):[],empty=!realized.length&&!planned.length&&!recurring.length;p.classList.toggle('category-empty',empty);if(empty&&legend)legend.innerHTML='<div class="category-empty-message">Nenhuma despesa '+(key>=current?'prevista':'realizada')+' neste mês.</div>'}catch(_){}}
 
 // R10.5 mobile bottom navigation
 const mobileBottomNav=document.getElementById('mobileBottomNav');
@@ -2602,4 +2602,4 @@ document.addEventListener('click',function(e){
 <script src="./r70-real-reset.js?v=18"></script>
 <script src="./r75-final-validation-fix.js?v=9"></script>
 <script src="./r80-investment-status-fix.js?v=8"></script>
-<div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=15"></script></body></html>
+<div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=16"></script></body></html>
