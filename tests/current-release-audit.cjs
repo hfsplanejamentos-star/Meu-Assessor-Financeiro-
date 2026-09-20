@@ -10,10 +10,13 @@ const index = read('index.html');
 const atual = read('atual.html');
 const sw = read('sw.js');
 assert.strictEqual(index, atual, 'index.html e atual.html precisam ser idênticos');
-assert.match(index, /ATUAL-MOBILE-R12\.3-2026\.09\.20/);
-assert.match(index, /id="r122-mobile-account-stack"/);
-assert.match(index, /data-kpi-id="c6account"[\s\S]*data-kpi-id="caju"[\s\S]*grid-column:1\/-1!important/);
-assert.match(sw, /r123-full-audit/);
+assert.match(index, /ATUAL-MOBILE-R12\.4-2026\.09\.20/);
+assert.match(index, /id="r124-mobile-financial-card-stack"/);
+assert.match(index, /#view-overview #kpis\.grid-kpi>\.brand-fin-card\{[\s\S]*grid-column:1\/-1!important;[\s\S]*width:100%!important/);
+['c6account', 'caju', 'creditcard', 'itauaccount', 'xpaccount'].forEach(id =>
+  assert.match(index, new RegExp(`data-kpi-id="${id}"`), `card financeiro ${id} precisa estar contemplado`)
+);
+assert.match(sw, /r124-financial-card-stack/);
 
 const storage = {};
 const context = {
