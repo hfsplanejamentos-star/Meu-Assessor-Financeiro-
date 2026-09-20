@@ -1190,7 +1190,7 @@ function setActiveMonth(key){
  if(!/^\d{4}-\d{2}$/.test(String(key||'')))return;
  activeMonth=key;MONTH_SCOPES.forEach(k=>monthScopes[k]=key);
  localStorage.setItem('assessor_active_month',key);localStorage.setItem('assessor_month_scopes',JSON.stringify(monthScopes));
- fillMonthFilters();renderAll();requestAnimationFrame(()=>{renderCharts();renderKpis();setTimeout(syncEmptyCategoryState,50)})
+ fillMonthFilters();renderAll();requestAnimationFrame(()=>{renderCharts();renderKpis();try{window.FinanceCanonical?.renderMobileFinSummary?.()}catch(_){}setTimeout(syncEmptyCategoryState,50)})
 }
 function setScopeMonth(scope,key){
  monthScopes[scope]=key;localStorage.setItem('assessor_month_scopes',JSON.stringify(monthScopes));
