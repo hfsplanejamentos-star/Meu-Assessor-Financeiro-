@@ -23,21 +23,31 @@ function currentBalances(){
  return {liquid,invest,patrimony:liquid+invest};
 }
 function accumulatedRealized(key){
- // Regra exclusiva do card Saldo Acumulado:
- // até o mês selecionado, receitas/despesas previstas são tratadas como se fossem efetivadas.
- const until=String(key||'9999-12');
- const tx=(db.transactions||[]).filter(t=>keyOf(t.date)<=until);
- const operational=tx.filter(t=>!t.transfer&&!t.excludeFromExpense);
- const income=operational.filter(t=>n(t.value)>0).reduce((s,t)=>s+n(t.value),0);
- const expenseTx=operational.filter(t=>n(t.value)<0);
- let incomeTotal=income,expense=expenseTx.reduce((s,t)=>s+abs(t.value),0);
- // Recorrências representam despesas mensais; adiciona apenas quando não existe lançamento equivalente no mês.
- const recurring=(db.recurring||[]).filter(r=>r.active!==false);
- const first='2026-09';let d=new Date(first+'-01T12:00:00'),last=new Date(until+'-01T12:00:00');
- while(d<=last){const mk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');recurring.forEach(r=>{const rv=abs(n(r.value));if(!rv)return;const same=expenseTx.some(t=>keyOf(t.date)===mk&&((r.id&&String(t.recurringId||'')===String(r.id))||(String(t.desc||t.description||'').trim().toLowerCase()===String(r.name||r.desc||'').trim().toLowerCase()&&Math.abs(abs(n(t.value))-rv)<.02)));if(!same)expense+=rv});d=new Date(d.getFullYear(),d.getMonth()+1,1)}
+ // Exclusivo do card Saldo Acumulado.
+ // Mês-base real (set/26): usa somente o que existe no mês, realizado ou previsto.
+ // Meses posteriores: considera receitas, despesas e recorrências do próprio mês como efetivadas.
+ const until=String(key||'9999-12'),base='2026-09';
+ let income=0,expense=0,investment=0;
  const accountType=id=>String((db.accounts||[]).find(a=>a.id===id)?.type||'').toLowerCase();
- const investment=tx.filter(t=>t.transfer&&(t.dest===INV||t.destAccountId===INV||/invest/.test(accountType(t.dest||t.destAccountId)))).reduce((s,t)=>s+abs(t.value),0);
- return {income:incomeTotal,expense,investment,balance:incomeTotal-expense-investment};
+ const months=[];let d=new Date(base+'-01T12:00:00'),last=new Date(until+'-01T12:00:00');
+ while(d<=last){months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));d=new Date(d.getFullYear(),d.getMonth()+1,1)}
+ months.forEach(mk=>{
+   const tx=(db.transactions||[]).filter(t=>keyOf(t.date)===mk);
+   const op=tx.filter(t=>!t.transfer&&!t.excludeFromExpense);
+   income+=op.filter(t=>n(t.value)>0).reduce((s,t)=>s+n(t.value),0);
+   const monthExpense=op.filter(t=>n(t.value)<0);
+   expense+=monthExpense.reduce((s,t)=>s+abs(t.value),0);
+   investment+=tx.filter(t=>t.transfer&&(t.dest===INV||t.destAccountId===INV||/invest/.test(accountType(t.dest||t.destAccountId)))).reduce((s,t)=>s+abs(t.value),0);
+   if(mk>base){
+     recurringFor(mk).forEach(r=>{
+       const rv=abs(r.value);if(!rv)return;
+       const name=String(r.name||r.desc||'').trim().toLowerCase();
+       const already=monthExpense.some(t=>(r.id&&String(t.recurringId||'')===String(r.id))||(name&&String(t.desc||t.description||'').trim().toLowerCase()===name&&Math.abs(abs(t.value)-rv)<.02));
+       if(!already)expense+=rv;
+     });
+   }
+ });
+ return {income,expense,investment,balance:income-expense-investment};
 }
 function projection(start='2026-10',count=12){
  let p=currentBalances().patrimony,liq=currentBalances().liquid,inv=currentBalances().invest,costs=0;const [y,m]=start.split('-').map(Number),rows=[];
