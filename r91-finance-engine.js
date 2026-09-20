@@ -169,18 +169,6 @@ function renderMobileFinSummary(){
  const daily=days.map(day=>{
    let realized=0,forecast=0;
    tx.forEach(t=>{if((Number(String(t.date||'').slice(8,10))||0)!==day)return;const v=abs(t.value);if(realizedStatus(t))realized+=v;else if(plannedStatus(t))forecast+=v});
-   if(k>=cur)rec.forEach(r=>{const due=Number(r.day||r.due||r.dueDay||r.dayOfMonth||0);if(due!==day)return;const rv=abs(r.value),name=String(r.name||r.desc||'').trim().toLowerCase();const exists=tx.some(t=>(Number(String(t.date||'').slice(8,10))||0)===day&&((r.id&&String(t.recurringId||'')===String(r.id))||(name&&String(t.desc||t.description||'']=k.split('-').map(Number),daysInMonth=new Date(yy,mm,0).getDate();
- const anchor=Math.min(today.getDate(),daysInMonth),first=Math.max(1,anchor-6);
- const days=Array.from({length:anchor-first+1},(_,i)=>first+i);
- const isCajuTx=t=>{const aid=String(t.account||t.accountId||'');const a=(db.accounts||[]).find(x=>String(x.id)===aid);return /caju|benef[ií]cio/i.test([aid,a?.name,a?.type,t.card,t.cardId,t.origin,t.source].filter(Boolean).join(' '))||t.benefit===true};
- const isInvoicePayment=t=>!!(t.invoicePayment||t.cardPayment)||/pagamento.*fatura|fatura.*pagamento/i.test(String(t.desc||t.description||''));
- const plannedStatus=t=>planned(t.status)||['pending','forecast','prevista','previsto','planejada','planejado'].includes(String(t.status||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase());
- const realizedStatus=t=>!plannedStatus(t);
- const tx=(db.transactions||[]).filter(t=>keyOf(t.date)===k&&n(t.value)<0&&!t.transfer&&!t.excludeFromExpense&&!isCajuTx(t)&&!isInvoicePayment(t));
- const rec=recurringFor(k);
- const daily=days.map(day=>{
-   let realized=0,forecast=0;
-   tx.forEach(t=>{if((Number(String(t.date||'').slice(8,10))||0)!==day)return;const v=abs(t.value);if(realizedStatus(t))realized+=v;else if(plannedStatus(t))forecast+=v});
    if(k>=cur)rec.forEach(r=>{const due=Number(r.day||r.due||r.dueDay||r.dayOfMonth||0);if(due!==day)return;const rv=abs(r.value),name=String(r.name||r.desc||'').trim().toLowerCase();const exists=tx.some(t=>(Number(String(t.date||'').slice(8,10))||0)===day&&((r.id&&String(t.recurringId||'')===String(r.id))||(name&&String(t.desc||t.description||'').trim().toLowerCase()===name&&Math.abs(abs(t.value)-rv)<.02)));if(!exists)forecast+=rv});
    return {day,realized,planned:forecast,total:realized+forecast};
  });
@@ -207,4 +195,13 @@ function install(){
    wrappedRenderCharts.__canonicalExpenseWrapped=true;window.renderCharts=wrappedRenderCharts;
  }
  window.buildProjection=function(count){const start=(typeof scopeMonth==='function'?scopeMonth('projection'):activeMonth)||'2026-10';return projection(start,Number(count)||12)};
- bi
+ bind();
+ const refresh=()=>{try{renderCanonicalExpenseChart()}catch(_){}};
+ setTimeout(()=>{bind();try{renderAll();renderCharts();renderKpis();renderMobileFinSummary();refresh()}catch(_){};audit()},250);
+ setTimeout(refresh,900);setTimeout(refresh,2200);
+
+}
+document.addEventListener('finance-cloud-status',e=>{const t=String(e.detail?.text||'');if(!/Sincronizado|Conectado|Desktop enviado/.test(t))return;setTimeout(()=>{ensurePlan();bind();try{renderCanonicalExpenseChart()}catch(_){};audit()},250)});
+document.addEventListener('finance-data-changed',()=>setTimeout(()=>{bind();try{renderCanonicalExpenseChart();renderMobileFinSummary()}catch(_){};audit()},80));
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
+})();
