@@ -604,6 +604,16 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
  #categoryPanel #categoryChart{max-width:280px!important;max-height:280px!important;margin:0 auto!important}
  #categoryPanel .category-content{gap:4px!important}
 }
+
+/* R10.23 — refinamento mobile validado em tela */
+@media(max-width:520px){
+ #categoryPanel .chart-wrap{height:300px!important;min-height:300px!important}
+ #categoryPanel #categoryChart{max-width:300px!important;max-height:300px!important}
+ #kpis .brand-fin-card.caju-card .brand-fin-stats{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:10px!important}
+ #kpis .brand-fin-card.caju-card .brand-fin-stat{min-width:0!important}
+ #kpis .brand-fin-card.caju-card .brand-fin-stat span{font-size:10px!important;line-height:1.15!important;white-space:normal!important}
+ #kpis .brand-fin-card.caju-card .brand-fin-stat b{font-size:17px!important;white-space:nowrap!important}
+}
 </style>
 <link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R10.18-2026.09.20';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
 </head>
@@ -1857,7 +1867,7 @@ function drawDonut(canvas,items){
  const c=canvas,ctx=c.getContext('2d'),dpr=devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;
  if(!w||!h){requestAnimationFrame(()=>drawDonut(canvas,items));return}
  c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
- const mobile=window.matchMedia('(max-width:520px)').matches,cx=w/2,cy=h/2,r=Math.min(w,h)*(mobile?.29:.32),total=items.reduce((s,x)=>s+x.value,0);let a=-Math.PI/2;
+ const mobile=window.matchMedia('(max-width:520px)').matches,cx=w/2,cy=h/2,r=Math.min(w,h)*(mobile?.40:.32),total=items.reduce((s,x)=>s+x.value,0);let a=-Math.PI/2;
  items.forEach((it,i)=>{if(total<=0)return;let da=it.value/total*Math.PI*2;ctx.beginPath();ctx.arc(cx,cy,r,a,a+da);ctx.arc(cx,cy,r*.58,a+da,a,true);ctx.closePath();ctx.fillStyle=colors[i%colors.length];ctx.fill();a+=da});
  ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font=(mobile?'700 12px system-ui':'700 16px system-ui');ctx.fillText(brl(total),cx,cy+3);ctx.font=(mobile?'9px system-ui':'11px system-ui');ctx.fillStyle='#9db0c7';ctx.fillText('Total',cx,cy+(mobile?17:22));ctx.textAlign='left';
  c._chart={type:'donut',items,total,cx,cy,r,w,h};
@@ -2547,7 +2557,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r1022',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r1023',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
@@ -2620,4 +2630,4 @@ document.addEventListener('click',function(e){
 <script src="./r70-real-reset.js?v=20"></script>
 <script src="./r75-final-validation-fix.js?v=10"></script>
 <script src="./r80-investment-status-fix.js?v=8"></script>
-<div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=22"></script></body></html>
+<div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=23"></script></body></html>
