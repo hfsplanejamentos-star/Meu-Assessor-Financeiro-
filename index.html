@@ -615,7 +615,7 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
  #kpis .brand-fin-card.caju-card .brand-fin-stat b{font-size:17px!important;white-space:nowrap!important}
 }
 </style>
-<link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R11.6-2026.09.20';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
+<link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R11.7-2026.09.20';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
 <style id="atual-r11-fintech">
 /* ATUAL R11 · MOBILE FINTECH APROVADO */
 @media(max-width:820px){
@@ -771,6 +771,23 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
  #mobileMonthDock .mfs-month button{height:48px!important}
  #mobileMonthDock .mfs-label{min-width:0!important;max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important}
  #mobileFinSummary{margin-top:92px!important}
+}
+</style><style id="atual-r117-card-overflow-fix">
+@media(max-width:820px){
+ #kpis.grid-kpi{align-items:stretch!important}
+ #kpis .brand-fin-card{min-width:0!important;overflow:hidden!important}
+ #kpis .brand-top{gap:6px!important}
+ #kpis .brand-type{font-size:10px!important;line-height:1.15!important}
+ #kpis .brand-logo{font-size:15px!important}
+ #kpis .brand-name{font-size:22px!important}
+ #kpis .brand-sub{font-size:13px!important;line-height:1.25!important}
+ #kpis .brand-stats{gap:8px!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+ #kpis .brand-stats>div{min-width:0!important}
+ #kpis .brand-stats small{font-size:10px!important;line-height:1.15!important}
+ #kpis .brand-stats strong{font-size:18px!important;white-space:nowrap!important;letter-spacing:-.04em!important}
+ #kpis .caju-brand .brand-foot{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important}
+ #kpis .caju-brand .brand-foot>span{display:block!important;min-width:0!important;font-size:9px!important;line-height:1.2!important;white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important}
+ #kpis .caju-brand .brand-detail-btn{padding:7px 9px!important;font-size:10px!important;gap:6px!important}
 }
 </style></head>
 <body>
@@ -2713,7 +2730,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r116',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r117',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
