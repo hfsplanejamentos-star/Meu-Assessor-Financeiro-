@@ -138,9 +138,28 @@ function bind(){
  const g=document.getElementById('globalMonthFilter');if(g){g.disabled=false;g.style.pointerEvents='auto';g.onchange=e=>{const k=e.currentTarget.value;if(/^\d{4}-\d{2}$/.test(k)&&typeof setActiveMonth==='function'){setActiveMonth(k);setTimeout(()=>{try{renderAll();renderCharts();renderKpis()}catch(_){}},20)}}}
  document.querySelectorAll('#kpis [data-card-nav]').forEach(card=>{card.style.pointerEvents='auto';card.style.cursor='pointer';if(card.dataset.r1019Click!=='1'){card.dataset.r1019Click='1';card.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if(typeof nav==='function')nav(card.dataset.cardNav)},true)}});
 }
+
+function renderMobileFinSummary(){
+ if(!window.matchMedia('(max-width:820px)').matches)return;
+ const k=(typeof activeMonth!=='undefined'?activeMonth:'2026-09'),cur=(typeof monthKey==='function'?monthKey(today):new Date().toISOString().slice(0,7)),sum=summary(k),acc=accumulatedRealized(k);
+ const future=k>cur,entry=future?sum.plannedIncome:sum.realizedIncome,out=future?sum.plannedExpense:sum.realizedExpense,center=future?acc.balance:currentBalances().liquid;
+ const host=document.getElementById('kpis');if(!host)return;
+ let box=document.getElementById('mobileFinSummary');
+ if(!box){box=document.createElement('section');box.id='mobileFinSummary';box.className='mobile-fin-summary';host.parentNode.insertBefore(box,host)}
+ const label=typeof monthLabelKey==='function'?monthLabelKey(k):k;
+ const pts=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===k&&!t.transfer&&!t.excludeFromExpense).map(t=>({d:Number(String(t.date||'').slice(8,10))||1,v:Math.abs(n(t.value))})).sort((a,b)=>a.d-b.d);
+ const max=Math.max(1,...pts.map(p=>p.v)),w=560,h=78;
+ const xy=pts.length?pts.map((p,i)=>[(pts.length===1?w/2:i*w/(pts.length-1)),h-8-(p.v/max)*(h-20)]):[[0,h-8],[w,h-8]];
+ const path=xy.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+ box.innerHTML=`<div class="mfs-month"><button type="button" data-mfs-step="-1">‹</button><div class="mfs-label">▣ <span>${label}</span></div><button type="button" data-mfs-step="1">›</button></div>
+ <div class="mfs-values"><div class="mfs-metric in"><small><b class="mfs-ico">↓</b> Entrada</small><strong>${brl(entry)}</strong></div><div class="mfs-metric mid"><small><b class="mfs-ico">●</b> ${future?'Previsto':'Saldo'}</small><strong>${brl(center)}</strong><div class="mfs-sub">${future?'Saldo acumulado projetado':'Conta principal disponível'}</div></div><div class="mfs-metric out"><small><b class="mfs-ico">↑</b> Saída</small><strong>${brl(out)}</strong></div></div>
+ <div class="mfs-chart"><svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="Movimentação do mês"><defs><linearGradient id="mfsFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5876" stop-opacity=".35"/><stop offset="1" stop-color="#ff5876" stop-opacity="0"/></linearGradient></defs><path d="${path} L ${xy.at(-1)[0]} ${h} L ${xy[0][0]} ${h} Z" fill="url(#mfsFill)"/><path d="${path}" fill="none" stroke="#ff5876" stroke-width="3"/>${xy.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#ff6a80"/>`).join('')}</svg></div>`;
+ box.querySelectorAll('[data-mfs-step]').forEach(b=>b.onclick=()=>{const [y,m]=k.split('-').map(Number),d=new Date(y,m-1+Number(b.dataset.mfsStep),1),nk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');if(typeof setActiveMonth==='function')setActiveMonth(nk)});
+}
+
 function install(){
  ensurePlan();
- window.FinanceCanonical={summary,projection,recurringFor,currentBalances,accumulatedRealized,ensurePlan,normalizeCore,audit,bind,canonicalRenderKpis,renderCanonicalExpenseChart};window.renderKpis=canonicalRenderKpis;
+ window.FinanceCanonical={summary,projection,recurringFor,currentBalances,accumulatedRealized,ensurePlan,normalizeCore,audit,bind,canonicalRenderKpis,renderCanonicalExpenseChart,renderMobileFinSummary};window.renderKpis=canonicalRenderKpis;
  if(typeof window.renderCharts==='function'&&!window.renderCharts.__canonicalExpenseWrapped){
    const baseRenderCharts=window.renderCharts;
    const wrappedRenderCharts=function(...args){const out=baseRenderCharts.apply(this,args);try{renderCanonicalExpenseChart()}catch(_){}return out};
@@ -149,11 +168,11 @@ function install(){
  window.buildProjection=function(count){const start=(typeof scopeMonth==='function'?scopeMonth('projection'):activeMonth)||'2026-10';return projection(start,Number(count)||12)};
  bind();
  const refresh=()=>{try{renderCanonicalExpenseChart()}catch(_){}};
- setTimeout(()=>{bind();try{renderAll();renderCharts();renderKpis();refresh()}catch(_){};audit()},250);
+ setTimeout(()=>{bind();try{renderAll();renderCharts();renderKpis();renderMobileFinSummary();refresh()}catch(_){};audit()},250);
  setTimeout(refresh,900);setTimeout(refresh,2200);
 
 }
 document.addEventListener('finance-cloud-status',e=>{const t=String(e.detail?.text||'');if(!/Sincronizado|Conectado|Desktop enviado/.test(t))return;setTimeout(()=>{ensurePlan();bind();try{renderCanonicalExpenseChart()}catch(_){};audit()},250)});
-document.addEventListener('finance-data-changed',()=>setTimeout(()=>{bind();try{renderCanonicalExpenseChart()}catch(_){};audit()},80));
+document.addEventListener('finance-data-changed',()=>setTimeout(()=>{bind();try{renderCanonicalExpenseChart();renderMobileFinSummary()}catch(_){};audit()},80));
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
 })();
