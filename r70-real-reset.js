@@ -13,8 +13,8 @@ function migrateSep26(){
  const required=['c6_260910_pix_in','c6_260910_recarga','c6_260910_estorno','c6_260911_super','c6_260911_agencia','c6_260911_deposito','c6_260911_drogaria','c6_260912_lavland','c6_260913_lavland','c6_260913_nexa','c6_260913_jm','c6_260915_posto','c6_260915_jm','c6_260916_posto','c6_260918_pix_in','c6_260918_aluguel','c6_260918_posto','c6_260918_pb','c6_260918_pista4','c6_260918_lanche','c6_260918_pista3','c6_2026_09_19_ben_padaria_1199','c6_2026_09_20_pista5_1080','c6_2026_09_20_jbm_1649','c6_2026_09_20_gas_company_5000','c6_2026_09_20_pista4_1080','c6_2026_09_20_pista3_1080','c6_2026_09_20_posto_trevo_5000','c6_2026_09_20_marlon_borracheiro_4000'];
  const hasAll=required.every(id=>db.transactions.some(t=>String(t.id)===id));
  if(db.meta.c6Sep2026Validated===version&&hasAll)return false;
- // Setembro/2026 C6 é uma base validada pelo usuário. Reconstroi somente este mês para eliminar snapshots antigos.
- db.transactions=db.transactions.filter(t=>!(String(t.date||'').slice(0,7)==='2026-09'&&(t.account===aid||t.accountId===aid)));
+ // Reconstroi apenas os registros canônicos C6; lançamentos manuais/importados permanecem intactos.
+ db.transactions=db.transactions.filter(t=>!(String(t.date||'').slice(0,7)==='2026-09'&&(t.account===aid||t.accountId===aid)&&/^c6_/i.test(String(t.id||''))));
  const rows=[
  ['c6_260910_pix_in','2026-09-10','PIX recebido',304.57,'Receitas','PIX recebido'],
  ['c6_260910_recarga','2026-09-10','Recarga celular',-20,'Comunicação','Recarga celular'],

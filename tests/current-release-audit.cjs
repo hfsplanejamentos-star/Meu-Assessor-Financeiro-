@@ -32,6 +32,7 @@ const context = {
 vm.createContext(context);
 vm.runInContext(read('r70-real-reset.js'), context);
 context.db = context.window.FinanceRealBase.build();
+context.db.transactions.push({ id: 'manual_regression_guard', date: '2026-09-20', value: 0, account: 'acc_c6', status: 'realized', origin: 'Manual' });
 
 (async () => {
   await context.window.FinanceRealBase.enforce('automated-audit');
@@ -52,6 +53,7 @@ context.db = context.window.FinanceRealBase.build();
   near(db.meta.statementOutVisible, 2028.42, 'saídas visíveis');
   assert.strictEqual(new Set(ids).size, ids.length, 'IDs de transações duplicados');
   assert.strictEqual(db.meta.c6Sep2026Validated, 'v7');
+  assert.ok(db.transactions.some(t => t.id === 'manual_regression_guard'), 'migração não pode apagar lançamentos manuais');
 
   const todayIds = [
     'c6_2026_09_20_pista5_1080', 'c6_2026_09_20_jbm_1649',
