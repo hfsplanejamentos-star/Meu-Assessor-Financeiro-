@@ -525,13 +525,20 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
  .mobile-bottom-nav button{width:100%;min-width:0;min-height:48px;justify-content:center}
  .mobile-bottom-nav .mobile-add{width:48px;min-width:48px;height:48px;min-height:48px}
  #fcFab{bottom:112px!important;right:16px!important;width:48px!important;height:48px!important}
- #kpis.grid-kpi{grid-template-columns:repeat(auto-fit,minmax(145px,1fr))!important;grid-auto-rows:1fr;align-items:stretch!important}
- #kpis.grid-kpi>div{height:100%;min-height:0}
+ #kpis.grid-kpi{grid-template-columns:repeat(auto-fit,minmax(145px,1fr))!important;grid-auto-rows:auto;align-items:stretch!important}
+ #kpis.grid-kpi>div{min-height:0}
  #kpis .brand-fin-card{display:flex;flex-direction:column}
  #kpis .brand-fin-card .brand-foot{margin-top:auto;padding-top:10px}
  #categoryPanel .category-content{height:auto!important;min-height:0!important}
  #categoryPanel #categoryLegend{grid-template-columns:repeat(auto-fit,minmax(138px,1fr))!important;align-items:stretch}
  #categoryPanel #categoryLegend .legend-line{height:100%;min-height:44px}
+}
+
+/* R10.12 mobile — KPIs compactos, sem áreas vazias */
+@media(max-width:820px){
+ #view-overview #kpis.grid-kpi>.kpi:not(.brand-fin-card){height:auto!important;min-height:106px!important;padding:12px 14px!important;display:flex!important;flex-direction:column;justify-content:flex-start}
+ #view-overview #kpis.grid-kpi>.kpi:not(.brand-fin-card) .value{margin:7px 0 4px!important;font-size:22px!important}
+ #view-overview #kpis.grid-kpi>.kpi:not(.brand-fin-card) .trend{margin-top:auto!important;white-space:normal!important;overflow:visible!important;line-height:1.25!important}
 }
 
 /* R10.7 fixes verified from mobile screenshots */
@@ -546,7 +553,7 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
 }
 .category-empty-message{padding:18px 14px;border:1px dashed rgba(130,180,220,.22);border-radius:14px;color:var(--muted);text-align:center}
 </style>
-<link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R10.11-2026.09.20';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
+<link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R10.12-2026.09.20';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
 </head>
 <body>
 <div class="tooltip" id="tooltip"></div>
@@ -1353,7 +1360,8 @@ function financeBrandCard(kind,key){
  const isCaju=kind==='caju',card=isCaju?(db.cards||[]).find(x=>String(x.id)==='card_caju_alimentacao'||/caju/i.test(String(x.name||''))):(db.cards||[]).find(x=>['Crédito','Múltiplo'].includes(x.type||'Crédito'));
  if(isCaju){const bal=card?cajuBalanceAt(card.id,key):0,spent=(db.transactions||[]).filter(t=>card&&(t.cardId===card.id||t.card===card.id)&&String(t.date||'').slice(0,7)===key&&t.status!=='planned'&&Number(t.value)<0).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0),cajuLimit=key==='2026-09'?1006.89:1500;return `<div class="brand-fin-card caju-brand clickable-card" data-card-nav="cards" data-kpi-id="caju" tabindex="0"><div class="brand-top"><span class="brand-type">🍴 CARTÃO BENEFÍCIO</span><b class="brand-logo">caju</b></div><div class="brand-name">Caju</div><div class="brand-sub">Alimentação e Refeição</div><div class="brand-num">•••• ${card?.last4||'5678'}</div><div class="brand-stats"><div><small>Valor gasto</small><strong>${brl(spent)}</strong></div><div><small>Saldo disponível</small><strong class="up">${brl(bal)}</strong></div></div><div class="brand-foot">Limite nominal ${brl(cajuLimit)} · saldo acumulativo</div></div>`}
  const inv=card?invoiceAmount(card.id,key):0,limit=Number(card?.limit||0),avail=Math.max(limit-inv,0);return `<div class="brand-fin-card c6-brand clickable-card" data-card-nav="cards" data-kpi-id="creditcard" tabindex="0"><div class="brand-top"><span class="brand-type">▣ CARTÃO DE CRÉDITO</span><b class="brand-logo">C6 BANK</b></div><div class="brand-name">C6 Bank Carbon</div><div class="brand-num">•••• ${card?.last4||'4321'}</div><div class="brand-stats"><div><small>Fatura atual</small><strong>${brl(inv)}</strong></div><div><small>Disponível</small><strong class="up">${limit?brl(avail):'Não informado'}</strong></div></div><div class="brand-foot">${limit?'Limite '+brl(limit):'Limite não informado'} · Ver lançamentos →</div></div>`}
-function renderKpis(){const b=balances(),key=activeMonth,planned=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&t.status==='planned'&&!t.transfer),plannedIncome=planned.filter(t=>Number(t.value)>0).reduce((s,t)=>s+Number(t.value||0),0),recExpense=(db.recurring||[]).filter(r=>{const st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return r.active!==false&&(!st||key>=st)&&(!en||key<=en)}).reduce((s,r)=>s+Math.abs(Number(r.value)||0),0),box=document.getElementById('kpis');if(!box)return;
+function accumulatedRealizedAt(key){const real=s=>['realized','realizada','realizado','posted','confirmada','confirmado'].includes(String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()),tx=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)<=key&&real(t.status)),op=tx.filter(t=>!t.transfer&&!t.excludeFromExpense),income=op.filter(t=>Number(t.value)>0).reduce((s,t)=>s+Number(t.value||0),0),expense=op.filter(t=>Number(t.value)<0).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0),accountType=id=>String((db.accounts||[]).find(a=>a.id===id)?.type||'').toLowerCase(),investment=tx.filter(t=>t.transfer&&(t.dest==='acc_invest_plan'||t.destAccountId==='acc_invest_plan'||/invest/.test(accountType(t.dest||t.destAccountId)))).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);return {income,expense,investment,balance:income-expense-investment}}
+function renderKpis(){const b=balances(),key=activeMonth,acc=accumulatedRealizedAt(key),planned=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&t.status==='planned'&&!t.transfer),plannedIncome=planned.filter(t=>Number(t.value)>0).reduce((s,t)=>s+Number(t.value||0),0),recExpense=(db.recurring||[]).filter(r=>{const st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return r.active!==false&&(!st||key>=st)&&(!en||key<=en)}).reduce((s,r)=>s+Math.abs(Number(r.value)||0),0),box=document.getElementById('kpis');if(!box)return;
  const creditCards=(db.cards||[]).filter(c=>['Crédito','Múltiplo'].includes(c.type||'Crédito')),cardSpend=creditCards.reduce((s,c)=>s+invoiceAmount(c.id,key),0);
  const defs={
   c6account:{html:accountBrandCard('c6account',key),route:'accounts'},
@@ -1361,6 +1369,7 @@ function renderKpis(){const b=balances(),key=activeMonth,planned=(db.transaction
   xpaccount:{html:accountBrandCard('xpaccount',key),route:'accounts'},
   patrimony:{html:kpiCard('PATRIMÔNIO TOTAL',brl(b.patrimony),'Contas','neutral'),route:'accounts'},
   available:{html:kpiCard('DISPONÍVEL HOJE',brl(b.liquid),'Contas','neutral'),route:'accounts'},
+  accumulated:{html:kpiCard('SALDO ACUMULADO',brl(acc.balance),'Receitas − despesas − investimentos realizados','neutral'),route:'transactions'},
   income:{html:kpiCard('RECEITAS',brl(b.inc),'Previsto '+brl(plannedIncome),'neutral'),route:'transactions'},
   expense:{html:kpiCard('DESPESAS',brl(b.exp),'Previsto '+brl(recExpense),'neutral'),route:'transactions'},
   creditcard:{html:financeBrandCard('creditcard',key),route:'cards'},
@@ -1983,7 +1992,7 @@ function renderReconciliation(){
 const HOME_BLOCKS=[['projection','Evolução do Patrimônio'],['category','Despesas por Categoria'],['commitments','Próximos Compromissos'],['recurring','Recorrências Ativas'],['calendar','Agenda Financeira'],['recent','Últimas Transações'],['investments','Investimentos'],['alerts','Alertas Financeiros'],['health','Saúde Financeira']];
 const __normalizeLayout=(raw,defs)=>{const base=defs.map(x=>({id:x[0],visible:true}));if(!Array.isArray(raw))return base;const allowed=new Set(defs.map(x=>x[0])),seen=new Set(),out=[];raw.forEach(x=>{if(x&&allowed.has(x.id)&&!seen.has(x.id)){out.push({id:x.id,visible:x.visible!==false});seen.add(x.id)}});base.forEach(x=>{if(!seen.has(x.id))out.push(x)});return out};
 let homeLayout=(()=>{try{return __normalizeLayout(JSON.parse(localStorage.getItem('assessor_home_layout')||'null'),HOME_BLOCKS)}catch(e){return HOME_BLOCKS.map(x=>({id:x[0],visible:true}))}})();
-const KPI_ITEMS=[['c6account','C6 Bank'],['itauaccount','Itaú'],['xpaccount','XP'],['creditcard','C6 Carbono'],['caju','Caju'],['patrimony','Patrimônio Total'],['available','Disponível Hoje'],['income','Receitas'],['expense','Despesas'],['investments','Investimentos']];let kpiLayout=(()=>{try{return __normalizeLayout(JSON.parse(localStorage.getItem('assessor_kpi_layout')||'null'),KPI_ITEMS)}catch(e){return KPI_ITEMS.map(x=>({id:x[0],visible:true}))}})();
+const KPI_ITEMS=[['c6account','C6 Bank'],['itauaccount','Itaú'],['xpaccount','XP'],['creditcard','C6 Carbono'],['caju','Caju'],['patrimony','Patrimônio Total'],['available','Disponível Hoje'],['accumulated','Saldo Acumulado'],['income','Receitas'],['expense','Despesas'],['investments','Investimentos']];let kpiLayout=(()=>{try{return __normalizeLayout(JSON.parse(localStorage.getItem('assessor_kpi_layout')||'null'),KPI_ITEMS)}catch(e){return KPI_ITEMS.map(x=>({id:x[0],visible:true}))}})();
 function renderCustomizeKpis(){const box=document.getElementById('customizeKpiList');if(!box)return;const names=Object.fromEntries(KPI_ITEMS);box.innerHTML=kpiLayout.map((x,i)=>'<div class="customize-row"><div class="customize-move"><button data-kpi-up="'+i+'">↑</button><button data-kpi-down="'+i+'">↓</button></div><b>'+names[x.id]+'</b><label><input type="checkbox" data-kpi-visible="'+i+'" '+(x.visible!==false?'checked':'')+'> Exibir</label></div>').join('');box.querySelectorAll('[data-kpi-up]').forEach(b=>b.onclick=()=>{const i=+b.dataset.kpiUp;if(i>0){[kpiLayout[i-1],kpiLayout[i]]=[kpiLayout[i],kpiLayout[i-1]];localStorage.setItem('assessor_kpi_layout',JSON.stringify(kpiLayout));renderCustomizeKpis()}});box.querySelectorAll('[data-kpi-down]').forEach(b=>b.onclick=()=>{const i=+b.dataset.kpiDown;if(i<kpiLayout.length-1){[kpiLayout[i+1],kpiLayout[i]]=[kpiLayout[i],kpiLayout[i+1]];localStorage.setItem('assessor_kpi_layout',JSON.stringify(kpiLayout));renderCustomizeKpis()}});box.querySelectorAll('[data-kpi-visible]').forEach(b=>b.onchange=()=>{kpiLayout[+b.dataset.kpiVisible].visible=b.checked;localStorage.setItem('assessor_kpi_layout',JSON.stringify(kpiLayout));renderKpis()})}
 
 function tagHomeBlocks(){const dash=document.querySelector('#view-overview .dashboard');if(!dash)return;const ids=['projection','category','commitments','recurring','calendar','recent','investments','alerts','health'];[...dash.children].forEach((el,i)=>{if(!el.dataset.homeBlock&&ids[i])el.dataset.homeBlock=ids[i]})}
@@ -2515,7 +2524,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r1011',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r1012',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
@@ -2588,4 +2597,4 @@ document.addEventListener('click',function(e){
 <script src="./r70-real-reset.js?v=18"></script>
 <script src="./r75-final-validation-fix.js?v=9"></script>
 <script src="./r80-investment-status-fix.js?v=8"></script>
-<div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=13"></script></body></html>
+<div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=14"></script></body></html>
