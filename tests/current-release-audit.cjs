@@ -10,7 +10,7 @@ const index = read('index.html');
 const atual = read('atual.html');
 const sw = read('sw.js');
 assert.strictEqual(index, atual, 'index.html e atual.html precisam ser idênticos');
-assert.match(index, /ATUAL-MOBILE-R12\.5-2026\.09\.20/);
+assert.match(index, /ATUAL-MOBILE-R12\.6-2026\.09\.20/);
 assert.match(index, /id="r124-mobile-financial-card-stack"/);
 assert.match(index, /#view-overview #kpis\.grid-kpi>\.brand-fin-card\{[\s\S]*grid-column:1\/-1!important;[\s\S]*width:100%!important/);
 ['c6account', 'caju', 'creditcard', 'itauaccount', 'xpaccount'].forEach(id =>
@@ -19,7 +19,9 @@ assert.match(index, /#view-overview #kpis\.grid-kpi>\.brand-fin-card\{[\s\S]*gri
 assert.match(index, /function carbonInvestmentLimitAt\(key\)/);
 assert.match(index, /t\.transfer&&realized\(t\.status\)&&month&&month<=key/);
 assert.match(index, /Limite acumulado \$\{brl\(limit\)\} · investimentos realizados/);
-assert.match(sw, /r125-carbon-investment-limit/);
+assert.match(index, /const summaryCells=\[\.\.\.box\.children\]\.filter\(el=>!el\.classList\.contains\('brand-fin-card'\)\)/);
+assert.match(index, /if\(summaryCells\.length%2===1\)summaryCells\.at\(-1\)\?\.classList\.add\('summary-wide'\)/);
+assert.match(sw, /r126-summary-grid-balance/);
 
 const storage = {};
 const context = {

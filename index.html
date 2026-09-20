@@ -615,7 +615,7 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
  #kpis .brand-fin-card.caju-card .brand-fin-stat b{font-size:17px!important;white-space:nowrap!important}
 }
 </style>
-<link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R12.5-2026.09.20';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
+<link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R12.6-2026.09.20';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
 <style id="atual-r11-fintech">
 /* ATUAL R11 · MOBILE FINTECH APROVADO */
 @media(max-width:820px){
@@ -1658,7 +1658,7 @@ function renderKpis(){const b=balances(),key=activeMonth,acc=accumulatedRealized
   investments:{html:kpiCard('INVESTIMENTOS',brl(b.invest),'Investimentos','neutral'),route:'investments'}
  };
  const valid=new Set(KPI_ITEMS.map(x=>x[0])),seen=new Set();kpiLayout=(Array.isArray(kpiLayout)?kpiLayout:[]).filter(x=>x&&valid.has(x.id)&&!seen.has(x.id)&&(seen.add(x.id),true));KPI_ITEMS.forEach(x=>{if(!seen.has(x[0]))kpiLayout.push({id:x[0],visible:true})});
- const visible=kpiLayout.filter(x=>x.visible!==false&&defs[x.id]);box.innerHTML=visible.map(x=>defs[x.id].html).join('');[...box.children].forEach((el,i)=>{el.classList.add('clickable-card');el.tabIndex=0;el.dataset.cardNav=defs[visible[i].id].route;el.dataset.kpiId=visible[i].id;el.style.pointerEvents='auto'});const cells=[...box.children];if(cells.length%2===1)cells.at(-1)?.classList.add('summary-wide');
+ const visible=kpiLayout.filter(x=>x.visible!==false&&defs[x.id]);box.innerHTML=visible.map(x=>defs[x.id].html).join('');[...box.children].forEach((el,i)=>{el.classList.add('clickable-card');el.tabIndex=0;el.dataset.cardNav=defs[visible[i].id].route;el.dataset.kpiId=visible[i].id;el.style.pointerEvents='auto'});const summaryCells=[...box.children].filter(el=>!el.classList.contains('brand-fin-card'));summaryCells.forEach(el=>el.classList.remove('summary-wide'));if(summaryCells.length%2===1)summaryCells.at(-1)?.classList.add('summary-wide');
 }
 function renderQuickFinancialCards(){
  if(window.matchMedia('(max-width:520px)').matches){document.getElementById('quickFinancialCards')?.remove();return}
@@ -2776,7 +2776,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r125',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r126',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
