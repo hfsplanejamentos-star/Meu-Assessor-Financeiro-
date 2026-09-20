@@ -536,7 +536,10 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
 
 /* R10.12 mobile — KPIs compactos, sem áreas vazias */
 @media(max-width:820px){
- #view-overview #kpis.grid-kpi>[data-kpi-id="caju"]{grid-column:1/-1;min-height:168px!important}
+ #view-overview #kpis.grid-kpi>.brand-fin-card{grid-column:1/-1;width:100%!important;height:210px!important;min-height:210px!important;padding:16px 18px!important}
+ #view-overview #kpis.grid-kpi>.brand-fin-card .brand-name{margin-top:12px!important}
+ #view-overview #kpis.grid-kpi>.brand-fin-card .brand-stats{margin-top:12px!important;padding-top:10px!important}
+ #view-overview #kpis.grid-kpi>.brand-fin-card .brand-foot{padding-top:8px!important;margin-top:auto!important}
  #view-overview #kpis.grid-kpi>.kpi:not(.brand-fin-card){height:auto!important;min-height:98px!important;padding:11px 13px!important;display:flex!important;flex-direction:column;justify-content:flex-start}
  #view-overview #kpis.grid-kpi>.kpi:not(.brand-fin-card) .value{margin:7px 0 4px!important;font-size:22px!important}
  #view-overview #kpis.grid-kpi>.kpi:not(.brand-fin-card) .trend{margin-top:auto!important;white-space:normal!important;overflow:visible!important;line-height:1.25!important}
@@ -554,7 +557,7 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
 }
 .category-empty-message{padding:18px 14px;border:1px dashed rgba(130,180,220,.22);border-radius:14px;color:var(--muted);text-align:center}
 </style>
-<link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R10.13-2026.09.20';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
+<link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R10.14-2026.09.20';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
 </head>
 <body>
 <div class="tooltip" id="tooltip"></div>
@@ -2525,7 +2528,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r1013',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r1014',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
