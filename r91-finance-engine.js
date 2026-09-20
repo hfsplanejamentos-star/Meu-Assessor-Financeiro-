@@ -141,22 +141,46 @@ function bind(){
 
 function renderMobileFinSummary(){
  if(!window.matchMedia('(max-width:820px)').matches)return;
- const k=(typeof activeMonth!=='undefined'?activeMonth:'2026-09'),cur=(typeof monthKey==='function'?monthKey(today):new Date().toISOString().slice(0,7)),sum=summary(k),acc=accumulatedRealized(k);
- const future=k>cur,entry=future?sum.plannedIncome:sum.realizedIncome,out=future?sum.plannedExpense:sum.realizedExpense,center=future?acc.balance:currentBalances().liquid;
+ const k=(typeof activeMonth!=='undefined'?activeMonth:'2026-09');
+ const cur=(typeof monthKey==='function'?monthKey(today):new Date().toISOString().slice(0,7));
+ const sum=summary(k),acc=accumulatedRealized(k),future=k>cur;
+ const entry=future?sum.plannedIncome:sum.realizedIncome;
+ const out=future?sum.plannedExpense:sum.realizedExpense;
+ const center=future?acc.balance:currentBalances().liquid;
  const host=document.getElementById('kpis');if(!host)return;
  let box=document.getElementById('mobileFinSummary');
  if(!box){box=document.createElement('section');box.id='mobileFinSummary';box.className='mobile-fin-summary';host.parentNode.insertBefore(box,host)}
  const label=typeof monthLabelKey==='function'?monthLabelKey(k):k;
- const pts=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===k&&!t.transfer&&!t.excludeFromExpense).map(t=>({d:Number(String(t.date||'').slice(8,10))||1,v:Math.abs(n(t.value))})).sort((a,b)=>a.d-b.d);
- const max=Math.max(1,...pts.map(p=>p.v)),w=560,h=78;
- const xy=pts.length?pts.map((p,i)=>[(pts.length===1?w/2:i*w/(pts.length-1)),h-8-(p.v/max)*(h-20)]):[[0,h-8],[w,h-8]];
- const path=xy.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+
+ // Janela semanal: 7 dias. O último dia acompanha o dia atual (ex.: 14–20).
+ const [yy,mm]=k.split('-').map(Number),daysInMonth=new Date(yy,mm,0).getDate();
+ const anchor=Math.min(today.getDate(),daysInMonth),first=Math.max(1,anchor-6);
+ const days=Array.from({length:anchor-first+1},(_,i)=>first+i);
+ const realizedStatus=t=>!t.status||['realized','real','paid','received'].includes(String(t.status).toLowerCase());
+ const plannedStatus=t=>['planned','pending','forecast','previsto'].includes(String(t.status||'').toLowerCase());
+ const tx=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===k&&!t.transfer&&!t.excludeFromExpense&&Number(t.value)<0);
+ const rec=(db.recurring||[]).filter(r=>r.active!==false);
+ const daily=days.map(day=>{
+   let realized=0,planned=0;
+   tx.forEach(t=>{if((Number(String(t.date||'').slice(8,10))||0)!==day)return;const v=Math.abs(n(t.value));if(realizedStatus(t))realized+=v;else if(plannedStatus(t))planned+=v});
+   // Recorrências entram como previstas quando ainda não existe lançamento equivalente no dia.
+   if(k>=cur) rec.forEach(r=>{const due=Number(r.day||r.dueDay||r.dayOfMonth||0);if(due!==day)return;const exists=tx.some(t=>(Number(String(t.date||'').slice(8,10))||0)===day&&String(t.desc||'').toLowerCase().includes(String(r.name||r.desc||'').toLowerCase()));if(!exists)planned+=Math.abs(n(r.value))});
+   return {day,realized,planned,total:realized+planned};
+ });
+ const max=Math.max(1,...daily.map(p=>p.total)),w=560,h=86,padX=12,padTop=10,padBottom=20;
+ const x=i=>daily.length===1?w/2:padX+i*(w-padX*2)/(daily.length-1);
+ const y=v=>h-padBottom-(v/max)*(h-padTop-padBottom);
+ const points=daily.map((p,i)=>[x(i),y(p.total)]);
+ const path=points.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+ const area=points.length?path+' L '+points.at(-1)[0].toFixed(1)+' '+(h-padBottom)+' L '+points[0][0].toFixed(1)+' '+(h-padBottom)+' Z':'';
  box.innerHTML=`<div class="mfs-month"><button type="button" data-mfs-step="-1">‹</button><div class="mfs-label">▣ <span>${label}</span></div><button type="button" data-mfs-step="1">›</button></div>
  <div class="mfs-values"><div class="mfs-metric in"><small><b class="mfs-ico">↓</b> Entrada</small><strong>${brl(entry)}</strong></div><div class="mfs-metric mid"><small><b class="mfs-ico">●</b> ${future?'Previsto':'Saldo'}</small><strong>${brl(center)}</strong><div class="mfs-sub">${future?'Saldo acumulado projetado':'Conta principal disponível'}</div></div><div class="mfs-metric out"><small><b class="mfs-ico">↑</b> Saída</small><strong>${brl(out)}</strong></div></div>
- <div class="mfs-chart"><svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="Movimentação do mês"><defs><linearGradient id="mfsFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5876" stop-opacity=".35"/><stop offset="1" stop-color="#ff5876" stop-opacity="0"/></linearGradient></defs><path d="${path} L ${xy.at(-1)[0]} ${h} L ${xy[0][0]} ${h} Z" fill="url(#mfsFill)"/><path d="${path}" fill="none" stroke="#ff5876" stroke-width="3"/>${xy.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#ff6a80"/>`).join('')}</svg></div>`;
- box.querySelectorAll('[data-mfs-step]').forEach(b=>b.onclick=()=>{const [y,m]=k.split('-').map(Number),d=new Date(y,m-1+Number(b.dataset.mfsStep),1),nk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');if(typeof setActiveMonth==='function')setActiveMonth(nk)});
+ <div class="mfs-chart"><svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="Despesas diárias da semana"><defs><linearGradient id="mfsFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5876" stop-opacity=".35"/><stop offset="1" stop-color="#ff5876" stop-opacity="0"/></linearGradient></defs>${area?`<path d="${area}" fill="url(#mfsFill)"/><path d="${path}" fill="none" stroke="#ff5876" stroke-width="3"/>`:''}${points.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="${daily[i].realized>0?'#ff5876':'#9b6cff'}"/><text x="${p[0]}" y="${h-3}" text-anchor="middle" fill="#8fa4ba" font-size="9">${String(daily[i].day).padStart(2,'0')}/${String(mm).padStart(2,'0')}</text>`).join('')}</svg></div>`;
+ box.querySelectorAll('[data-mfs-step]').forEach(b=>b.onclick=()=>{
+   const d=new Date(yy,mm-1+Number(b.dataset.mfsStep),1),nk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+   if(typeof setActiveMonth==='function'){setActiveMonth(nk);setTimeout(()=>renderMobileFinSummary(),0)}
+ });
 }
-
 function install(){
  ensurePlan();
  window.FinanceCanonical={summary,projection,recurringFor,currentBalances,accumulatedRealized,ensurePlan,normalizeCore,audit,bind,canonicalRenderKpis,renderCanonicalExpenseChart,renderMobileFinSummary};window.renderKpis=canonicalRenderKpis;
