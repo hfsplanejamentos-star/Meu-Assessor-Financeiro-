@@ -67,7 +67,7 @@ function renderCanonicalExpenseChart(){
  const key=typeof scopeMonth==='function'?scopeMonth('category'):activeMonth;
  const current=typeof monthKey==='function'?monthKey(today):new Date().toISOString().slice(0,7),cats={};
  (db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense&&t.status!=='planned').forEach(t=>cats[t.cat||'Outros']=(cats[t.cat||'Outros']||0)+Math.abs(n(t.value)));
- if(key>=current){
+ if(key>current){
    (db.recurring||[]).filter(r=>r.active!==false).forEach(r=>cats[r.cat||'Outros']=(cats[r.cat||'Outros']||0)+Math.abs(n(r.value)));
    (db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&t.status==='planned'&&Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense).forEach(t=>cats[t.cat||'Outros']=(cats[t.cat||'Outros']||0)+Math.abs(n(t.value)));
  }
@@ -75,7 +75,7 @@ function renderCanonicalExpenseChart(){
  const canvas=document.getElementById('categoryChart'),legend=document.getElementById('categoryLegend'),panel=document.getElementById('categoryPanel');
  if(canvas&&typeof drawDonut==='function')drawDonut(canvas,items);
  if(panel)panel.classList.toggle('category-empty',items.length===0);
- if(legend)legend.innerHTML=items.length?items.map((it,i)=>`<div class="legend-line clickable" data-canonical-category="${String(it.name).replace(/"/g,'&quot;')}"><span><i class="dot" style="background:${(typeof colors!=='undefined'?colors:['#20d8ff','#9a6cff','#2ce6b8','#ffb74d'])[i%(typeof colors!=='undefined'?colors.length:4)]}"></i>${it.name}</span><b>${brl(it.value)}</b></div>`).join(''):`<div class="notice">Sem despesas ${key>=current?'previstas':'realizadas'} em ${typeof monthLabelKey==='function'?monthLabelKey(key):key}.</div>`;
+ if(legend)legend.innerHTML=items.length?items.map((it,i)=>`<div class="legend-line clickable" data-canonical-category="${String(it.name).replace(/"/g,'&quot;')}"><span><i class="dot" style="background:${(typeof colors!=='undefined'?colors:['#20d8ff','#9a6cff','#2ce6b8','#ffb74d'])[i%(typeof colors!=='undefined'?colors.length:4)]}"></i>${it.name}</span><b>${brl(it.value)}</b></div>`).join(''):`<div class="notice">Sem despesas ${key>current?'previstas':'realizadas'} em ${typeof monthLabelKey==='function'?monthLabelKey(key):key}.</div>`;
  if(legend)legend.querySelectorAll('[data-canonical-category]').forEach(el=>el.onclick=()=>typeof openCategoryDetail==='function'&&openCategoryDetail(el.dataset.canonicalCategory));
 }
 function canonicalRenderKpis(){
@@ -91,15 +91,25 @@ function canonicalRenderKpis(){
   available:{html:kpiCard('DISPONÍVEL HOJE',brl(b.liquid),'Abrir contas','neutral'),route:'accounts'},
   accumulated:{html:kpiCard('SALDO ACUMULADO',brl(acc.balance),'Receitas − despesas − investimentos realizados','neutral'),route:'transactions'},
   income:{html:kpiCard('RECEITAS REALIZADAS',brl(s.realizedIncome),k,'neutral'),route:'transactions'},
+  income_planned:{html:kpiCard('RECEITAS PREVISTAS',brl(s.plannedIncome),k,'neutral'),route:'transactions'},
   expense:{html:kpiCard('DESPESAS REALIZADAS',brl(s.realizedExpense),k,'neutral'),route:'transactions'},
+  expense_planned:{html:kpiCard('DESPESAS PREVISTAS',brl(s.plannedExpense),k,'neutral'),route:'transactions'},
   investments:{html:kpiCard('INVESTIMENTOS',brl(b.invest),'Abrir investimentos','neutral'),route:'investments'}
  };
+ const mobile=window.matchMedia('(max-width:820px)').matches;
  const fallback=(typeof KPI_ITEMS!=='undefined'?KPI_ITEMS.map(x=>({id:x[0],visible:true})):Object.keys(defs).map(id=>({id,visible:true}))),raw=Array.isArray(pref)?pref:[],order=[],known=new Set();
- raw.forEach(x=>{if(x&&defs[x.id]&&!known.has(x.id)){order.push(x);known.add(x.id)}});fallback.forEach(x=>{if(!known.has(x.id)){order.push(x);known.add(x.id)}});const seen=new Set(),rows=[];
- order.forEach(x=>{if(x&&x.visible!==false&&defs[x.id]&&!seen.has(x.id)){rows.push({id:x.id,...defs[x.id]});seen.add(x.id)}});
+ raw.forEach(x=>{if(x&&defs[x.id]&&!known.has(x.id)){order.push(x);known.add(x.id)}});fallback.forEach(x=>{if(!known.has(x.id)){order.push(x);known.add(x.id)}});
+ ['income_planned','expense_planned'].forEach(id=>{if(!known.has(id)){order.push({id,visible:true});known.add(id)}});
+ if(mobile){
+   const core=['c6account','caju'];
+   const rest=order.filter(x=>!core.includes(x.id));
+   order.length=0;core.forEach(id=>order.push({id,visible:true}));rest.forEach(x=>order.push(x));
+ }
+ const seen=new Set(),rows=[];
+ order.forEach(x=>{if(x&&x.visible!==false&&defs[x.id]&&!seen.has(x.id)&&defs[x.id].html){rows.push({id:x.id,...defs[x.id]});seen.add(x.id)}});
  box.innerHTML=rows.map(x=>x.html).join('');
- [...box.children].forEach((el,i)=>{el.classList.add('clickable-card');el.tabIndex=0;el.dataset.cardNav=rows[i].route;el.dataset.kpiId=rows[i].id;el.style.pointerEvents='auto'});
- const summary=[...box.children].filter(el=>!el.classList.contains('brand-fin-card'));if(summary.length%2===1)summary.at(-1)?.classList.add('summary-wide');
+ [...box.children].forEach((el,i)=>{el.classList.add('clickable-card');el.tabIndex=0;el.setAttribute('role','button');el.dataset.cardNav=rows[i].route;el.dataset.kpiId=rows[i].id;el.style.pointerEvents='auto'});
+ const summaryCards=[...box.children].filter(el=>!el.classList.contains('brand-fin-card'));summaryCards.forEach(el=>el.classList.remove('summary-wide'));
  bind();
 }
 function bind(){
