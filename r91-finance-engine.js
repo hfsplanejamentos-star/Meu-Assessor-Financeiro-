@@ -72,8 +72,9 @@ function renderCanonicalExpenseChart(){
    (db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&t.status==='planned'&&Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense).forEach(t=>cats[t.cat||'Outros']=(cats[t.cat||'Outros']||0)+Math.abs(n(t.value)));
  }
  const items=Object.entries(cats).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
- const canvas=document.getElementById('categoryChart'),legend=document.getElementById('categoryLegend');
+ const canvas=document.getElementById('categoryChart'),legend=document.getElementById('categoryLegend'),panel=document.getElementById('categoryPanel');
  if(canvas&&typeof drawDonut==='function')drawDonut(canvas,items);
+ if(panel)panel.classList.toggle('category-empty',items.length===0);
  if(legend)legend.innerHTML=items.length?items.map((it,i)=>`<div class="legend-line clickable" data-canonical-category="${String(it.name).replace(/"/g,'&quot;')}"><span><i class="dot" style="background:${(typeof colors!=='undefined'?colors:['#20d8ff','#9a6cff','#2ce6b8','#ffb74d'])[i%(typeof colors!=='undefined'?colors.length:4)]}"></i>${it.name}</span><b>${brl(it.value)}</b></div>`).join(''):`<div class="notice">Sem despesas ${key>=current?'previstas':'realizadas'} em ${typeof monthLabelKey==='function'?monthLabelKey(key):key}.</div>`;
  if(legend)legend.querySelectorAll('[data-canonical-category]').forEach(el=>el.onclick=()=>typeof openCategoryDetail==='function'&&openCategoryDetail(el.dataset.canonicalCategory));
 }
@@ -109,6 +110,11 @@ function bind(){
 function install(){
  ensurePlan();
  window.FinanceCanonical={summary,projection,recurringFor,currentBalances,accumulatedRealized,ensurePlan,normalizeCore,audit,bind,canonicalRenderKpis,renderCanonicalExpenseChart};window.renderKpis=canonicalRenderKpis;
+ if(typeof window.renderCharts==='function'&&!window.renderCharts.__canonicalExpenseWrapped){
+   const baseRenderCharts=window.renderCharts;
+   const wrappedRenderCharts=function(...args){const out=baseRenderCharts.apply(this,args);try{renderCanonicalExpenseChart()}catch(_){}return out};
+   wrappedRenderCharts.__canonicalExpenseWrapped=true;window.renderCharts=wrappedRenderCharts;
+ }
  window.buildProjection=function(count){const start=(typeof scopeMonth==='function'?scopeMonth('projection'):activeMonth)||'2026-10';return projection(start,Number(count)||12)};
  bind();
  const refresh=()=>{try{renderCanonicalExpenseChart()}catch(_){}};
