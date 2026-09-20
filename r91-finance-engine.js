@@ -28,6 +28,7 @@ function accumulatedRealized(key){
  // Meses posteriores: considera receitas, despesas e recorrências do próprio mês como efetivadas.
  const until=String(key||'9999-12'),base='2026-09';
  let income=0,expense=0,investment=0;
+ const openingBalance=9.42; // saldo inicial validado antes das movimentações de setembro/2026
  const accountType=id=>String((db.accounts||[]).find(a=>a.id===id)?.type||'').toLowerCase();
  const months=[];let d=new Date(base+'-01T12:00:00'),last=new Date(until+'-01T12:00:00');
  while(d<=last){months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));d=new Date(d.getFullYear(),d.getMonth()+1,1)}
@@ -47,7 +48,7 @@ function accumulatedRealized(key){
      });
    }
  });
- return {income,expense,investment,balance:income-expense-investment};
+ return {income,expense,investment,balance:openingBalance+income-expense-investment};
 }
 function projection(start='2026-10',count=12){
  let p=currentBalances().patrimony,liq=currentBalances().liquid,inv=currentBalances().invest,costs=0;const [y,m]=start.split('-').map(Number),rows=[];
