@@ -22,6 +22,13 @@ function currentBalances(){
  const invest=(db.accounts||[]).filter(isInv).reduce((s,a)=>s+n(a.balance),0);
  return {liquid,invest,patrimony:liquid+invest};
 }
+function accumulatedRealized(key){
+ const until=String(key||'9999-12'),tx=(db.transactions||[]).filter(t=>keyOf(t.date)<=until&&real(t.status));
+ const operational=tx.filter(t=>!t.transfer&&!t.excludeFromExpense),income=operational.filter(t=>n(t.value)>0).reduce((s,t)=>s+n(t.value),0),expense=operational.filter(t=>n(t.value)<0).reduce((s,t)=>s+abs(t.value),0);
+ const accountType=id=>String((db.accounts||[]).find(a=>a.id===id)?.type||'').toLowerCase();
+ const investment=tx.filter(t=>t.transfer&&(t.dest===INV||t.destAccountId===INV||/invest/.test(accountType(t.dest||t.destAccountId)))).reduce((s,t)=>s+abs(t.value),0);
+ return {income,expense,investment,balance:income-expense-investment};
+}
 function projection(start='2026-10',count=12){
  let p=currentBalances().patrimony,liq=currentBalances().liquid,inv=currentBalances().invest,costs=0;const [y,m]=start.split('-').map(Number),rows=[];
  for(let i=0;i<count;i++){const d=new Date(y,m-1+i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),s=summary(k),income=s.plannedIncome,expense=s.plannedExpense,move=s.investment;
@@ -71,7 +78,7 @@ function renderCanonicalExpenseChart(){
  if(legend)legend.querySelectorAll('[data-canonical-category]').forEach(el=>el.onclick=()=>typeof openCategoryDetail==='function'&&openCategoryDetail(el.dataset.canonicalCategory));
 }
 function canonicalRenderKpis(){
- const b=currentBalances(),k=(typeof activeMonth!=='undefined'?activeMonth:'2026-09'),s=summary(k),box=document.getElementById('kpis');if(!box||typeof brl!=='function')return;
+ const b=currentBalances(),k=(typeof activeMonth!=='undefined'?activeMonth:'2026-09'),s=summary(k),acc=accumulatedRealized(k),box=document.getElementById('kpis');if(!box||typeof brl!=='function')return;
  let pref;try{pref=JSON.parse(localStorage.getItem('assessor_kpi_layout')||'[]')}catch(_){pref=[]}
  const defs={
   c6account:{html:typeof accountBrandCard==='function'?accountBrandCard('c6account',k):'',route:'accounts'},
@@ -81,12 +88,13 @@ function canonicalRenderKpis(){
   caju:{html:typeof financeBrandCard==='function'?financeBrandCard('caju',k):'',route:'cards'},
   patrimony:{html:kpiCard('PATRIMÔNIO TOTAL',brl(b.patrimony),'Abrir contas','neutral'),route:'accounts'},
   available:{html:kpiCard('DISPONÍVEL HOJE',brl(b.liquid),'Abrir contas','neutral'),route:'accounts'},
+  accumulated:{html:kpiCard('SALDO ACUMULADO',brl(acc.balance),'Receitas − despesas − investimentos realizados','neutral'),route:'transactions'},
   income:{html:kpiCard('RECEITAS REALIZADAS',brl(s.realizedIncome),k,'neutral'),route:'transactions'},
   expense:{html:kpiCard('DESPESAS REALIZADAS',brl(s.realizedExpense),k,'neutral'),route:'transactions'},
   investments:{html:kpiCard('INVESTIMENTOS',brl(b.invest),'Abrir investimentos','neutral'),route:'investments'}
  };
- const fallback=(typeof KPI_ITEMS!=='undefined'?KPI_ITEMS.map(x=>({id:x[0],visible:true})):Object.keys(defs).map(id=>({id,visible:true})));
- const order=Array.isArray(pref)&&pref.length?pref:fallback,seen=new Set(),rows=[];
+ const fallback=(typeof KPI_ITEMS!=='undefined'?KPI_ITEMS.map(x=>({id:x[0],visible:true})):Object.keys(defs).map(id=>({id,visible:true}))),raw=Array.isArray(pref)?pref:[],order=[],known=new Set();
+ raw.forEach(x=>{if(x&&defs[x.id]&&!known.has(x.id)){order.push(x);known.add(x.id)}});fallback.forEach(x=>{if(!known.has(x.id)){order.push(x);known.add(x.id)}});const seen=new Set(),rows=[];
  order.forEach(x=>{if(x&&x.visible!==false&&defs[x.id]&&!seen.has(x.id)){rows.push({id:x.id,...defs[x.id]});seen.add(x.id)}});
  box.innerHTML=rows.map(x=>x.html).join('');
  [...box.children].forEach((el,i)=>{el.classList.add('clickable-card');el.tabIndex=0;el.dataset.cardNav=rows[i].route;el.dataset.kpiId=rows[i].id;el.style.pointerEvents='auto'});
@@ -99,7 +107,7 @@ function bind(){
 }
 function install(){
  ensurePlan();
- window.FinanceCanonical={summary,projection,recurringFor,currentBalances,ensurePlan,normalizeCore,audit,bind,canonicalRenderKpis,renderCanonicalExpenseChart};window.renderKpis=canonicalRenderKpis;
+ window.FinanceCanonical={summary,projection,recurringFor,currentBalances,accumulatedRealized,ensurePlan,normalizeCore,audit,bind,canonicalRenderKpis,renderCanonicalExpenseChart};window.renderKpis=canonicalRenderKpis;
  window.buildProjection=function(count){const start=(typeof scopeMonth==='function'?scopeMonth('projection'):activeMonth)||'2026-10';return projection(start,Number(count)||12)};
  bind();
  const refresh=()=>{try{renderCanonicalExpenseChart()}catch(_){}};
