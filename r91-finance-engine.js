@@ -68,7 +68,7 @@ function renderCanonicalExpenseChart(){
  const current=typeof monthKey==='function'?monthKey(today):new Date().toISOString().slice(0,7),cats={};
  (db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense&&t.status!=='planned').forEach(t=>cats[t.cat||'Outros']=(cats[t.cat||'Outros']||0)+Math.abs(n(t.value)));
  if(key>=current){
-   recurringFor(key).forEach(r=>cats[r.cat||'Outros']=(cats[r.cat||'Outros']||0)+Math.abs(n(r.value)));
+   (db.recurring||[]).filter(r=>r.active!==false).forEach(r=>cats[r.cat||'Outros']=(cats[r.cat||'Outros']||0)+Math.abs(n(r.value)));
    (db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&t.status==='planned'&&Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense).forEach(t=>cats[t.cat||'Outros']=(cats[t.cat||'Outros']||0)+Math.abs(n(t.value)));
  }
  const items=Object.entries(cats).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
