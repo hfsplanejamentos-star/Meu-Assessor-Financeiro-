@@ -130,7 +130,7 @@ function canonicalRenderKpis(){
  order.forEach(x=>{if(x&&x.visible!==false&&defs[x.id]&&!seen.has(x.id)&&defs[x.id].html){rows.push({id:x.id,...defs[x.id]});seen.add(x.id)}});
  box.innerHTML=rows.map(x=>x.html).join('');
  [...box.children].forEach((el,i)=>{el.classList.add('clickable-card');el.tabIndex=0;el.setAttribute('role','button');el.dataset.cardNav=rows[i].route;el.dataset.kpiId=rows[i].id;el.style.pointerEvents='auto'});
- const summaryCards=[...box.children].filter(el=>!el.classList.contains('brand-fin-card'));summaryCards.forEach(el=>el.classList.remove('summary-wide'));
+ const cells=[...box.children];cells.forEach(el=>el.classList.remove('summary-wide'));if(cells.length%2===1)cells.at(-1)?.classList.add('summary-wide');
  bind();
 }
 function bind(){
