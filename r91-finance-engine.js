@@ -181,7 +181,7 @@ function renderMobileFinSummary(){
  <div class="mfs-chart"><svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-label="Despesas diárias da semana"><defs><linearGradient id="mfsFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5876" stop-opacity=".35"/><stop offset="1" stop-color="#ff5876" stop-opacity="0"/></linearGradient></defs>${area?`<path d="${area}" fill="url(#mfsFill)"/><path d="${path}" fill="none" stroke="#ff5876" stroke-width="3"/>`:''}${points.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="${daily[i].realized>0?'#ff5876':'#9b6cff'}"/><text x="${p[0]}" y="${h-3}" text-anchor="middle" fill="#8fa4ba" font-size="9">${String(daily[i].day).padStart(2,'0')}/${String(mm).padStart(2,'0')}</text>`).join('')}</svg></div>`;
  box.querySelectorAll('[data-mfs-step]').forEach(b=>b.onclick=()=>{
    const d=new Date(yy,mm-1+Number(b.dataset.mfsStep),1),nk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-   if(typeof setActiveMonth==='function'){setActiveMonth(nk);setTimeout(()=>renderMobileFinSummary(),0)}
+   if(typeof setActiveMonth==='function'){setActiveMonth(nk);setTimeout(()=>{try{renderAll();renderCharts();canonicalRenderKpis();renderCanonicalExpenseChart();renderMobileFinSummary();bind()}catch(_){renderMobileFinSummary()}},0)}
  });
 }
 function install(){
