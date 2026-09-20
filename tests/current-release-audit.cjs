@@ -10,13 +10,16 @@ const index = read('index.html');
 const atual = read('atual.html');
 const sw = read('sw.js');
 assert.strictEqual(index, atual, 'index.html e atual.html precisam ser idênticos');
-assert.match(index, /ATUAL-MOBILE-R12\.4-2026\.09\.20/);
+assert.match(index, /ATUAL-MOBILE-R12\.5-2026\.09\.20/);
 assert.match(index, /id="r124-mobile-financial-card-stack"/);
 assert.match(index, /#view-overview #kpis\.grid-kpi>\.brand-fin-card\{[\s\S]*grid-column:1\/-1!important;[\s\S]*width:100%!important/);
 ['c6account', 'caju', 'creditcard', 'itauaccount', 'xpaccount'].forEach(id =>
   assert.match(index, new RegExp(`data-kpi-id="${id}"`), `card financeiro ${id} precisa estar contemplado`)
 );
-assert.match(sw, /r124-financial-card-stack/);
+assert.match(index, /function carbonInvestmentLimitAt\(key\)/);
+assert.match(index, /t\.transfer&&realized\(t\.status\)&&month&&month<=key/);
+assert.match(index, /Limite acumulado \$\{brl\(limit\)\} · investimentos realizados/);
+assert.match(sw, /r125-carbon-investment-limit/);
 
 const storage = {};
 const context = {
@@ -66,6 +69,20 @@ context.db.transactions.push({ id: 'manual_regression_guard', date: '2026-09-20'
   ];
   const todayTotal = Math.abs(db.transactions.filter(t => todayIds.includes(t.id)).reduce((s, t) => s + Number(t.value), 0));
   near(todayTotal, 188.89, 'sete lançamentos de 20/09');
+
+  const ruleStart = index.indexOf('function isC6CarbonCard');
+  const ruleEnd = index.indexOf('function financeBrandCard', ruleStart);
+  assert.ok(ruleStart > 0 && ruleEnd > ruleStart, 'regra do limite C6 Carbon precisa estar disponível');
+  vm.runInContext(index.slice(ruleStart, ruleEnd), context);
+  db.transactions.push(
+    { id: 'audit_inv_oct', date: '2026-10-10', value: -1000, transfer: true, dest: 'acc_invest_plan', status: 'realized' },
+    { id: 'audit_inv_nov_planned', date: '2026-11-10', value: -3000, transfer: true, dest: 'acc_invest_plan', status: 'planned' },
+    { id: 'audit_inv_dec', date: '2026-12-10', value: -500, transfer: true, dest: 'acc_invest_plan', status: 'posted' },
+  );
+  near(context.carbonInvestmentLimitAt('2026-10'), 1000, 'limite C6 Carbon em outubro');
+  near(context.carbonInvestmentLimitAt('2026-11'), 1000, 'aporte previsto não vira limite');
+  near(context.carbonInvestmentLimitAt('2026-12'), 1500, 'limite C6 Carbon acumulado em dezembro');
+  db.transactions = db.transactions.filter(t => !String(t.id).startsWith('audit_inv_'));
 
   console.log('AUDITORIA ATUAL: APROVADA');
   console.log(JSON.stringify({ income, expense, balance: account.balance, openingBalance: account.openingBalance, todayTotal }, null, 2));
