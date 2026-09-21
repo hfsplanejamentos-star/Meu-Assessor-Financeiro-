@@ -30,6 +30,20 @@ export default defineSchema({
     .index("by_owner_and_event_id", ["ownerHash", "eventId"])
     .index("by_owner_and_fingerprint", ["ownerHash", "fingerprint"])
     .index("by_owner_and_received_at", ["ownerHash", "receivedAt"]),
+  incomePayerRules: defineTable({
+    ownerHash: v.string(),
+    payerKey: v.string(),
+    payerName: v.string(),
+    payerDocument: v.optional(v.string()),
+    category: v.string(),
+    subcategory: v.string(),
+    isSalary: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_owner_and_payer_key", ["ownerHash", "payerKey"])
+    .index("by_owner", ["ownerHash"]),
+
   notificationDevices: defineTable({
     ownerHash: v.string(),
     deviceId: v.string(),
