@@ -8,12 +8,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 final class BankAllowlist {
+
     private static final String PREFS = "capture_preferences";
     private static final String KEY = "allowed_packages";
+
+    // Captura limitada somente ao C6 Bank e Caju
     private static final Set<String> DEFAULTS = new HashSet<>(Arrays.asList(
-        "com.c6bank.app",
-        "com.caju.employee"
-));
+            "com.c6bank.app",
+            "com.caju.employee"
     ));
 
     static boolean contains(Context context, String packageName) {
@@ -21,9 +23,14 @@ final class BankAllowlist {
     }
 
     static Set<String> packages(Context context) {
-        SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        return new HashSet<>(preferences.getStringSet(KEY, DEFAULTS));
+        SharedPreferences preferences =
+                context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+
+        return new HashSet<>(
+                preferences.getStringSet(KEY, DEFAULTS)
+        );
     }
 
-    private BankAllowlist() {}
+    private BankAllowlist() {
+    }
 }
