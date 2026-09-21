@@ -1878,6 +1878,8 @@ function renderInvoiceManagement(){
 }
 /* Extrato C6 validado pelo usuário — somente setembro/2026 */
 (function migrateC6September2026(){
+ // Migração legada desativada: a base canônica atual é mantida por r70-real-reset.js.
+ return;
  const migrationId='c6_sep_2026_statement_v1';db.migrations=db.migrations||{};if(db.migrations[migrationId])return;
  db.transactions=db.transactions||[];db.accounts=db.accounts||[];
  let acc=db.accounts.find(a=>a.id==='acc_c6'||/c6/i.test(String(a.name||a.institution||'')));
@@ -1925,9 +1927,17 @@ function ensureMonthlyIncomeAutomation(){
   ['caju_2026_09_17_marilza_2999','2026-09-17','IFD*60.939.734 MARI...',-29.99,'Alimentação'],
   ['caju_2026_09_18_padaria_3090','2026-09-18','PADARIA E CONFEITARIA',-30.90,'Alimentação'],
   ['caju_2026_09_18_kaique_4905','2026-09-18','IFD*64802138 KAIQUE...',-49.05,'Alimentação'],
-  ['caju_2026_09_19_restaurante_7800','2026-09-19','Restaurante MACAE BR',-78.00,'Alimentação']
+  ['caju_2026_09_19_restaurante_7800','2026-09-19','Restaurante MACAE BR',-78.00,'Alimentação'],
+  ['caju_2026_09_20_luana_3189','2026-09-20','IFD*56162560 LUANA...',-31.89,'Alimentação'],
+  ['caju_2026_09_21_super_market_24689','2026-09-21','SUPER MARKET CAX...',-246.89,'Supermercado']
  ];
- hist.forEach(([id,date,desc,value,sub])=>{if(!db.transactions.some(t=>String(t.id)===id))db.transactions.push({id,date,desc,value,cat:'Alimentação',sub,card:caju.id,cardId:caju.id,origin:'Extrato Caju',status:'realized',benefit:true,excludeFromExpense:true})});
+ hist.forEach(([id,date,desc,value,sub])=>{
+  const exists=db.transactions.some(t=>String(t.id)===id||(
+   String(t.date||'').slice(0,10)===date&&Math.abs(Number(t.value||0)-value)<0.005&&
+   (String(t.cardId||t.card||'')===caju.id||/caju/i.test(String(t.origin||t.source||'')))
+  ));
+  if(!exists)db.transactions.push({id,date,desc,value,cat:'Alimentação',sub,card:caju.id,cardId:caju.id,origin:'Extrato Caju',status:'realized',benefit:true,excludeFromExpense:true});
+ });
  const now=new Date(),start=new Date(2026,9,1);
  if(now>=start){for(let d=new Date(start);d<=now;d=new Date(d.getFullYear(),d.getMonth()+1,1)){const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),date=key+'-01';
    const salaryId='auto_salary_'+key,cajuId='auto_caju_'+key;
@@ -1944,12 +1954,7 @@ function ensureMonthlyIncomeAutomation(){
  save();
 }
 function cajuBalanceAt(cardId,key){
- const card=(db.cards||[]).find(c=>c.id===cardId),baseMonth='2026-09';
- // Setembro/26 é extrato validado: crédito 1.006,89 - gastos 202,94 = 803,95.
- if(key===baseMonth)return 803.95;
- let bal=803.95;
- (db.transactions||[]).filter(t=>(t.cardId===cardId||t.card===cardId)&&String(t.date||'').slice(0,7)>baseMonth&&String(t.date||'').slice(0,7)<=key&&t.status!=='planned'&&!t.excludeFromBalance).forEach(t=>bal+=Number(t.value||0));
- return bal;
+ return Math.round((db.transactions||[]).filter(t=>(t.cardId===cardId||t.card===cardId)&&String(t.date||'').slice(0,7)<=key&&t.status!=='planned'&&!t.excludeFromBalance).reduce((sum,t)=>sum+Number(t.value||0),0)*100)/100;
 }
 function renderCajuDetails(){
  const card=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||String(c.name||'').toLowerCase().includes('caju'));if(!card)return;
@@ -2853,7 +2858,7 @@ document.addEventListener('click',function(e){
 <script src="./r69-money-input-fix.js?v=1"></script>
 <script src="./r69-final-cleanup.js?v=3"></script>
 <script src="./r69-real-budget-repair.js?v=2"></script>
-<script src="./r70-real-reset.js?v=22"></script>
+<script src="./r70-real-reset.js?v=24"></script>
 <script src="./r75-final-validation-fix.js?v=10"></script>
-<script src="./r80-investment-status-fix.js?v=8"></script>
+<script src="./r80-investment-status-fix.js?v=9"></script>
 <div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=30"></script></body></html>
