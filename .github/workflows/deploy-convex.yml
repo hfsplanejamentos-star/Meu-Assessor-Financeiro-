@@ -29,9 +29,12 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
+
+      - name: Instalar Convex SDK
+        run: npm install --no-save convex@latest
 
       - name: Implantar funções no Convex
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
-        run: npx --yes convex@latest deploy
+        run: npx convex deploy
