@@ -11,10 +11,9 @@ final class BankAllowlist {
     private static final String PREFS = "capture_preferences";
     private static final String KEY = "allowed_packages";
     private static final Set<String> DEFAULTS = new HashSet<>(Arrays.asList(
-            "com.c6bank.app",
-            "br.com.itau",
-            "br.com.xp.carteira",
-            "com.caju.employee"
+        "com.c6bank.app",
+        "com.caju.employee"
+));
     ));
 
     static boolean contains(Context context, String packageName) {
