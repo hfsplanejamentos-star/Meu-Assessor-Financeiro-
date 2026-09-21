@@ -2391,13 +2391,20 @@ deleteRecurringBtn.onclick=()=>{
  save();recurringEditModal.classList.remove('open');renderAll();renderAudit();
 };
 function openModal(type){document.getElementById('modal').classList.add('open');document.getElementById('fType').value=type||'expense';document.getElementById('fDate').value=iso(today);fillFormSelects();fInstallmentMode.value='single';fInstallments.value=1;fInstallmentNo.value=1;renderInstallmentPreview()}
-function fillFormSelects(){document.getElementById('fCategory').innerHTML=db.categories.map(c=>`<option>${c.name}</option>`).join('');const opts=db.accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');document.getElementById('fAccount').innerHTML=opts;document.getElementById('fDest').innerHTML='<option value="">—</option>'+opts;document.getElementById('fCard').innerHTML='<option value="">—</option>'+db.cards.map(c=>`<option value="${c.id}">${c.name} · ${c.type||'Crédito'}</option>`).join('')}
+function fillFormSelects(){document.getElementById('fCategory').innerHTML=db.categories.map(c=>`<option>${c.name}</option>`).join('');const opts=db.accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');const caju=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||/caju/i.test(String(c.name||'')));const cajuOpt=caju?`<option value="caju:${caju.id}">Caju Alimentação (benefício)</option>`:'';document.getElementById('fAccount').innerHTML=opts+cajuOpt;document.getElementById('fDest').innerHTML='<option value="">—</option>'+opts;document.getElementById('fCard').innerHTML='<option value="">—</option>'+db.cards.map(c=>`<option value="${c.id}">${c.name} · ${c.type||'Crédito'}</option>`).join('')}
 document.getElementById('entryForm').onsubmit=e=>{
  e.preventDefault();
  const __beforeIds=new Set((db.transactions||[]).map(t=>String(t.id)));
- const type=fType.value,val=Math.abs(+fValue.value||0);
+ const type=fType.value,val=Math.abs(+fValue.value||0),cajuSource=String(fAccount.value||'').startsWith('caju:'),cajuCardId=cajuSource?String(fAccount.value).slice(5):'';
+ if(cajuSource&&type!=='expense')return alert('O Caju está disponível como conta de origem somente para despesas.');
  const base={id:Date.now(),date:fDate.value,desc:fDesc.value,cat:fCategory.value,sub:fSub.value,account:fAccount.value,origin:fOrigin.value,card:fCard.value||null,installments:+fInstallments.value||1,installmentNo:+fInstallmentNo.value||1,installmentMode:fInstallmentMode.value,inputValue:val};
- if(type==='recurring'){
+ if(cajuSource){
+   const card=(db.cards||[]).find(c=>String(c.id)===cajuCardId);
+   if(!card)return alert('Não foi possível localizar o cartão Caju.');
+   const tx={...base,account:'',accountId:'',card:cajuCardId,cardId:cajuCardId,value:-val,status:fStatus.value,source:'Caju',origin:'Caju',paymentType:'Cartão benefício',benefit:true,excludeFromPatrimony:true};
+   db.transactions.push(tx);
+   if(fStatus.value==='realized'){card.availableLimit=Math.max(0,Math.round((Number(card.availableLimit??card.balance??card.limit??0)-val)*100)/100);card.balance=card.availableLimit}
+ }else if(type==='recurring'){
    db.recurring.push({id:'r'+Date.now(),desc:fDesc.value,value:val,cat:fCategory.value,sub:fSub.value,due:+fDue.value||1,freq:fFrequency.value||'Mensal',kind:'Recorrente',icon:iconFor(fCategory.value,fSub.value),account:fAccount.value||null,active:true});
  }else if(type==='transfer'||type==='investment'){
    db.transactions.push({...base,value:-val,transfer:true,dest:fDest.value,status:fStatus.value});
