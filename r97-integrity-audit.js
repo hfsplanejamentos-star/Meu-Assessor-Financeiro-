@@ -6,7 +6,7 @@
  function migrate(){
   let changed=false;
   (db.recurring||[]).forEach(r=>{
-   if(String(r.id)==='rec_pensao'||/pensao alimenticia|^pensao$/.test(norm(r.desc||r.description))){if(r.cat!=='Pensão'){r.cat='Pensão';r.desc='Pensão';r.description='Pensão';changed=true}}\n   if(String(r.id)==='rec_emp_mae'&&r.cat!=='Móveis'){r.cat='Móveis';r.desc='Móveis';r.description='Móveis';changed=true}
+   if(String(r.id)==='rec_pensao'||/pensao alimenticia|^pensao$/.test(norm(r.desc||r.description))){if(r.cat!=='Pensão'){r.cat='Pensão';r.desc='Pensão';r.description='Pensão';changed=true}}\n   if(String(r.id)==='rec_emp_mae'&&r.cat!=='Móveis'){r.cat='Móveis';r.desc='Móveis';r.description='Móveis';changed=true}\n   if((String(r.id)==='rec_tim'||(/plano tim/.test(norm(r.desc||r.description))&&Math.abs(n(r.value))===79.9))&&r.cat!=='Plano TIM'){r.cat='Plano TIM';r.desc='Plano TIM';r.description='Plano TIM';changed=true}
    if(String(r.id)==='rec_carro'||/prestacao do carro/.test(norm(r.desc||r.description))){if(r.cat!=='C4 Cactus'){r.cat='C4 Cactus';changed=true}}
   });
   if(changed)try{save()}catch(_){}
