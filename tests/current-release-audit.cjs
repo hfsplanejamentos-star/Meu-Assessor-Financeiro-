@@ -24,7 +24,13 @@ assert.match(index, /if\(summaryCells\.length%2===1\)summaryCells\.at\(-1\)\?\.c
 const canonical = read('r91-finance-engine.js');
 assert.match(canonical, /const summaryCells=\[\.\.\.box\.children\]\.filter\(el=>!el\.classList\.contains\('brand-fin-card'\)\)/);
 assert.doesNotMatch(canonical, /const cells=\[\.\.\.box\.children\].*cells\.length%2/);
-assert.match(sw, /r129-c6-classification/);
+assert.match(sw, /r134-stable-values-airsoft/);
+assert.match(index, /r70-real-reset\.js\?v=25/);
+assert.match(index, /r92-stable-startup\.js\?v=1/);
+assert.match(index, /r80-investment-status-fix\.js\?v=9/);
+assert.doesNotMatch(index, /if\(key===baseMonth\)return 803\.95/);
+assert.match(index, /const balanceById=new Map\(\);let running=0/);
+assert.doesNotMatch(index, /t\.id==='caju_2026_09_17_marilza_2999'\?brl\(961\.90\)/);
 
 const storage = {};
 const context = {
@@ -63,7 +69,7 @@ context.db.transactions.push({ id: 'manual_regression_guard', date: '2026-09-20'
   near(account.openingBalance + income - expense, account.balance, 'reconciliação do saldo C6');
   near(db.meta.statementOutVisible, 2174.72, 'saídas visíveis');
   assert.strictEqual(new Set(ids).size, ids.length, 'IDs de transações duplicados');
-  assert.strictEqual(db.meta.c6Sep2026Validated, 'v9');
+  assert.strictEqual(db.meta.c6Sep2026Validated, 'v10');
   assert.ok(db.transactions.some(t => t.id === 'manual_regression_guard'), 'migração não pode apagar lançamentos manuais');
 
   const todayIds = [
@@ -79,7 +85,7 @@ context.db.transactions.push({ id: 'manual_regression_guard', date: '2026-09-20'
   const latao = db.transactions.find(t => t.id === 'c6_2026_09_20_pix_andress_8000');
   const airsoft = db.transactions.find(t => t.id === 'c6_2026_09_20_pix_sympla_6630');
   assert.deepStrictEqual([latao.cat, latao.sub, latao.classificationPending], ['Cerveja', 'Depósito do Latão', false]);
-  assert.deepStrictEqual([airsoft.cat, airsoft.sub, airsoft.classificationPending], ['Entretenimento', 'Airsoft', false]);
+  assert.deepStrictEqual([airsoft.cat, airsoft.sub, airsoft.classificationPending], ['Airsoft', 'Airsoft', false]);
 
   const ruleStart = index.indexOf('function isC6CarbonCard');
   const ruleEnd = index.indexOf('function financeBrandCard', ruleStart);
@@ -94,6 +100,18 @@ context.db.transactions.push({ id: 'manual_regression_guard', date: '2026-09-20'
   near(context.carbonInvestmentLimitAt('2026-11'), 1000, 'aporte previsto não vira limite');
   near(context.carbonInvestmentLimitAt('2026-12'), 1500, 'limite C6 Carbon acumulado em dezembro');
   db.transactions = db.transactions.filter(t => !String(t.id).startsWith('audit_inv_'));
+
+  account.balance = 400;
+  const caju = db.cards.find(c => c.id === 'card_caju_alimentacao');
+  caju.balance = 500;
+  caju.availableLimit = 500;
+  await context.window.FinanceRealBase.enforce('manual-balance-regression');
+  near(account.balance, 400, 'saldo manual posterior do C6 deve ser preservado');
+  near(caju.balance, 500, 'saldo manual posterior do Caju deve ser preservado');
+  near(caju.availableLimit, 500, 'disponível manual posterior do Caju deve ser preservado');
+  account.balance = 486.31;
+  caju.balance = 525.17;
+  caju.availableLimit = 525.17;
 
   console.log('AUDITORIA ATUAL: APROVADA');
   console.log(JSON.stringify({ income, expense, balance: account.balance, openingBalance: account.openingBalance, todayTotal }, null, 2));

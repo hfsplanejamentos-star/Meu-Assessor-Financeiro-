@@ -11,7 +11,7 @@ function valid(x){return !!(x&&/^R(7|8|10)\./.test(x.meta?.realBase||'')&&Array.
 function migrateSep26(){
  if(typeof db!=='object'||!db)return false;
  db.meta=db.meta||{};db.transactions=db.transactions||[];db.accounts=db.accounts||[];
- const aid='acc_c6',version='v9',balanceVersion='2026-09-20-v1';
+ const aid='acc_c6',version='v10',balanceVersion='2026-09-20-v1';
  const required=['c6_260910_pix_in','c6_260910_recarga','c6_260910_estorno','c6_260911_super','c6_260911_agencia','c6_260911_deposito','c6_260911_drogaria','c6_260912_lavland','c6_260913_lavland','c6_260913_nexa','c6_260913_jm','c6_260915_posto','c6_260915_jm','c6_260916_posto','c6_260918_pix_in','c6_260918_aluguel','c6_260918_posto','c6_260918_pb','c6_260918_pista4','c6_260918_lanche','c6_260918_pista3','c6_2026_09_19_ben_padaria_1199','c6_2026_09_20_pista5_1080','c6_2026_09_20_jbm_1649','c6_2026_09_20_gas_company_5000','c6_2026_09_20_pista4_1080','c6_2026_09_20_pista3_1080','c6_2026_09_20_posto_trevo_5000','c6_2026_09_20_marlon_borracheiro_4000','c6_2026_09_20_pix_andress_8000','c6_2026_09_20_pix_sympla_6630'];
  const hasAll=required.every(id=>db.transactions.some(t=>String(t.id)===id));
  if(db.meta.c6Sep2026Validated===version&&hasAll){
@@ -61,7 +61,7 @@ function migrateSep26(){
   ['c6_2026_09_20_posto_trevo_5000','2026-09-20','Posto Trevo Litoral Macaé',-50.00,'Transporte','Combustível'],
   ['c6_2026_09_20_marlon_borracheiro_4000','2026-09-20','PIX Marlon Ferreira Faria — Borracheiro',-40.00,'Transporte','Borracheiro'],
   ['c6_2026_09_20_pix_andress_8000','2026-09-20','PIX — Depósito do Latão',-80.00,'Cerveja','Depósito do Latão'],
-  ['c6_2026_09_20_pix_sympla_6630','2026-09-20','PIX — Airsoft',-66.30,'Entretenimento','Airsoft']
+  ['c6_2026_09_20_pix_sympla_6630','2026-09-20','PIX — Airsoft',-66.30,'Airsoft','Airsoft']
  ];
  confirmed.forEach(([id,date,desc,value,cat,sub])=>{if(!db.transactions.some(t=>String(t.id)===id))db.transactions.push({id,date,desc,description:desc,value,cat,sub,status:'realized',origin:'Extrato C6 confirmado',source:'Extrato C6 confirmado',account:aid,accountId:aid,paymentMethod:id.includes('_pix_')?'PIX':'Débito',statementVerified:true,classificationPending:false})});
  const a=db.accounts.find(x=>x.id===aid);if(a){a.balance=486.31;a.openingBalance=21.41;a.balanceDate='2026-09-20';a.statementVerified=true}

@@ -1,0 +1,20 @@
+/* R9.2 — evita exibir valores intermediários durante restauração local/Cloud */
+(()=>{'use strict';
+const root=document.documentElement,start=Date.now(),minimum=1700,maximum=8000;
+let cloudSettled=!localStorage.getItem('assessor_cloud_sync_key'),released=false;
+function release(){
+ if(released)return;
+ const wait=Math.max(0,minimum-(Date.now()-start));
+ if(wait){setTimeout(release,wait);return}
+ released=true;
+ try{if(typeof renderAll==='function')renderAll()}catch(_){}
+ root.classList.remove('finance-booting');root.classList.add('finance-ready');
+ document.dispatchEvent(new CustomEvent('finance-startup-ready'));
+}
+document.addEventListener('finance-cloud-status',e=>{
+ const text=String(e.detail?.text||''),state=String(e.detail?.state||'');
+ if(state==='ok'||/Sincronizado|Conectado/.test(text)){cloudSettled=true;setTimeout(release,280)}
+});
+setTimeout(()=>{if(cloudSettled)release()},minimum);
+setTimeout(release,maximum);
+})();
