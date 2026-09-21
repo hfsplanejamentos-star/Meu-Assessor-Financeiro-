@@ -10,6 +10,7 @@ import java.util.Set;
 final class BankAllowlist {
     private static final String PREFS = "capture_preferences";
     private static final String KEY = "allowed_packages";
+    private static final String KEY_DISABLED = "disabled_packages";
 
     /*
      * Allowlist inicial de bancos, carteiras e apps de pagamento.
@@ -72,18 +73,34 @@ final class BankAllowlist {
         return packageName != null && packages(context).contains(packageName);
     }
 
+    static boolean isEnabled(Context context, String packageName) {
+        return contains(context, packageName);
+    }
+
+    static void setEnabled(Context context, String packageName, boolean enabled) {
+        SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        Set<String> disabled = new HashSet<>(preferences.getStringSet(KEY_DISABLED, new HashSet<>()));
+        if (enabled) disabled.remove(packageName);
+        else disabled.add(packageName);
+        preferences.edit().putStringSet(KEY_DISABLED, disabled).apply();
+    }
+
     static Set<String> packages(Context context) {
         SharedPreferences preferences =
                 context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
 
         Set<String> saved = preferences.getStringSet(KEY, null);
         if (saved == null || saved.isEmpty()) {
-            return new HashSet<>(DEFAULTS);
+            Set<String> defaults = new HashSet<>(DEFAULTS);
+            defaults.removeAll(preferences.getStringSet(KEY_DISABLED, new HashSet<>()));
+            return defaults;
         }
 
         // Migração: mantém escolhas existentes e incorpora os novos padrões.
         Set<String> merged = new HashSet<>(DEFAULTS);
         merged.addAll(saved);
+        Set<String> disabled = preferences.getStringSet(KEY_DISABLED, new HashSet<>());
+        merged.removeAll(disabled);
         return merged;
     }
 
