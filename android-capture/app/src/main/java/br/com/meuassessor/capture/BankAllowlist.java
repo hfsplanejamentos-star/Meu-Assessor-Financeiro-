@@ -8,29 +8,84 @@ import java.util.HashSet;
 import java.util.Set;
 
 final class BankAllowlist {
-
     private static final String PREFS = "capture_preferences";
     private static final String KEY = "allowed_packages";
 
-    // Captura limitada somente ao C6 Bank e Caju
+    /*
+     * Allowlist inicial de bancos, carteiras e apps de pagamento.
+     * O listener ainda exige que NotificationParser reconheça valor +
+     * linguagem financeira antes de gravar qualquer evento.
+     *
+     * O diagnóstico seguro permite descobrir packageNames adicionais
+     * sem armazenar o conteúdo de notificações de apps não autorizados.
+     */
     private static final Set<String> DEFAULTS = new HashSet<>(Arrays.asList(
+            // C6
             "com.c6bank.app",
-            "com.caju.employee"
+
+            // XP
+            "br.com.xp.carteira",
+
+            // Caju
+            "com.caju.employee",
+
+            // Itaú
+            "br.com.itau",
+
+            // Nubank
+            "com.nu.production",
+
+            // Banco Inter
+            "br.com.intermedium",
+
+            // Santander
+            "com.santander.app",
+
+            // Bradesco
+            "com.bradesco",
+
+            // Banco do Brasil
+            "br.com.bb.android",
+
+            // Caixa
+            "br.com.gabba.Caixa",
+
+            // Mercado Pago
+            "com.mercadopago.wallet",
+
+            // PicPay
+            "com.picpay",
+
+            // PagBank / PagSeguro
+            "br.com.uol.ps.myaccount",
+
+            // Neon
+            "br.com.neon",
+
+            // Google Play Store / Google Wallet.
+            // Conteúdo só passa se o parser reconhecer uma transação financeira.
+            "com.android.vending",
+            "com.google.android.apps.walletnfcrel"
     ));
 
     static boolean contains(Context context, String packageName) {
-        return packages(context).contains(packageName);
+        return packageName != null && packages(context).contains(packageName);
     }
 
     static Set<String> packages(Context context) {
         SharedPreferences preferences =
                 context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
 
-        return new HashSet<>(
-                preferences.getStringSet(KEY, DEFAULTS)
-        );
+        Set<String> saved = preferences.getStringSet(KEY, null);
+        if (saved == null || saved.isEmpty()) {
+            return new HashSet<>(DEFAULTS);
+        }
+
+        // Migração: mantém escolhas existentes e incorpora os novos padrões.
+        Set<String> merged = new HashSet<>(DEFAULTS);
+        merged.addAll(saved);
+        return merged;
     }
 
-    private BankAllowlist() {
-    }
+    private BankAllowlist() {}
 }
