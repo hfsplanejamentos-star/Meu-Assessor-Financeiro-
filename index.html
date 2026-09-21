@@ -615,7 +615,7 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
  #kpis .brand-fin-card.caju-card .brand-fin-stat b{font-size:17px!important;white-space:nowrap!important}
 }
 </style>
-<link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R12.8-2026.09.21';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
+<link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R12.9-2026.09.21';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
 <style id="atual-r11-fintech">
 /* ATUAL R11 · MOBILE FINTECH APROVADO */
 @media(max-width:820px){
@@ -2776,7 +2776,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r128',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r129',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
@@ -2846,7 +2846,7 @@ document.addEventListener('click',function(e){
 <script src="./r69-money-input-fix.js?v=1"></script>
 <script src="./r69-final-cleanup.js?v=3"></script>
 <script src="./r69-real-budget-repair.js?v=2"></script>
-<script src="./r70-real-reset.js?v=21"></script>
+<script src="./r70-real-reset.js?v=22"></script>
 <script src="./r75-final-validation-fix.js?v=10"></script>
 <script src="./r80-investment-status-fix.js?v=8"></script>
 <div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=30"></script></body></html>

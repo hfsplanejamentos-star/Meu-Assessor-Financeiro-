@@ -10,7 +10,7 @@ const index = read('index.html');
 const atual = read('atual.html');
 const sw = read('sw.js');
 assert.strictEqual(index, atual, 'index.html e atual.html precisam ser idênticos');
-assert.match(index, /ATUAL-MOBILE-R12\.8-2026\.09\.21/);
+assert.match(index, /ATUAL-MOBILE-R12\.9-2026\.09\.21/);
 assert.match(index, /id="r124-mobile-financial-card-stack"/);
 assert.match(index, /#view-overview #kpis\.grid-kpi>\.brand-fin-card\{[\s\S]*grid-column:1\/-1!important;[\s\S]*width:100%!important/);
 ['c6account', 'caju', 'creditcard', 'itauaccount', 'xpaccount'].forEach(id =>
@@ -24,7 +24,7 @@ assert.match(index, /if\(summaryCells\.length%2===1\)summaryCells\.at\(-1\)\?\.c
 const canonical = read('r91-finance-engine.js');
 assert.match(canonical, /const summaryCells=\[\.\.\.box\.children\]\.filter\(el=>!el\.classList\.contains\('brand-fin-card'\)\)/);
 assert.doesNotMatch(canonical, /const cells=\[\.\.\.box\.children\].*cells\.length%2/);
-assert.match(sw, /r128-c6-reconciliation/);
+assert.match(sw, /r129-c6-classification/);
 
 const storage = {};
 const context = {
@@ -63,7 +63,7 @@ context.db.transactions.push({ id: 'manual_regression_guard', date: '2026-09-20'
   near(account.openingBalance + income - expense, account.balance, 'reconciliação do saldo C6');
   near(db.meta.statementOutVisible, 2174.72, 'saídas visíveis');
   assert.strictEqual(new Set(ids).size, ids.length, 'IDs de transações duplicados');
-  assert.strictEqual(db.meta.c6Sep2026Validated, 'v8');
+  assert.strictEqual(db.meta.c6Sep2026Validated, 'v9');
   assert.ok(db.transactions.some(t => t.id === 'manual_regression_guard'), 'migração não pode apagar lançamentos manuais');
 
   const todayIds = [
@@ -76,7 +76,10 @@ context.db.transactions.push({ id: 'manual_regression_guard', date: '2026-09-20'
   const todayTotal = Math.abs(db.transactions.filter(t => todayIds.includes(t.id)).reduce((s, t) => s + Number(t.value), 0));
   near(todayTotal, 335.19, 'nove lançamentos de 20/09');
   assert.strictEqual(db.transactions.filter(t => ['c6_2026_09_20_pista5_1080','c6_2026_09_20_jbm_1649'].includes(t.id)).length, 2, 'extrato não pode duplicar Pista 5 ou JBM');
-  assert.ok(db.transactions.filter(t => ['c6_2026_09_20_pix_andress_8000','c6_2026_09_20_pix_sympla_6630'].includes(t.id)).every(t => t.classificationPending), 'novos Pix devem aguardar classificação');
+  const latao = db.transactions.find(t => t.id === 'c6_2026_09_20_pix_andress_8000');
+  const airsoft = db.transactions.find(t => t.id === 'c6_2026_09_20_pix_sympla_6630');
+  assert.deepStrictEqual([latao.cat, latao.sub, latao.classificationPending], ['Cerveja', 'Depósito do Latão', false]);
+  assert.deepStrictEqual([airsoft.cat, airsoft.sub, airsoft.classificationPending], ['Entretenimento', 'Airsoft', false]);
 
   const ruleStart = index.indexOf('function isC6CarbonCard');
   const ruleEnd = index.indexOf('function financeBrandCard', ruleStart);
