@@ -12,7 +12,7 @@ const baseline={
  ],
  cards:[{id:'card_c6_carbon',name:'C6 Bank Carbon',bank:'C6 Bank',type:'credit',source:'user-approved'}],
  recurring:[
-  recurring('rec_pensao','Pensão','Pensão',-1500,'2026-10-10','2027-07-10',10),recurring('rec_carro','Prestação do carro','C4 Cactus',-1000,'2026-10-10','2027-07-10',10),recurring('rec_aluguel','Aluguel','Moradia',-1250,'2026-10-10','2027-07-10',10),recurring('rec_internet','Internet','Moradia',-80,'2026-10-10','2027-07-10',10),recurring('rec_tim','Plano TIM','Comunicação',-79.90,'2026-10-10','2027-07-10',10),recurring('rec_emp_mae','Móveis','Móveis',-300,'2026-10-10','2027-05-10',10,{installments:8})
+  recurring('rec_pensao','Pensão','Pensão',-1500,'2026-10-10','2027-07-10',10),recurring('rec_carro','Prestação do carro','C4 Cactus',-1000,'2026-10-10','2027-07-10',10),recurring('rec_aluguel','Aluguel','Moradia',-1250,'2026-10-10','2027-07-10',10),recurring('rec_internet','Internet','Moradia',-80,'2026-10-10','2027-07-10',10),recurring('rec_tim','Plano TIM','Plano TIM',-79.90,'2026-10-10','2027-07-10',10),recurring('rec_emp_mae','Móveis','Móveis',-300,'2026-10-10','2027-05-10',10,{installments:8})
  ],
  transactions:[
   tx('salary_2026_10','2026-10-01','Salário outubro','Receitas',6500,{status:'planned',accountId:'acc_c6',account:'C6 Bank'}),
