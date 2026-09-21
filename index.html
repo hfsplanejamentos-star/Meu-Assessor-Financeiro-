@@ -828,7 +828,17 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
  #view-overview #kpis.grid-kpi>[data-kpi-id="itauaccount"]{order:-17}
  #view-overview #kpis.grid-kpi>[data-kpi-id="xpaccount"]{order:-16}
 }
-</style>\n</head>
+</style>\n<!-- R9.5 mobile financial summary fit -->
+<style>
+@media(max-width:520px){
+ #mobileFinSummary .mfs-values{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr)!important;gap:0!important}
+ #mobileFinSummary .mfs-metric{min-width:0;padding-left:6px!important;padding-right:6px!important;overflow:hidden}
+ #mobileFinSummary .mfs-metric strong{display:block;font-size:clamp(17px,5.3vw,25px)!important;line-height:1.12;white-space:nowrap;letter-spacing:-.04em}
+ #mobileFinSummary .mfs-metric small{white-space:nowrap;font-size:clamp(11px,3.5vw,15px)!important}
+ #mobileFinSummary .mfs-sub{font-size:10px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
+</style>
+</head>
 <body>
 <div class="tooltip" id="tooltip"></div>
 <div class="mobile-overlay" id="overlay"></div>
