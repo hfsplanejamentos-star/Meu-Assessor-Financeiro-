@@ -85,11 +85,12 @@ function audit(){
  const out={ok:tests.every(x=>x.ok)&&filters.every(x=>x.nov&&x.enabled)&&cards.every(x=>x.pointer!=='none'),tests,filters,cards,at:new Date().toISOString()};window.__ASSESSOR_R91_AUDIT__=out;return out;
 }
 function renderCanonicalExpenseChart(){
- const key=typeof scopeMonth==='function'?scopeMonth('category'):activeMonth;
+ const key=(typeof activeMonth!=='undefined'?activeMonth:(typeof scopeMonth==='function'?scopeMonth('category'):'2026-09'));
+ try{if(typeof monthScopes==='object'&&monthScopes)monthScopes.category=key;const s=document.querySelector('[data-month-scope="category"]');if(s&&s.value!==key)s.value=key}catch(_){};
  const current=typeof monthKey==='function'?monthKey(today):new Date().toISOString().slice(0,7),cats={};
  (db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense&&t.status!=='planned').forEach(t=>cats[t.cat||'Outros']=(cats[t.cat||'Outros']||0)+Math.abs(n(t.value)));
- if(key>current){
-   (db.recurring||[]).filter(r=>r.active!==false).forEach(r=>cats[r.cat||'Outros']=(cats[r.cat||'Outros']||0)+Math.abs(n(r.value)));
+ if(key>=current){
+   recurringFor(key).forEach(r=>cats[r.cat||'Outros']=(cats[r.cat||'Outros']||0)+Math.abs(n(r.value)));
    (db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&t.status==='planned'&&Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense).forEach(t=>cats[t.cat||'Outros']=(cats[t.cat||'Outros']||0)+Math.abs(n(t.value)));
  }
  const items=Object.entries(cats).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
@@ -135,6 +136,7 @@ function canonicalRenderKpis(){
 }
 function bind(){
  document.querySelectorAll('.month-filter').forEach(sel=>{sel.disabled=false;sel.style.pointerEvents='auto';if(sel.dataset.r94Bound!=='1'){sel.dataset.r94Bound='1';sel.addEventListener('change',()=>setTimeout(()=>{try{renderCanonicalExpenseChart()}catch(_){}},35))}});
+ document.querySelectorAll('[data-month-scope="category"]').forEach(s=>{s.value=(typeof activeMonth!=='undefined'?activeMonth:s.value);s.onchange=e=>{if(typeof setActiveMonth==='function'){setActiveMonth(e.currentTarget.value);setTimeout(refreshCanonicalMonth,20)}}});
  const g=document.getElementById('globalMonthFilter');if(g){g.disabled=false;g.style.pointerEvents='auto';g.onchange=e=>{const k=e.currentTarget.value;if(/^\d{4}-\d{2}$/.test(k)&&typeof setActiveMonth==='function'){setActiveMonth(k);setTimeout(()=>{try{renderAll();renderCharts();renderKpis()}catch(_){}},20)}}}
  document.querySelectorAll('#kpis [data-card-nav]').forEach(card=>{card.style.pointerEvents='auto';card.style.cursor='pointer';if(card.dataset.r1019Click!=='1'){card.dataset.r1019Click='1';card.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if(typeof nav==='function')nav(card.dataset.cardNav)},true)}});
 }
