@@ -1,0 +1,1 @@
+-keep class br.com.meuassessor.capture.BankNotificationListener { *; }
