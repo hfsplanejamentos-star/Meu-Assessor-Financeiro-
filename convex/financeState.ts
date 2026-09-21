@@ -1,20 +1,33 @@
-import { mutation, query } from "./_generated/server";
+import { internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 
-export const get = query({
+export const get = internalQuery({
   args: { ownerKey: v.string() },
+  returns: v.union(v.null(), v.object({
+    _id: v.id("financeState"),
+    _creationTime: v.number(),
+    ownerKey: v.string(),
+    payload: v.any(),
+    version: v.number(),
+    updatedAt: v.number(),
+    deviceId: v.optional(v.string()),
+  })),
   handler: async (ctx, { ownerKey }) => {
     return await ctx.db.query("financeState").withIndex("by_owner", q => q.eq("ownerKey", ownerKey)).unique();
   },
 });
 
-export const save = mutation({
+export const save = internalMutation({
   args: {
     ownerKey: v.string(),
     payload: v.any(),
     baseVersion: v.optional(v.number()),
     deviceId: v.optional(v.string()),
   },
+  returns: v.union(
+    v.object({ ok: v.literal(false), conflict: v.literal(true), version: v.number(), updatedAt: v.number() }),
+    v.object({ ok: v.literal(true), conflict: v.literal(false), version: v.number(), updatedAt: v.number() }),
+  ),
   handler: async (ctx, args) => {
     const current = await ctx.db.query("financeState").withIndex("by_owner", q => q.eq("ownerKey", args.ownerKey)).unique();
     if (current && args.baseVersion !== undefined && current.version !== args.baseVersion) {
@@ -31,8 +44,9 @@ export const save = mutation({
   },
 });
 
-export const reset = mutation({
+export const reset = internalMutation({
   args: { ownerKey: v.string(), emptyPayload: v.any(), deviceId: v.optional(v.string()) },
+  returns: v.object({ ok: v.boolean(), version: v.number(), updatedAt: v.number() }),
   handler: async (ctx, args) => {
     const current = await ctx.db.query("financeState").withIndex("by_owner", q => q.eq("ownerKey", args.ownerKey)).unique();
     const version = (current?.version ?? 0) + 1;
