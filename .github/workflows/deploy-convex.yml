@@ -1,0 +1,37 @@
+name: Implantar Backend Convex
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - principal
+    paths:
+      - "convexo/**"
+      - "convex.json"
+      - ".github/workflows/deploy-convex.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-convex-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Implantar no Convex Production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar código do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Implantar funções no Convex
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+        run: npx --yes convex@latest deploy
