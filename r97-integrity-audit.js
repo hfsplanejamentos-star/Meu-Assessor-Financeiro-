@@ -6,7 +6,7 @@
  function migrate(){
   let changed=false;
   (db.recurring||[]).forEach(r=>{
-   if(String(r.id)==='rec_pensao'||/pensao alimenticia/.test(norm(r.desc||r.description))){if(r.cat!=='Pensão Alimentícia'){r.cat='Pensão Alimentícia';changed=true}}
+   if(String(r.id)==='rec_pensao'||/pensao alimenticia|^pensao$/.test(norm(r.desc||r.description))){if(r.cat!=='Pensão'){r.cat='Pensão';r.desc='Pensão';r.description='Pensão';changed=true}}\n   if(String(r.id)==='rec_emp_mae'&&r.cat!=='Móveis'){r.cat='Móveis';r.desc='Móveis';r.description='Móveis';changed=true}
    if(String(r.id)==='rec_carro'||/prestacao do carro/.test(norm(r.desc||r.description))){if(r.cat!=='C4 Cactus'){r.cat='C4 Cactus';changed=true}}
   });
   if(changed)try{save()}catch(_){}
@@ -32,7 +32,7 @@
  function audit(m=selectedMonth()){
   migrate();const rows=expenseRows(m),by={};rows.forEach(x=>by[x.cat]=(by[x.cat]||0)+x.value);
   const rec=(db.recurring||[]),tests=[
-   ['Pensão categorizada',rec.some(r=>r.id==='rec_pensao'&&r.cat==='Pensão Alimentícia'&&Math.abs(n(r.value))===1500)],
+   ['Pensão categorizada',rec.some(r=>r.id==='rec_pensao'&&r.cat==='Pensão'&&Math.abs(n(r.value))===1500)],
    ['C4 Cactus categorizado',rec.some(r=>r.id==='rec_carro'&&r.cat==='C4 Cactus'&&Math.abs(n(r.value))===1000)],
    ['Moradia relacionada',rec.filter(r=>activeRecurring(r,m)&&r.cat==='Moradia').every(r=>Math.abs(n(r.value))>0)],
    ['Mês sincronizado',m===selectedMonth()],
