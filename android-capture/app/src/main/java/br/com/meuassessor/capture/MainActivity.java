@@ -10,6 +10,7 @@ import android.provider.Settings;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -83,9 +84,39 @@ public final class MainActivity extends Activity {
         root.addView(queue, params(18));
         root.addView(diagnostic, params(18));
         root.addView(refresh, params(10));
+
+        TextView banksTitle = label("Bancos monitorados", 18, Color.WHITE);
+        root.addView(banksTitle, params(10));
+        addBankToggle(root, "C6 Bank", "com.c6bank.app");
+        addBankToggle(root, "XP", "br.com.xp.carteira");
+        addBankToggle(root, "Caju", "com.caju.employee");
+        addBankToggle(root, "Itaú", "br.com.itau");
+        addBankToggle(root, "Nubank", "com.nu.production");
+        addBankToggle(root, "Banco Inter", "br.com.intermedium");
+        addBankToggle(root, "Santander", "com.santander.app");
+        addBankToggle(root, "Bradesco", "com.bradesco");
+        addBankToggle(root, "Banco do Brasil", "br.com.bb.android");
+        addBankToggle(root, "Caixa", "br.com.gabba.Caixa");
+        addBankToggle(root, "Mercado Pago", "com.mercadopago.wallet");
+        addBankToggle(root, "PicPay", "com.picpay");
+        addBankToggle(root, "PagBank", "br.com.uol.ps.myaccount");
+        addBankToggle(root, "Neon", "br.com.neon");
+        addBankToggle(root, "Google Play", "com.android.vending");
+        addBankToggle(root, "Google Wallet", "com.google.android.apps.walletnfcrel");
+
         root.addView(permission, params(18));
         root.addView(privacy, params(18));
         return root;
+    }
+
+    private void addBankToggle(LinearLayout root, String name, String packageName) {
+        CheckBox check = new CheckBox(this);
+        check.setText(name);
+        check.setTextColor(Color.parseColor("#D8E4F2"));
+        check.setChecked(BankAllowlist.isEnabled(this, packageName));
+        check.setOnCheckedChangeListener((button, enabled) ->
+                BankAllowlist.setEnabled(this, packageName, enabled));
+        root.addView(check, params(4));
     }
 
     private boolean listenerEnabled() {
