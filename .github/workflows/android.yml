@@ -27,11 +27,44 @@ jobs:
         run: gradle assembleDebug
 
       - name: Localizar APK
-        run: find android-capture -type f -name "*.apk" -print
+        run: |
+          echo "=== APK GERADO ==="
+          find android-capture -type f -name "*.apk" -print
+          ls -lh android-capture/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Validar assinatura do APK
+        run: |
+          APK="android-capture/app/build/outputs/apk/debug/app-debug.apk"
+
+          echo "=== ASSINATURA APK ==="
+
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" \
+            verify \
+            --verbose \
+            --print-certs \
+            "$APK"
+
+      - name: Validar pacote e compatibilidade
+        run: |
+          APK="android-capture/app/build/outputs/apk/debug/app-debug.apk"
+
+          echo "=== INFORMACOES DO APK ==="
+
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" \
+            dump badging "$APK" | head -40
+
+      - name: Mostrar Manifest compilado
+        run: |
+          APK="android-capture/app/build/outputs/apk/debug/app-debug.apk"
+
+          echo "=== MANIFEST APK ==="
+
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" \
+            dump permissions "$APK"
 
       - name: Disponibilizar APK
         uses: actions/upload-artifact@v4
         with:
           name: Meu-Assessor-Financeiro-Android
-          path: android-capture/app/build/outputs/apk/debug/*.apk
+          path: android-capture/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
