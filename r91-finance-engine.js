@@ -59,7 +59,7 @@ function projection(start='2026-10',count=12){
 function normalizeCore(){
  db.accounts=db.accounts||[];db.transactions=db.transactions||[];db.investments=db.investments||[];db.recurring=db.recurring||[];let changed=false;
  db.transactions.forEach(t=>{if(/^sal_/.test(String(t.id||''))||/salário/i.test(String(t.desc||t.description||''))){if(t.cat!=='Receitas'){t.cat='Receitas';changed=true}if(t.sub!=='Salário'){t.sub='Salário';changed=true}}if(String(t.id||'')==='decimo_2026'&&t.cat!=='Receitas'){t.cat='Receitas';changed=true}const caju=/caju/i.test(String(t.cardId||t.card||t.origin||t.source||''))||t.benefit===true;if(caju&&t.excludeFromExpense!==true){t.excludeFromExpense=true;changed=true}});
- db.recurring.forEach(r=>{if(n(r.value)>0){r.value=-Math.abs(n(r.value));changed=true}if((String(r.id||'')==='rec_carro'||/prestação do carro|prestacao do carro/i.test(String(r.name||r.desc||'')))&&r.cat!=='C4 Cactus'){r.cat='C4 Cactus';changed=true}});
+ db.recurring.forEach(r=>{if(n(r.value)>0){r.value=-Math.abs(n(r.value));changed=true}if((String(r.id||'')==='rec_pensao'||/pensão alimentícia|pensao alimenticia/i.test(String(r.name||r.desc||'')))&&r.cat!=='Pensão Alimentícia'){r.cat='Pensão Alimentícia';changed=true}if((String(r.id||'')==='rec_carro'||/prestação do carro|prestacao do carro/i.test(String(r.name||r.desc||'')))&&r.cat!=='C4 Cactus'){r.cat='C4 Cactus';changed=true}});
  return changed;
 }
 function ensurePlan(){
