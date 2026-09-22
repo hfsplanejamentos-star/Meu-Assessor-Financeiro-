@@ -78,7 +78,7 @@ function migrateCajuSep26(){
  if(canonical&&legacy&&String(legacy.id)===legacyId){legacy.value=0;legacy.status='ignored';legacy.duplicateOf=canonicalId;legacy.excludeFromBalance=true;legacy.excludeFromExpense=true;changed=true}
  else if(canonical&&!legacy){db.transactions.push({id:legacyId,date:'2026-09-17',desc:'Registro legado neutralizado',value:0,status:'ignored',card:'card_caju_alimentacao',cardId:'card_caju_alimentacao',duplicateOf:canonicalId,excludeFromBalance:true,excludeFromExpense:true});changed=true}
  const cj=db.cards.find(x=>x.id==='card_caju_alimentacao');
- if(cj&&db.meta.cajuKnownBalanceVersion!=='2026-09-extrato-v5'){cj.limit=1006.89;cj.availableLimit=525.17;cj.balance=525.17;cj.excludeFromPatrimony=true;db.meta.cajuKnownBalanceVersion='2026-09-extrato-v5';changed=true}
+ if(cj&&db.meta.cajuKnownBalanceVersion!=='2026-09-22-extrato-v7'){cj.limit=1006.89;cj.availableLimit=456.23;cj.balance=456.23;cj.excludeFromPatrimony=true;db.meta.cajuKnownBalanceVersion='2026-09-22-extrato-v7';changed=true}
  return changed;
 }
 function migrateExtratosSep22(){
@@ -108,6 +108,16 @@ function migrateExtratosSep22(){
   ['caju_2026_09_21_ifd_netos_2494','2026-09-21','IFD*Netos Delivery',-24.94,'Delivery'],
   ['caju_2026_09_22_dafoca_bar_4400','2026-09-22','Dafoca Bar Rio de Janeiro',-44.00,'Restaurante']
  ].forEach(([id,date,desc,value,sub])=>add({...cjbase,id,date,desc,description:desc,value,sub}));
+ /* Deduplicação semântica: o Cloud pode devolver o mesmo lançamento Caju com ID antigo/diferente.
+    Para o extrato confirmado de 17–22/09, data+valor identificam os lançamentos canônicos. */
+ const canonicalCaju=(db.transactions||[]).filter(t=>String(t.id||'').startsWith('caju_2026_09_')&&t.status!=='ignored');
+ const canonKeys=new Map(canonicalCaju.map(t=>[String(t.date)+'|'+Math.abs(Number(t.value||0)).toFixed(2),String(t.id)]));
+ (db.transactions||[]).forEach(t=>{
+   const isCaju=(t.cardId==='card_caju_alimentacao'||t.card==='card_caju_alimentacao'||t.benefit===true);
+   if(!isCaju||String(t.date||'')<'2026-09-17'||String(t.date||'')>'2026-09-22'||String(t.id||'').startsWith('caju_2026_09_')||t.status==='ignored')return;
+   const canonicalId=canonKeys.get(String(t.date)+'|'+Math.abs(Number(t.value||0)).toFixed(2));
+   if(canonicalId){t.value=0;t.status='ignored';t.duplicateOf=canonicalId;t.excludeFromBalance=true;t.excludeFromExpense=true;changed=true}
+ });
  const cj=db.cards.find(x=>x.id==='card_caju_alimentacao');
  if(cj&&db.meta.cajuKnownBalanceVersion!=='2026-09-22-extrato-v7'){cj.limit=1006.89;cj.availableLimit=456.23;cj.balance=456.23;cj.excludeFromPatrimony=true;db.meta.cajuKnownBalanceVersion='2026-09-22-extrato-v7';changed=true}
  if(changed){try{save()}catch(_){localStorage.setItem(KEY,JSON.stringify(db))}}
