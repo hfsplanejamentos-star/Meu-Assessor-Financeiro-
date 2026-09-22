@@ -116,7 +116,8 @@ function canonicalRenderKpis(){
   income_planned:{html:kpiCard('RECEITAS PREVISTAS',brl(s.plannedIncome),k,'neutral'),route:'transactions'},
   expense:{html:kpiCard('DESPESAS REALIZADAS',brl(s.realizedExpense),k,'neutral'),route:'transactions'},
   expense_planned:{html:kpiCard('DESPESAS PREVISTAS',brl(s.plannedExpense),k,'neutral'),route:'transactions'},
-  investments:{html:kpiCard('INVESTIMENTOS',brl(s.investment>0?s.investment:b.invest),s.investment>0?('Planejado · '+k):'Abrir investimentos','neutral'),route:'investments'}
+  investments:{html:kpiCard('INVESTIMENTOS',brl(s.investment>0?s.investment:b.invest),s.investment>0?('Planejado · '+k):'Abrir investimentos','neutral'),route:'investments'},
+  goal:{html:kpiCard('META',brl(Math.max(0,n((db.accounts||[]).find(a=>/\\bxp\\b/i.test(String(a.name||a.institution||'')))?.balance))),'Saldo de referência XP','neutral'),route:'budgets'}
  };
  const mobile=window.matchMedia('(max-width:820px)').matches;
  const fallback=(typeof KPI_ITEMS!=='undefined'?KPI_ITEMS.map(x=>({id:x[0],visible:true})):Object.keys(defs).map(id=>({id,visible:true}))),raw=Array.isArray(pref)?pref:[],order=[],known=new Set();
