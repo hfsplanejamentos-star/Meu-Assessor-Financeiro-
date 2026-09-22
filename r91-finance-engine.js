@@ -7,7 +7,7 @@ const real=s=>['realized','realizada','realizado','posted','confirmada','confirm
 function recurringFor(key){return (db.recurring||[]).filter(r=>{const st=keyOf(r.startDate),en=keyOf(r.endDate);return r.active!==false&&(!st||key>=st)&&(!en||key<=en)})}
 function summary(key){
  const tx=(db.transactions||[]).filter(t=>keyOf(t.date)===key);
- const op=tx.filter(t=>!t.transfer&&!t.excludeFromExpense);
+ const op=tx.filter(t=>!t.transfer&&!t.excludeFromExpense&&!t.invoicePayment&&t.kind!=='invoice_payment');
  const realizedIncome=op.filter(t=>real(t.status)&&n(t.value)>0).reduce((s,t)=>s+n(t.value),0);
  const realizedExpense=op.filter(t=>real(t.status)&&n(t.value)<0).reduce((s,t)=>s+abs(t.value),0);
  const plannedIncome=op.filter(t=>planned(t.status)&&n(t.value)>0).reduce((s,t)=>s+n(t.value),0);
@@ -34,7 +34,7 @@ function accumulatedRealized(key){
  while(d<=last){months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));d=new Date(d.getFullYear(),d.getMonth()+1,1)}
  months.forEach(mk=>{
    const tx=(db.transactions||[]).filter(t=>keyOf(t.date)===mk);
-   const op=tx.filter(t=>!t.transfer&&!t.excludeFromExpense);
+   const op=tx.filter(t=>!t.transfer&&!t.excludeFromExpense&&!t.invoicePayment&&t.kind!=='invoice_payment');
    income+=op.filter(t=>n(t.value)>0).reduce((s,t)=>s+n(t.value),0);
    const monthExpense=op.filter(t=>n(t.value)<0);
    expense+=monthExpense.reduce((s,t)=>s+abs(t.value),0);
