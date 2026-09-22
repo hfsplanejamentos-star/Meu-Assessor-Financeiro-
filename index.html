@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260922-r144';
+ const RELEASE='atual-ui-20260922-r145';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    ['assessor_home_layout','assessor_kpi_layout','assessor_month_scopes'].forEach(k=>localStorage.removeItem(k));
    localStorage.setItem('assessor_active_month','2026-09');
@@ -1520,12 +1520,14 @@ const FinanceDomain=(()=>{
  const num=v=>Number.isFinite(Number(v))?Number(v):0;
  const monthKey=d=>String(d||'').slice(0,7);
  const isIncome=t=>num(t?.value)>0, isExpense=t=>num(t?.value)<0;
- const isCardPurchase=t=>!!t?.card&&isExpense(t);
+ const isInvoicePayment=t=>!!(t?.invoicePayment||t?.cardPayment)||t?.kind==='invoice_payment';
+ const isTransfer=t=>!!(t?.transfer||t?.transferId)||t?.kind==='transfer';
+ const isCardPurchase=t=>!!t?.card&&isExpense(t)&&!isInvoicePayment(t);
  const isRealized=t=>!t?.status||['realized','real','paid','received'].includes(String(t.status).toLowerCase());
  function normalizeTransaction(t){return {...t,id:t.id??('tx_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)),date:t.date||new Date().toISOString().slice(0,10),desc:String(t.desc||'Lançamento').trim(),value:num(t.value),account:t.account||null,card:t.card||null,cat:t.cat||'Outros',sub:t.sub||'',origin:t.origin||'Manual',status:t.status||'realized'}}
  function transactions(month){const a=(db.transactions||[]).map(t=>normalizeTransaction(t.statementVerified?{...t,status:'realized'}:t));return month?a.filter(t=>monthKey(t.date)===month):a}
- function monthlySummary(month){const a=transactions(month).filter(isRealized),income=a.filter(isIncome).reduce((s,t)=>s+num(t.value),0),expenses=a.filter(isExpense).reduce((s,t)=>s+Math.abs(num(t.value)),0),cardPurchases=a.filter(isCardPurchase).reduce((s,t)=>s+Math.abs(num(t.value)),0);return {month,income,expenses,net:income-expenses,cardPurchases,count:a.length}}
- function cardInvoice(cardId,month){return transactions(month).filter(t=>t.card===cardId&&isExpense(t)&&isRealized(t)).reduce((s,t)=>s+Math.abs(num(t.value)),0)}
+ function monthlySummary(month){const a=transactions(month).filter(isRealized),operational=a.filter(t=>!isTransfer(t)&&!isInvoicePayment(t)&&!t.excludeFromExpense),income=operational.filter(isIncome).reduce((s,t)=>s+num(t.value),0),expenses=operational.filter(isExpense).reduce((s,t)=>s+Math.abs(num(t.value)),0),cardPurchases=a.filter(isCardPurchase).reduce((s,t)=>s+Math.abs(num(t.value)),0);return {month,income,expenses,net:income-expenses,cardPurchases,count:a.length}}
+ function cardInvoice(cardId,month){return transactions(month).filter(t=>t.card===cardId&&isCardPurchase(t)&&isRealized(t)).reduce((s,t)=>s+Math.abs(num(t.value)),0)}
  function accountCashMovement(accountId,month){return transactions(month).filter(t=>t.account===accountId&&!isCardPurchase(t)&&isRealized(t)).reduce((s,t)=>s+num(t.value),0)}
  function recurringMonthlyTotal(){return (db.recurring||[]).filter(r=>r.active!==false).reduce((s,r)=>s+Math.abs(num(r.value)),0)}
 
@@ -1924,7 +1926,7 @@ function ensureInvoice(cardId,month){
  return inv
 }
 function currentInvoiceMonth(cardId){const c=db.cards.find(x=>x.id===cardId);let d=new Date(today.getFullYear(),today.getMonth(),1);if(today.getDate()>(Number(c?.closing)||31))d=new Date(today.getFullYear(),today.getMonth()+1,1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`}
-function invoiceAmount(cardId,month){return cardTransactions(cardId).filter(t=>(t.invoiceMonth||cardInvoiceMonthForDate(cardId,t.date))===month&&t.value<0&&!t.invoicePayment).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0)}
+function invoiceAmount(cardId,month){return cardTransactions(cardId).filter(t=>(t.invoiceMonth||cardInvoiceMonthForDate(cardId,t.date))===month&&t.value<0&&!t.invoicePayment&&!t.cardPayment&&t.kind!=='invoice_payment'&&t.status!=='planned').reduce((s,t)=>s+Math.abs(Number(t.value)||0),0)}
 function invoiceStatusLabel(s){return s==='paid'?'Paga':s==='closed'?'Fechada':'Aberta'}
 function invoiceStatusClass(s){return s==='paid'?'invoice-status-paid':s==='closed'?'invoice-status-closed':'invoice-status-open'}
 function cardTransactions(cardId){
