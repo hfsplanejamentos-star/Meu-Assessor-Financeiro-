@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260922-r134';
+ const RELEASE='atual-ui-20260922-r135';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    ['assessor_home_layout','assessor_kpi_layout','assessor_month_scopes'].forEach(k=>localStorage.removeItem(k));
    localStorage.setItem('assessor_active_month','2026-09');
@@ -2344,11 +2344,19 @@ function openDetail(title,rows,actions=[]){
  const bg=document.getElementById('recoveryBackdrop');if(bg){bg.classList.add('show');bg.setAttribute('aria-hidden','false')}
 }
 function openCategoryDetail(name){
- const key=scopeMonth('category'),currentKey=monthKey(today);
- const tx=db.transactions.filter(t=>t.cat===name && t.value<0 && !t.transfer && t.status!=='planned' && monthOfTx(t)===key);
- const recs=key>currentKey?(db.recurring||[]).filter(r=>r.cat===name&&r.active!==false):[];
- const realized=tx.reduce((s,t)=>s+Math.abs(Number(t.value)||0),0),forecast=recs.reduce((s,r)=>s+Math.abs(Number(r.value)||0),0);
- openDetail(`Categoria · ${name}`,[['Mês',monthLabelKey(key)],[key>currentKey?'Despesa prevista':'Gasto realizado',brl(key>currentKey?forecast:realized)],[key>currentKey?'Compromissos':'Transações realizadas',String(key>currentKey?recs.length:tx.length)],['Subcategorias',[...new Set((key>currentKey?recs:tx).map(t=>t.sub))].filter(Boolean).join(', ')||'—']]);
+ const key=(typeof activeMonth!=='undefined'&&activeMonth)||scopeMonth('category');
+ const rows=window.FinanceDataModel?.categoryRows?.(name,key);
+ if(Array.isArray(rows)){
+   const total=rows.reduce((s,r)=>s+Math.abs(Number(r.value)||0),0), subs={};
+   rows.forEach(r=>{const k=r.sub||'Sem subcategoria';subs[k]=(subs[k]||0)+Math.abs(Number(r.value)||0)});
+   const details=[['Mês',monthLabelKey(key)],['Total',brl(total)],['Lançamentos',String(rows.length)]];
+   Object.entries(subs).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>details.push([k,brl(v)]));
+   openDetail(`Categoria · ${name}`,details);return;
+ }
+ const currentKey=monthKey(today),tx=db.transactions.filter(t=>t.cat===name&&t.value<0&&!t.transfer&&t.status!=='planned'&&monthOfTx(t)===key);
+ const recs=key>=currentKey?(db.recurring||[]).filter(r=>r.cat===name&&r.active!==false):[];
+ const data=key>=currentKey?recs:tx,total=data.reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);
+ openDetail(`Categoria · ${name}`,[['Mês',monthLabelKey(key)],['Total',brl(total)],['Lançamentos',String(data.length)],['Subcategorias',[...new Set(data.map(t=>t.sub||t.desc))].filter(Boolean).join(', ')||'—']]);
 }
 
 function bindValueHover(){
