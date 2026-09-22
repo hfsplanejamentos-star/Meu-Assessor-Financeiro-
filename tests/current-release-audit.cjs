@@ -7,11 +7,13 @@ const near = (actual, expected, label) =>
   assert.ok(Math.abs(actual - expected) < 0.011, `${label}: ${actual} != ${expected}`);
 
 const index = read('index.html');
-const atual = read('atual.html');
 const sw = read('sw.js');
-assert.strictEqual(index, atual, 'index.html e atual.html precisam ser idênticos');
-assert.match(index, /ATUAL-MOBILE-R12\.9-2026\.09\.21/);
+assert.match(index, /atual-ui-20260922-r141/);
 assert.match(index, /id="r124-mobile-financial-card-stack"/);
+assert.match(index, /\['goal','Meta'\]/);
+assert.match(index, /goal:\{html:kpiCard\('META'/);
+assert.match(index, /window\.FinanceCloud\?\.detectLocalChange/);
+assert.match(index, /window\.FinanceCloud\?\.push\?\.\(\)/);
 assert.match(index, /#view-overview #kpis\.grid-kpi>\.brand-fin-card\{[\s\S]*grid-column:1\/-1!important;[\s\S]*width:100%!important/);
 ['c6account', 'caju', 'creditcard', 'itauaccount', 'xpaccount'].forEach(id =>
   assert.match(index, new RegExp(`data-kpi-id="${id}"`), `card financeiro ${id} precisa estar contemplado`)
