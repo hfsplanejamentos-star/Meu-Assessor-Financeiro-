@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260919-r92';
+ const RELEASE='atual-ui-20260922-r137';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    ['assessor_home_layout','assessor_kpi_layout','assessor_month_scopes'].forEach(k=>localStorage.removeItem(k));
    localStorage.setItem('assessor_active_month','2026-09');
@@ -618,7 +618,7 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
  #kpis .brand-fin-card.caju-card .brand-fin-stat b{font-size:17px!important;white-space:nowrap!important}
 }
 </style>
-<link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R12.9-2026.09.21';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
+<link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=5"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R13.3-2026.09.22';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
 <style id="atual-r11-fintech">
 /* ATUAL R11 · MOBILE FINTECH APROVADO */
 @media(max-width:820px){
@@ -828,7 +828,71 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
  #view-overview #kpis.grid-kpi>[data-kpi-id="itauaccount"]{order:-17}
  #view-overview #kpis.grid-kpi>[data-kpi-id="xpaccount"]{order:-16}
 }
-</style>\n</head>
+</style>\n<!-- R9.5 mobile financial summary fit -->
+<style>
+@media(max-width:520px){
+ #mobileFinSummary .mfs-values{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr)!important;gap:0!important}
+ #mobileFinSummary .mfs-metric{min-width:0;padding-left:6px!important;padding-right:6px!important;overflow:hidden}
+ #mobileFinSummary .mfs-metric strong{display:block;font-size:clamp(17px,5.3vw,25px)!important;line-height:1.12;white-space:nowrap;letter-spacing:-.04em}
+ #mobileFinSummary .mfs-metric small{white-space:nowrap;font-size:clamp(11px,3.5vw,15px)!important}
+ #mobileFinSummary .mfs-sub{font-size:10px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
+</style>
+<style id="r130-mobile-kpi-fix">
+@media(max-width:520px){
+ #mobileFinSummary .mfs-values{display:flex!important;width:100%!important}
+ #mobileFinSummary .mfs-metric{flex:1 1 0!important;width:0!important;min-width:0!important;padding:3px 2px!important}
+ #mobileFinSummary .mfs-metric.mid{flex:1.12 1 0!important}
+ #mobileFinSummary .mfs-metric strong{font-size:clamp(13px,3.85vw,17px)!important;letter-spacing:-.06em!important;overflow:visible!important;text-overflow:unset!important}
+ #mobileFinSummary .mfs-metric small{font-size:clamp(10px,3vw,13px)!important}
+ #mobileFinSummary .mfs-sub{font-size:8px!important}
+}
+</style>\n<style id="r131-edit-modal-mobile-fix">
+@media(max-width:820px){
+ #editTransactionModal{z-index:900!important;padding:8px!important;align-items:stretch!important}
+ #editTransactionModal .modal-box{height:calc(100dvh - 16px)!important;max-height:calc(100dvh - 16px)!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;padding:14px 14px 0!important}
+ #editTransactionModal .modal-head{flex:0 0 auto!important}
+ #editTransactionForm{display:flex!important;flex-direction:column!important;min-height:0!important;flex:1 1 auto!important;overflow:hidden!important}
+ #editTransactionForm .form-grid{display:block!important;overflow-y:auto!important;min-height:0!important;flex:1 1 auto!important;padding-bottom:16px!important;-webkit-overflow-scrolling:touch}
+ #editTransactionForm .field{margin-bottom:12px!important}
+ #editTransactionForm .edit-actions{position:relative!important;bottom:auto!important;flex:0 0 auto!important;display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;background:#071221!important;padding:10px 0 calc(14px + env(safe-area-inset-bottom))!important;z-index:3!important}
+ #editTransactionForm .edit-actions span{display:none!important}
+ #editTransactionForm .edit-actions button{min-width:0!important;width:100%!important;margin:0!important;min-height:46px!important}
+ #editTransactionForm .edit-actions #deleteFutureBtn,#editTransactionForm .edit-actions #deleteGroupBtn{grid-column:1/-1}
+ #editTransactionForm .edit-actions button.primary{grid-column:2;grid-row:auto}
+ #editTransactionForm .edit-actions #cancelEditModal{grid-column:1}
+ .mobile-bottom-nav:has(~ #editTransactionModal.open),body:has(#editTransactionModal.open) .mobile-bottom-nav{visibility:hidden!important;pointer-events:none!important}
+}
+</style>\n<style id="r132-mobile-responsive-typography">
+@media(max-width:520px){
+  .kpi-grid,.projection-kpis,.summary-grid,.cards-grid{gap:10px!important}
+  .kpi-card,.projection-kpi,.summary-card{min-width:0!important;padding:16px 14px!important;overflow:hidden!important}
+  .kpi-card .value,.kpi-card strong,.projection-kpi .value,.projection-kpi strong,.summary-card .value,.summary-card strong{
+    font-size:clamp(22px,6.4vw,32px)!important;line-height:1.08!important;letter-spacing:-.045em!important;white-space:nowrap!important;max-width:100%!important
+  }
+  .kpi-card .label,.projection-kpi .label,.summary-card .label{font-size:clamp(12px,3.5vw,16px)!important;line-height:1.15!important}
+  select,.filter-select,.month-filter,.projection-controls select{
+    min-width:0!important;width:100%!important;max-width:100%!important;font-size:clamp(14px,4.2vw,18px)!important;padding-left:12px!important;padding-right:34px!important;text-overflow:ellipsis!important;white-space:nowrap!important
+  }
+  .projection-controls{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:10px!important}
+  .projection-controls>*{min-width:0!important;max-width:100%!important}
+  #projectionPanel .card-title,#projectionPanel h2,#projectionPanel h3{font-size:clamp(21px,6vw,28px)!important;line-height:1.15!important}
+}
+@media(max-width:390px){
+  .kpi-card .value,.kpi-card strong,.projection-kpi .value,.projection-kpi strong,.summary-card .value,.summary-card strong{font-size:clamp(19px,6vw,25px)!important}
+  select,.filter-select,.month-filter,.projection-controls select{font-size:14px!important}
+}
+</style>\n
+<style id="r137-desktop-card-row">
+/* R13.7 — Desktop: todos os cards financeiros na primeira linha */
+@media (min-width:821px){
+  #view-overview .grid-kpi{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(0,1fr))!important;grid-auto-flow:column!important;gap:8px!important;width:100%!important;}
+  #view-overview .grid-kpi>.kpi{min-width:0!important;width:auto!important;padding:12px!important;}
+  #view-overview .grid-kpi>.kpi .value{font-size:clamp(15px,1.45vw,23px)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+  #view-overview .grid-kpi>.kpi .label{font-size:10px!important;}
+}
+</style>
+</head>
 <body>
 <div class="tooltip" id="tooltip"></div>
 <div class="mobile-overlay" id="overlay"></div>
@@ -2290,11 +2354,19 @@ function openDetail(title,rows,actions=[]){
  const bg=document.getElementById('recoveryBackdrop');if(bg){bg.classList.add('show');bg.setAttribute('aria-hidden','false')}
 }
 function openCategoryDetail(name){
- const key=scopeMonth('category'),currentKey=monthKey(today);
- const tx=db.transactions.filter(t=>t.cat===name && t.value<0 && !t.transfer && t.status!=='planned' && monthOfTx(t)===key);
- const recs=key>currentKey?(db.recurring||[]).filter(r=>r.cat===name&&r.active!==false):[];
- const realized=tx.reduce((s,t)=>s+Math.abs(Number(t.value)||0),0),forecast=recs.reduce((s,r)=>s+Math.abs(Number(r.value)||0),0);
- openDetail(`Categoria · ${name}`,[['Mês',monthLabelKey(key)],[key>currentKey?'Despesa prevista':'Gasto realizado',brl(key>currentKey?forecast:realized)],[key>currentKey?'Compromissos':'Transações realizadas',String(key>currentKey?recs.length:tx.length)],['Subcategorias',[...new Set((key>currentKey?recs:tx).map(t=>t.sub))].filter(Boolean).join(', ')||'—']]);
+ const key=(typeof activeMonth!=='undefined'&&activeMonth)||scopeMonth('category');
+ const rows=window.FinanceDataModel?.categoryRows?.(name,key);
+ if(Array.isArray(rows)){
+   const total=rows.reduce((s,r)=>s+Math.abs(Number(r.value)||0),0), subs={};
+   rows.forEach(r=>{const k=r.sub||'Sem subcategoria';subs[k]=(subs[k]||0)+Math.abs(Number(r.value)||0)});
+   const details=[['Mês',monthLabelKey(key)],['Total',brl(total)],['Lançamentos',String(rows.length)]];
+   Object.entries(subs).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>details.push([k,brl(v)]));
+   openDetail(`Categoria · ${name}`,details);return;
+ }
+ const currentKey=monthKey(today),tx=db.transactions.filter(t=>t.cat===name&&t.value<0&&!t.transfer&&t.status!=='planned'&&monthOfTx(t)===key);
+ const recs=key>=currentKey?(db.recurring||[]).filter(r=>r.cat===name&&r.active!==false):[];
+ const data=key>=currentKey?recs:tx,total=data.reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);
+ openDetail(`Categoria · ${name}`,[['Mês',monthLabelKey(key)],['Total',brl(total)],['Lançamentos',String(data.length)],['Subcategorias',[...new Set(data.map(t=>t.sub||t.desc))].filter(Boolean).join(', ')||'—']]);
 }
 
 function bindValueHover(){
@@ -2455,7 +2527,37 @@ syncMobileMonthNav();
 document.addEventListener('change',e=>{if(e.target.matches('.individual-month-filter'))setScopeMonth(e.target.dataset.monthScope,e.target.value)});
 document.getElementById('nav').onclick=e=>{const b=e.target.closest('button[data-view]');if(b)nav(b.dataset.view)};backBtn.onclick=()=>{if(navHistory.length>1){navHistory.pop();nav(navHistory[navHistory.length-1],false)}};window.addEventListener('popstate',()=>{if(navHistory.length>1){navHistory.pop();nav(navHistory[navHistory.length-1],false)}})
 document.addEventListener('click',e=>{const b=e.target.closest('[data-nav]');if(b){e.preventDefault();nav(b.dataset.nav)}});
-function bindKpiNavigation(){document.querySelectorAll('#kpis [data-card-nav],#cardKpis [data-card-nav]').forEach(card=>{card.style.cursor='pointer';card.style.pointerEvents='auto';card.onclick=e=>{e.preventDefault();e.stopPropagation();nav(card.dataset.cardNav)};card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();nav(card.dataset.cardNav)}}})}
+function openOverviewFinancialDetail(card){
+ const id=card?.dataset?.kpiId||'',key=activeMonth;
+ if(id==='creditcard'||id==='caju'){
+   const target=id==='caju'
+    ?(db.cards||[]).find(x=>String(x.id)==='card_caju_alimentacao'||/caju/i.test(String(x.name||'')))
+    :(db.cards||[]).find(x=>['Crédito','Múltiplo'].includes(x.type||'Crédito')&&!/caju/i.test(String(x.name||'')));
+   ['cards','invoice','purchases'].forEach(k=>monthScopes[k]=key);
+   nav('cards');
+   requestAnimationFrame(()=>{
+     const cid=target?.id;
+     ['cardPurchaseFilter','invoiceCardFilter','cardTrendCardFilter'].forEach(selId=>{
+       const el=document.getElementById(selId);
+       if(el&&cid&&[...el.options].some(o=>o.value===String(cid)))el.value=String(cid);
+     });
+     renderCardDashboard();renderInvoiceManagement();renderCardPurchases();renderCardTrend();
+     const focus=id==='caju'?document.getElementById('cajuDetailPanel'):document.getElementById('cardList');
+     focus?.scrollIntoView({block:'start',behavior:'smooth'});
+   });return;
+ }
+ if(['c6account','itauaccount','xpaccount'].includes(id)){
+   const rules={c6account:/c6/i,itauaccount:/ita[uú]/i,xpaccount:/\bxp\b/i},a=(db.accounts||[]).find(x=>rules[id].test(String(x.name||x.institution||'')));
+   nav('accounts');
+   requestAnimationFrame(()=>{
+     const el=a&&document.querySelector('#accountList [data-detail-type="account"][data-detail-id="'+CSS.escape(String(a.id))+'"]');
+     el?.scrollIntoView({block:'center',behavior:'smooth'});
+     if(a)el?.click();
+   });return;
+ }
+ nav(card.dataset.cardNav);
+}
+function bindKpiNavigation(){document.querySelectorAll('#kpis [data-card-nav],#cardKpis [data-card-nav]').forEach(card=>{card.style.cursor='pointer';card.style.pointerEvents='auto';card.onclick=e=>{e.preventDefault();e.stopPropagation();openOverviewFinancialDetail(card)};card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openOverviewFinancialDetail(card)}}})}
 document.addEventListener('click',e=>{
  const s=e.target.closest('[data-invest-summary]');if(!s)return;
  e.preventDefault();e.stopPropagation();
@@ -2866,4 +2968,7 @@ document.addEventListener('click',function(e){
 <script src="./r70-real-reset.js?v=25"></script>
 <script src="./r75-final-validation-fix.js?v=10"></script>
 <script src="./r80-investment-status-fix.js?v=9"></script>
-<div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=30"></script><script src="./r92-stable-startup.js?v=1"></script></body></html>
+<div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=30"></script><script src="./r92-stable-startup.js?v=1"></script><script src="r95-image-entry.js?v=20260921"></script>
+<script src="r96-category-details.js?v=20260922-r134"></script>
+<script src="r97-integrity-audit.js?v=20260922-r134"></script>
+</body></html>
