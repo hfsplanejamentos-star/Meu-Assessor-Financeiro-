@@ -8,12 +8,16 @@ const near = (actual, expected, label) =>
 
 const index = read('index.html');
 const sw = read('sw.js');
-assert.match(index, /atual-ui-20260922-r142/);
+assert.match(index, /atual-ui-20260922-r145/);
 assert.match(index, /id="r124-mobile-financial-card-stack"/);
 assert.match(index, /\['goal','Meta'\]/);
 assert.match(index, /goal:\{html:kpiCard\('META'/);
 assert.match(index, /window\.FinanceCloud\?\.detectLocalChange/);
 assert.match(index, /window\.FinanceCloud\?\.push\?\.\(\)/);
+assert.match(index, /const isInvoicePayment=t=>/);
+assert.match(index, /const isTransfer=t=>/);
+assert.match(index, /!isTransfer\(t\)&&!isInvoicePayment\(t\)&&!t\.excludeFromExpense/);
+assert.match(index, /!t\.invoicePayment&&!t\.cardPayment&&t\.kind!=='invoice_payment'&&t\.status!=='planned'/);
 assert.match(index, /#view-overview #kpis\.grid-kpi>\.brand-fin-card\{[\s\S]*grid-column:1\/-1!important;[\s\S]*width:100%!important/);
 ['c6account', 'caju', 'creditcard', 'itauaccount', 'xpaccount'].forEach(id =>
   assert.match(index, new RegExp(`data-kpi-id="${id}"`), `card financeiro ${id} precisa estar contemplado`)
@@ -24,6 +28,7 @@ assert.match(index, /Limite acumulado \$\{brl\(limit\)\} · investimentos realiz
 assert.match(index, /const summaryCells=\[\.\.\.box\.children\]\.filter\(el=>!el\.classList\.contains\('brand-fin-card'\)\)/);
 assert.match(index, /if\(summaryCells\.length%2===1\)summaryCells\.at\(-1\)\?\.classList\.add\('summary-wide'\)/);
 const canonical = read('r91-finance-engine.js');
+assert.match(canonical, /!t\.invoicePayment&&t\.kind!=='invoice_payment'/);
 assert.match(canonical, /const summaryCells=\[\.\.\.box\.children\]\.filter\(el=>!el\.classList\.contains\('brand-fin-card'\)\)/);
 assert.doesNotMatch(canonical, /const cells=\[\.\.\.box\.children\].*cells\.length%2/);
 assert.match(sw, /r134-stable-values-airsoft/);
