@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260922-r140';
+ const RELEASE='atual-ui-20260922-r141';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    ['assessor_home_layout','assessor_kpi_layout','assessor_month_scopes'].forEach(k=>localStorage.removeItem(k));
    localStorage.setItem('assessor_active_month','2026-09');
@@ -1451,7 +1451,7 @@ const seed={
  investments:[{month:'Jul',planned:1000,realized:900},{month:'Ago',planned:1200,realized:1200},{month:'Set',planned:1500,realized:2000},{month:'Out',planned:1500,realized:0},{month:'Nov',planned:1800,realized:0},{month:'Dez',planned:2000,realized:0}]
 };
 let db=JSON.parse(localStorage.getItem(STORAGE)||'null')||structuredClone(seed);
-const save=()=>localStorage.setItem(STORAGE,JSON.stringify(db));
+const save=()=>{localStorage.setItem(STORAGE,JSON.stringify(db));try{if(window.FinanceCloud?.detectLocalChange)window.FinanceCloud.detectLocalChange();else localStorage.setItem('assessor_cloud_dirty','1');document.dispatchEvent(new CustomEvent('finance-data-changed'));}catch(_){}};
 
 /* Cenário fictício isolado — v1.8.0 */
 (function seedV180Simulation(){
@@ -2870,7 +2870,7 @@ closeBudgetModal.onclick=cancelBudget.onclick=()=>budgetModal.classList.remove('
 budgetForm.onsubmit=e=>{e.preventDefault();const cat=budgetCategory.value;let b=(db.budgets||[]).find(x=>x.category===cat);const before=b?JSON.parse(JSON.stringify(b)):null;if(b){b.limit=+budgetLimit.value||0;b.alertPct=+budgetAlertPct.value||80;audit('edit','budget',before,b,{scope:'orçamento mensal'})}else{b={id:'bud'+Date.now(),category:cat,limit:+budgetLimit.value||0,alertPct:+budgetAlertPct.value||80};db.budgets.push(b);audit('create','budget',null,b,{scope:'orçamento mensal'})}save();budgetModal.classList.remove('open');e.target.reset();renderAll();returnHomeAfterSave()};
 btnGoal.onclick=()=>goalModal.classList.add('open');
 closeGoalModal.onclick=cancelGoal.onclick=()=>goalModal.classList.remove('open');
-goalForm.onsubmit=e=>{e.preventDefault();const g={id:'goal'+Date.now(),name:goalName.value,target:+goalTarget.value||0,current:+goalCurrent.value||0,date:goalDate.value,type:goalType.value};db.goals.push(g);audit('create','goal',null,g,{scope:'meta financeira'});save();goalModal.classList.remove('open');e.target.reset();renderAll();returnHomeAfterSave()};
+goalForm.onsubmit=e=>{e.preventDefault();const g={id:'goal'+Date.now(),name:goalName.value,target:+goalTarget.value||0,current:+goalCurrent.value||0,date:goalDate.value,type:goalType.value};db.goals.push(g);audit('create','goal',null,g,{scope:'meta financeira'});save();try{window.FinanceCloud?.push?.()}catch(_){}goalModal.classList.remove('open');e.target.reset();renderAll();returnHomeAfterSave()};
 
 
 const androidPermissionBtn=document.getElementById('androidPermissionBtn');if(androidPermissionBtn)androidPermissionBtn.onclick=()=>{if(androidBridgeAvailable()&&typeof AndroidBridge.openNotificationAccessSettings==='function'){AndroidBridge.openNotificationAccessSettings()}else alert('A autorização real fica disponível no aplicativo Android v1.8.0 SIMULAÇÃO R6.5 · POPUPS EDITÁVEIS.')};
