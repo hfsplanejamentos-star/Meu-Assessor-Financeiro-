@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260922-r136';
+ const RELEASE='atual-ui-20260922-r137';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    ['assessor_home_layout','assessor_kpi_layout','assessor_month_scopes'].forEach(k=>localStorage.removeItem(k));
    localStorage.setItem('assessor_active_month','2026-09');
@@ -882,7 +882,17 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
   .kpi-card .value,.kpi-card strong,.projection-kpi .value,.projection-kpi strong,.summary-card .value,.summary-card strong{font-size:clamp(19px,6vw,25px)!important}
   select,.filter-select,.month-filter,.projection-controls select{font-size:14px!important}
 }
-</style>\n</head>
+</style>\n
+<style id="r137-desktop-card-row">
+/* R13.7 — Desktop: todos os cards financeiros na primeira linha */
+@media (min-width:821px){
+  #view-overview .grid-kpi{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(0,1fr))!important;grid-auto-flow:column!important;gap:8px!important;width:100%!important;}
+  #view-overview .grid-kpi>.kpi{min-width:0!important;width:auto!important;padding:12px!important;}
+  #view-overview .grid-kpi>.kpi .value{font-size:clamp(15px,1.45vw,23px)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+  #view-overview .grid-kpi>.kpi .label{font-size:10px!important;}
+}
+</style>
+</head>
 <body>
 <div class="tooltip" id="tooltip"></div>
 <div class="mobile-overlay" id="overlay"></div>
