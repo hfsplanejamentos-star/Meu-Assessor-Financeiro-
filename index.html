@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260922-r141';
+ const RELEASE='atual-ui-20260922-r142';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    ['assessor_home_layout','assessor_kpi_layout','assessor_month_scopes'].forEach(k=>localStorage.removeItem(k));
    localStorage.setItem('assessor_active_month','2026-09');
@@ -1694,7 +1694,7 @@ function renderBudgetsGoals(){
  const goalCard=document.getElementById('goalBalanceCard');if(goalCard){const pct=goalTarget>0?Math.min(100,xpBalance/goalTarget*100):0;goalCard.innerHTML='<small>Meta · saldo de referência XP</small><strong>'+brl(xpBalance)+'</strong><div class="progress"><span style="width:'+pct.toFixed(1)+'%"></span></div><div class="goal-balance-meta"><span>Valor disponível para metas</span><span>'+(goalTarget?'Objetivos cadastrados: '+brl(goalTarget):'Nenhuma meta definida')+'</span></div>'}
  k.innerHTML=`<div class="budget-kpi"><small>Orçamento total</small><b>${brl(totalBudget)}</b></div><div class="budget-kpi"><small>Gasto no mês</small><b class="${spent>totalBudget&&totalBudget?'down':''}">${brl(spent)}</b></div><div class="budget-kpi"><small>Saldo do orçamento</small><b class="${remaining<0?'down':'up'}">${brl(remaining)}</b></div><div class="budget-kpi"><small>Metas acumuladas</small><b>${goalTarget?((goalCurrent/goalTarget)*100).toFixed(0):0}%</b></div>`;
  const bl=document.getElementById('budgetList');if(bl)bl.innerHTML=(db.budgets||[]).length?db.budgets.map(b=>{const s=monthlyExpenseByCategory(b.category,budgetMonth),pct=Number(b.limit)>0?s/Number(b.limit):0,cls=pct>=1?'danger':pct>=Number(b.alertPct||80)/100?'warn':'';return `<div class="budget-card"><div class="budget-top"><div><b>${b.category}</b><small style="display:block;color:var(--muted)">Limite ${brl(b.limit)}</small></div><span class="tag">${Math.round(pct*100)}%</span></div><div class="progress ${cls}"><span style="width:${Math.min(100,pct*100)}%"></span></div><div class="budget-meta"><span>Gasto ${brl(s)}</span><span>${pct>1?'Excedido '+brl(s-b.limit):'Disponível '+brl(b.limit-s)}</span></div></div>`}).join(''):'<div class="notice">Nenhum orçamento cadastrado.</div>';
- const gl=document.getElementById('goalList');if(gl)gl.innerHTML=goals.length?goals.map(g=>{const pct=Number(g.target)>0?Number(g.current||0)/Number(g.target):0;return `<div class="goal-card"><div class="goal-top"><div><b>${g.name}</b><small style="display:block;color:var(--muted)">${g.type||'Meta'}${g.date?' · até '+fmt(g.date):''}</small></div><span class="tag">${Math.min(100,Math.round(pct*100))}%</span></div><div class="progress"><span style="width:${Math.min(100,pct*100)}%"></span></div><div class="goal-meta"><span>${brl(g.current||0)}</span><span>Meta ${brl(g.target)}</span></div></div>`}).join(''):'<div class="notice">Nenhuma meta cadastrada.</div>';
+ const gl=document.getElementById('goalList');if(gl){const explicit=goals.reduce((s,g)=>s+Math.max(0,Number(g.current||0)),0);gl.innerHTML=goals.length?goals.map((g,i)=>{const current=explicit>0?Math.max(0,Number(g.current||0)):(goals.length===1?xpBalance:0),pct=Number(g.target)>0?current/Number(g.target):0;return `<div class="goal-card"><div class="goal-top"><div><b>${g.name}</b><small style="display:block;color:var(--muted)">${g.type||'Meta'}${g.date?' · até '+fmt(g.date):''}</small></div><span class="tag">${Math.min(100,Math.round(pct*100))}%</span></div><div class="progress"><span style="width:${Math.min(100,pct*100)}%"></span></div><div class="goal-meta"><span>${brl(current)}</span><span>Meta ${brl(g.target)}</span></div></div>`}).join(''):'<div class="notice">Nenhuma meta cadastrada.</div>';}
  const ho=document.getElementById('healthOverview'),hd=document.getElementById('healthDetail');if(ho)ho.innerHTML=healthHTML();if(hd)hd.innerHTML=healthHTML();
 }
 
@@ -1733,7 +1733,7 @@ function renderKpis(){const b=balances(),key=activeMonth,acc=accumulatedRealized
   creditcard:{html:financeBrandCard('creditcard',key),route:'cards'},
   caju:{html:financeBrandCard('caju',key),route:'cards'},
   investments:{html:kpiCard('INVESTIMENTOS',brl(b.invest),'Investimentos','neutral'),route:'investments'},
-  goal:{html:kpiCard('META',brl(Math.max(0,Number((db.accounts||[]).find(a=>/\\bxp\\b/i.test(String(a.name||a.institution||'')))?.balance||0))),'Saldo de referência XP','neutral'),route:'budgets'}
+  goal:{html:kpiCard('META',brl(xpBalance),'Saldo de referência XP','neutral'),route:'budgets'}
  };
  const valid=new Set(KPI_ITEMS.map(x=>x[0])),seen=new Set();kpiLayout=(Array.isArray(kpiLayout)?kpiLayout:[]).filter(x=>x&&valid.has(x.id)&&!seen.has(x.id)&&(seen.add(x.id),true));KPI_ITEMS.forEach(x=>{if(!seen.has(x[0]))kpiLayout.push({id:x[0],visible:true})});
  const visible=kpiLayout.filter(x=>x.visible!==false&&defs[x.id]);box.innerHTML=visible.map(x=>defs[x.id].html).join('');[...box.children].forEach((el,i)=>{el.classList.add('clickable-card');el.tabIndex=0;el.dataset.cardNav=defs[visible[i].id].route;el.dataset.kpiId=visible[i].id;el.style.pointerEvents='auto'});const summaryCells=[...box.children].filter(el=>!el.classList.contains('brand-fin-card'));summaryCells.forEach(el=>el.classList.remove('summary-wide'));if(summaryCells.length%2===1)summaryCells.at(-1)?.classList.add('summary-wide');
