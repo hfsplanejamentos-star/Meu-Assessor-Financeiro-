@@ -14,7 +14,7 @@
  }
  function expenseRows(m){
   const current=new Date().toISOString().slice(0,7),rows=[];
-  (db.transactions||[]).forEach(t=>{if(ym(t.date)!==m||n(t.value)>=0||t.transfer||t.excludeFromExpense)return;if(m<current&&t.status==='planned')return;rows.push({kind:'transaction',cat:t.cat||'Outros',sub:t.sub||t.subcategory||t.desc||'Sem subcategoria',value:Math.abs(n(t.value)),id:t.id})});
+  (db.transactions||[]).forEach(t=>{if(ym(t.date)!==m||n(t.value)>=0||t.transfer||t.transferId||t.excludeFromExpense||t.invoicePayment||t.cardPayment||t.kind==='invoice_payment'||t.kind==='transfer')return;if(m<current&&t.status==='planned')return;rows.push({kind:'transaction',cat:t.cat||'Outros',sub:t.sub||t.subcategory||t.desc||'Sem subcategoria',value:Math.abs(n(t.value)),id:t.id})});
   if(m>=current)(db.recurring||[]).filter(r=>activeRecurring(r,m)).forEach(r=>rows.push({kind:'recurring',cat:r.cat||'Outros',sub:r.sub||r.subcategory||r.desc||r.description||'Recorrente',value:Math.abs(n(r.value)),id:r.id}));
   return rows;
  }
