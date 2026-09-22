@@ -8,7 +8,7 @@ const near = (actual, expected, label) =>
 
 const index = read('index.html');
 const sw = read('sw.js');
-assert.match(index, /atual-ui-20260922-r141/);
+assert.match(index, /atual-ui-20260922-r142/);
 assert.match(index, /id="r124-mobile-financial-card-stack"/);
 assert.match(index, /\['goal','Meta'\]/);
 assert.match(index, /goal:\{html:kpiCard\('META'/);
