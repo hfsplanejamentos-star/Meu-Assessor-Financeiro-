@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260922-r145';
+ const RELEASE='atual-ui-20260922-r146';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    ['assessor_home_layout','assessor_kpi_layout','assessor_month_scopes'].forEach(k=>localStorage.removeItem(k));
    localStorage.setItem('assessor_active_month','2026-09');
@@ -1541,13 +1541,13 @@ const FinanceDomain=(()=>{
     affectsCash:kind!=='card_purchase',
     cashAmount:kind==='card_purchase'?0:value,
     cardAmount:kind==='card_purchase'?Math.abs(value):0,
-    origin:t.origin,status:t.status
+    origin:t.origin,status:t.status,excludeFromExpense:!!t.excludeFromExpense
    };
   });
  }
  function ledgerSummary(month){
   const rows=ledger(month);
-  const operational=rows.filter(r=>!['transfer','invoice_payment'].includes(r.kind));
+  const operational=rows.filter(r=>!['transfer','invoice_payment'].includes(r.kind)&&!r.excludeFromExpense);
   const income=operational.filter(r=>r.amount>0).reduce((s,r)=>s+r.amount,0);
   const expenses=operational.filter(r=>r.amount<0).reduce((s,r)=>s+Math.abs(r.amount),0);
   const cashMovement=rows.reduce((s,r)=>s+r.cashAmount,0);
@@ -1570,7 +1570,7 @@ const FinanceDomain=(()=>{
  /* v1.8.0 SIMULAÇÃO R6.5 · POPUPS EDITÁVEIS — ledger avançado */
  function transactionKind(t){
    if(t.kind) return t.kind;
-   if(t.transferId) return 'transfer';
+   if(t.transfer || t.transferId) return 'transfer';
    if(t.invoicePayment || t.cardPayment) return 'invoice_payment';
    if(isCardPurchase(t)) return 'card_purchase';
    return isIncome(t)?'income':'expense';
@@ -1596,8 +1596,8 @@ const FinanceDomain=(()=>{
  function transferEntries({fromAccount,toAccount,value,date,description='Transferência'}){
    const amount=Math.abs(num(value)), transferId='tr_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
    return [
-     normalizeTransaction({date,desc:description,value:-amount,account:fromAccount,kind:'transfer',transferId,origin:'Manual'}),
-     normalizeTransaction({date,desc:description,value: amount,account:toAccount,kind:'transfer',transferId,origin:'Manual'})
+     normalizeTransaction({date,desc:description,value:-amount,account:fromAccount,kind:'transfer',transfer:true,excludeFromExpense:true,transferId,origin:'Manual'}),
+     normalizeTransaction({date,desc:description,value: amount,account:toAccount,kind:'transfer',transfer:true,excludeFromExpense:true,transferId,origin:'Manual'})
    ];
  }
  function invoicePaymentEntry({accountId,cardId,value,date,description='Pagamento de fatura'}){
