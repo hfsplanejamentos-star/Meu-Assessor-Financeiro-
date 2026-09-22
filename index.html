@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260921-r130';
+ const RELEASE='atual-ui-20260922-r134';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    ['assessor_home_layout','assessor_kpi_layout','assessor_month_scopes'].forEach(k=>localStorage.removeItem(k));
    localStorage.setItem('assessor_active_month','2026-09');
@@ -2920,4 +2920,7 @@ document.addEventListener('click',function(e){
 <script src="./r70-real-reset.js?v=25"></script>
 <script src="./r75-final-validation-fix.js?v=10"></script>
 <script src="./r80-investment-status-fix.js?v=9"></script>
-<div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=30"></script><script src="./r92-stable-startup.js?v=1"></script><script src="r95-image-entry.js?v=20260921"></script>\n<script src="r96-category-details.js?v=20260922-r133"></script>\n<script src="r97-integrity-audit.js?v=20260922-r133"></script>\n</body></html>
+<div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=30"></script><script src="./r92-stable-startup.js?v=1"></script><script src="r95-image-entry.js?v=20260921"></script>
+<script src="r96-category-details.js?v=20260922-r134"></script>
+<script src="r97-integrity-audit.js?v=20260922-r134"></script>
+</body></html>
