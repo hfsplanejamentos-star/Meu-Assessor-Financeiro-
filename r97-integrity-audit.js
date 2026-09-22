@@ -36,12 +36,20 @@
    ['C4 Cactus categorizado',rec.some(r=>r.id==='rec_carro'&&r.cat==='C4 Cactus'&&Math.abs(n(r.value))===1000)],
    ['Moradia relacionada',rec.filter(r=>activeRecurring(r,m)&&r.cat==='Moradia').every(r=>Math.abs(n(r.value))>0)],
    ['Mês sincronizado',m===selectedMonth()],
+   ['Soma categorias = total',Math.abs(Object.values(by).reduce((s,v)=>s+v,0)-rows.reduce((s,x)=>s+x.value,0))<0.01],
+   ['Moradia = detalhe',Math.abs((by['Moradia']||0)-rows.filter(x=>x.cat==='Moradia').reduce((s,x)=>s+x.value,0))<0.01],
    ['IDs de recorrência únicos',new Set(rec.map(r=>r.id)).size===rec.length]
   ];
   const result={month:m,expenseTotal:rows.reduce((s,x)=>s+x.value,0),categories:by,tests,passed:tests.filter(x=>x[1]).length,total:tests.length,timestamp:new Date().toISOString()};
   window.__FINANCE_STATUS__=result;localStorage.setItem('assessor_integrity_status',JSON.stringify(result));return result;
  }
- window.openCategoryDetail=open;window.FinanceIntegrity={audit,expenseRows,selectedMonth,migrate};
+ window.openCategoryDetail=open;window.FinanceIntegrity={audit,expenseRows,selectedMonth,migrate,openCategory:open};
+ window.FinanceDataModel={
+  month:()=>selectedMonth(),
+  expenseRows:m=>expenseRows(m||selectedMonth()),
+  categoryRows:(category,m)=>expenseRows(m||selectedMonth()).filter(x=>x.cat===category),
+  categoryTotal:(category,m)=>expenseRows(m||selectedMonth()).filter(x=>x.cat===category).reduce((s,x)=>s+x.value,0)
+ };
  document.addEventListener('finance-data-changed',()=>setTimeout(()=>audit(),50));
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(audit,700));else setTimeout(audit,700);
 })();
