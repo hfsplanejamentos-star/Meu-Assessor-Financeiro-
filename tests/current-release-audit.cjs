@@ -8,7 +8,7 @@ const near = (actual, expected, label) =>
 
 const index = read('index.html');
 const sw = read('sw.js');
-assert.match(index, /atual-ui-20260922-r145/);
+assert.match(index, /atual-ui-20260922-r146/);
 assert.match(index, /id="r124-mobile-financial-card-stack"/);
 assert.match(index, /\['goal','Meta'\]/);
 assert.match(index, /goal:\{html:kpiCard\('META'/);
@@ -16,6 +16,9 @@ assert.match(index, /window\.FinanceCloud\?\.detectLocalChange/);
 assert.match(index, /window\.FinanceCloud\?\.push\?\.\(\)/);
 assert.match(index, /const isInvoicePayment=t=>/);
 assert.match(index, /const isTransfer=t=>/);
+assert.match(index, /if\(t\.transfer \|\| t\.transferId\) return 'transfer'/);
+assert.match(index, /excludeFromExpense:!!t\.excludeFromExpense/);
+assert.match(index, /kind:'transfer',transfer:true,excludeFromExpense:true/);
 assert.match(index, /!isTransfer\(t\)&&!isInvoicePayment\(t\)&&!t\.excludeFromExpense/);
 assert.match(index, /!t\.invoicePayment&&!t\.cardPayment&&t\.kind!=='invoice_payment'&&t\.status!=='planned'/);
 assert.match(index, /#view-overview #kpis\.grid-kpi>\.brand-fin-card\{[\s\S]*grid-column:1\/-1!important;[\s\S]*width:100%!important/);
