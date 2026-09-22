@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260922-r135';
+ const RELEASE='atual-ui-20260922-r136';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    ['assessor_home_layout','assessor_kpi_layout','assessor_month_scopes'].forEach(k=>localStorage.removeItem(k));
    localStorage.setItem('assessor_active_month','2026-09');
@@ -2517,7 +2517,37 @@ syncMobileMonthNav();
 document.addEventListener('change',e=>{if(e.target.matches('.individual-month-filter'))setScopeMonth(e.target.dataset.monthScope,e.target.value)});
 document.getElementById('nav').onclick=e=>{const b=e.target.closest('button[data-view]');if(b)nav(b.dataset.view)};backBtn.onclick=()=>{if(navHistory.length>1){navHistory.pop();nav(navHistory[navHistory.length-1],false)}};window.addEventListener('popstate',()=>{if(navHistory.length>1){navHistory.pop();nav(navHistory[navHistory.length-1],false)}})
 document.addEventListener('click',e=>{const b=e.target.closest('[data-nav]');if(b){e.preventDefault();nav(b.dataset.nav)}});
-function bindKpiNavigation(){document.querySelectorAll('#kpis [data-card-nav],#cardKpis [data-card-nav]').forEach(card=>{card.style.cursor='pointer';card.style.pointerEvents='auto';card.onclick=e=>{e.preventDefault();e.stopPropagation();nav(card.dataset.cardNav)};card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();nav(card.dataset.cardNav)}}})}
+function openOverviewFinancialDetail(card){
+ const id=card?.dataset?.kpiId||'',key=activeMonth;
+ if(id==='creditcard'||id==='caju'){
+   const target=id==='caju'
+    ?(db.cards||[]).find(x=>String(x.id)==='card_caju_alimentacao'||/caju/i.test(String(x.name||'')))
+    :(db.cards||[]).find(x=>['Crédito','Múltiplo'].includes(x.type||'Crédito')&&!/caju/i.test(String(x.name||'')));
+   ['cards','invoice','purchases'].forEach(k=>monthScopes[k]=key);
+   nav('cards');
+   requestAnimationFrame(()=>{
+     const cid=target?.id;
+     ['cardPurchaseFilter','invoiceCardFilter','cardTrendCardFilter'].forEach(selId=>{
+       const el=document.getElementById(selId);
+       if(el&&cid&&[...el.options].some(o=>o.value===String(cid)))el.value=String(cid);
+     });
+     renderCardDashboard();renderInvoiceManagement();renderCardPurchases();renderCardTrend();
+     const focus=id==='caju'?document.getElementById('cajuDetailPanel'):document.getElementById('cardList');
+     focus?.scrollIntoView({block:'start',behavior:'smooth'});
+   });return;
+ }
+ if(['c6account','itauaccount','xpaccount'].includes(id)){
+   const rules={c6account:/c6/i,itauaccount:/ita[uú]/i,xpaccount:/\bxp\b/i},a=(db.accounts||[]).find(x=>rules[id].test(String(x.name||x.institution||'')));
+   nav('accounts');
+   requestAnimationFrame(()=>{
+     const el=a&&document.querySelector('#accountList [data-detail-type="account"][data-detail-id="'+CSS.escape(String(a.id))+'"]');
+     el?.scrollIntoView({block:'center',behavior:'smooth'});
+     if(a)el?.click();
+   });return;
+ }
+ nav(card.dataset.cardNav);
+}
+function bindKpiNavigation(){document.querySelectorAll('#kpis [data-card-nav],#cardKpis [data-card-nav]').forEach(card=>{card.style.cursor='pointer';card.style.pointerEvents='auto';card.onclick=e=>{e.preventDefault();e.stopPropagation();openOverviewFinancialDetail(card)};card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openOverviewFinancialDetail(card)}}})}
 document.addEventListener('click',e=>{
  const s=e.target.closest('[data-invest-summary]');if(!s)return;
  e.preventDefault();e.stopPropagation();
