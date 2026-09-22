@@ -81,6 +81,34 @@ function migrateCajuSep26(){
  if(cj&&db.meta.cajuKnownBalanceVersion!=='2026-09-extrato-v5'){cj.limit=1006.89;cj.availableLimit=525.17;cj.balance=525.17;cj.excludeFromPatrimony=true;db.meta.cajuKnownBalanceVersion='2026-09-extrato-v5';changed=true}
  return changed;
 }
+function migrateExtratosSep22(){
+ db.transactions=db.transactions||[];db.accounts=db.accounts||[];db.cards=db.cards||[];db.meta=db.meta||{};let changed=false;
+ const add=t=>{if(!db.transactions.some(x=>String(x.id)===String(t.id))){db.transactions.push(t);changed=true}};
+ const c6base={status:'realized',origin:'Extrato C6 confirmado',source:'Extrato C6 confirmado',account:'acc_c6',accountId:'acc_c6',statementVerified:true,classificationPending:false};
+ [
+  ['c6_2026_09_21_99_1039','2026-09-21','PIX 99 Tecnologia Ltda',-10.39,'Transporte','Aplicativo','PIX'],
+  ['c6_2026_09_22_posto_5000','2026-09-22','Posto de Gasolina dos Duque de Caxias',-50.00,'Transporte','Combustível','Débito'],
+  ['c6_2026_09_22_99_2403','2026-09-22','PIX 99 Tecnologia Ltda',-24.03,'Transporte','Aplicativo','PIX'],
+  ['c6_2026_09_22_99_219','2026-09-22','PIX 99 Tecnologia Ltda',-2.19,'Transporte','Aplicativo','PIX']
+ ].forEach(([id,date,desc,value,cat,sub,paymentMethod])=>add({...c6base,id,date,desc,description:desc,value,cat,sub,paymentMethod}));
+ add({...c6base,id:'c6_2026_09_21_pix_proprio_100',date:'2026-09-21',desc:'PIX enviado para Hebert Ferreira da Silva',description:'PIX enviado para Hebert Ferreira da Silva',value:-1,cat:'Transferências',sub:'Transferência própria',paymentMethod:'PIX',transfer:true,kind:'transfer',excludeFromExpense:true});
+ /* R$ 80,00 de 20/09 não é reinserido: já existe como Depósito do Latão e o usuário pediu para desconsiderar neste extrato. */
+ const c6=db.accounts.find(a=>a.id==='acc_c6');
+ if(c6&&db.meta.c6KnownBalanceVersion!=='2026-09-22-v1'){c6.balance=398.70;c6.balanceDate='2026-09-22';c6.statementVerified=true;db.meta.c6KnownBalanceVersion='2026-09-22-v1';changed=true}
+ const cjbase={status:'realized',origin:'Extrato Caju confirmado',source:'Extrato Caju confirmado',card:'card_caju_alimentacao',cardId:'card_caju_alimentacao',benefit:true,excludeFromExpense:true,statementVerified:true,cat:'Alimentação'};
+ [
+  ['caju_2026_09_19_restaurante_macae_7800','2026-09-19','Restaurante Macaé BR',-78.00,'Restaurante'],
+  ['caju_2026_09_20_ifd_luana_3189','2026-09-20','IFD*56162560 Luana',-31.89,'Delivery'],
+  ['caju_2026_09_21_super_market_24689','2026-09-21','Super Market Caxias',-246.89,'Mercado'],
+  ['caju_2026_09_21_ifd_netos_2494','2026-09-21','IFD*Netos Delivery',-24.94,'Delivery'],
+  ['caju_2026_09_22_dafoca_bar_4400','2026-09-22','Dafoca Bar Rio de Janeiro',-44.00,'Restaurante']
+ ].forEach(([id,date,desc,value,sub])=>add({...cjbase,id,date,desc,description:desc,value,sub}));
+ const cj=db.cards.find(x=>x.id==='card_caju_alimentacao');
+ if(cj&&db.meta.cajuKnownBalanceVersion!=='2026-09-22-extrato-v6'){cj.limit=1006.89;cj.availableLimit=99.45;cj.balance=99.45;cj.excludeFromPatrimony=true;db.meta.cajuKnownBalanceVersion='2026-09-22-extrato-v6';changed=true}
+ if(changed){try{save()}catch(_){localStorage.setItem(KEY,JSON.stringify(db))}}
+ return changed;
+}
+migrateExtratosSep22();
 function repairCajuSep26(){
  if(!migrateCajuSep26())return false;
  try{if(typeof save==='function')save();else localStorage.setItem(KEY,JSON.stringify(db))}catch(_){}
