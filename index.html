@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260923-r158';
+ const RELEASE='atual-ui-20260923-r159';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -1716,10 +1716,13 @@ function isC6CarbonCard(card){return /c6[\s-]*(bank[\s-]*)?carbon|carbon/i.test(
 function carbonInvestmentLimitAt(key){
  const realized=s=>{const v=String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();return !v||['realized','real','realizada','realizado','posted','confirmada','confirmado','paid','received','pago','recebido'].includes(v)};
  const accountType=id=>String((db.accounts||[]).find(a=>String(a.id)===String(id))?.type||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+ const investmentAccount=id=>id==='acc_invest_plan'||/invest/.test(accountType(id));
  return Math.round((db.transactions||[]).filter(t=>{
-  const dest=t.dest||t.destAccountId,destType=accountType(dest),month=String(t.date||'').slice(0,7);
-  return (!!(t.transfer||t.transferId)||t.kind==='transfer')&&realized(t.status)&&month&&month<=key&&(dest==='acc_invest_plan'||/invest/.test(destType));
- }).reduce((sum,t)=>sum+Math.abs(Number(t.value)||0),0)*100)/100;
+  const dest=t.dest||t.destAccountId,source=t.sourceAccountId||t.source||t.account||t.accountId,month=String(t.date||'').slice(0,7),v=Number(t.value)||0;
+  if(!(!!(t.transfer||t.transferId)||t.kind==='transfer'||t.kind==='goal_transfer')||!realized(t.status)||!month||month>key)return false;
+  /* Conta apenas a perna positiva que efetivamente entra no investimento; evita dobrar pares de transferência. */
+  return v>0&&investmentAccount(dest||t.account||t.accountId)&&!investmentAccount(source);
+ }).reduce((sum,t)=>sum+Number(t.value||0),0)*100)/100;
 }
 function cardLimitAt(card,key){return isC6CarbonCard(card)?carbonInvestmentLimitAt(key):Number(card?.limit||0)}
 function financeBrandCard(kind,key){
