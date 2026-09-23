@@ -11,7 +11,15 @@
    if((String(r.id)==='rec_tim'||(/plano tim/.test(norm(r.desc||r.description))&&Math.abs(n(r.value))===79.9))&&r.cat!=='Plano TIM'){r.cat='Plano TIM';r.desc='Plano TIM';r.description='Plano TIM';changed=true}
    if(String(r.id)==='rec_carro'||/prestacao do carro/.test(norm(r.desc||r.description))){if(r.cat!=='C4 Cactus'){r.cat='C4 Cactus';changed=true}}
   });
-  if(changed)try{save()}catch(_){}
+  const pharmacyId='manual_c6_farmacia_2026-09-23_2699';
+  if(!(db.transactions||[]).some(t=>String(t.id)===pharmacyId)){
+   const tx={id:pharmacyId,date:'2026-09-23',desc:'Farmácia',value:-26.99,cat:'Saúde',sub:'Farmácia',account:'acc_c6',accountId:'acc_c6',card:null,origin:'Lançamento solicitado',status:'realized',paymentType:'Débito'};
+   db.transactions=db.transactions||[];db.transactions.push(tx);
+   const account=(db.accounts||[]).find(a=>String(a.id)==='acc_c6');if(account)account.balance=Math.round((n(account.balance)-26.99)*100)/100;
+   db.auditLog=db.auditLog||[];db.auditLog.unshift({id:'audit_'+pharmacyId,ts:'2026-09-23T17:00:00-03:00',action:'create',entity:'transaction',before:null,after:JSON.parse(JSON.stringify(tx)),meta:{scope:'lançamento confirmado'}});
+   changed=true;
+  }
+  if(changed){try{save()}catch(_){}try{window.FinanceCloud?.detectLocalChange?.();setTimeout(()=>window.FinanceCloud?.pushLocalControlled?.(),1600)}catch(_){}}
   return changed;
  }
  function expenseRows(m){
