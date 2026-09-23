@@ -18,6 +18,8 @@ function ensureStyle(){
    #view-overview .dashboard>*{min-width:0!important;max-width:100%!important}
    #view-overview .dashboard .panel-head{min-width:0!important;flex-wrap:wrap!important}
    #view-overview .dashboard .panel-head>*{min-width:0!important;max-width:100%!important}
+   #realModeFab:disabled{pointer-events:none!important}
+   #sidebar .nav{padding-bottom:58px!important}
    #view-overview #kpis .brand-fin-card{overflow:hidden!important}
    #view-overview #kpis .brand-fin-card>*{min-width:0!important;max-width:100%!important}
    #view-overview #kpis .brand-stats{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:6px!important}
