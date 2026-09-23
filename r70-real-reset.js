@@ -65,7 +65,7 @@ function migrateSep26(){
  ];
  confirmed.forEach(([id,date,desc,value,cat,sub])=>{if(!db.transactions.some(t=>String(t.id)===id))db.transactions.push({id,date,desc,description:desc,value,cat,sub,status:'realized',origin:'Extrato C6 confirmado',source:'Extrato C6 confirmado',account:aid,accountId:aid,paymentMethod:id.includes('_pix_')?'PIX':'Débito',statementVerified:true,classificationPending:false})});
  const a=db.accounts.find(x=>x.id===aid);if(a){a.balance=398.70;a.openingBalance=21.41;a.balanceDate='2026-09-22';a.statementVerified=true}
- db.meta.c6Sep2026Validated=version;db.meta.c6KnownBalanceVersion=balanceVersion;db.meta.statementInReported=2639.62;db.meta.statementOutReported=2174.72;db.meta.statementOutVisible=2174.72;db.meta.statementDifference=0;db.meta.realBase='R10.15';
+ db.meta.c6Sep2026Validated=version;db.meta.c6KnownBalanceVersion=balanceVersion;db.meta.statementInReported=2639.62;db.meta.statementOutReported=2262.33;db.meta.statementOutVisible=2261.33;db.meta.statementDifference=0;db.meta.realBase='R10.15';
  try{save()}catch(_){localStorage.setItem(KEY,JSON.stringify(db))}
  return true
 }
@@ -82,7 +82,7 @@ function migrateExtratosSep22(){
  add({...c6base,id:'c6_2026_09_21_pix_proprio_100',date:'2026-09-21',desc:'PIX enviado para Hebert Ferreira da Silva',description:'PIX enviado para Hebert Ferreira da Silva',value:-1,cat:'Transferências',sub:'Transferência própria',paymentMethod:'PIX',transfer:true,kind:'transfer',excludeFromExpense:true});
  /* R$ 80,00 de 20/09 não é reinserido: já existe como Depósito do Latão e o usuário pediu para desconsiderar neste extrato. */
  const c6=db.accounts.find(a=>a.id==='acc_c6');
- if(c6&&db.meta.c6KnownBalanceVersion!=='2026-09-22-v1'){c6.balance=398.70;c6.balanceDate='2026-09-22';c6.statementVerified=true;db.meta.c6KnownBalanceVersion='2026-09-22-v1';changed=true}
+ if(c6&&db.meta.c6KnownBalanceVersion!=='2026-09-22-v1'){c6.balance=398.70;c6.balanceDate='2026-09-22';c6.statementVerified=true;db.meta.c6KnownBalanceVersion='2026-09-22-v1';db.meta.statementOutReported=2262.33;db.meta.statementOutVisible=2261.33;db.meta.statementDifference=1.00;changed=true}
  const cjbase={status:'realized',origin:'Extrato Caju confirmado',source:'Extrato Caju confirmado',card:'card_caju_alimentacao',cardId:'card_caju_alimentacao',benefit:true,excludeFromExpense:true,statementVerified:true,cat:'Alimentação'};
  [
   ['caju_2026_09_17_ifd_mari_2999','2026-09-17','IFD*60.939.734 Mari',-29.99,'Delivery'],
