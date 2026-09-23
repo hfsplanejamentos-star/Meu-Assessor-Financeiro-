@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260923-r148';
+ const RELEASE='atual-ui-20260923-r149';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    ['assessor_home_layout','assessor_kpi_layout','assessor_month_scopes'].forEach(k=>localStorage.removeItem(k));
    localStorage.setItem('assessor_active_month','2026-09');
@@ -1689,7 +1689,7 @@ function healthHTML(){
  const h=calcHealth(),deg=Math.round(h.score*3.6),tone=h.score>=70?'var(--green)':h.score>=50?'var(--amber)':'var(--red)';
  return `<div class="health-ring" style="background:conic-gradient(${tone} 0 ${deg}deg,#182636 ${deg}deg)"><div><b style="font-size:27px">${h.score}</b><small>/100</small></div></div><div><b style="font-size:18px;color:${tone}">${h.label}</b><div class="health-factors" style="margin-top:10px"><div class="health-factor"><small>Taxa de poupança</small><b>${(h.savingsRate*100).toFixed(0)}%</b></div><div class="health-factor"><small>Orçamentos dentro do limite</small><b>${(h.within*100).toFixed(0)}%</b></div><div class="health-factor"><small>Maior uso de cartão</small><b>${(h.cardUse*100).toFixed(0)}%</b></div><div class="health-factor"><small>Reserva líquida</small><b>${h.reserveMonths.toFixed(1)} mês(es)</b></div></div></div>`;
 }
-function goalContribution(g){return (db.transactions||[]).filter(t=>t.goalId===g.id&&(t.goalContribution===true||t.kind==='goal_transfer')&&Number(t.value)>0&&String(t.status||'realized').toLowerCase()!=='planned').reduce((s,t)=>s+Number(t.value||0),0)}
+function goalContribution(g){const planned=s=>['planned','planejada','planejado','prevista','previsto'].includes(String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase());return (db.transactions||[]).filter(t=>t.goalId===g.id&&(t.goalContribution===true||t.kind==='goal_transfer')&&Number(t.value)>0&&!planned(t.status)).reduce((s,t)=>s+Number(t.value||0),0)}
 function goalXpAccount(){return (db.accounts||[]).find(a=>/\\bxp\\b/i.test(String(a.name||a.institution||'')))}
 function renderBudgetsGoals(){
  const k=document.getElementById('budgetKpis');if(!k)return;
@@ -1710,7 +1710,7 @@ function accountBrandCard(kind,key){
 }
 function isC6CarbonCard(card){return /c6[\s-]*(bank[\s-]*)?carbon|carbon/i.test(String(card?.id||'')+' '+String(card?.name||''))}
 function carbonInvestmentLimitAt(key){
- const realized=s=>['realized','realizada','realizado','posted','confirmada','confirmado','paid'].includes(String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase());
+ const realized=s=>{const v=String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();return !v||['realized','real','realizada','realizado','posted','confirmada','confirmado','paid','received','pago','recebido'].includes(v)};
  const accountType=id=>String((db.accounts||[]).find(a=>String(a.id)===String(id))?.type||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
  return Math.round((db.transactions||[]).filter(t=>{
   const dest=t.dest||t.destAccountId,destType=accountType(dest),month=String(t.date||'').slice(0,7);
