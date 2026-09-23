@@ -90,12 +90,15 @@ function audit(){
 }
 function renderCanonicalExpenseChart(){
  const key=(typeof scopeMonth==='function'?scopeMonth('category'):(typeof activeMonth!=='undefined'?activeMonth:'2026-09'));
- 
  const current=typeof monthKey==='function'?monthKey(today):new Date().toISOString().slice(0,7),cats={};
- (db.transactions||[]).filter(t=>((t.card||t.cardId)?(t.invoiceMonth||String(t.date||'').slice(0,7)):String(t.date||'').slice(0,7))===key&&Number(t.value)<0&&!isTransfer(t)&&!t.excludeFromExpense&&!isInvoicePayment(t)&&real(t.status)).forEach(t=>cats[t.cat||'Outros']=(cats[t.cat||'Outros']||0)+Math.abs(n(t.value)));
- if(key>=current){
-   recurringFor(key).forEach(r=>cats[r.cat||'Outros']=(cats[r.cat||'Outros']||0)+Math.abs(n(r.value)));
-   (db.transactions||[]).filter(t=>((t.card||t.cardId)?(t.invoiceMonth||String(t.date||'').slice(0,7)):String(t.date||'').slice(0,7))===key&&planned(t.status)&&Number(t.value)<0&&!isTransfer(t)&&!t.excludeFromExpense&&!isInvoicePayment(t)).forEach(t=>cats[t.cat||'Outros']=(cats[t.cat||'Outros']||0)+Math.abs(n(t.value)));
+ let rows=[];
+ try{if(window.FinanceDataModel&&typeof window.FinanceDataModel.expenseRows==='function')rows=window.FinanceDataModel.expenseRows(key)||[]}catch(_){}
+ if(rows.length){
+   rows.forEach(t=>{const name=t.cat||t.category||'Outros',value=Math.abs(n(t.value??t.amount));if(value)cats[name]=(cats[name]||0)+value});
+ }else{
+   const direct=(db.transactions||[]).filter(t=>((t.card||t.cardId)?(t.invoiceMonth||String(t.date||'').slice(0,7)):String(t.date||'').slice(0,7))===key&&Number(t.value)<0&&!isTransfer(t)&&!t.excludeFromExpense&&!isInvoicePayment(t)&&(real(t.status)||(key>=current&&planned(t.status))));
+   direct.forEach(t=>cats[t.cat||'Outros']=(cats[t.cat||'Outros']||0)+Math.abs(n(t.value)));
+   if(key>=current){const seen=new Set(direct.map(t=>String(t.recurringId||'')+'|'+String(t.desc||t.description||'').trim().toLowerCase()+'|'+Math.abs(n(t.value)).toFixed(2)));recurringFor(key).forEach(r=>{const sig=String(r.id||'')+'|'+String(r.name||r.desc||'').trim().toLowerCase()+'|'+Math.abs(n(r.value)).toFixed(2);if(!seen.has(sig))cats[r.cat||'Outros']=(cats[r.cat||'Outros']||0)+Math.abs(n(r.value))})}
  }
  const items=Object.entries(cats).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
  const canvas=document.getElementById('categoryChart'),legend=document.getElementById('categoryLegend'),panel=document.getElementById('categoryPanel');
