@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260923-r173';
+ const RELEASE='atual-ui-20260923-r174';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -2329,7 +2329,14 @@ async function mobileRefresh(){
  }finally{setTimeout(()=>{if(b){b.classList.remove('refreshing');b.querySelector('span').textContent='Atualizar'}},450)}
 }
 document.getElementById('mobileRefreshBtn')?.addEventListener('click',mobileRefresh);
-function renderAll(){ensureMonthlyIncomeAutomation();fillMonthFilters();renderKpis();renderQuickFinancialCards();applyHomeLayout();bindKpiNavigation();renderLists();renderCommitments();renderCalendar();renderInvestment();renderCardDashboard();renderInvoiceManagement();renderAudit();renderAlerts();renderBudgetsGoals();renderAndroidInbox();updateAndroidBridgeStatus();bindDetailClicks();bindValueHover();requestAnimationFrame(()=>{renderCharts();renderCardTrend();bindValueHover()});renderReconciliation()}
+function renderAll(){
+ const steps=[
+  ['income',()=>ensureMonthlyIncomeAutomation()],['filters',()=>fillMonthFilters()],['kpis',()=>renderKpis()],['quick',()=>renderQuickFinancialCards()],['layout',()=>applyHomeLayout()],['kpi-nav',()=>bindKpiNavigation()],['lists',()=>renderLists()],['commitments',()=>renderCommitments()],['calendar',()=>renderCalendar()],['investment',()=>renderInvestment()],['cards',()=>renderCardDashboard()],['invoices',()=>renderInvoiceManagement()],['audit',()=>renderAudit()],['alerts',()=>renderAlerts()],['goals',()=>renderBudgetsGoals()],['android',()=>renderAndroidInbox()],['bridge',()=>updateAndroidBridgeStatus()],['details',()=>bindDetailClicks()],['hover',()=>bindValueHover()],['reconciliation',()=>renderReconciliation()]
+ ];
+ const errors=[];for(const [name,fn] of steps){try{fn()}catch(e){errors.push(name);console.error('[renderAll:'+name+']',e)}}
+ requestAnimationFrame(()=>{for(const [name,fn] of [['charts',()=>renderCharts()],['card-trend',()=>renderCardTrend()],['hover-raf',()=>bindValueHover()]])try{fn()}catch(e){errors.push(name);console.error('[renderAll:'+name+']',e)}});
+ window.assessorRenderErrors=errors;document.documentElement.dataset.financeRender=errors.length?'partial':'ok';
+}
 
 function hideTooltip(){const t=document.getElementById('tooltip');if(t)t.style.display='none'}
 window.addEventListener('scroll',hideTooltip,{passive:true});
@@ -2891,7 +2898,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r173',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r174',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
