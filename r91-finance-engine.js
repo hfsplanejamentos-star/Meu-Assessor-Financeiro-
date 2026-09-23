@@ -37,10 +37,11 @@ function accumulatedRealized(key){
  months.forEach(mk=>{
    const tx=(db.transactions||[]).filter(t=>keyOf(t.date)===mk);
    const op=tx.filter(t=>!isTransfer(t)&&!t.excludeFromExpense&&!isInvoicePayment(t));
-   income+=op.filter(t=>n(t.value)>0).reduce((s,t)=>s+n(t.value),0);
-   const monthExpense=op.filter(t=>n(t.value)<0);
+   const effective=op.filter(t=>mk===base?real(t.status):(real(t.status)||planned(t.status)));
+   income+=effective.filter(t=>n(t.value)>0).reduce((s,t)=>s+n(t.value),0);
+   const monthExpense=effective.filter(t=>n(t.value)<0);
    expense+=monthExpense.reduce((s,t)=>s+abs(t.value),0);
-   investment+=tx.filter(t=>isTransfer(t)&&(t.dest===INV||t.destAccountId===INV||/invest/.test(accountType(t.dest||t.destAccountId)))).reduce((s,t)=>s+abs(t.value),0);
+   investment+=tx.filter(t=>isTransfer(t)&&real(t.status)&&(t.dest===INV||t.destAccountId===INV||/invest/.test(accountType(t.dest||t.destAccountId)))).reduce((s,t)=>s+abs(t.value),0);
    if(mk>base){
      recurringFor(mk).forEach(r=>{
        const rv=abs(r.value);if(!rv)return;
