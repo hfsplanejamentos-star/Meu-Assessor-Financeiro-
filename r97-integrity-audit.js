@@ -13,9 +13,11 @@
   return changed;
  }
  function expenseRows(m){
-  const current=new Date().toISOString().slice(0,7),rows=[];
-  (db.transactions||[]).forEach(t=>{if(ym(t.date)!==m||n(t.value)>=0||t.transfer||t.transferId||t.excludeFromExpense||t.invoicePayment||t.cardPayment||t.kind==='invoice_payment'||t.kind==='transfer')return;if(m<current&&t.status==='planned')return;rows.push({kind:'transaction',cat:t.cat||'Outros',sub:t.sub||t.subcategory||t.desc||'Sem subcategoria',value:Math.abs(n(t.value)),id:t.id})});
-  if(m>=current)(db.recurring||[]).filter(r=>activeRecurring(r,m)).forEach(r=>rows.push({kind:'recurring',cat:r.cat||'Outros',sub:r.sub||r.subcategory||r.desc||r.description||'Recorrente',value:Math.abs(n(r.value)),id:r.id}));
+  const current=new Date().toISOString().slice(0,7),rows=[],planned=s=>['planned','planejada','planejado','prevista','previsto'].includes(norm(s));
+  const monthOf=t=>(t.card||t.cardId)?(t.invoiceMonth||ym(t.date)):ym(t.date);
+  const direct=[];
+  (db.transactions||[]).forEach(t=>{if(monthOf(t)!==m||n(t.value)>=0||t.transfer||t.transferId||t.excludeFromExpense||t.invoicePayment||t.cardPayment||t.kind==='invoice_payment'||t.kind==='transfer')return;if(m<current&&planned(t.status))return;const row={kind:'transaction',cat:t.cat||'Outros',sub:t.sub||t.subcategory||t.desc||'Sem subcategoria',value:Math.abs(n(t.value)),id:t.id,recurringId:t.recurringId||null,desc:t.desc||t.description||''};direct.push(row);rows.push(row)});
+  if(m>=current)(db.recurring||[]).filter(r=>activeRecurring(r,m)).forEach(r=>{const rv=Math.abs(n(r.value)),name=norm(r.name||r.desc||r.description||''),duplicate=direct.some(t=>(r.id&&String(t.recurringId||'')===String(r.id))||(name&&norm(t.desc)===name&&Math.abs(t.value-rv)<.02));if(!duplicate)rows.push({kind:'recurring',cat:r.cat||'Outros',sub:r.sub||r.subcategory||r.desc||r.description||'Recorrente',value:rv,id:r.id})});
   return rows;
  }
  function selectedMonth(){
