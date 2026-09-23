@@ -3,17 +3,19 @@
 const PLAN_SOURCE='user-approved-investment-3000',INV='acc_invest_plan';
 const n=v=>Number(v)||0,abs=v=>Math.abs(n(v)),keyOf=v=>String(v||'').slice(0,7);
 const planned=s=>['planned','planejada','planejado','prevista','previsto'].includes(String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase());
-const real=s=>['realized','realizada','realizado','posted','confirmada','confirmado'].includes(String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase());
+const real=s=>{const v=String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();return !v||['realized','real','realizada','realizado','posted','confirmada','confirmado','paid','received','pago','recebido'].includes(v)};
+const isTransfer=t=>!!(t?.transfer||t?.transferId)||t?.kind==='transfer';
+const isInvoicePayment=t=>!!(t?.invoicePayment||t?.cardPayment)||t?.kind==='invoice_payment';
 function recurringFor(key){return (db.recurring||[]).filter(r=>{const st=keyOf(r.startDate),en=keyOf(r.endDate);return r.active!==false&&(!st||key>=st)&&(!en||key<=en)})}
 function summary(key){
  const tx=(db.transactions||[]).filter(t=>keyOf(t.date)===key);
- const op=tx.filter(t=>!t.transfer&&!t.excludeFromExpense&&!t.invoicePayment&&t.kind!=='invoice_payment');
+ const op=tx.filter(t=>!isTransfer(t)&&!t.excludeFromExpense&&!isInvoicePayment(t));
  const realizedIncome=op.filter(t=>real(t.status)&&n(t.value)>0).reduce((s,t)=>s+n(t.value),0);
  const realizedExpense=op.filter(t=>real(t.status)&&n(t.value)<0).reduce((s,t)=>s+abs(t.value),0);
  const plannedIncome=op.filter(t=>planned(t.status)&&n(t.value)>0).reduce((s,t)=>s+n(t.value),0);
  const directPlannedExpense=op.filter(t=>planned(t.status)&&n(t.value)<0).reduce((s,t)=>s+abs(t.value),0);
  const recurringExpense=recurringFor(key).reduce((s,r)=>s+abs(r.value),0);
- const investment=(db.transactions||[]).filter(t=>keyOf(t.date)===key&&t.transfer&&t.dest===INV&&planned(t.status)).reduce((s,t)=>s+abs(t.value),0);
+ const investment=(db.transactions||[]).filter(t=>keyOf(t.date)===key&&isTransfer(t)&&(t.dest===INV||t.destAccountId===INV)&&planned(t.status)).reduce((s,t)=>s+abs(t.value),0);
  return {key,realizedIncome,realizedExpense,plannedIncome,plannedExpense:directPlannedExpense+recurringExpense,recurringExpense,investment};
 }
 function currentBalances(){
@@ -34,11 +36,11 @@ function accumulatedRealized(key){
  while(d<=last){months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));d=new Date(d.getFullYear(),d.getMonth()+1,1)}
  months.forEach(mk=>{
    const tx=(db.transactions||[]).filter(t=>keyOf(t.date)===mk);
-   const op=tx.filter(t=>!t.transfer&&!t.excludeFromExpense&&!t.invoicePayment&&t.kind!=='invoice_payment');
+   const op=tx.filter(t=>!isTransfer(t)&&!t.excludeFromExpense&&!isInvoicePayment(t));
    income+=op.filter(t=>n(t.value)>0).reduce((s,t)=>s+n(t.value),0);
    const monthExpense=op.filter(t=>n(t.value)<0);
    expense+=monthExpense.reduce((s,t)=>s+abs(t.value),0);
-   investment+=tx.filter(t=>t.transfer&&(t.dest===INV||t.destAccountId===INV||/invest/.test(accountType(t.dest||t.destAccountId)))).reduce((s,t)=>s+abs(t.value),0);
+   investment+=tx.filter(t=>isTransfer(t)&&(t.dest===INV||t.destAccountId===INV||/invest/.test(accountType(t.dest||t.destAccountId)))).reduce((s,t)=>s+abs(t.value),0);
    if(mk>base){
      recurringFor(mk).forEach(r=>{
        const rv=abs(r.value);if(!rv)return;
@@ -88,10 +90,10 @@ function renderCanonicalExpenseChart(){
  const key=(typeof activeMonth!=='undefined'?activeMonth:(typeof scopeMonth==='function'?scopeMonth('category'):'2026-09'));
  try{if(typeof monthScopes==='object'&&monthScopes)monthScopes.category=key;const s=document.querySelector('[data-month-scope="category"]');if(s&&s.value!==key)s.value=key}catch(_){};
  const current=typeof monthKey==='function'?monthKey(today):new Date().toISOString().slice(0,7),cats={};
- (db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense&&t.status!=='planned').forEach(t=>cats[t.cat||'Outros']=(cats[t.cat||'Outros']||0)+Math.abs(n(t.value)));
+ (db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)<0&&!isTransfer(t)&&!t.excludeFromExpense&&!isInvoicePayment(t)&&real(t.status)).forEach(t=>cats[t.cat||'Outros']=(cats[t.cat||'Outros']||0)+Math.abs(n(t.value)));
  if(key>=current){
    recurringFor(key).forEach(r=>cats[r.cat||'Outros']=(cats[r.cat||'Outros']||0)+Math.abs(n(r.value)));
-   (db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&t.status==='planned'&&Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense).forEach(t=>cats[t.cat||'Outros']=(cats[t.cat||'Outros']||0)+Math.abs(n(t.value)));
+   (db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&planned(t.status)&&Number(t.value)<0&&!isTransfer(t)&&!t.excludeFromExpense&&!isInvoicePayment(t)).forEach(t=>cats[t.cat||'Outros']=(cats[t.cat||'Outros']||0)+Math.abs(n(t.value)));
  }
  const items=Object.entries(cats).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
  const canvas=document.getElementById('categoryChart'),legend=document.getElementById('categoryLegend'),panel=document.getElementById('categoryPanel');
