@@ -22,6 +22,8 @@ function ensureStyle(){
    #view-overview #kpis .brand-fin-card>*{min-width:0!important;max-width:100%!important}
    #view-overview #kpis .brand-stats{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:6px!important}
    #view-overview #kpis .brand-stats strong{font-size:clamp(16px,1.45vw,20px)!important;white-space:nowrap!important}
+   #view-overview #kpis [data-kpi-id="caju"] .brand-stats{grid-template-columns:1fr!important;gap:8px!important}
+   #view-overview #kpis [data-kpi-id="caju"] .brand-stats>div{display:flex!important;align-items:baseline!important;justify-content:space-between!important;gap:8px!important}
    #view-overview #kpis .brand-foot{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:8px!important}
  }
  @media(min-width:821px) and (max-width:1180px){
