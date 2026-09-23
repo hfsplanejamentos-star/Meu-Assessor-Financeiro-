@@ -74,10 +74,12 @@ context.db.transactions.push({ id: 'manual_regression_guard', date: '2026-09-20'
   const ids = db.transactions.map(t => String(t.id));
 
   near(income, 2639.62, 'entradas de setembro');
-  near(expense, 2174.72, 'saídas de setembro');
-  near(account.balance, 486.31, 'saldo atual C6');
+  near(expense, 2262.33, 'saídas de setembro incluindo transferência própria de R$ 1,00');
+  near(account.balance, 398.70, 'saldo atual C6');
   near(account.openingBalance + income - expense, account.balance, 'reconciliação do saldo C6');
-  near(db.meta.statementOutVisible, 2174.72, 'saídas visíveis');
+  const ownTransfer = db.transactions.find(t => t.id === 'c6_2026_09_21_pix_hebert_100');
+  assert.ok(ownTransfer && (ownTransfer.transfer || ownTransfer.kind === 'transfer') && ownTransfer.excludeFromExpense === true, 'PIX próprio de R$ 1 deve ser transferência e não despesa');
+  near(db.meta.statementOutVisible, 2261.33, 'despesas operacionais visíveis, excluindo transferência própria');
   assert.strictEqual(new Set(ids).size, ids.length, 'IDs de transações duplicados');
   assert.strictEqual(db.meta.c6Sep2026Validated, 'v10');
   assert.ok(db.transactions.some(t => t.id === 'manual_regression_guard'), 'migração não pode apagar lançamentos manuais');
@@ -119,10 +121,10 @@ context.db.transactions.push({ id: 'manual_regression_guard', date: '2026-09-20'
   near(account.balance, 400, 'saldo manual posterior do C6 deve ser preservado');
   near(caju.balance, 500, 'saldo manual posterior do Caju deve ser preservado');
   near(caju.availableLimit, 500, 'disponível manual posterior do Caju deve ser preservado');
-  account.balance = 486.31;
-  caju.balance = 525.17;
-  caju.availableLimit = 525.17;
+  account.balance = 398.70;
+  caju.balance = 456.23;
+  caju.availableLimit = 456.23;
 
   console.log('AUDITORIA ATUAL: APROVADA');
-  console.log(JSON.stringify({ income, expense, balance: account.balance, openingBalance: account.openingBalance, todayTotal }, null, 2));
+  console.log(JSON.stringify({ income, expense, balance: account.balance, openingBalance: account.openingBalance, todayTotal, operationalOut: db.meta.statementOutVisible }, null, 2));
 })().catch(error => { console.error(error); process.exitCode = 1; });
