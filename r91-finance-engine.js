@@ -31,7 +31,7 @@ function accumulatedRealized(key){
  // Meses posteriores: considera receitas, despesas e recorrências do próprio mês como efetivadas.
  const until=String(key||'9999-12'),base='2026-09';
  let income=0,expense=0,investment=0;
- const openingBalance=21.41; // 632,61 atual - 2.639,62 entradas + 2.028,42 saídas
+ const openingBalance=n((db.accounts||[]).find(a=>String(a.id)==='acc_c6')?.openingBalance); // saldo inicial real da conta C6; não usar valor fixo no motor
  const accountType=id=>String((db.accounts||[]).find(a=>a.id===id)?.type||'').toLowerCase();
  const months=[];let d=new Date(base+'-01T12:00:00'),last=new Date(until+'-01T12:00:00');
  while(d<=last){months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));d=new Date(d.getFullYear(),d.getMonth()+1,1)}
@@ -42,7 +42,7 @@ function accumulatedRealized(key){
    income+=effective.filter(t=>n(t.value)>0).reduce((s,t)=>s+n(t.value),0);
    const monthExpense=effective.filter(t=>n(t.value)<0);
    expense+=monthExpense.reduce((s,t)=>s+abs(t.value),0);
-   investment+=tx.filter(t=>isTransfer(t)&&real(t.status)&&(t.dest===INV||t.destAccountId===INV||/invest/.test(accountType(t.dest||t.destAccountId)))).reduce((s,t)=>s+abs(t.value),0);
+   investment+=tx.filter(t=>isTransfer(t)&&real(t.status)&&n(t.value)>0&&(t.dest===INV||t.destAccountId===INV||/invest/.test(accountType(t.dest||t.destAccountId||t.account||t.accountId)))).reduce((s,t)=>s+n(t.value),0);
    if(mk>base){
      recurringFor(mk).forEach(r=>{
        const rv=abs(r.value);if(!rv)return;
