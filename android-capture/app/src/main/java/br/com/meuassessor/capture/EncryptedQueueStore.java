@@ -70,6 +70,14 @@ final class EncryptedQueueStore {
         }
     }
 
+    synchronized String snapshotJson() {
+        try {
+            return read().toString();
+        } catch (Exception ignored) {
+            return "[]";
+        }
+    }
+
     private JSONArray read() throws Exception {
 
         if (!file.exists()) {
