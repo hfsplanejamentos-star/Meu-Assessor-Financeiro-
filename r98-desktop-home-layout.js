@@ -14,7 +14,15 @@ function ensureStyle(){
    #view-overview #kpis .r98-summary-row>.kpi{width:100%!important;min-width:0!important}
    #view-overview #kpis .brand-detail-btn{background:rgba(5,14,27,.72)!important;color:#eef7ff!important;border:1px solid rgba(92,196,255,.34)!important;border-radius:12px!important;padding:8px 12px!important;box-shadow:none!important}
    #view-overview #kpis .brand-detail-btn:hover{background:rgba(20,48,76,.88)!important;border-color:rgba(32,216,255,.62)!important}
-   #view-overview .dashboard{grid-auto-flow:row dense!important}
+   #view-overview .dashboard{grid-auto-flow:row dense!important;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr) minmax(0,.85fr)!important;min-width:0!important}
+   #view-overview .dashboard>*{min-width:0!important;max-width:100%!important}
+   #view-overview .dashboard .panel-head{min-width:0!important;flex-wrap:wrap!important}
+   #view-overview .dashboard .panel-head>*{min-width:0!important;max-width:100%!important}
+   #view-overview #kpis .brand-fin-card{overflow:hidden!important}
+   #view-overview #kpis .brand-fin-card>*{min-width:0!important;max-width:100%!important}
+   #view-overview #kpis .brand-stats{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:6px!important}
+   #view-overview #kpis .brand-stats strong{font-size:clamp(16px,1.45vw,20px)!important;white-space:nowrap!important}
+   #view-overview #kpis .brand-foot{display:flex!important;flex-direction:column!important;align-items:flex-start!important;gap:8px!important}
  }
  @media(min-width:821px) and (max-width:1180px){
    #view-overview #kpis .r98-summary-row{grid-template-columns:repeat(3,minmax(0,1fr))!important}
