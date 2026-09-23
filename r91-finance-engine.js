@@ -14,7 +14,8 @@ function summary(key){
  const realizedExpense=op.filter(t=>real(t.status)&&n(t.value)<0).reduce((s,t)=>s+abs(t.value),0);
  const plannedIncome=op.filter(t=>planned(t.status)&&n(t.value)>0).reduce((s,t)=>s+n(t.value),0);
  const directPlannedExpense=op.filter(t=>planned(t.status)&&n(t.value)<0).reduce((s,t)=>s+abs(t.value),0);
- const recurringExpense=recurringFor(key).reduce((s,r)=>s+abs(r.value),0);
+ const recurringRows=recurringFor(key),plannedExpenseRows=op.filter(t=>planned(t.status)&&n(t.value)<0);
+ const recurringExpense=recurringRows.reduce((s,r)=>{const rv=abs(r.value),name=String(r.name||r.desc||r.description||'').trim().toLowerCase(),already=plannedExpenseRows.some(t=>(r.id&&String(t.recurringId||'')===String(r.id))||(name&&String(t.desc||t.description||'').trim().toLowerCase()===name&&Math.abs(abs(t.value)-rv)<.02));return s+(already?0:rv)},0);
  const investment=(db.transactions||[]).filter(t=>keyOf(t.date)===key&&isTransfer(t)&&(t.dest===INV||t.destAccountId===INV)&&planned(t.status)).reduce((s,t)=>s+abs(t.value),0);
  return {key,realizedIncome,realizedExpense,plannedIncome,plannedExpense:directPlannedExpense+recurringExpense,recurringExpense,investment};
 }
