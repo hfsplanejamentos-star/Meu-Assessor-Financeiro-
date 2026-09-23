@@ -19,6 +19,43 @@
    db.auditLog=db.auditLog||[];db.auditLog.unshift({id:'audit_'+pharmacyId,ts:'2026-09-23T17:00:00-03:00',action:'create',entity:'transaction',before:null,after:JSON.parse(JSON.stringify(tx)),meta:{scope:'lançamento confirmado'}});
    changed=true;
   }
+  /* Conciliação definitiva do extrato Caju de 17 a 23/09/2026.
+     Mantém somente as 13 compras visíveis no extrato e elimina versões duplicadas. */
+  db.meta=db.meta||{};
+  if(db.meta.cajuStatementVersion!=='2026-09-23-v1'){
+   const base={status:'realized',origin:'Extrato Caju confirmado',source:'Extrato Caju confirmado',card:'card_caju_alimentacao',cardId:'card_caju_alimentacao',benefit:true,excludeFromExpense:true,statementVerified:true,cat:'Alimentação'};
+   const statement=[
+    ['caju_stmt_2026_09_17_padaria_100','2026-09-17','Padaria e Confeitaria',-1.00,'Padaria'],
+    ['caju_stmt_2026_09_17_padaria_1400','2026-09-17','Padaria e Confeitaria',-14.00,'Padaria'],
+    ['caju_stmt_2026_09_17_mari_2999','2026-09-17','IFD*60.939.734 Mari',-29.99,'Delivery'],
+    ['caju_stmt_2026_09_18_padaria_3090','2026-09-18','Padaria e Confeitaria',-30.90,'Padaria'],
+    ['caju_stmt_2026_09_18_kaique_4905','2026-09-18','IFD*64802138 Kaique',-49.05,'Delivery'],
+    ['caju_stmt_2026_09_19_restaurante_7800','2026-09-19','Restaurante Macaé BR',-78.00,'Restaurante'],
+    ['caju_stmt_2026_09_20_luana_3189','2026-09-20','IFD*56162560 Luana',-31.89,'Delivery'],
+    ['caju_stmt_2026_09_21_netos_2494','2026-09-21','IFD*Netos Delivery',-24.94,'Delivery'],
+    ['caju_stmt_2026_09_21_supermarket_24689','2026-09-21','Super Market Caxias',-246.89,'Supermercado'],
+    ['caju_stmt_2026_09_22_dafoca_4400','2026-09-22','Dafoca Bar Rio de Janeiro',-44.00,'Restaurante'],
+    ['caju_stmt_2026_09_23_julia_2941','2026-09-23','IFD*51.419.326 Julia',-29.41,'Delivery'],
+    ['caju_stmt_2026_09_23_padaria_3140','2026-09-23','Padaria e Confeitaria',-31.40,'Padaria'],
+    ['caju_stmt_2026_09_23_dom_5590','2026-09-23','DOM BAR E RESTAURANTE',-55.90,'Restaurante']
+   ];
+   const keep=new Set(statement.map(x=>x[0]));
+   db.transactions=db.transactions||[];
+   statement.forEach(([id,date,desc,value,sub])=>{
+    let t=db.transactions.find(x=>String(x.id)===id);
+    if(!t){t={id};db.transactions.push(t)}
+    Object.assign(t,base,{id,date,desc,description:desc,value,sub,duplicateOf:null,excludeFromBalance:false});
+   });
+   db.transactions.forEach(t=>{
+    const date=String(t.date||'').slice(0,10),isCaju=t.cardId==='card_caju_alimentacao'||t.card==='card_caju_alimentacao'||t.benefit===true||/caju/i.test(String(t.origin||t.source||''));
+    if(!isCaju||date<'2026-09-17'||date>'2026-09-23'||Number(t.value)>=0||keep.has(String(t.id)))return;
+    t.value=0;t.status='ignored';t.duplicateOf='caju_statement_reconciled_2026_09_23';t.excludeFromBalance=true;t.excludeFromExpense=true;
+   });
+   const caju=(db.cards||[]).find(x=>String(x.id)==='card_caju_alimentacao');
+   if(caju){caju.limit=1006.89;caju.balance=339.52;caju.availableLimit=339.52;caju.excludeFromPatrimony=true}
+   db.meta.cajuStatementSpent=667.37;db.meta.cajuStatementAvailable=339.52;db.meta.cajuStatementVersion='2026-09-23-v1';
+   changed=true;
+  }
   if(changed){try{save()}catch(_){}try{window.FinanceCloud?.detectLocalChange?.();setTimeout(()=>window.FinanceCloud?.pushLocalControlled?.(),1600)}catch(_){}}
   return changed;
  }
