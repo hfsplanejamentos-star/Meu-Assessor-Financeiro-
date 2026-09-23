@@ -7,7 +7,7 @@ function build(){const transactions=raw.map(x=>({id:x[0],date:x[1],desc:x[2],des
 /* IMPORTANTE: validade estrutural, não validade de valores. Saldo, status, datas e valores podem ser alterados pelo usuário. */
 const legacyBuild=build;
 build=()=>{const next=legacyBuild(),c6=next.accounts.find(a=>a.id==='acc_c6'),caju=next.cards.find(c=>c.id==='card_caju_alimentacao');if(c6){c6.balance=398.70;c6.openingBalance=21.41;c6.balanceDate='2026-09-22';c6.statementVerified=true}if(caju){caju.limit=1006.89;caju.availableLimit=456.23;caju.balance=456.23;caju.excludeFromPatrimony=true}return next};
-function valid(x){return !!(x&&/^R(7|8|10)\./.test(x.meta?.realBase||'')&&Array.isArray(x.accounts)&&x.accounts.some(a=>a.id==='acc_c6')&&!x.accounts.some(a=>/nubank|btg/i.test(a.name||''))&&Array.isArray(x.transactions)&&x.transactions.some(t=>t.id==='sal_2026_10')&&Array.isArray(x.recurring)&&x.recurring.some(r=>r.id==='rec_pensao'))}
+function valid(x){return !!(x&&Array.isArray(x.accounts)&&x.accounts.some(a=>a.id==='acc_c6')&&Array.isArray(x.transactions)&&x.transactions.length&&Array.isArray(x.recurring));}
 function migrateSep26(){
  if(typeof db!=='object'||!db)return false;
  db.meta=db.meta||{};db.transactions=db.transactions||[];db.accounts=db.accounts||[];
