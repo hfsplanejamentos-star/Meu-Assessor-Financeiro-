@@ -28,8 +28,8 @@
    const val=Number(String(document.getElementById('imgValue').value).replace(/\./g,'').replace(',','.'));
    if(!Number.isFinite(val)||val<=0){alert('Informe o valor para confirmar o lancamento.');return}
    const type=document.getElementById('imgType').value,tx={id:'img_'+Date.now(),date:document.getElementById('imgDate').value,desc:document.getElementById('imgDesc').value.trim()||'Lancamento por imagem',cat:document.getElementById('imgCat').value.trim()||(type==='income'?'Receitas':'Outros'),sub:'Imagem',value:type==='expense'?-Math.abs(val):Math.abs(val),status:'realized',source:'Imagem',origin:document.getElementById('imgAccount').value.trim()||'Imagem'};
-   if(!window.db||!Array.isArray(window.db.transactions)){alert('Base financeira ainda nao esta pronta.');return}
-   window.db.transactions.push(tx); try{window.save?.()}catch(_){}
+   if(typeof db==='undefined'||!db||!Array.isArray(db.transactions)){alert('Base financeira ainda nao esta pronta.');return}
+   db.transactions.push(tx); try{if(typeof save==='function')save()}catch(_){}
    document.dispatchEvent(new CustomEvent('finance-data-changed',{detail:{source:'image-entry',id:tx.id}}));
    m.classList.remove('open');URL.revokeObjectURL(url); alert('Lancamento incluido e confirmado.');
   };
