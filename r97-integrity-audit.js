@@ -33,9 +33,11 @@
  function selectedMonth(){
   const s=document.querySelector('[data-month-scope="category"]');return s?.value||window.activeMonth||localStorage.getItem('assessor_active_month')||new Date().toISOString().slice(0,7);
  }
+ function hideTooltip(){const t=document.getElementById('tooltip');if(t)t.style.display='none'}
  function open(category){
+  hideTooltip();
   const m=selectedMonth(),rows=expenseRows(m).filter(x=>x.cat===category),g={};rows.forEach(x=>{g[x.sub]=(g[x.sub]||0)+x.value});
-  let modal=document.getElementById('categoryDetailModal');if(!modal){modal=document.createElement('div');modal.id='categoryDetailModal';modal.className='modal';modal.innerHTML='<div class="modal-card"><div class="modal-head"><h3 id="categoryDetailTitle"></h3><button class="close">×</button></div><div id="categoryDetailBody"></div></div>';document.body.appendChild(modal);modal.querySelector('.close').onclick=()=>modal.classList.remove('open')}
+  let modal=document.getElementById('categoryDetailModal');if(!modal){modal=document.createElement('div');modal.id='categoryDetailModal';modal.className='modal';modal.innerHTML='<div class="modal-card"><div class="modal-head"><h3 id="categoryDetailTitle"></h3><button class="close">×</button></div><div id="categoryDetailBody"></div></div>';document.body.appendChild(modal);modal.querySelector('.close').onclick=()=>{modal.classList.remove('open');hideTooltip()};modal.onclick=e=>{if(e.target===modal){modal.classList.remove('open');hideTooltip()}}}
   document.getElementById('categoryDetailTitle').textContent='Categoria · '+category;
   const entries=Object.entries(g).sort((a,b)=>b[1]-a[1]),total=entries.reduce((s,[,v])=>s+v,0);
   document.getElementById('categoryDetailBody').innerHTML='<div class="detail-row"><span>Mês</span><b>'+m+'</b></div>'+entries.map(([k,v])=>'<div class="detail-row"><span>'+k+'</span><b>'+brl(v)+'</b></div>').join('')+'<div class="detail-row"><span><b>Total</b></span><b>'+brl(total)+'</b></div>';
