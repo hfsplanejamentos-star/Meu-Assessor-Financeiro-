@@ -143,7 +143,7 @@ function bind(){
  document.querySelectorAll('.month-filter').forEach(sel=>{sel.disabled=false;sel.style.pointerEvents='auto';if(sel.dataset.r94Bound!=='1'){sel.dataset.r94Bound='1';sel.addEventListener('change',()=>setTimeout(()=>{try{renderCanonicalExpenseChart()}catch(_){}},35))}});
  document.querySelectorAll('[data-month-scope="category"]').forEach(s=>{s.value=(typeof scopeMonth==='function'?scopeMonth('category'):s.value);s.onchange=e=>{if(typeof setScopeMonth==='function'){setScopeMonth('category',e.currentTarget.value);setTimeout(refreshCanonicalMonth,20)}}});
  const g=document.getElementById('globalMonthFilter');if(g){g.disabled=false;g.style.pointerEvents='auto';g.onchange=e=>{const k=e.currentTarget.value;if(/^\d{4}-\d{2}$/.test(k)&&typeof setActiveMonth==='function'){setActiveMonth(k);setTimeout(()=>{try{renderAll();renderCharts();renderKpis()}catch(_){}},20)}}}
- document.querySelectorAll('#kpis [data-card-nav]').forEach(card=>{card.style.pointerEvents='auto';card.style.cursor='pointer';if(card.dataset.r1019Click!=='1'){card.dataset.r1019Click='1';card.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();if(typeof nav==='function')nav(card.dataset.cardNav)},true)}});
+ document.querySelectorAll('#kpis [data-card-nav]').forEach(card=>{card.style.pointerEvents='auto';card.style.cursor='pointer';/* navegação é centralizada por bindKpiNavigation/openOverviewFinancialDetail; não registrar listener concorrente aqui */});
 }
 
 function refreshCanonicalMonth(){
