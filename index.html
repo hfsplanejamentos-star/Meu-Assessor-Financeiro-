@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260923-r169';
+ const RELEASE='atual-ui-20260923-r170';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -1453,59 +1453,14 @@ const seed={
 let db=JSON.parse(localStorage.getItem(STORAGE)||'null')||structuredClone(seed);
 const save=()=>{localStorage.setItem(STORAGE,JSON.stringify(db));try{if(window.FinanceCloud?.detectLocalChange)window.FinanceCloud.detectLocalChange();else localStorage.setItem('assessor_cloud_dirty','1');document.dispatchEvent(new CustomEvent('finance-data-changed'));}catch(_){}};
 
-/* Cenário fictício isolado — v1.8.0 */
-(function seedV180Simulation(){
- const __storedSim=localStorage.getItem(STORAGE);
- let __parsedSim=null;
- try{__parsedSim=__storedSim?JSON.parse(__storedSim):null}catch(_){}
- const __hasValidSim=__parsedSim && Array.isArray(__parsedSim.accounts) &&
-   __parsedSim.accounts.some(a=>a.id==='acc_c6') &&
-   Array.isArray(__parsedSim.transactions) &&
-   __parsedSim.transactions.some(t=>t.id==='t01');
- if(__hasValidSim){ db=__parsedSim; return; }
- const A1='acc_c6',A2='acc_nu',A3='acc_btg',C1='card_c6',C2='card_nu';
- db.accounts=[
-  {id:A1,name:'C6 Conta Corrente',balance:5000,openingBalance:5000,type:'Conta corrente'},
-  {id:A2,name:'Nubank Conta',balance:2500,openingBalance:2500,type:'Conta corrente'},
-  {id:A3,name:'BTG Investimentos',balance:30000,openingBalance:30000,type:'Investimentos'}];
- db.cards=[
-  {id:C1,name:'C6 Carbon',limit:15000,due:25,closing:18,last4:'1234',account:A1},
-  {id:C2,name:'Nubank Platinum',limit:9000,due:8,closing:2,last4:'7788',account:A2}];
- db.transactions=[
-  {id:'t01',date:'2026-09-01',desc:'Salário',value:13626,account:A1,cat:'Receitas',sub:'Salário',origin:'Manual',status:'realized'},
-  {id:'t02',date:'2026-09-03',desc:'Aluguel',value:-2800,account:A1,cat:'Moradia',sub:'Aluguel',origin:'Manual',status:'realized'},
-  {id:'t03',date:'2026-09-04',desc:'Supermercado',value:-486.32,account:A1,card:C1,cat:'Alimentação',sub:'Mercado',origin:'Android',status:'realized'},
-  {id:'t04',date:'2026-09-06',desc:'Combustível',value:-320,account:A1,card:C1,cat:'Transporte',sub:'Combustível',origin:'Manual',status:'realized'},
-  {id:'t05',date:'2026-09-08',desc:'Netflix',value:-55.90,account:A2,card:C2,cat:'Assinaturas',sub:'Streaming',origin:'Manual',status:'realized'},
-  {id:'t06',date:'2026-09-10',desc:'Farmácia',value:-142.80,account:A2,card:C2,cat:'Saúde',sub:'Farmácia',origin:'Manual',status:'realized'},
-  {id:'t07',date:'2026-09-11',desc:'Serviço extra',value:1800,account:A1,cat:'Receitas',sub:'Extra',origin:'Manual',status:'realized'},
-  {id:'t08',date:'2026-09-12',desc:'Restaurante',value:-184.50,account:A1,card:C1,cat:'Alimentação',sub:'Restaurante',origin:'Manual',status:'realized'},
-  {id:'t09',date:'2026-09-13',desc:'Academia',value:-129.90,account:A2,card:C2,cat:'Saúde',sub:'Academia',origin:'Manual',status:'realized'},
-  {id:'tr1a',date:'2026-09-14',desc:'Transferência C6 → Nubank',value:-1000,account:A1,cat:'Transferência',sub:'Saída',origin:'Manual',status:'realized',kind:'transfer',transferId:'TR001'},
-  {id:'tr1b',date:'2026-09-14',desc:'Transferência C6 → Nubank',value:1000,account:A2,cat:'Transferência',sub:'Entrada',origin:'Manual',status:'realized',kind:'transfer',transferId:'TR001'},
-  {id:'pay1',date:'2026-09-14',desc:'Pagamento parcial fatura C6',value:-500,account:A1,card:C1,cat:'Cartão',sub:'Pagamento de fatura',origin:'Manual',status:'realized',kind:'invoice_payment',invoicePayment:true}];
- db.recurring=[
-  {id:'r1',desc:'Aluguel',value:2800,cat:'Moradia',sub:'Aluguel',due:3,frequency:'monthly',account:A1,active:true},
-  {id:'r2',desc:'Parcela do carro',value:1350,cat:'Transporte',sub:'Financiamento',due:5,frequency:'monthly',account:A1,active:true},
-  {id:'r3',desc:'Internet',value:149.90,cat:'Moradia',sub:'Internet',due:12,frequency:'monthly',account:A1,active:true},
-  {id:'r4',desc:'Academia',value:129.90,cat:'Saúde',sub:'Academia',due:15,frequency:'monthly',account:A2,active:true},
-  {id:'r5',desc:'Seguro Auto',value:238.40,cat:'Transporte',sub:'Seguro',due:20,frequency:'monthly',account:A1,active:true}];
- db.investments=[
-  {month:'2026-04',planned:1200,realized:1100},{month:'2026-05',planned:1400,realized:1350},
-  {month:'2026-06',planned:1500,realized:1500},{month:'2026-07',planned:1600,realized:1550},
-  {month:'2026-08',planned:1700,realized:1700},{month:'2026-09',planned:1800,realized:1800}];
- db.budgets=[{id:'b1',cat:'Alimentação',limit:1500,alert:80},{id:'b2',cat:'Transporte',limit:1800,alert:80},{id:'b3',cat:'Assinaturas',limit:400,alert:85}];
- db.goals=[{id:'g1',name:'Reserva de emergência',target:30000,current:18500,date:'2027-03-31'},{id:'g2',name:'Viagem',target:12000,current:4200,date:'2027-07-01'}];
- localStorage.setItem(STORAGE,JSON.stringify(db));
- localStorage.setItem('v180_sim_seeded_fixed','1');
+/* Versão Atual: preservar a base real existente. A antiga rotina de seed fictício foi desativada porque podia substituir o banco real no Desktop. */
+(function preserveCurrentRealBase(){
+ const raw=localStorage.getItem(STORAGE);
+ if(!raw)return;
+ try{const stored=JSON.parse(raw);if(stored&&Array.isArray(stored.accounts)&&Array.isArray(stored.transactions))db=stored}catch(e){console.warn('[Versão Atual] Base local inválida; reparo será tratado pelo motor real.',e)}
 })();
 
-
-/* R2: garantia de dados em memória mesmo se o navegador bloquear persistência local */
-if(!Array.isArray(db.accounts)||!db.accounts.length||!Array.isArray(db.transactions)||!db.transactions.length){
-  console.warn('[SIMULAÇÃO R6.5 · POPUPS EDITÁVEIS] Base vazia detectada; usando seed em memória.');
-  db=structuredClone(seed);
-}
+/* Versão Atual: não injetar seed fictício quando a base real estiver temporariamente vazia durante a sincronização. */
 db.accounts=db.accounts||[];db.cards=db.cards||[];db.categories=db.categories||[];db.transactions=db.transactions||[];db.recurring=db.recurring||[];db.investments=db.investments||[];
 db.transactions.forEach(t=>{if(!t.status)t.status='realized';if(t.card===undefined)t.card=db.cards.some(c=>c.id===t.account)?t.account:null;});db.recurring.forEach(r=>{if(r.active===undefined)r.active=true;if(!r.freq)r.freq='Mensal';if(!r.kind)r.kind='Recorrente';});db.cards.forEach(c=>{if(!c.type)c.type='Crédito';});db.invoices=db.invoices||[];db.auditLog=db.auditLog||[];db.dismissedAlerts=db.dismissedAlerts||{};db.budgets=db.budgets||[];db.goals=db.goals||[];db.goals.forEach(g=>{if(Number(g.current||0)>0&&!('legacyCurrent' in g))g.legacyCurrent=Number(g.current||0)});db.androidNotifications=db.androidNotifications||[];db.captureIgnored=db.captureIgnored||{};
 
