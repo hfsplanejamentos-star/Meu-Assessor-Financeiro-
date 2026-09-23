@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260923-r161';
+ const RELEASE='atual-ui-20260923-r162';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -1524,7 +1524,7 @@ const FinanceDomain=(()=>{
  const isTransfer=t=>!!(t?.transfer||t?.transferId)||t?.kind==='transfer';
  const isCardPurchase=t=>!!(t?.card||t?.cardId)&&isExpense(t)&&!isInvoicePayment(t);
  const isRealized=t=>!t?.status||['realized','real','paid','received'].includes(String(t.status).toLowerCase());
- function normalizeTransaction(t){return {...t,id:t.id??('tx_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)),date:t.date||new Date().toISOString().slice(0,10),desc:String(t.desc||'Lançamento').trim(),value:num(t.value),account:t.account||null,card:t.card||null,cat:t.cat||'Outros',sub:t.sub||'',origin:t.origin||'Manual',status:t.status||'realized'}}
+ function normalizeTransaction(t){const account=t.account||t.accountId||null,card=t.card||t.cardId||null;return {...t,id:t.id??('tx_'+Date.now()+'_'+Math.random().toString(36).slice(2,7)),date:t.date||new Date().toISOString().slice(0,10),desc:String(t.desc||t.description||'Lançamento').trim(),value:num(t.value),account,accountId:t.accountId||account,card,cardId:t.cardId||card,cat:t.cat||'Outros',sub:t.sub||'',origin:t.origin||'Manual',status:t.status||'realized'}}
  function transactions(month){const a=(db.transactions||[]).map(t=>normalizeTransaction(t.statementVerified?{...t,status:'realized'}:t));return month?a.filter(t=>monthOfTx(t)===month):a}
  function monthlySummary(month){const a=transactions(month).filter(isRealized),operational=a.filter(t=>!isTransfer(t)&&!isInvoicePayment(t)&&!t.excludeFromExpense),income=operational.filter(isIncome).reduce((s,t)=>s+num(t.value),0),expenses=operational.filter(isExpense).reduce((s,t)=>s+Math.abs(num(t.value)),0),cardPurchases=a.filter(isCardPurchase).reduce((s,t)=>s+Math.abs(num(t.value)),0);return {month,income,expenses,net:income-expenses,cardPurchases,count:a.length}}
  function cardInvoice(cardId,month){return transactions(month).filter(t=>(t.card===cardId||t.cardId===cardId)&&isCardPurchase(t)&&isRealized(t)).reduce((s,t)=>s+Math.abs(num(t.value)),0)}
@@ -1536,7 +1536,7 @@ const FinanceDomain=(()=>{
    const value=num(t.value),kind=transactionKind(t);
    return {
     id:t.id,date:t.date,month:monthKey(t.date),description:t.desc,
-    category:t.cat,subcategory:t.sub,accountId:t.account,cardId:t.card,
+    category:t.cat,subcategory:t.sub,accountId:t.account||t.accountId,cardId:t.card||t.cardId,
     amount:value,direction:value>=0?'credit':'debit',kind,
     affectsCash:kind!=='card_purchase',
     cashAmount:kind==='card_purchase'?0:value,
@@ -1569,9 +1569,9 @@ const FinanceDomain=(()=>{
 
  /* v1.8.0 SIMULAÇÃO R6.5 · POPUPS EDITÁVEIS — ledger avançado */
  function transactionKind(t){
+   if(t.transfer || t.transferId || t.kind==='transfer' || t.kind==='goal_transfer') return 'transfer';
+   if(t.invoicePayment || t.cardPayment || t.kind==='invoice_payment') return 'invoice_payment';
    if(t.kind) return t.kind;
-   if(t.transfer || t.transferId) return 'transfer';
-   if(t.invoicePayment || t.cardPayment) return 'invoice_payment';
    if(isCardPurchase(t)) return 'card_purchase';
    return isIncome(t)?'income':'expense';
  }
