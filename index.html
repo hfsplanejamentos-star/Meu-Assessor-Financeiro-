@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260923-r162';
+ const RELEASE='atual-ui-20260923-r163';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -1507,7 +1507,7 @@ if(!Array.isArray(db.accounts)||!db.accounts.length||!Array.isArray(db.transacti
   db=structuredClone(seed);
 }
 db.accounts=db.accounts||[];db.cards=db.cards||[];db.categories=db.categories||[];db.transactions=db.transactions||[];db.recurring=db.recurring||[];db.investments=db.investments||[];
-db.transactions.forEach(t=>{if(!t.status)t.status='realized';if(t.card===undefined)t.card=db.cards.some(c=>c.id===t.account)?t.account:null;});db.recurring.forEach(r=>{if(r.active===undefined)r.active=true;if(!r.freq)r.freq='Mensal';if(!r.kind)r.kind='Recorrente';});db.cards.forEach(c=>{if(!c.type)c.type='Crédito';});db.invoices=db.invoices||[];db.auditLog=db.auditLog||[];db.dismissedAlerts=db.dismissedAlerts||{};db.budgets=db.budgets||[];db.goals=db.goals||[];db.androidNotifications=db.androidNotifications||[];db.captureIgnored=db.captureIgnored||{};
+db.transactions.forEach(t=>{if(!t.status)t.status='realized';if(t.card===undefined)t.card=db.cards.some(c=>c.id===t.account)?t.account:null;});db.recurring.forEach(r=>{if(r.active===undefined)r.active=true;if(!r.freq)r.freq='Mensal';if(!r.kind)r.kind='Recorrente';});db.cards.forEach(c=>{if(!c.type)c.type='Crédito';});db.invoices=db.invoices||[];db.auditLog=db.auditLog||[];db.dismissedAlerts=db.dismissedAlerts||{};db.budgets=db.budgets||[];db.goals=db.goals||[];db.goals.forEach(g=>{if(Number(g.current||0)>0&&!('legacyCurrent' in g))g.legacyCurrent=Number(g.current||0)});db.androidNotifications=db.androidNotifications||[];db.captureIgnored=db.captureIgnored||{};
 
 const iconFor=(cat,sub='')=>{
  const c=db.categories.find(x=>x.name===cat); if(sub?.toLowerCase().includes('internet')) return '📶';
@@ -1689,7 +1689,7 @@ function healthHTML(){
  const h=calcHealth(),deg=Math.round(h.score*3.6),tone=h.score>=70?'var(--green)':h.score>=50?'var(--amber)':'var(--red)';
  return `<div class="health-ring" style="background:conic-gradient(${tone} 0 ${deg}deg,#182636 ${deg}deg)"><div><b style="font-size:27px">${h.score}</b><small>/100</small></div></div><div><b style="font-size:18px;color:${tone}">${h.label}</b><div class="health-factors" style="margin-top:10px"><div class="health-factor"><small>Taxa de poupança</small><b>${(h.savingsRate*100).toFixed(0)}%</b></div><div class="health-factor"><small>Orçamentos dentro do limite</small><b>${(h.within*100).toFixed(0)}%</b></div><div class="health-factor"><small>Maior uso de cartão</small><b>${(h.cardUse*100).toFixed(0)}%</b></div><div class="health-factor"><small>Reserva líquida</small><b>${h.reserveMonths.toFixed(1)} mês(es)</b></div></div></div>`;
 }
-function goalContribution(g){const planned=s=>['planned','planejada','planejado','prevista','previsto'].includes(String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase());return (db.transactions||[]).filter(t=>t.goalId===g.id&&(t.goalContribution===true||t.kind==='goal_transfer')&&Number(t.value)>0&&!planned(t.status)).reduce((s,t)=>s+Number(t.value||0),0)}
+function goalContribution(g){const planned=s=>['planned','planejada','planejado','prevista','previsto'].includes(String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()),linked=(db.transactions||[]).filter(t=>t.goalId===g.id&&(t.goalContribution===true||t.kind==='goal_transfer')&&Number(t.value)>0&&!planned(t.status)).reduce((s,t)=>s+Number(t.value||0),0);return linked>0?linked:Math.max(0,Number(g.legacyCurrent??g.current||0))}
 function goalXpAccount(){return (db.accounts||[]).find(a=>/\\bxp\\b/i.test(String(a.name||a.institution||'')))}
 function goalTransferRows(goalId){return (db.transactions||[]).filter(t=>t.goalId===goalId&&(t.goalContribution===true||t.kind==='goal_transfer'))}
 function reverseGoalContributions(goalId){const rows=goalTransferRows(goalId),ids=new Set(rows.map(t=>t.transferId).filter(Boolean));ids.forEach(id=>{const pair=rows.filter(t=>t.transferId===id),out=pair.find(t=>Number(t.value)<0),inc=pair.find(t=>Number(t.value)>0),source=(db.accounts||[]).find(a=>a.id===(out?.account||out?.accountId||inc?.sourceAccountId)),xp=(db.accounts||[]).find(a=>a.id===(inc?.account||inc?.accountId||out?.dest||out?.destAccountId)),amount=Math.abs(Number(inc?.value||out?.value||0));if(source&&xp&&amount){source.balance=Number(source.balance||0)+amount;xp.balance=Number(xp.balance||0)-amount}});db.transactions=(db.transactions||[]).filter(t=>!rows.includes(t));return rows}
