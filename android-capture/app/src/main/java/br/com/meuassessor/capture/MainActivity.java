@@ -1,14 +1,18 @@
 package br.com.meuassessor.capture;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.speech.RecognizerIntent;
 import android.view.ViewGroup;
+import android.window.OnBackInvokedDispatcher;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -39,6 +43,16 @@ public final class MainActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         setContentView(root);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                    OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::handleBackNavigation);
+            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 703);
+            }
+        }
+        UpdateChecker.check(this);
 
         if (state == null) {
             webView.loadUrl(APP_URL);
@@ -122,10 +136,19 @@ public final class MainActivity extends Activity {
         super.onSaveInstanceState(state);
     }
 
+    private void handleBackNavigation() {
+        webView.evaluateJavascript(
+                "(function(){try{return !!(window.handleAndroidBack&&window.handleAndroidBack())}catch(e){return false}})()",
+                handled -> {
+                    if ("true".equals(handled)) return;
+                    if (webView.canGoBack()) webView.goBack();
+                    else finish();
+                });
+    }
+
     @Override
     public void onBackPressed() {
-        if (webView.canGoBack()) webView.goBack();
-        else super.onBackPressed();
+        handleBackNavigation();
     }
 
     @Override
