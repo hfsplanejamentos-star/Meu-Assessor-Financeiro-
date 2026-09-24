@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260924-r185';
+ const RELEASE='atual-ui-20260924-r186';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -1722,7 +1722,7 @@ function accountBrandCard(kind,key){
  const rules={c6account:{rx:/c6/i,label:'C6 BANK',cls:'acct-c6',fallback:'C6 Bank'},itauaccount:{rx:/ita[uú]/i,label:'Itaú',cls:'acct-itau',fallback:'Itaú'},xpaccount:{rx:/\bxp\b/i,label:'XP',cls:'acct-xp',fallback:'XP'}},r=rules[kind];if(!r)return '';
  const a=(db.accounts||[]).find(x=>r.rx.test(String(x.name||x.institution||'')));
  const aid=a?.id,tx=(db.transactions||[]).filter(t=>aid&&(t.account===aid||t.accountId===aid)&&String(t.date||'').slice(0,7)===key&&!t.benefit),realTx=tx.filter(t=>t.status!=='planned'),planTx=tx.filter(t=>t.status==='planned'),inc=realTx.filter(t=>Number(t.value)>0).reduce((s,t)=>s+Number(t.value||0),0),exp=realTx.filter(t=>Number(t.value)<0).reduce((s,t)=>s+Math.abs(Number(t.value||0)),0),pinc=planTx.filter(t=>Number(t.value)>0).reduce((s,t)=>s+Number(t.value||0),0),bal=Number(a?.balance||0);
- return `<div class="brand-fin-card account-brand ${r.cls} clickable-card" data-card-nav="accounts" data-kpi-id="${kind}" tabindex="0"><div class="brand-top"><span class="brand-type">▰ CONTA</span><b class="brand-logo">${r.label}</b></div><div class="brand-name">${a?.name||r.fallback}</div><div class="brand-stats account-compact-stats"><div><small>Saldo atual</small><strong>${brl(bal)}</strong><span class="brand-month">${monthLabelKey(key)}</span></div></div><button type="button" class="brand-detail-btn" data-card-nav="accounts">Ver detalhes <b>→</b></button></div>`;
+ return `<div class="brand-fin-card account-brand ${r.cls} clickable-card" data-card-nav="${kind==='c6account'?'transactions':'accounts'}" data-kpi-id="${kind}" tabindex="0"><div class="brand-top"><span class="brand-type">▰ CONTA</span><b class="brand-logo">${r.label}</b></div><div class="brand-name">${a?.name||r.fallback}</div><div class="brand-stats account-compact-stats"><div><small>Saldo atual</small><strong>${brl(bal)}</strong><span class="brand-month">${monthLabelKey(key)}</span></div></div><button type="button" class="brand-detail-btn" data-card-nav="accounts">Ver detalhes <b>→</b></button></div>`;
 }
 function isC6CarbonCard(card){return /c6[\s-]*(bank[\s-]*)?carbon|carbon/i.test(String(card?.id||'')+' '+String(card?.name||''))}
 function carbonInvestmentLimitAt(key){
@@ -2962,7 +2962,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r185',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r186',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
