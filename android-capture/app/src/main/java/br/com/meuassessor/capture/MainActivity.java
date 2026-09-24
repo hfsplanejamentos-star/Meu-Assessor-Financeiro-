@@ -44,6 +44,8 @@ public final class MainActivity extends Activity {
             webView.loadUrl(APP_URL);
         } else {
             webView.restoreState(state);
+            String savedImageUri = state.getString("captured_image_uri");
+            if (savedImageUri != null) capturedImageUri = Uri.parse(savedImageUri);
         }
     }
 
@@ -135,7 +137,11 @@ public final class MainActivity extends Activity {
                 result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
                 if ((result == null || result.length == 0) && capturedImageUri != null) {
                     result = new Uri[]{capturedImageUri};
+                } else if (capturedImageUri != null) {
+                    getContentResolver().delete(capturedImageUri, null, null);
                 }
+            } else if (capturedImageUri != null) {
+                getContentResolver().delete(capturedImageUri, null, null);
             }
             if (fileCallback != null) fileCallback.onReceiveValue(result);
             fileCallback = null;
