@@ -1,12 +1,10 @@
 package br.com.meuassessor.capture;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.speech.RecognizerIntent;
 import android.view.ViewGroup;
 import android.webkit.ValueCallback;
@@ -41,7 +39,6 @@ public final class MainActivity extends Activity {
 
         if (state == null) {
             webView.loadUrl(APP_URL);
-            firstRunConsent();
         } else {
             webView.restoreState(state);
         }
@@ -90,19 +87,6 @@ public final class MainActivity extends Activity {
             }
         });
         return value;
-    }
-
-    private void firstRunConsent() {
-        if (getPreferences(MODE_PRIVATE).getBoolean("native_intro_seen", false)) return;
-        new AlertDialog.Builder(this)
-                .setTitle("Recursos Android")
-                .setMessage("O dashboard funciona normalmente. A captura bancária só será ativada se você autorizar manualmente o acesso às notificações. Nenhuma alteração financeira é gravada sem confirmação.")
-                .setPositiveButton("Configurar captura", (dialog, which) ->
-                        startActivity(new Intent(this, CaptureSettingsActivity.class)))
-                .setNegativeButton("Agora não", null)
-                .setOnDismissListener(dialog ->
-                        getPreferences(MODE_PRIVATE).edit().putBoolean("native_intro_seen", true).apply())
-                .show();
     }
 
     @Override
