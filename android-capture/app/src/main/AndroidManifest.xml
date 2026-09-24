@@ -11,6 +11,8 @@
 
     <application
         android:allowBackup="false"
+        android:icon="@drawable/ic_assessor_launcher"
+        android:roundIcon="@drawable/ic_assessor_launcher"
         android:label="Meu Assessor Financeiro IA"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
