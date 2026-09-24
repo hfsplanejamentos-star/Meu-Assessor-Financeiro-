@@ -54,13 +54,13 @@ jobs:
           APK="app/build/outputs/apk/release/app-release.apk"
           test -f "$APK"
           "${ANDROID_HOME}/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
-          cp "$APK" "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.2.0.apk"
+          cp "$APK" "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.2.1.apk"
 
       - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: Meu-Assessor-Financeiro-IA-v1.2.0-SIGNED
-          path: android-capture/app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.2.0.apk
+          name: Meu-Assessor-Financeiro-IA-v1.2.1-SIGNED
+          path: android-capture/app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.2.1.apk
           if-no-files-found: error
           retention-days: 90
 
@@ -68,5 +68,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete "v1.2.0" --yes --cleanup-tag 2>/dev/null || true
-          gh release create "v1.2.0"             "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.2.0.apk"             --repo "${{ github.repository }}"             --title "Meu Assessor Financeiro IA 1.2.0"             --notes "Versão completa assinada: atualização no app, gesto nativo de voltar, câmera, voz, WhatsApp, ícone personalizado e captura bancária."
+          gh release delete "v1.2.1" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "v1.2.1"             "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.2.1.apk"             --repo "${{ github.repository }}"             --title "Meu Assessor Financeiro IA 1.2.1"             --notes "Versão completa assinada: atualização no app, biometria, gesto nativo de voltar, câmera, voz, WhatsApp, ícone personalizado e captura bancária."
