@@ -18,6 +18,10 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="false">
         <activity
+            android:name=".CaptureSettingsActivity"
+            android:exported="false"
+            android:label="Captura de notificações" />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:screenOrientation="unspecified">
@@ -26,5 +30,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".BankNotificationListener"
+            android:exported="true"
+            android:label="Captura bancária do Meu Assessor"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.notification.default_filter_types"
+                android:value="alerting|silent" />
+            <meta-data
+                android:name="android.service.notification.disabled_filter_types"
+                android:value="ongoing" />
+        </service>
     </application>
 </manifest>
