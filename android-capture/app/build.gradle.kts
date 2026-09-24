@@ -8,8 +8,8 @@ android {
         applicationId = "br.com.meuassessor.capture"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0-capture"
+        versionCode = 2
+        versionName = "1.1.0-hybrid"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
