@@ -1,10 +1,12 @@
 package br.com.meuassessor.capture;
 
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.speech.RecognizerIntent;
 import android.view.ViewGroup;
 import android.webkit.ValueCallback;
@@ -25,6 +27,7 @@ public final class MainActivity extends Activity {
 
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
+    private Uri capturedImageUri;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -75,12 +78,33 @@ public final class MainActivity extends Activity {
                     FileChooserParams params) {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = callback;
-                Intent chooser = params.createIntent();
-                chooser.addCategory(Intent.CATEGORY_OPENABLE);
+
+                Intent files = params.createIntent();
+                files.addCategory(Intent.CATEGORY_OPENABLE);
+
+                Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                ContentValues image = new ContentValues();
+                image.put(MediaStore.Images.Media.DISPLAY_NAME,
+                        "meu_assessor_" + System.currentTimeMillis() + ".jpg");
+                image.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+                capturedImageUri = getContentResolver().insert(
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI, image);
+                if (capturedImageUri != null) {
+                    camera.putExtra(MediaStore.EXTRA_OUTPUT, capturedImageUri);
+                    camera.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                            | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                }
+
+                Intent chooser = Intent.createChooser(files, "Anexar comprovante ou extrato");
+                if (capturedImageUri != null && camera.resolveActivity(getPackageManager()) != null) {
+                    chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{camera});
+                }
+
                 try {
                     startActivityForResult(chooser, REQUEST_FILE);
                 } catch (Exception error) {
                     fileCallback = null;
+                    capturedImageUri = null;
                     return false;
                 }
                 return true;
@@ -92,6 +116,7 @@ public final class MainActivity extends Activity {
     @Override
     protected void onSaveInstanceState(Bundle state) {
         webView.saveState(state);
+        if (capturedImageUri != null) state.putString("captured_image_uri", capturedImageUri.toString());
         super.onSaveInstanceState(state);
     }
 
@@ -105,11 +130,16 @@ public final class MainActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_FILE) {
-            Uri[] result = resultCode == RESULT_OK
-                    ? WebChromeClient.FileChooserParams.parseResult(resultCode, data)
-                    : null;
+            Uri[] result = null;
+            if (resultCode == RESULT_OK) {
+                result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+                if ((result == null || result.length == 0) && capturedImageUri != null) {
+                    result = new Uri[]{capturedImageUri};
+                }
+            }
             if (fileCallback != null) fileCallback.onReceiveValue(result);
             fileCallback = null;
+            capturedImageUri = null;
             return;
         }
         if (requestCode == REQUEST_VOICE && resultCode == RESULT_OK && data != null) {
