@@ -1,22 +1,40 @@
-# Meu Assessor · Captura Android
+# Meu Assessor Financeiro IA · APK híbrido
 
-Módulo nativo da Atualização 1. Ele observa somente notificações dos aplicativos bancários autorizados, identifica movimentações com valor em reais e mantém uma fila local criptografada.
+Aplicativo Android da **Versão Atual**. A V10 não é carregada.
 
-## Privacidade e segurança
+## Recursos preparados
 
-- O acesso é concedido e pode ser revogado nas configurações do Android.
-- Notificações de aplicativos fora da lista autorizada são ignoradas.
-- Mensagens sem valor monetário e sem indício de movimentação são ignoradas.
-- A fila usa AES-256-GCM com chave não exportável no Android Keystore.
-- Há deduplicação local por origem, conteúdo, valor e minuto da notificação.
-- Nesta etapa não existe transmissão pela internet.
+- Dashboard publicado aberto em WebView segura.
+- Atualizações do site recebidas sem reinstalar o APK.
+- Cache e armazenamento local do WebView para uso PWA/offline.
+- Captura opcional de notificações bancárias autorizadas.
+- Fila local criptografada com AES-256-GCM e Android Keystore.
+- Ponte Android para comando de voz.
+- Seleção de imagem/arquivo pelo próprio Android.
+- Compartilhamento com WhatsApp.
+- Ponte para entregar as notificações capturadas ao dashboard.
+- Estrutura web existente para Assistente IA; credenciais nunca ficam no APK.
+- Confirmação do usuário antes de gravar sugestões financeiras.
 
-## Abrir e testar
+## Privacidade
 
-1. Abra a pasta `android-capture` no Android Studio.
-2. Aguarde a sincronização do Gradle e execute no aparelho Android 8 ou superior.
-3. Toque em **Autorizar acesso às notificações**.
-4. Ative **Meu Assessor · Captura** na tela do sistema.
-5. Uma notificação financeira compatível incrementará o contador local.
+A captura só funciona depois que o usuário abre **Configurar captura** e concede manualmente o acesso nas configurações do Android. Aplicativos fora da lista autorizada são ignorados. O conteúdo fica criptografado no aparelho até ser tratado pelo dashboard.
 
-O envio seguro ao backend e o consumo dessa fila pelo dashboard pertencem às Atualizações 2 e 3.
+## Gerar o APK automaticamente
+
+1. Abra a aba **Actions** do repositório.
+2. Selecione **Build Android APK**.
+3. Execute **Run workflow**.
+4. Ao concluir, baixe o artefato **Meu-Assessor-Financeiro-IA-APK**.
+
+O arquivo gerado é `Meu-Assessor-Financeiro-IA.apk`.
+
+## Desenvolvimento local
+
+Abra a pasta `android-capture` no Android Studio, sincronize o Gradle e execute em um aparelho Android 8 ou superior.
+
+## Integrações externas
+
+- A IA deve ser chamada por backend seguro; nenhuma chave de API deve ser embutida no aplicativo.
+- A automação de mensagens recebidas pelo WhatsApp exige a API oficial WhatsApp Business/Meta e um backend configurado.
+- O compartilhamento para o aplicativo WhatsApp já está disponível pela ponte Android.
