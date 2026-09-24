@@ -11,6 +11,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.speech.RecognizerIntent;
+import android.view.View;
 import android.view.ViewGroup;
 import android.window.OnBackInvokedDispatcher;
 import android.webkit.ValueCallback;
@@ -32,6 +33,10 @@ public final class MainActivity extends Activity {
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
     private Uri capturedImageUri;
+    private Bundle pendingState;
+    private boolean authenticated;
+    private boolean authenticationInProgress;
+    private long backgroundAt;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -43,24 +48,68 @@ public final class MainActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         setContentView(root);
+        webView.setVisibility(View.INVISIBLE);
+        pendingState = state;
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
                     OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::handleBackNavigation);
-            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
-                    != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 703);
-            }
+        }
+        requestAuthentication();
+    }
+
+    private void requestAuthentication() {
+        if (authenticationInProgress) return;
+        authenticationInProgress = true;
+        AppLock.authenticate(this, this::unlockApplication, this::cancelAuthentication);
+    }
+
+    private void unlockApplication() {
+        if (isFinishing()) return;
+        authenticationInProgress = false;
+        authenticated = true;
+        backgroundAt = 0L;
+        webView.setVisibility(View.VISIBLE);
+
+        if (pendingState == null) {
+            if (webView.getUrl() == null) webView.loadUrl(APP_URL);
+        } else {
+            webView.restoreState(pendingState);
+            String savedImageUri = pendingState.getString("captured_image_uri");
+            if (savedImageUri != null) capturedImageUri = Uri.parse(savedImageUri);
+            pendingState = null;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 703);
         }
         UpdateChecker.check(this);
+    }
 
-        if (state == null) {
-            webView.loadUrl(APP_URL);
-        } else {
-            webView.restoreState(state);
-            String savedImageUri = state.getString("captured_image_uri");
-            if (savedImageUri != null) capturedImageUri = Uri.parse(savedImageUri);
+    private void cancelAuthentication() {
+        authenticationInProgress = false;
+        if (!authenticated) finish();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (authenticated && backgroundAt > 0L
+                && System.currentTimeMillis() - backgroundAt >= 30000L) {
+            authenticated = false;
+            webView.setVisibility(View.INVISIBLE);
+            requestAuthentication();
         }
+    }
+
+    @Override
+    protected void onStop() {
+        if (authenticated && !isChangingConfigurations()) {
+            backgroundAt = System.currentTimeMillis();
+        }
+        super.onStop();
     }
 
     private WebView buildWebView() {
@@ -154,6 +203,11 @@ public final class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == AppLock.REQUEST_DEVICE_CREDENTIAL) {
+            if (resultCode == RESULT_OK) unlockApplication();
+            else cancelAuthentication();
+            return;
+        }
         if (requestCode == REQUEST_FILE) {
             Uri[] result = null;
             if (resultCode == RESULT_OK) {
