@@ -5,11 +5,11 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "br.com.meuassessor.capture"
+        applicationId = "br.com.meuassessor.financeiroia"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1.0-hybrid"
+        versionCode = 3
+        versionName = "1.1.1-install-fix"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
