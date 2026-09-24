@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="finance-booting">
+<html lang="pt-BR" class="finance-ready">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,13 +10,17 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260923-r183';
+ const RELEASE='atual-ui-20260924-r184';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
    localStorage.setItem('assessor_current_ui_release',RELEASE);
  }
 }catch(_){}})();
+</script>
+<script>
+/* R18.4 — garante que a interface nunca permaneça bloqueada após a inicialização. */
+(()=>{const unlock=()=>{document.documentElement.classList.remove('finance-booting');document.documentElement.classList.add('finance-ready')};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',unlock,{once:true});else unlock();setTimeout(unlock,1500)})();
 </script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -2955,7 +2959,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r183',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r184',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
