@@ -111,7 +111,7 @@ function canonicalRenderKpis(){
  const b=currentBalances(),k=(typeof activeMonth!=='undefined'?activeMonth:'2026-09'),s=summary(k),acc=accumulatedRealized(k),box=document.getElementById('kpis');if(!box||typeof brl!=='function')return;
  let pref;try{pref=JSON.parse(localStorage.getItem('assessor_kpi_layout')||'[]')}catch(_){pref=[]}
  const defs={
-  c6account:{html:typeof accountBrandCard==='function'?accountBrandCard('c6account',k):'',route:'accounts'},
+  c6account:{html:typeof accountBrandCard==='function'?accountBrandCard('c6account',k):'',route:'transactions'},
   itauaccount:{html:typeof accountBrandCard==='function'?accountBrandCard('itauaccount',k):'',route:'accounts'},
   xpaccount:{html:typeof accountBrandCard==='function'?accountBrandCard('xpaccount',k):'',route:'accounts'},
   creditcard:{html:typeof financeBrandCard==='function'?financeBrandCard('creditcard',k):'',route:'cards'},
@@ -146,7 +146,11 @@ function bind(){
  document.querySelectorAll('.month-filter').forEach(sel=>{sel.disabled=false;sel.style.pointerEvents='auto';if(sel.dataset.r94Bound!=='1'){sel.dataset.r94Bound='1';sel.addEventListener('change',()=>setTimeout(()=>{try{renderCanonicalExpenseChart()}catch(_){}},35))}});
  document.querySelectorAll('[data-month-scope="category"]').forEach(s=>{s.value=(typeof scopeMonth==='function'?scopeMonth('category'):s.value);s.onchange=e=>{if(typeof setScopeMonth==='function'){setScopeMonth('category',e.currentTarget.value);setTimeout(refreshCanonicalMonth,20)}}});
  const g=document.getElementById('globalMonthFilter');if(g){g.disabled=false;g.style.pointerEvents='auto';g.onchange=e=>{const k=e.currentTarget.value;if(/^\d{4}-\d{2}$/.test(k)&&typeof setActiveMonth==='function'){setActiveMonth(k);setTimeout(()=>{try{renderAll();renderCharts();renderKpis()}catch(_){}},20)}}}
- document.querySelectorAll('#kpis [data-card-nav]').forEach(card=>{card.style.pointerEvents='auto';card.style.cursor='pointer';/* navegação é centralizada por bindKpiNavigation/openOverviewFinancialDetail; não registrar listener concorrente aqui */});
+ document.querySelectorAll('#kpis [data-card-nav]').forEach(card=>{
+   card.style.pointerEvents='auto';card.style.cursor='pointer';
+   card.onclick=e=>{e.preventDefault();e.stopPropagation();if(typeof openOverviewFinancialDetail==='function')openOverviewFinancialDetail(card);else if(typeof nav==='function')nav(card.dataset.cardNav)};
+   card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();card.click()}};
+ });
 }
 
 function refreshCanonicalMonth(){
