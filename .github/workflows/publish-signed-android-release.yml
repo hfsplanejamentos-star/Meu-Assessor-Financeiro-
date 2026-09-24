@@ -13,7 +13,7 @@ jobs:
       run:
         working-directory: android-capture
     env:
-      ANDROID_KEYSTORE_FILE: ${{ runner.temp }}/meu-assessor-release.p12
+      ANDROID_KEYSTORE_FILE: /tmp/meu-assessor-release.p12
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
@@ -52,8 +52,10 @@ jobs:
       - name: Verify APK signature
         run: |
           APK="app/build/outputs/apk/release/app-release.apk"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
           test -f "$APK"
-          "${ANDROID_HOME}/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
+          test -n "$APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
           cp "$APK" "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.2.1.apk"
 
       - name: Upload signed APK
@@ -69,4 +71,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete "v1.2.1" --yes --cleanup-tag 2>/dev/null || true
-          gh release create "v1.2.1"             "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.2.1.apk"             --repo "${{ github.repository }}"             --title "Meu Assessor Financeiro IA 1.2.1"             --notes "Versão completa assinada: atualização no app, biometria, gesto nativo de voltar, câmera, voz, WhatsApp, ícone personalizado e captura bancária."
+          gh release create "v1.2.1" \
+            "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.2.1.apk" \
+            --repo "${{ github.repository }}" \
+            --title "Meu Assessor Financeiro IA 1.2.1" \
+            --notes "Versão completa assinada: atualização no app, biometria, gesto nativo de voltar, câmera, voz, WhatsApp, ícone personalizado e captura bancária."
