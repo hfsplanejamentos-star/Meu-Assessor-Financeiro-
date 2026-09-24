@@ -1,6 +1,7 @@
 package br.com.meuassessor.capture;
 
 import android.content.Intent;
+import android.provider.Settings;
 import android.speech.RecognizerIntent;
 import android.webkit.JavascriptInterface;
 
@@ -9,6 +10,28 @@ final class WebAppBridge {
 
     WebAppBridge(MainActivity activity) {
         this.activity = activity;
+    }
+
+    @JavascriptInterface
+    public int notificationCount() {
+        return new EncryptedQueueStore(activity).size();
+    }
+
+    @JavascriptInterface
+    public String capturedNotifications() {
+        return new EncryptedQueueStore(activity).snapshotJson();
+    }
+
+    @JavascriptInterface
+    public void openNotificationSettings() {
+        activity.runOnUiThread(() ->
+                activity.startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)));
+    }
+
+    @JavascriptInterface
+    public void openCaptureSettings() {
+        activity.runOnUiThread(() ->
+                activity.startActivity(new Intent(activity, CaptureSettingsActivity.class)));
     }
 
     @JavascriptInterface
