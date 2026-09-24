@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260924-r184';
+ const RELEASE='atual-ui-20260924-r185';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -2610,12 +2610,15 @@ function openOverviewFinancialDetail(card){
  }
  if(['c6account','itauaccount','xpaccount'].includes(id)){
    const rules={c6account:/c6/i,itauaccount:/ita[uú]/i,xpaccount:/\bxp\b/i},a=(db.accounts||[]).find(x=>rules[id].test(String(x.name||x.institution||'')));
-   nav('accounts');
-   requestAnimationFrame(()=>{
-     const el=a&&document.querySelector('#accountList [data-detail-type="account"][data-detail-id="'+CSS.escape(String(a.id))+'"]');
-     el?.scrollIntoView({block:'center',behavior:'smooth'});
-     if(a)el?.click();
-   });return;
+   if(!a){nav('accounts');return}
+   const tx=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&(String(t.account||t.accountId||'')===String(a.id))&&!t.benefit);
+   const expenses=tx.filter(t=>Number(t.value)<0).sort((x,y)=>String(y.date||'').localeCompare(String(x.date||'')));
+   const spent=expenses.reduce((sum,t)=>sum+Math.abs(Number(t.value)||0),0);
+   const rows=[['Mês',monthLabelKey(key)],['Saldo atual',brl(Number(a.balance)||0)],['Total gasto',brl(spent)],['Lançamentos',String(expenses.length)]];
+   expenses.slice(0,30).forEach(t=>rows.push([String(t.date||'').split('-').reverse().join('/')+' · '+(t.desc||t.sub||t.cat||'Despesa'),brl(Math.abs(Number(t.value)||0))]));
+   if(!expenses.length)rows.push(['Gastos','Nenhum gasto registrado neste mês']);
+   openDetail(a.name||a.institution||'Conta',rows,[{label:'Abrir transações',primary:true,onClick:()=>{closeRecoveryWindow();nav('transactions')}}]);
+   return;
  }
  nav(card.dataset.cardNav);
 }
@@ -2959,7 +2962,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r184',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r185',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
