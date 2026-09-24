@@ -8,8 +8,8 @@ android {
         applicationId = "br.com.meuassessor.financeiroia"
         minSdk = 26
         targetSdk = 35
-        versionCode = 4
-        versionName = "1.1.2-safe-install"
+        versionCode = 5
+        versionName = "1.1.3-custom-icon"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
