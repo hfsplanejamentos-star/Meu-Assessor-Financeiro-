@@ -2568,6 +2568,21 @@ mobileMonthNav?.addEventListener('touchstart',e=>{const t=e.changedTouches[0];mo
 mobileMonthNav?.addEventListener('touchend',e=>{if(monthSwipeX===null)return;const t=e.changedTouches[0],dx=t.clientX-monthSwipeX,dy=t.clientY-monthSwipeY;monthSwipeX=monthSwipeY=null;if(Math.abs(dx)>=55&&Math.abs(dx)>Math.abs(dy)*1.25)shiftMobileMonth(dx<0?1:-1)},{passive:true});
 syncMobileMonthNav();
 document.addEventListener('change',e=>{if(e.target.matches('.individual-month-filter'))setScopeMonth(e.target.dataset.monthScope,e.target.value)});
+window.handleAndroidBack=function(){
+ const openLayer=document.querySelector('.modal.open,.drawer.open,#detailDrawer.open,#sidebar.open,#overlay.show,#recoveryBackdrop.show');
+ if(openLayer){
+   document.querySelectorAll('.modal.open,.drawer.open,#detailDrawer.open,#sidebar.open').forEach(el=>el.classList.remove('open','show'));
+   document.querySelectorAll('#overlay.show,#drawerOverlay.show,#drawerOverlay.open,#recoveryBackdrop.show').forEach(el=>el.classList.remove('show','open'));
+   return true;
+ }
+ if(navHistory.length>1){
+   navHistory.pop();
+   nav(navHistory[navHistory.length-1],false);
+   return true;
+ }
+ return false;
+};
+window.addEventListener('android-back-request',()=>window.handleAndroidBack());
 document.getElementById('nav').onclick=e=>{const b=e.target.closest('button[data-view]');if(b)nav(b.dataset.view)};backBtn.onclick=()=>{if(navHistory.length>1){navHistory.pop();nav(navHistory[navHistory.length-1],false)}};window.addEventListener('popstate',()=>{if(navHistory.length>1){navHistory.pop();nav(navHistory[navHistory.length-1],false)}})
 document.addEventListener('click',e=>{const b=e.target.closest('[data-nav]');if(b){e.preventDefault();nav(b.dataset.nav)}});
 function openOverviewFinancialDetail(card){
