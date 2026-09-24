@@ -15,7 +15,7 @@ const operationalTx=key=>(db.transactions||[]).filter(t=>String(t.date||'').slic
 const expenseTx=(key,cat=null)=>operationalTx(key).filter(t=>n(t.value)<0&&!isReversal(t)&&(!cat||t.cat===cat));
 const incomeTx=key=>operationalTx(key).filter(t=>n(t.value)>0&&!isReversal(t));
 const financeSummary=key=>({income:incomeTx(key).reduce((s,t)=>s+n(t.value),0),expenses:expenseTx(key).reduce((s,t)=>s+Math.abs(n(t.value)),0)});
-const categoryBreakdown=(name,key)=>{const tx=expenseTx(key,name);let account=0,card=0;tx.forEach(t=>{const v=Math.abs(n(t.value));if(t.card)card+=v;else account+=v;});return {tx,account,card,total:account+card};};
+const categoryBreakdown=(name,key)=>{const canonical=window.FinanceDataModel?.categoryRows?.(name,key),tx=Array.isArray(canonical)?canonical:expenseTx(key,name);let account=0,card=0;tx.forEach(t=>{const v=Math.abs(n(t.value));if(t.card||t.cardId)card+=v;else account+=v;});return {tx,account,card,total:account+card};};
 const hasMonthData=key=>operationalTx(key).length>0;
 
 window.kpiCard=function(label,val,trend='— sem histórico',cls='neutral',sparkValue=null){const known=sparkValue!==null&&sparkValue!==undefined&&Number.isFinite(Number(sparkValue));const flat=!known||Math.abs(n(sparkValue))<0.0001;const points=flat?'0,15 15,15 28,15 41,15 55,15 69,15 82,15 100,15':(n(sparkValue)>0?'0,24 15,21 28,23 41,15 55,18 69,10 82,12 100,5':'0,5 15,10 28,8 41,16 55,13 69,21 82,19 100,25');return `<div class="card kpi"><div class="label">${label}</div><div class="value">${val}</div><div class="${cls}">${trend}</div><svg class="spark" viewBox="0 0 100 30"><polyline points="${points}" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>`;};
