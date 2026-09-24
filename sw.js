@@ -1,4 +1,4 @@
-const C='assessor-atual-r188';
+const C='assessor-atual-r189';
 const A=['./index.html?release=atual-r188','./atual.html','./manifest.webmanifest'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(A)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil((async()=>{for(const k of await caches.keys())if(k!==C)await caches.delete(k);await self.clients.claim()})()));
