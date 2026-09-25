@@ -38,7 +38,7 @@ public final class MainActivity extends Activity {
     static final int REQUEST_VOICE = 701;
     private static final int REQUEST_FILE = 702;
     private static final String APP_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.3.4";
+            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.3.5";
     private static final String APP_BASE_URL =
             "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/";
 
@@ -56,10 +56,10 @@ public final class MainActivity extends Activity {
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
                 .getString("web_cache_version", "");
-        if (!"1.3.4".equals(nativeVersion)) {
+        if (!"1.3.5".equals(nativeVersion)) {
             webView.clearCache(true);
             getSharedPreferences("native_runtime", MODE_PRIVATE).edit()
-                    .putString("web_cache_version", "1.3.4").apply();
+                    .putString("web_cache_version", "1.3.5").apply();
         }
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.parseColor("#020A14"));
@@ -263,8 +263,23 @@ public final class MainActivity extends Activity {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = callback;
 
-                Intent files = params.createIntent();
+                Intent files = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 files.addCategory(Intent.CATEGORY_OPENABLE);
+                files.setType("*/*");
+                files.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
+                        "image/*", "application/pdf", "text/csv", "text/plain",
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        "application/vnd.ms-excel", "application/x-ofx"
+                });
+
+                Intent gallery;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    gallery = new Intent(MediaStore.ACTION_PICK_IMAGES);
+                } else {
+                    gallery = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    gallery.addCategory(Intent.CATEGORY_OPENABLE);
+                    gallery.setType("image/*");
+                }
 
                 Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
                 ContentValues image = new ContentValues();
@@ -279,9 +294,17 @@ public final class MainActivity extends Activity {
                             | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 }
 
-                Intent chooser = Intent.createChooser(files, "Anexar comprovante ou extrato");
+                Intent chooser = Intent.createChooser(files, "Anexar comprovante, print ou extrato");
+                ArrayList<Intent> initialIntents = new ArrayList<>();
+                if (gallery.resolveActivity(getPackageManager()) != null) {
+                    initialIntents.add(gallery);
+                }
                 if (capturedImageUri != null && camera.resolveActivity(getPackageManager()) != null) {
-                    chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{camera});
+                    initialIntents.add(camera);
+                }
+                if (!initialIntents.isEmpty()) {
+                    chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS,
+                            initialIntents.toArray(new Intent[0]));
                 }
 
                 try {

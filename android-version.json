@@ -1,6 +1,6 @@
 {
-  "versionCode": 13,
-  "versionName": "1.3.4",
-  "downloadUrl": "https://github.com/hfsplanejamentos-star/Meu-Assessor-Financeiro-/releases/download/v1.3.4/Meu-Assessor-Financeiro-IA-v1.3.4.apk",
-  "notes": "Carrega e decodifica o HTML pelo módulo nativo antes de entregá-lo ao WebView, eliminando caracteres ilegíveis."
+  "versionCode": 14,
+  "versionName": "1.3.5",
+  "downloadUrl": "https://github.com/hfsplanejamentos-star/Meu-Assessor-Financeiro-/releases/download/v1.3.5/Meu-Assessor-Financeiro-IA-v1.3.5.apk",
+  "notes": "Adiciona seleção explícita de prints e fotos na importação, mantendo câmera e arquivos disponíveis, com carregamento nativo estável do painel."
 }

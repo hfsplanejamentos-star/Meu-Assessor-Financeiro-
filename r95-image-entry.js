@@ -37,6 +37,11 @@
  }
  function install(){
   ensureUI();
+  const importImageBtn=document.getElementById('importImageBtn');
+  if(importImageBtn&&!importImageBtn.dataset.imageEntryBound){
+   importImageBtn.dataset.imageEntryBound='1';
+   importImageBtn.onclick=()=>launch('gallery');
+  }
   const menus=[...document.querySelectorAll('.fab-menu')];
   menus.forEach(menu=>{if(menu.querySelector('[data-image-entry]'))return;const b=document.createElement('button');b.type='button';b.className='fab-action';b.dataset.imageEntry='1';b.innerHTML='<span>Adicionar por imagem</span><i>▣</i>';b.onclick=()=>launch('gallery');menu.appendChild(b)});
   window.MeuAssessorImageEntry={gallery:()=>launch('gallery'),camera:()=>launch('camera')};

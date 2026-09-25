@@ -62,13 +62,13 @@ jobs:
           test -f "$APK"
           test -n "$APKSIGNER"
           "$APKSIGNER" verify --verbose --print-certs "$APK"
-          cp "$APK" "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.4.apk"
+          cp "$APK" "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.5.apk"
 
       - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: Meu-Assessor-Financeiro-IA-v1.3.4-SIGNED
-          path: android-capture/app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.4.apk
+          name: Meu-Assessor-Financeiro-IA-v1.3.5-SIGNED
+          path: android-capture/app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.5.apk
           if-no-files-found: error
           retention-days: 90
 
@@ -76,9 +76,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete "v1.3.4" --yes --cleanup-tag 2>/dev/null || true
-          gh release create "v1.3.4" \
-            "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.4.apk" \
+          gh release delete "v1.3.5" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "v1.3.5" \
+            "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.5.apk" \
             --repo "${{ github.repository }}" \
-            --title "Meu Assessor Financeiro IA 1.3.4" \
-            --notes "O módulo nativo baixa e decodifica o HTML antes de entregá-lo ao WebView, eliminando caracteres ilegíveis mesmo com cache antigo do Android."
+            --title "Meu Assessor Financeiro IA 1.3.5" \
+            --notes "Adiciona seleção explícita de prints e fotos na importação, mantendo câmera e arquivos disponíveis. Também preserva o carregamento nativo do painel para evitar HTML ilegível ou cache antigo."
