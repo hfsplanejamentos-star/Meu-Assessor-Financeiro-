@@ -1,9 +1,12 @@
 package br.com.meuassessor.capture;
 
+import android.content.ComponentName;
 import android.content.Intent;
 import android.provider.Settings;
 import android.speech.RecognizerIntent;
 import android.webkit.JavascriptInterface;
+
+import org.json.JSONObject;
 
 final class WebAppBridge {
     private final MainActivity activity;
@@ -19,11 +22,52 @@ final class WebAppBridge {
 
     @JavascriptInterface
     public String capturedNotifications() {
+        return getPendingNotifications();
+    }
+
+    @JavascriptInterface
+    public String getPendingNotifications() {
         return new EncryptedQueueStore(activity).snapshotJson();
     }
 
     @JavascriptInterface
+    public void markNotificationsConsumed() {
+        new EncryptedQueueStore(activity).clear();
+    }
+
+    @JavascriptInterface
+    public boolean isNotificationAccessEnabled() {
+        String enabled = Settings.Secure.getString(
+                activity.getContentResolver(), "enabled_notification_listeners");
+        ComponentName component = new ComponentName(activity, BankNotificationListener.class);
+        return enabled != null && enabled.contains(component.flattenToString());
+    }
+
+    @JavascriptInterface
+    public String captureDiagnostics() {
+        android.content.SharedPreferences d = activity.getSharedPreferences(
+                BankNotificationListener.DIAG_PREFS, android.content.Context.MODE_PRIVATE);
+        try {
+            JSONObject out = new JSONObject();
+            out.put("packageName", d.getString(BankNotificationListener.KEY_PACKAGE, ""));
+            out.put("allowed", d.getBoolean(BankNotificationListener.KEY_ALLOWED, false));
+            out.put("financial", d.getBoolean(BankNotificationListener.KEY_FINANCIAL, false));
+            out.put("result", d.getString(BankNotificationListener.KEY_RESULT, ""));
+            out.put("timestamp", d.getLong(BankNotificationListener.KEY_TIME, 0L));
+            out.put("pending", notificationCount());
+            return out.toString();
+        } catch (Exception ignored) {
+            return "{}";
+        }
+    }
+
+    @JavascriptInterface
     public void openNotificationSettings() {
+        openNotificationAccessSettings();
+    }
+
+    @JavascriptInterface
+    public void openNotificationAccessSettings() {
         activity.runOnUiThread(() ->
                 activity.startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)));
     }
