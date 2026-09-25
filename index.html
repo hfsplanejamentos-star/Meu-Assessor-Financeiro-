@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260925-r210';
+ const RELEASE='atual-ui-20260925-r211';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -1525,9 +1525,18 @@ db.accounts=db.accounts||[];db.cards=db.cards||[];db.categories=db.categories||[
 db.transactions.forEach(t=>{if(!t.status)t.status='realized';if(t.card===undefined)t.card=db.cards.some(c=>c.id===t.account)?t.account:null;});db.recurring.forEach(r=>{if(r.active===undefined)r.active=true;if(!r.freq)r.freq='Mensal';if(!r.kind)r.kind='Recorrente';});db.cards.forEach(c=>{if(!c.type)c.type='Crédito';});db.invoices=db.invoices||[];db.auditLog=db.auditLog||[];db.dismissedAlerts=db.dismissedAlerts||{};db.budgets=db.budgets||[];db.goals=db.goals||[];db.goals.forEach(g=>{if(Number(g.current||0)>0&&!('legacyCurrent' in g))g.legacyCurrent=Number(g.current||0)});db.androidNotifications=db.androidNotifications||[];db.captureIgnored=db.captureIgnored||{};
 
 const iconFor=(cat,sub='')=>{
- const c=db.categories.find(x=>x.name===cat); if(sub?.toLowerCase().includes('internet')) return '📶';
- if(sub?.toLowerCase().includes('mercado')) return '🛒'; if(sub?.toLowerCase().includes('combust')) return '⛽';
- if(sub?.toLowerCase().includes('carro')) return '🚘'; return c?.icon||'◈';
+ const text=(String(cat||'')+' '+String(sub||'')).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+ const rules=[
+  [/aliment|mercado|padaria|delivery|restaurante|refeicao/,'🍴'],[/aluguel|moradia/,'🏠'],[/luz|energia/,'⚡'],[/agua|esgoto/,'💧'],
+  [/internet|wifi/,'📶'],[/tim|celular|telefone|comunicacao/,'📱'],[/prestacao.*carro|financiamento.*veic/,'🚙'],[/pensao/,'🤲'],
+  [/moveis|emprestimo/,'🛋️'],[/saude|farmacia|medic|drogaria/,'❤️'],[/academia|esporte|bem-estar/,'🏋️'],[/airsoft/,'🎮'],
+  [/entreten|stream|cinema|evento|lazer/,'🎬'],[/combust|transporte|estacionamento|pedagio|99|uber/,'🚗'],[/compras|vestuario|eletron/,'🛒'],
+  [/educacao|curso|livro/,'🎓'],[/invest|aporte|aplicac/,'🐷'],[/transfer/,'🏦'],[/cartao|fatura|parcela/,'💳'],
+  [/taxa|imposto|tarifa|iof/,'🧾'],[/seguro/,'🛡️'],[/trabalho|equipamento|reuniao/,'💼'],[/viagem|passagem|hosped/,'✈️'],
+  [/pet|veterin|racao/,'🐾'],[/casa|manutencao|reparo|condominio/,'🏡'],[/doac|caridade|contribu/,'💝'],[/presente|aniversario/,'🎁']
+ ];
+ for(const [rx,icon] of rules)if(rx.test(text))return icon;
+ const c=db.categories.find(x=>String(x.name||'').toLowerCase()===String(cat||'').toLowerCase());return c?.icon||'•••';
 };
 
 /* v1.8.0 SIMULAÇÃO R6.5 · POPUPS EDITÁVEIS — camada central de regras financeiras */
