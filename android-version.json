@@ -1,6 +1,6 @@
 {
-  "versionCode": 8,
-  "versionName": "1.2.1",
-  "downloadUrl": "https://github.com/hfsplanejamentos-star/Meu-Assessor-Financeiro-/releases/latest",
-  "notes": "Nova versão do Meu Assessor Financeiro IA disponível. Inclui validação por biometria, gesto nativo de voltar, notificações de atualização, câmera, voz, WhatsApp, ícone personalizado e captura bancária."
+  "versionCode": 9,
+  "versionName": "1.3.0",
+  "downloadUrl": "https://github.com/hfsplanejamentos-star/Meu-Assessor-Financeiro-/releases/download/v1.3.0/Meu-Assessor-Financeiro-IA-v1.3.0.apk",
+  "notes": "Captura bancária real corrigida para C6 e XP, ponte Android integrada ao dashboard, permissões de câmera, fotos e microfone, diagnóstico de captura e atualização forçada do conteúdo WebView."
 }
