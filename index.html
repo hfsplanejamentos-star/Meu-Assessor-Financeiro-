@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260925-r206';
+ const RELEASE='atual-ui-20260925-r207';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -1817,7 +1817,7 @@ function renderLists(){
  document.getElementById('transactionTable').innerHTML=filteredTransactions().slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(t=>`<tr class="clickable" data-detail-type="transaction" data-detail-id="${t.id}"><td>${fmt(t.date)}</td><td>${t.desc}</td><td>${t.cat} › ${t.sub||''}</td><td>${db.cards.find(c=>c.id===t.card)?.name||db.accounts.find(a=>a.id===t.account)?.name||t.account||'—'}</td><td><span class="tag">${t.origin}</span></td><td class="${t.value>=0?'up':'down'}">${brl(t.value)}</td><td><button class="secondary tx-edit-btn" data-edit-tx="${t.id}">Editar</button></td></tr>`).join('');
  document.querySelectorAll('[data-edit-tx]').forEach(b=>b.onclick=e=>{e.stopPropagation();openEditTransaction(b.dataset.editTx)});
  document.getElementById('accountList').innerHTML=db.accounts.map(a=>`<div class="item clickable" data-detail-type="account" data-detail-id="${a.id}"><div class="ico">${a.type==='Investimento'?'↗':'▣'}</div><div><b>${a.name}</b><small>${a.type}</small></div><div class="amount">${brl(a.balance)}</div></div>`).join('');
- document.getElementById('cardList').innerHTML=db.cards.map(c=>`<div class="item clickable" data-detail-type="card" data-detail-id="${c.id}"><div class="ico">▤</div><div><b>${c.name}</b><small>${c.type||'Crédito'} · Vencimento dia ${c.due} · Limite ${brl(cardLimitAt(c,scopeMonth('cards')))}</small></div><div class="amount">${brl(invoiceAmount(c.id,scopeMonth('cards')))}</div></div>`).join('');
+ document.getElementById('cardList').innerHTML=db.cards.map(c=>{const key=scopeMonth('cards'),benefit=['benefício','beneficio','benefit'].includes(String(c.type||'').toLowerCase()),snap=benefit?cajuSnapshot(c.id,key):null;return `<div class="item clickable" data-detail-type="card" data-detail-id="${c.id}"><div class="ico">▤</div><div><b>${c.name}</b><small>${benefit?'Benefício · Crédito '+brl(snap.credit):(c.type||'Crédito')+' · Vencimento dia '+c.due+' · Limite '+brl(cardLimitAt(c,key))}</small></div><div class="amount">${benefit?brl(snap.available):brl(invoiceAmount(c.id,key))}</div></div>`}).join('');
  document.getElementById('categoryPage').innerHTML=db.categories.map(c=>`<div class="item clickable" data-detail-type="category" data-detail-id="${c.name}"><div class="ico">${c.icon}</div><div><b>${c.name}</b><small>${c.subs.join(' · ')}</small></div><div><span class="tag">${c.subs.length} subcategorias</span></div></div>`).join('');
 }
 function nextDate(day){let d=new Date(); d.setHours(12,0,0,0); if(d.getDate()>day)d.setMonth(d.getMonth()+1); d.setDate(Math.min(day,new Date(d.getFullYear(),d.getMonth()+1,0).getDate())); return d}
@@ -2118,7 +2118,7 @@ function renderCardDashboard(){
     <div class="credit-card-top"><div><div class="credit-card-name">${c.name}</div><div class="credit-card-meta">${c.type||'Crédito'} ${c.last4?'· •••• '+c.last4:''}</div></div>${(()=>{const iv=ensureInvoice(c.id,scopeMonth('cards'));return `<span class="invoice-badge ${invoiceStatusClass(iv.status)}">Fatura ${invoiceStatusLabel(iv.status).toLowerCase()}</span>`})()}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px"><div><small style="color:var(--muted)">Fatura atual</small><b style="display:block;font-size:18px">${brl(inv)}</b></div><div><small style="color:var(--muted)">Vencimento</small><b style="display:block">${Number(c.due)>0?'Dia '+c.due:'Não informado'}</b></div></div>
     <div class="limit-bar"><span style="width:${limit?pct:0}%"></span></div><div class="limit-row"><span>${limit?pct.toFixed(0)+'% utilizado':'0% utilizado'}</span><span>Disponível ${brl(avail)}</span></div>
-   </div>`}).join(''):'<div class="notice">Nenhum cartão de crédito cadastrado.</div>'; const benefits=(db.cards||[]).filter(c=>['benefício','beneficio','benefit'].includes(String(c.type||'').toLowerCase()));if(list&&benefits.length)list.insertAdjacentHTML('beforeend',benefits.map(c=>`<div class="credit-card-panel"><div class="credit-card-top"><div><div class="credit-card-name">${c.name}</div><div class="credit-card-meta">Benefício · não gera fatura</div></div><span class="invoice-badge invoice-closed">Benefício</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px"><div><small style="color:var(--muted)">Disponível</small><b style="display:block;font-size:18px">${brl(c.availableLimit??c.balance??0)}</b></div><div><small style="color:var(--muted)">Limite nominal</small><b style="display:block">${brl(c.limit||0)}</b></div></div><div class="limit-bar"><span style="width:${Math.max(0,Math.min(100,Number(c.limit)?Number(c.availableLimit??c.balance??0)/Number(c.limit)*100:0))}%"></span></div><div class="limit-row"><span>Fora do patrimônio</span><span>Sem vencimento/fatura</span></div></div>`).join(''));
+   </div>`}).join(''):'<div class="notice">Nenhum cartão de crédito cadastrado.</div>'; const benefits=(db.cards||[]).filter(c=>['benefício','beneficio','benefit'].includes(String(c.type||'').toLowerCase()));if(list&&benefits.length)list.insertAdjacentHTML('beforeend',benefits.map(c=>{const s=cajuSnapshot(c.id,scopeMonth('cards'));return `<div class="credit-card-panel clickable" data-detail-type="card" data-detail-id="${c.id}"><div class="credit-card-top"><div><div class="credit-card-name">${c.name}</div><div class="credit-card-meta">Benefício · não gera fatura</div></div><span class="invoice-badge invoice-closed">Benefício</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px"><div><small style="color:var(--muted)">Disponível</small><b style="display:block;font-size:18px">${brl(s.available)}</b></div><div><small style="color:var(--muted)">Créditos acumulados</small><b style="display:block">${brl(s.credit)}</b></div></div><div class="limit-bar"><span style="width:${Math.max(0,Math.min(100,s.credit?s.available/s.credit*100:0))}%"></span></div><div class="limit-row"><span>Gasto ${brl(s.spent)}</span><span>Fora do patrimônio</span></div></div>`}).join(''));
  const select=document.getElementById('cardPurchaseFilter');if(select){const current=select.value;select.innerHTML='<option value="all">Todos os cartões</option>'+cards.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');if([...select.options].some(o=>o.value===current))select.value=current;}
  renderCajuDetails();renderCardPurchases();renderCardForecast();renderCardTrend();bindDetailClicks();bindValueHover();
 }
@@ -2470,7 +2470,7 @@ function bindDetailClicks(){
    if(type==='transaction'){const t=db.transactions.find(x=>String(x.id)===String(id));if(t)openEditTransaction(t.id)}
    if(type==='recurring'){const r=db.recurring.find(x=>String(x.id)===String(id));if(r)openRecurringEdit(r.id)}
    if(type==='account'){const a=db.accounts.find(x=>String(x.id)===String(id));if(a)openDetail(a.name,[['Tipo',a.type],['Saldo',brl(a.balance)],['Banco',a.institution||a.name],['Agência',a.agency||'—'],['Conta/final',a.accountNo||'—']],[{label:'Editar',primary:true,onClick:()=>openBankEdit(a.id)}])}
-   if(type==='card'){const c=db.cards.find(x=>String(x.id)===String(id));if(c){const key=scopeMonth('cards'),inv=invoiceAmount(c.id,key),limit=cardLimitAt(c,key);openDetail(c.name,[['Tipo',c.type||'Crédito'],['Limite',brl(limit)],['Fatura atual',brl(inv)],['Disponível',brl(Math.max(limit-inv,0))],['Fechamento','Dia '+(c.closing||'—')],['Vencimento','Dia '+c.due],['Final',c.last4||'—']],[{label:'Editar',primary:true,onClick:()=>openCardEdit(c.id)}])}}
+   if(type==='card'){const c=db.cards.find(x=>String(x.id)===String(id));if(c){const key=scopeMonth('cards'),benefit=['benefício','beneficio','benefit'].includes(String(c.type||'').toLowerCase());if(benefit){const s=cajuSnapshot(c.id,key);openDetail(c.name,[['Tipo','Benefício'],['Créditos acumulados',brl(s.credit)],['Gasto no mês',brl(s.spent)],['Disponível',brl(s.available)],['Saldo disponível',s.credit?(s.available/s.credit*100).toFixed(1)+'%':'0.0%']],[{label:'Ver movimentações',primary:true,onClick:()=>{document.getElementById('detailDrawer')?.classList.remove('open');renderCajuDetails()}}])}else{const inv=invoiceAmount(c.id,key),limit=cardLimitAt(c,key);openDetail(c.name,[['Tipo',c.type||'Crédito'],['Limite',brl(limit)],['Fatura atual',brl(inv)],['Disponível',brl(Math.max(limit-inv,0))],['Fechamento','Dia '+(c.closing||'—')],['Vencimento','Dia '+c.due],['Final',c.last4||'—']],[{label:'Editar',primary:true,onClick:()=>openCardEdit(c.id)}])}}}
    if(type==='category')openCategoryDetail(id);
   }
  })
@@ -2992,7 +2992,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r206',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r207',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
@@ -3069,6 +3069,6 @@ document.addEventListener('click',function(e){
 <script src="r96-category-details.js?v=20260922-r134"></script>
 <script src="r97-integrity-audit.js?v=20260923-r183"></script>
 <script src="r98-desktop-home-layout.js?v=20260923-r183"></script>
-<script src="r99-sep25-transactions.js?v=20260925-r206"></script>
+<script src="r99-sep25-transactions.js?v=20260925-r207"></script>
 <script src="r100-desktop-stability.js?v=20260925-r200"></script>
 </body></html>
