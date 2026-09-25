@@ -1,6 +1,6 @@
 /* R9.9 — lançamentos confirmados em 25/09/2026 (C6 e Caju) */
 (()=>{'use strict';
- const VERSION='2026-09-25-v4';
+ const VERSION='2026-09-25-v5';
  const round=v=>Math.round(Number(v||0)*100)/100;
  function sameTransaction(date,value,predicate){
   return (db.transactions||[]).find(t=>
@@ -77,7 +77,10 @@
   db.meta.merchantAliases['VALDIVINO ANTONIO MIRANDA']={desc:'Estacionamento',cat:'Transporte',sub:'Estacionamento',accountId:'acc_c6'};
   db.meta.cajuStatementAvailable=303.02;
   db.meta.cajuStatementSpent=703.87;
-  db.meta.cajuStatementVersion='2026-09-25-v3';
+  db.meta.cajuStatementCredit=1006.89;
+  db.meta.cajuStatementAvailable=303.02;
+  db.meta.cajuStatementSpent=703.87;
+  db.meta.cajuStatementVersion='2026-09-25-v4';
   changed=true;
   if(changed){
    try{save()}catch(_){try{localStorage.setItem('assessor_v180_simulacao_ficticia',JSON.stringify(db))}catch(__){}}
