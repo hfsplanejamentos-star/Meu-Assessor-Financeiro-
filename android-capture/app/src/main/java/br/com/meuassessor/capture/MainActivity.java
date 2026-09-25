@@ -34,11 +34,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
 import java.util.zip.GZIPInputStream;
 
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.text.TextRecognition;
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
+
 public final class MainActivity extends Activity {
     static final int REQUEST_VOICE = 701;
     private static final int REQUEST_FILE = 702;
     private static final String APP_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.3.5";
+            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.3.6";
     private static final String APP_BASE_URL =
             "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/";
 
@@ -56,10 +60,10 @@ public final class MainActivity extends Activity {
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
                 .getString("web_cache_version", "");
-        if (!"1.3.5".equals(nativeVersion)) {
+        if (!"1.3.6".equals(nativeVersion)) {
             webView.clearCache(true);
             getSharedPreferences("native_runtime", MODE_PRIVATE).edit()
-                    .putString("web_cache_version", "1.3.5").apply();
+                    .putString("web_cache_version", "1.3.6").apply();
         }
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.parseColor("#020A14"));
@@ -362,6 +366,9 @@ public final class MainActivity extends Activity {
             } else if (capturedImageUri != null) {
                 getContentResolver().delete(capturedImageUri, null, null);
             }
+            if (result != null && result.length > 0 && result[0] != null) {
+                recognizeImageText(result[0]);
+            }
             if (fileCallback != null) fileCallback.onReceiveValue(result);
             fileCallback = null;
             capturedImageUri = null;
@@ -378,5 +385,38 @@ public final class MainActivity extends Activity {
                     "window.dispatchEvent(new CustomEvent('android-voice-result',{detail:decodeURIComponent(escape(atob('" +
                             encoded + "')))}));", null);
         }
+    }
+
+    private void recognizeImageText(Uri uri) {
+        String mime = getContentResolver().getType(uri);
+        if (mime != null && !mime.startsWith("image/")) return;
+        try {
+            InputImage image = InputImage.fromFilePath(this, uri);
+            com.google.mlkit.vision.text.TextRecognizer recognizer =
+                    TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
+            recognizer.process(image)
+                    .addOnSuccessListener(result -> {
+                        dispatchOcrResult(result.getText(), "ok");
+                        recognizer.close();
+                    })
+                    .addOnFailureListener(error -> {
+                        dispatchOcrResult("", "O reconhecimento ainda não está disponível. Verifique a internet e tente novamente.");
+                        recognizer.close();
+                    });
+        } catch (Exception error) {
+            dispatchOcrResult("", "Não foi possível ler esta imagem.");
+        }
+    }
+
+    private void dispatchOcrResult(String text, String status) {
+        String text64 = android.util.Base64.encodeToString(
+                (text == null ? "" : text).getBytes(StandardCharsets.UTF_8),
+                android.util.Base64.NO_WRAP);
+        String status64 = android.util.Base64.encodeToString(
+                status.getBytes(StandardCharsets.UTF_8), android.util.Base64.NO_WRAP);
+        runOnUiThread(() -> webView.evaluateJavascript(
+                "window.dispatchEvent(new CustomEvent('android-ocr-result',{detail:{text:decodeURIComponent(escape(atob('" +
+                        text64 + "'))),status:decodeURIComponent(escape(atob('" + status64 + "')))}}));",
+                null));
     }
 }
