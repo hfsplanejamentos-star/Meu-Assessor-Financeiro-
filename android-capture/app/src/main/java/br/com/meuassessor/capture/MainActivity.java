@@ -14,6 +14,7 @@ import android.speech.RecognizerIntent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.window.OnBackInvokedDispatcher;
+import android.webkit.PermissionRequest;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -28,7 +29,7 @@ public final class MainActivity extends Activity {
     static final int REQUEST_VOICE = 701;
     private static final int REQUEST_FILE = 702;
     private static final String APP_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/";
+            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.3.0";
 
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
@@ -42,6 +43,13 @@ public final class MainActivity extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         webView = buildWebView();
+        String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
+                .getString("web_cache_version", "");
+        if (!"1.3.0".equals(nativeVersion)) {
+            webView.clearCache(true);
+            getSharedPreferences("native_runtime", MODE_PRIVATE).edit()
+                    .putString("web_cache_version", "1.3.0").apply();
+        }
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.parseColor("#020A14"));
         root.addView(webView, new FrameLayout.LayoutParams(
@@ -85,7 +93,27 @@ public final class MainActivity extends Activity {
                 != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 703);
         }
+        requestNativePermissions();
         UpdateChecker.check(this);
+    }
+
+    private void requestNativePermissions() {
+        ArrayList<String> missing = new ArrayList<>();
+        if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            missing.add(Manifest.permission.CAMERA);
+        }
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            missing.add(Manifest.permission.RECORD_AUDIO);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
+                missing.add(Manifest.permission.READ_MEDIA_IMAGES);
+            }
+        } else if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            missing.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+        }
+        if (!missing.isEmpty()) requestPermissions(missing.toArray(new String[0]), 704);
     }
 
     private void cancelAuthentication() {
@@ -122,9 +150,12 @@ public final class MainActivity extends Activity {
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setMediaPlaybackRequiresUserGesture(true);
+        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         settings.setUserAgentString(settings.getUserAgentString() + " MeuAssessorAndroid/1.0");
 
-        value.addJavascriptInterface(new WebAppBridge(this), "AndroidApp");
+        WebAppBridge bridge = new WebAppBridge(this);
+        value.addJavascriptInterface(bridge, "AndroidBridge");
+        value.addJavascriptInterface(bridge, "AndroidApp");
         value.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -136,6 +167,23 @@ public final class MainActivity extends Activity {
             }
         });
         value.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onPermissionRequest(PermissionRequest request) {
+                runOnUiThread(() -> {
+                    ArrayList<String> granted = new ArrayList<>();
+                    for (String resource : request.getResources()) {
+                        if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)
+                                && checkSelfPermission(Manifest.permission.RECORD_AUDIO)
+                                == PackageManager.PERMISSION_GRANTED) granted.add(resource);
+                        if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource)
+                                && checkSelfPermission(Manifest.permission.CAMERA)
+                                == PackageManager.PERMISSION_GRANTED) granted.add(resource);
+                    }
+                    if (granted.isEmpty()) request.deny();
+                    else request.grant(granted.toArray(new String[0]));
+                });
+            }
+
             @Override
             public boolean onShowFileChooser(
                     WebView view,
