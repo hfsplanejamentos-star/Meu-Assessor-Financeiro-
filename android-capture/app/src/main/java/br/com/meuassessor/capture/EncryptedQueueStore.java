@@ -78,6 +78,10 @@ final class EncryptedQueueStore {
         }
     }
 
+    synchronized void clear() {
+        if (file.exists()) file.delete();
+    }
+
     private JSONArray read() throws Exception {
 
         if (!file.exists()) {
