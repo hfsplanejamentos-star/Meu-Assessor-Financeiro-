@@ -1,6 +1,6 @@
 /* R9.9 — lançamentos confirmados em 25/09/2026 (C6 e Caju) */
 (()=>{'use strict';
- const VERSION='2026-09-25-v2';
+ const VERSION='2026-09-25-v3';
  const round=v=>Math.round(Number(v||0)*100)/100;
  function sameTransaction(date,value,predicate){
   return (db.transactions||[]).find(t=>
@@ -34,14 +34,16 @@
    account:'acc_c6',accountId:'acc_c6',statementVerified:true,classificationPending:false};
   const c6StatementRows=[
    {id:'c6_2026_09_23_drogarias_pacheco_1498',date:'2026-09-23',desc:'Drogarias Pacheco',description:'Drogarias Pacheco',merchant:'DROGARIAS PACHECO SA DUQUE DE CAXI BRA',value:-14.98,cat:'Saúde',sub:'Farmácia',paymentMethod:'Débito'},
-   {id:'c6_2026_09_24_pix_valdivino_600',date:'2026-09-24',desc:'PIX enviado para Valdivino Antonio Miranda',description:'PIX enviado para Valdivino Antonio Miranda',value:-6.00,cat:'Transferências',sub:'PIX enviado',paymentMethod:'PIX',transfer:true,kind:'transfer',excludeFromExpense:true},
+   {id:'c6_2026_09_24_pix_valdivino_600',date:'2026-09-24',desc:'Estacionamento',description:'Estacionamento',merchantOriginal:'Valdivino Antonio Miranda',value:-6.00,cat:'Transporte',sub:'Estacionamento',paymentMethod:'PIX',transfer:false,kind:'expense',excludeFromExpense:false},
    {id:'c6_2026_09_25_pix_hebert_in_1_100',date:'2026-09-25',desc:'PIX recebido de Hebert Ferreira da Silva',description:'PIX recebido de Hebert Ferreira da Silva',value:1.00,cat:'Transferências',sub:'Transferência própria',paymentMethod:'PIX',transfer:true,kind:'transfer',excludeFromExpense:true},
    {id:'c6_2026_09_25_pix_hebert_out_100',date:'2026-09-25',desc:'PIX enviado para Hebert Ferreira da Silva',description:'PIX enviado para Hebert Ferreira da Silva',value:-1.00,cat:'Transferências',sub:'Transferência própria',paymentMethod:'PIX',transfer:true,kind:'transfer',excludeFromExpense:true},
    {id:'c6_2026_09_25_pix_hebert_in_2_100',date:'2026-09-25',desc:'PIX recebido de Hebert Ferreira da Silva',description:'PIX recebido de Hebert Ferreira da Silva',value:1.00,cat:'Transferências',sub:'Transferência própria',paymentMethod:'PIX',transfer:true,kind:'transfer',excludeFromExpense:true}
   ];
   c6StatementRows.forEach(row=>{
-   if(!db.transactions.some(t=>String(t.id)===row.id)){
-    db.transactions.push({...c6Base,...row});changed=true;
+   const existing=db.transactions.find(t=>String(t.id)===row.id);
+   if(!existing){db.transactions.push({...c6Base,...row});changed=true}
+   else if(row.id==='c6_2026_09_24_pix_valdivino_600'){
+    Object.assign(existing,c6Base,row);delete existing.transferId;changed=true;
    }
   });
   const c6Account=db.accounts.find(a=>String(a.id)==='acc_c6');
@@ -70,7 +72,9 @@
 
   db.meta.sep25ConfirmedTransactions=VERSION;
   db.meta.c6StatementAvailable=230.73;
-  db.meta.c6StatementVersion='2026-09-25-v2';
+  db.meta.c6StatementVersion='2026-09-25-v3';
+  db.meta.merchantAliases=db.meta.merchantAliases||{};
+  db.meta.merchantAliases['VALDIVINO ANTONIO MIRANDA']={desc:'Estacionamento',cat:'Transporte',sub:'Estacionamento',accountId:'acc_c6'};
   db.meta.cajuStatementAvailable=302.02;
   db.meta.cajuStatementSpent=704.87;
   db.meta.cajuStatementVersion='2026-09-24-v2';
