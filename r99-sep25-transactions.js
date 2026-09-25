@@ -1,6 +1,6 @@
 /* R9.9 — lançamentos confirmados em 25/09/2026 (C6 e Caju) */
 (()=>{'use strict';
- const VERSION='2026-09-25-v3';
+ const VERSION='2026-09-25-v4';
  const round=v=>Math.round(Number(v||0)*100)/100;
  function sameTransaction(date,value,predicate){
   return (db.transactions||[]).find(t=>
@@ -63,11 +63,11 @@
     excludeFromExpense:true,excludeFromPatrimony:true,statementVerified:true
    });
    const caju=db.cards.find(c=>String(c.id)===cajuId);
-   if(caju){caju.balance=302.02;caju.availableLimit=302.02;caju.excludeFromPatrimony=true}
+   if(caju){caju.balance=303.02;caju.availableLimit=303.02;caju.excludeFromPatrimony=true}
    changed=true;
   }else{
    const caju=db.cards.find(c=>String(c.id)===cajuId);
-   if(caju&&Math.abs(Number(caju.balance||0)-302.02)>0.005){caju.balance=302.02;caju.availableLimit=302.02;changed=true}
+   if(caju&&Math.abs(Number(caju.balance||0)-303.02)>0.005){caju.balance=303.02;caju.availableLimit=303.02;changed=true}
   }
 
   db.meta.sep25ConfirmedTransactions=VERSION;
@@ -75,9 +75,9 @@
   db.meta.c6StatementVersion='2026-09-25-v3';
   db.meta.merchantAliases=db.meta.merchantAliases||{};
   db.meta.merchantAliases['VALDIVINO ANTONIO MIRANDA']={desc:'Estacionamento',cat:'Transporte',sub:'Estacionamento',accountId:'acc_c6'};
-  db.meta.cajuStatementAvailable=302.02;
-  db.meta.cajuStatementSpent=704.87;
-  db.meta.cajuStatementVersion='2026-09-24-v2';
+  db.meta.cajuStatementAvailable=303.02;
+  db.meta.cajuStatementSpent=703.87;
+  db.meta.cajuStatementVersion='2026-09-25-v3';
   changed=true;
   if(changed){
    try{save()}catch(_){try{localStorage.setItem('assessor_v180_simulacao_ficticia',JSON.stringify(db))}catch(__){}}
