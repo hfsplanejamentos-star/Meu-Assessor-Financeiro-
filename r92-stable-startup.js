@@ -1,6 +1,13 @@
-/* R9.2 — evita exibir valores intermediários durante restauração local/Cloud */
+/* R9.2.1 — mês vigente no início e restauração estável local/Cloud */
 (()=>{'use strict';
 const root=document.documentElement,start=Date.now(),minimum=1700,maximum=8000;
+/* Toda nova abertura começa no mês vigente. A navegação manual permanece livre depois disso. */
+try{
+ const d=new Date(),key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+ activeMonth=key;MONTH_SCOPES.forEach(scope=>monthScopes[scope]=key);
+ localStorage.setItem('assessor_active_month',key);
+ localStorage.setItem('assessor_month_scopes',JSON.stringify(monthScopes));
+}catch(_){}
 let cloudSettled=!localStorage.getItem('assessor_cloud_sync_key'),released=false;
 function release(){
  if(released)return;
