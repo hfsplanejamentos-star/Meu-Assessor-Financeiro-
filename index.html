@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260925-r212';
+ const RELEASE='atual-ui-20260925-r213';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -2050,23 +2050,30 @@ function ensureMonthlyIncomeAutomation(){
  let caju=db.cards.find(c=>String(c.id)==='card_caju_alimentacao'||String(c.name||'').toLowerCase().includes('caju'));
  if(!caju){caju={id:'card_caju_alimentacao',name:'Caju Alimentação',type:'Benefício',limit:1500,balance:0};db.cards.push(caju)}
  caju.type='Benefício';caju.limit=1500;caju.monthlyCredit=1500;caju.accumulative=true;caju.creditStart='2026-10-01';
+ /* Setembro/2026: razão Caju confirmado. Fonte única para lista, detalhes e saldos. */
+ db.transactions=db.transactions.filter(t=>!(String(t.cardId||t.card||'')===caju.id&&String(t.date||'').slice(0,7)==='2026-09'&&Number(t.value)===0));
  const hist=[
   ['caju_2026_09_17_credit','2026-09-17','Caju Benefícios',1006.89,'Crédito benefício'],
-  ['caju_2026_09_17_padaria_1','2026-09-17','PADARIA E CONFEITARIA',-1.00,'Alimentação'],
-  ['caju_2026_09_17_padaria_14','2026-09-17','PADARIA E CONFEITARIA',-14.00,'Alimentação'],
-  ['caju_2026_09_17_marilza_2999','2026-09-17','IFD*60.939.734 MARI...',-29.99,'Alimentação'],
-  ['caju_2026_09_18_padaria_3090','2026-09-18','PADARIA E CONFEITARIA',-30.90,'Alimentação'],
-  ['caju_2026_09_18_kaique_4905','2026-09-18','IFD*64802138 KAIQUE...',-49.05,'Alimentação'],
-  ['caju_2026_09_19_restaurante_7800','2026-09-19','Restaurante MACAE BR',-78.00,'Alimentação'],
-  ['caju_2026_09_20_luana_3189','2026-09-20','IFD*56162560 LUANA...',-31.89,'Alimentação'],
-  ['caju_2026_09_21_super_market_24689','2026-09-21','SUPER MARKET CAX...',-246.89,'Supermercado']
+  ['caju_2026_09_17_padaria_14','2026-09-17','PADARIA E CONFEITARIA',-14.00,'Padaria'],
+  ['caju_2026_09_17_marilza_2999','2026-09-17','IFD*60.939.734 MARI...',-29.99,'Delivery'],
+  ['caju_2026_09_18_padaria_3090','2026-09-18','PADARIA E CONFEITARIA',-30.90,'Padaria'],
+  ['caju_2026_09_18_kaique_4905','2026-09-18','IFD*64802138 KAIQUE...',-49.05,'Delivery'],
+  ['caju_2026_09_19_restaurante_7800','2026-09-19','Restaurante MACAE BR',-78.00,'Restaurante'],
+  ['caju_2026_09_20_luana_3189','2026-09-20','IFD*56162560 LUANA...',-31.89,'Delivery'],
+  ['caju_2026_09_21_netos_2494','2026-09-21','IFD*NETOS DELIVERY',-24.94,'Delivery'],
+  ['caju_2026_09_21_super_market_24689','2026-09-21','SUPER MARKET CAX...',-246.89,'Supermercado'],
+  ['caju_2026_09_22_dafoca_4400','2026-09-22','DAFOCA BAR RIO DE J...',-44.00,'Restaurante'],
+  ['caju_2026_09_23_julia_2941','2026-09-23','IFD*51.419.326 JULIA',-29.41,'Delivery'],
+  ['caju_2026_09_23_padaria_3140','2026-09-23','PADARIA E CONFEITARIA',-31.40,'Padaria'],
+  ['caju_2026_09_23_dom_bar_5590','2026-09-23','DOM BAR E RESTAURANTE',-55.90,'Restaurante'],
+  ['caju_2026_09_24_boteco_3750','2026-09-24','Boteco Itaipava Rio',-37.50,'Restaurante']
  ];
  hist.forEach(([id,date,desc,value,sub])=>{
   const exists=db.transactions.some(t=>String(t.id)===id||(
    String(t.date||'').slice(0,10)===date&&Math.abs(Number(t.value||0)-value)<0.005&&
    (String(t.cardId||t.card||'')===caju.id||/caju/i.test(String(t.origin||t.source||'')))
   ));
-  if(!exists)db.transactions.push({id,date,desc,value,cat:'Alimentação',sub,card:caju.id,cardId:caju.id,origin:'Extrato Caju',status:'realized',benefit:true,excludeFromExpense:true});
+  if(!exists)db.transactions.push({id,date,desc,value,cat:'Alimentação',sub,card:caju.id,cardId:caju.id,origin:'Extrato Caju confirmado',status:'realized',benefit:true,excludeFromExpense:true});
  });
  const now=new Date(),start=new Date(2026,9,1);
  if(now>=start){for(let d=new Date(start);d<=now;d=new Date(d.getFullYear(),d.getMonth()+1,1)){const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),date=key+'-01';
