@@ -55,6 +55,8 @@ final class WebAppBridge {
             out.put("result", d.getString(BankNotificationListener.KEY_RESULT, ""));
             out.put("timestamp", d.getLong(BankNotificationListener.KEY_TIME, 0L));
             out.put("pending", notificationCount());
+            out.put("connected", d.getBoolean(BankNotificationListener.KEY_CONNECTED, false));
+            out.put("accessEnabled", isNotificationAccessEnabled());
             return out.toString();
         } catch (Exception ignored) {
             return "{}";
@@ -70,6 +72,11 @@ final class WebAppBridge {
     public void openNotificationAccessSettings() {
         activity.runOnUiThread(() ->
                 activity.startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)));
+    }
+
+    @JavascriptInterface
+    public void reconnectNotificationListener() {
+        BankNotificationListener.reconnect(activity);
     }
 
     @JavascriptInterface

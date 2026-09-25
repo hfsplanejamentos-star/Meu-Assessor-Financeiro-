@@ -62,13 +62,13 @@ jobs:
           test -f "$APK"
           test -n "$APKSIGNER"
           "$APKSIGNER" verify --verbose --print-certs "$APK"
-          cp "$APK" "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.0.apk"
+          cp "$APK" "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.1.apk"
 
       - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: Meu-Assessor-Financeiro-IA-v1.3.0-SIGNED
-          path: android-capture/app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.0.apk
+          name: Meu-Assessor-Financeiro-IA-v1.3.1-SIGNED
+          path: android-capture/app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.1.apk
           if-no-files-found: error
           retention-days: 90
 
@@ -76,9 +76,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete "v1.3.0" --yes --cleanup-tag 2>/dev/null || true
-          gh release create "v1.3.0" \
-            "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.0.apk" \
+          gh release delete "v1.3.1" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "v1.3.1" \
+            "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.1.apk" \
             --repo "${{ github.repository }}" \
-            --title "Meu Assessor Financeiro IA 1.2.1" \
-            --notes "Versão assinada com captura bancária real corrigida, ponte Android integrada ao dashboard, câmera, fotos, microfone, voz, WhatsApp, biometria, diagnóstico e atualização de cache da WebView."
+            --title "Meu Assessor Financeiro IA 1.3.1" \
+            --notes "Correção do NotificationListener: reconexão automática, diagnóstico de serviço/fila, captura bancária, câmera, fotos, microfone, voz, WhatsApp e biometria."

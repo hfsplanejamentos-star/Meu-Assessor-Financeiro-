@@ -29,7 +29,7 @@ public final class MainActivity extends Activity {
     static final int REQUEST_VOICE = 701;
     private static final int REQUEST_FILE = 702;
     private static final String APP_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.3.0";
+            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.3.1";
 
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
@@ -45,10 +45,10 @@ public final class MainActivity extends Activity {
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
                 .getString("web_cache_version", "");
-        if (!"1.3.0".equals(nativeVersion)) {
+        if (!"1.3.1".equals(nativeVersion)) {
             webView.clearCache(true);
             getSharedPreferences("native_runtime", MODE_PRIVATE).edit()
-                    .putString("web_cache_version", "1.3.0").apply();
+                    .putString("web_cache_version", "1.3.1").apply();
         }
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.parseColor("#020A14"));
@@ -124,6 +124,7 @@ public final class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
+        BankNotificationListener.reconnect(this);
         if (authenticated && backgroundAt > 0L
                 && System.currentTimeMillis() - backgroundAt >= 30000L) {
             authenticated = false;

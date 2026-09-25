@@ -44,8 +44,12 @@ public final class CaptureSettingsActivity extends Activity {
         } else {
             boolean allowed = d.getBoolean(BankNotificationListener.KEY_ALLOWED, false);
             boolean financial = d.getBoolean(BankNotificationListener.KEY_FINANCIAL, false);
+            boolean connected = d.getBoolean(BankNotificationListener.KEY_CONNECTED, false);
             String result = d.getString(BankNotificationListener.KEY_RESULT, "");
             diagnostic.setText(
+                    "Listener conectado: " + (connected ? "SIM" : "NÃO") +
+                    "\nFila criptografada: " + new EncryptedQueueStore(this).size() +
+                    "\n" +
                     "Último pacote: " + pkg +
                     "\nAplicativo autorizado: " + (allowed ? "SIM" : "NÃO") +
                     "\nFinanceira reconhecida: " + (financial ? "SIM" : "NÃO") +
@@ -73,7 +77,10 @@ public final class CaptureSettingsActivity extends Activity {
 
         Button refresh = new Button(this);
         refresh.setText("Atualizar diagnóstico");
-        refresh.setOnClickListener(v -> refresh());
+        refresh.setOnClickListener(v -> {
+            BankNotificationListener.reconnect(this);
+            refresh();
+        });
 
         TextView privacy = label(
                 "Diagnóstico seguro: de aplicativos não autorizados, somente o identificador do pacote é registrado. Conteúdo de notificações não autorizadas não é armazenado.",

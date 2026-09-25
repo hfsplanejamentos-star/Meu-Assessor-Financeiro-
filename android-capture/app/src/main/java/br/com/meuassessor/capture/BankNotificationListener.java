@@ -3,6 +3,7 @@ package br.com.meuassessor.capture;
 import android.app.Notification;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.ComponentName;
 import android.os.Bundle;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
@@ -14,6 +15,28 @@ public final class BankNotificationListener extends NotificationListenerService 
     static final String KEY_FINANCIAL = "last_financial";
     static final String KEY_RESULT = "last_result";
     static final String KEY_TIME = "last_time";
+    static final String KEY_CONNECTED = "listener_connected";
+
+    @Override
+    public void onListenerConnected() {
+        super.onListenerConnected();
+        getSharedPreferences(DIAG_PREFS, Context.MODE_PRIVATE).edit()
+                .putBoolean(KEY_CONNECTED, true)
+                .putString(KEY_RESULT, "Serviço conectado e aguardando notificação")
+                .putLong(KEY_TIME, System.currentTimeMillis())
+                .apply();
+    }
+
+    @Override
+    public void onListenerDisconnected() {
+        getSharedPreferences(DIAG_PREFS, Context.MODE_PRIVATE).edit()
+                .putBoolean(KEY_CONNECTED, false)
+                .putString(KEY_RESULT, "Serviço desconectado; solicitando reconexão")
+                .putLong(KEY_TIME, System.currentTimeMillis())
+                .apply();
+        requestRebind(new ComponentName(this, BankNotificationListener.class));
+        super.onListenerDisconnected();
+    }
 
     @Override
     public void onNotificationPosted(StatusBarNotification status) {
@@ -50,6 +73,10 @@ public final class BankNotificationListener extends NotificationListenerService 
         boolean added = new EncryptedQueueStore(this).add(event);
         saveDiagnostic(packageName, true, true,
                 added ? "Capturada e adicionada à fila" : "Reconhecida, mas já existente/erro de fila");
+    }
+
+    static void reconnect(Context context) {
+        requestRebind(new ComponentName(context, BankNotificationListener.class));
     }
 
     private void saveDiagnostic(String packageName, boolean allowed, boolean financial, String result) {
