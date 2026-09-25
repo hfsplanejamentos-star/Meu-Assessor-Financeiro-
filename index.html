@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260925-r205';
+ const RELEASE='atual-ui-20260925-r206';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -1757,7 +1757,7 @@ function carbonInvestmentLimitAt(key){
 function cardLimitAt(card,key){return isC6CarbonCard(card)?carbonInvestmentLimitAt(key):Number(card?.limit||0)}
 function financeBrandCard(kind,key){
  const isCaju=kind==='caju',card=isCaju?(db.cards||[]).find(x=>String(x.id)==='card_caju_alimentacao'||/caju/i.test(String(x.name||''))):(db.cards||[]).find(x=>['Crédito','Múltiplo'].includes(x.type||'Crédito'));
- if(isCaju){const rawBal=card?cajuBalanceAt(card.id,key):0,rawSpent=(db.transactions||[]).filter(t=>card&&(t.cardId===card.id||t.card===card.id)&&String(t.date||'').slice(0,7)===key&&t.status!=='planned'&&Number(t.value)<0&&!t.excludeFromBalance).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0),statementSep=key==='2026-09'&&db.meta?.cajuStatementVersion,bal=statementSep?Number(db.meta.cajuStatementAvailable??rawBal):rawBal,spent=statementSep?Number(db.meta.cajuStatementSpent??rawSpent):rawSpent,cajuLimit=statementSep?Number(db.meta.cajuStatementCredit??1006.89):(card?cajuCapacityAt(card.id,key):0),pct=Math.max(0,Math.min(100,cajuLimit?spent/cajuLimit*100:0)),future=key>monthKey(today);return `<div class="brand-fin-card caju-brand clickable-card" data-card-nav="cards" data-kpi-id="caju" tabindex="0"><div class="brand-top"><span class="brand-type">🍴 CARTÃO BENEFÍCIO</span><b class="brand-logo">caju</b></div><div class="brand-name">Caju</div><div class="brand-sub">Alimentação e Refeição</div><div class="brand-stats"><div><small>Valor gasto</small><strong>${brl(spent)}</strong></div><div><small>${future?'Disponível previsto':'Disponível real'}</small><strong class="up">${brl(bal)}</strong></div></div><div class="benefit-progress"><i style="width:${pct.toFixed(1)}%"></i></div><div class="brand-foot"><span>Créditos acumulados: ${brl(cajuLimit)}</span><button type="button" class="brand-detail-btn" data-card-nav="cards">Ver detalhes <b>→</b></button></div></div>`}
+ if(isCaju){const snap=card?cajuSnapshot(card.id,key):{available:0,spent:0,credit:0},bal=snap.available,spent=snap.spent,cajuLimit=snap.credit,pct=Math.max(0,Math.min(100,cajuLimit?spent/cajuLimit*100:0)),future=key>monthKey(today);return `<div class="brand-fin-card caju-brand clickable-card" data-card-nav="cards" data-kpi-id="caju" tabindex="0"><div class="brand-top"><span class="brand-type">🍴 CARTÃO BENEFÍCIO</span><b class="brand-logo">caju</b></div><div class="brand-name">Caju</div><div class="brand-sub">Alimentação e Refeição</div><div class="brand-stats"><div><small>Valor gasto</small><strong>${brl(spent)}</strong></div><div><small>${future?'Disponível previsto':'Disponível real'}</small><strong class="up">${brl(bal)}</strong></div></div><div class="benefit-progress"><i style="width:${pct.toFixed(1)}%"></i></div><div class="brand-foot"><span>Créditos acumulados: ${brl(cajuLimit)}</span><button type="button" class="brand-detail-btn" data-card-nav="cards">Ver detalhes <b>→</b></button></div></div>`}
  const inv=card?invoiceAmount(card.id,key):0,limit=cardLimitAt(card,key),avail=Math.max(limit-inv,0);return `<div class="brand-fin-card c6-brand clickable-card" data-card-nav="cards" data-kpi-id="creditcard" tabindex="0"><div class="brand-top"><span class="brand-type">▣ CARTÃO DE CRÉDITO</span><b class="brand-logo">C6 BANK</b></div><div class="brand-name">C6 Bank Carbon</div><div class="brand-num">•••• ${card?.last4||'4321'}</div><div class="brand-stats"><div><small>Fatura atual</small><strong>${brl(inv)}</strong></div><div><small>Disponível</small><strong class="up">${brl(avail)}</strong></div></div><div class="brand-foot">Limite acumulado ${brl(limit)} · investimentos realizados</div></div>`}
 function accumulatedRealizedAt(key){const real=s=>{const v=String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();return !v||['realized','real','realizada','realizado','posted','confirmada','confirmado','paid','received','pago','recebido'].includes(v)},tx=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)<=key&&real(t.status)),transfer=t=>!!(t.transfer||t.transferId)||t.kind==='transfer',invoice=t=>!!(t.invoicePayment||t.cardPayment)||t.kind==='invoice_payment',op=tx.filter(t=>!transfer(t)&&!invoice(t)&&!t.excludeFromExpense),income=op.filter(t=>Number(t.value)>0).reduce((s,t)=>s+Number(t.value||0),0),expense=op.filter(t=>Number(t.value)<0).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0),accountType=id=>String((db.accounts||[]).find(a=>a.id===id)?.type||'').toLowerCase(),investment=tx.filter(t=>transfer(t)&&(t.dest==='acc_invest_plan'||t.destAccountId==='acc_invest_plan'||/invest/.test(accountType(t.dest||t.destAccountId)))).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);return {income,expense,investment,balance:income-expense-investment}}
 function renderKpis(){const b=balances(),key=activeMonth,xp=goalXpAccount(),xpBalance=Number(xp?.balance||0),acc=accumulatedRealizedAt(key),planned=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)===key&&t.status==='planned'&&!t.transfer),plannedIncome=planned.filter(t=>Number(t.value)>0).reduce((s,t)=>s+Number(t.value||0),0),recExpense=(db.recurring||[]).filter(r=>{const st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return r.active!==false&&(!st||key>=st)&&(!en||key<=en)}).reduce((s,r)=>s+Math.abs(Number(r.value)||0),0),box=document.getElementById('kpis');if(!box)return;
@@ -2074,6 +2074,10 @@ function ensureMonthlyIncomeAutomation(){
  db.automationState.monthlyIncome={enabled:true,start:'2026-10-01',salary:6500,caju:1500,cajuAccumulative:true,day:1};
  save();
 }
+function cajuSnapshot(cardId,key){
+ if(key==='2026-09'&&db.meta?.cajuStatementVersion)return {available:Number(db.meta.cajuStatementAvailable||303.02),spent:Number(db.meta.cajuStatementSpent||703.87),credit:Number(db.meta.cajuStatementCredit||1006.89),source:'statement'};
+ const available=cajuBalanceAt(cardId,key),credit=cajuCapacityAt(cardId,key),spent=(db.transactions||[]).filter(t=>(t.cardId===cardId||t.card===cardId)&&String(t.date||'').slice(0,7)===key&&t.status!=='planned'&&Number(t.value)<0&&!t.excludeFromBalance).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);return {available,spent,credit,source:'ledger'};
+}
 function cajuBalanceAt(cardId,key){
  const current=monthKey(today);
  return Math.round((db.transactions||[]).filter(t=>{
@@ -2093,7 +2097,7 @@ function renderCajuDetails(){
  const key=scopeMonth('caju')||activeMonth,all=(db.transactions||[]).filter(t=>t.cardId===card.id&&String(t.date||'').slice(0,7)===key&&t.status!=='planned'&&Number(t.value)<0).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.time||'').localeCompare(String(a.time||'')));
  const balanceById=new Map();let running=0;
  (db.transactions||[]).filter(t=>(t.cardId===card.id||t.card===card.id)&&String(t.date||'').slice(0,7)<=key&&t.status!=='planned'&&!t.excludeFromBalance).sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.time||'').localeCompare(String(b.time||''))).forEach(t=>{running=Math.round((running+Number(t.value||0))*100)/100;balanceById.set(String(t.id),running)});
- const txSpent=all.reduce((s,t)=>s+(Number(t.value)<0?Math.abs(Number(t.value)||0):0),0),isStatementMonth=key==='2026-09'&&db.meta?.cajuStatementVersion,spent=isStatementMonth?Number(db.meta.cajuStatementSpent??txSpent):txSpent,avail=isStatementMonth?Number(db.meta.cajuStatementAvailable??cajuBalanceAt(card.id,key)):cajuBalanceAt(card.id,key),limit=cajuCapacityAt(card.id,key),pct=limit?avail/limit*100:0,future=key>monthKey(today);
+ const snap=cajuSnapshot(card.id,key),spent=snap.spent,avail=snap.available,limit=snap.credit,pct=limit?avail/limit*100:0,future=key>monthKey(today);
  const k=document.getElementById('cajuDetailKpis');if(k)k.innerHTML=`<div class="card-kpi"><small>${future?'Saldo previsto':'Saldo disponível real'}</small><b class="up">${brl(avail)}</b></div><div class="card-kpi"><small>Gasto em ${monthLabelKey(key)}</small><b class="down">${brl(spent)}</b></div><div class="card-kpi"><small>Créditos acumulados</small><b>${brl(limit)}</b></div><div class="card-kpi"><small>Saldo disponível</small><b>${pct.toFixed(1)}%</b></div>`;
  const tb=document.getElementById('cajuDetailTable');if(tb)tb.innerHTML=all.length?all.map(t=>`<tr><td>${fmt(t.date)} ${t.time||''}</td><td>${t.desc||t.description||''}</td><td>${t.cat||'Alimentação'} › ${t.sub||''}</td><td class="down">-${brl(Math.abs(Number(t.value)||0))}</td><td>${balanceById.has(String(t.id))?brl(balanceById.get(String(t.id))):'—'}</td></tr>`).join(''):`<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:22px">Nenhuma movimentação Caju em ${monthLabelKey(key)}.</td></tr>`;
 }
@@ -2988,7 +2992,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r205',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r206',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
@@ -3065,6 +3069,6 @@ document.addEventListener('click',function(e){
 <script src="r96-category-details.js?v=20260922-r134"></script>
 <script src="r97-integrity-audit.js?v=20260923-r183"></script>
 <script src="r98-desktop-home-layout.js?v=20260923-r183"></script>
-<script src="r99-sep25-transactions.js?v=20260925-r205"></script>
+<script src="r99-sep25-transactions.js?v=20260925-r206"></script>
 <script src="r100-desktop-stability.js?v=20260925-r200"></script>
 </body></html>
