@@ -19,8 +19,8 @@ android {
         applicationId = "br.com.meuassessor.financeiroia"
         minSdk = 26
         targetSdk = 35
-        versionCode = 8
-        versionName = "1.2.1"
+        versionCode = 9
+        versionName = "1.3.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
