@@ -11,8 +11,8 @@ import java.util.regex.Pattern;
 
 final class NotificationParser {
     private static final Pattern MONEY = Pattern.compile("(?i)(?:R\\$\\s*)?([0-9]{1,3}(?:\\.[0-9]{3})*,[0-9]{2}|[0-9]+,[0-9]{2})");
-    private static final Pattern OUT = Pattern.compile("(?i)\\b(compra|pagamento|pix enviado|d[eé]bito|sa[ií]da|transfer[eê]ncia enviada)\\b");
-    private static final Pattern IN = Pattern.compile("(?i)\\b(recebido|dep[oó]sito recebido|cr[eé]dito|entrada|transfer[eê]ncia recebida)\\b");
+    private static final Pattern OUT = Pattern.compile("(?i)\\b(compra|pagamento|pix enviado|enviou(?: um)? pix|d[eé]bito|sa[ií]da|transfer[eê]ncia enviada)\\b");
+    private static final Pattern IN = Pattern.compile("(?i)\\b(recebido|recebeu(?: um)? pix|dep[oó]sito recebido|cr[eé]dito|entrada|transfer[eê]ncia recebida)\\b");
 
     static CapturedNotification parse(String sourcePackage, String title, String text, long postedAt) {
         String safeTitle = clean(title);
