@@ -62,13 +62,13 @@ jobs:
           test -f "$APK"
           test -n "$APKSIGNER"
           "$APKSIGNER" verify --verbose --print-certs "$APK"
-          cp "$APK" "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.2.apk"
+          cp "$APK" "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.3.apk"
 
       - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: Meu-Assessor-Financeiro-IA-v1.3.2-SIGNED
-          path: android-capture/app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.2.apk
+          name: Meu-Assessor-Financeiro-IA-v1.3.3-SIGNED
+          path: android-capture/app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.3.apk
           if-no-files-found: error
           retention-days: 90
 
@@ -76,9 +76,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete "v1.3.2" --yes --cleanup-tag 2>/dev/null || true
-          gh release create "v1.3.2" \
-            "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.2.apk" \
+          gh release delete "v1.3.3" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "v1.3.3" \
+            "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.3.apk" \
             --repo "${{ github.repository }}" \
-            --title "Meu Assessor Financeiro IA 1.3.2" \
-            --notes "Captura ampliada para variações de pacotes C6/XP, listener sem filtro restritivo, histórico de pacotes e diagnóstico nativo."
+            --title "Meu Assessor Financeiro IA 1.3.3" \
+            --notes "Corrige a abertura do dashboard em aparelhos cujo WebView exibia a resposta compactada como texto ilegível."

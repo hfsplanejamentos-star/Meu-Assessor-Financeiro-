@@ -18,18 +18,21 @@ import android.webkit.PermissionRequest;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
 import java.util.ArrayList;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public final class MainActivity extends Activity {
     static final int REQUEST_VOICE = 701;
     private static final int REQUEST_FILE = 702;
     private static final String APP_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.3.2";
+            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.3.3";
 
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
@@ -45,10 +48,10 @@ public final class MainActivity extends Activity {
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
                 .getString("web_cache_version", "");
-        if (!"1.3.2".equals(nativeVersion)) {
+        if (!"1.3.3".equals(nativeVersion)) {
             webView.clearCache(true);
             getSharedPreferences("native_runtime", MODE_PRIVATE).edit()
-                    .putString("web_cache_version", "1.3.2").apply();
+                    .putString("web_cache_version", "1.3.3").apply();
         }
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.parseColor("#020A14"));
@@ -158,6 +161,32 @@ public final class MainActivity extends Activity {
         value.addJavascriptInterface(bridge, "AndroidBridge");
         value.addJavascriptInterface(bridge, "AndroidApp");
         value.setWebViewClient(new WebViewClient() {
+            @Override
+            public WebResourceResponse shouldInterceptRequest(
+                    WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                String host = uri.getHost() == null ? "" : uri.getHost();
+                String path = uri.getPath() == null ? "" : uri.getPath();
+                if (!request.isForMainFrame()
+                        || !"hfsplanejamentos-star.github.io".equalsIgnoreCase(host)
+                        || !(path.equals("/Meu-Assessor-Financeiro-/")
+                        || path.equals("/Meu-Assessor-Financeiro-/index.html"))) return null;
+                try {
+                    HttpURLConnection connection = (HttpURLConnection)
+                            new URL(uri.toString()).openConnection();
+                    connection.setConnectTimeout(12000);
+                    connection.setReadTimeout(20000);
+                    connection.setRequestProperty("Accept", "text/html,application/xhtml+xml");
+                    connection.setRequestProperty("Accept-Encoding", "identity");
+                    connection.setRequestProperty("Cache-Control", "no-cache");
+                    connection.connect();
+                    if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) return null;
+                    return new WebResourceResponse("text/html", "UTF-8", connection.getInputStream());
+                } catch (Exception ignored) {
+                    return null;
+                }
+            }
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
