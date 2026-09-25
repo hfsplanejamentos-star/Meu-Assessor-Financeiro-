@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260925-r214';
+ const RELEASE='atual-ui-20260925-r215';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -958,7 +958,10 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
 
 <style id="r214-neon-3d-icons">
 .ico:has(.neon-expense-icon){background:linear-gradient(145deg,#0a2031,#061522)!important;border:1px solid rgba(88,185,255,.25)!important;border-radius:16px!important;box-shadow:inset 0 0 18px rgba(15,75,115,.25),0 6px 18px rgba(0,0,0,.28)!important;overflow:visible!important}
-.neon-expense-icon{width:100%;height:100%;min-width:42px;min-height:42px;display:flex;align-items:center;justify-content:center;font-size:27px;font-weight:900;line-height:1;font-family:"Arial Rounded MT Bold",Arial,sans-serif;transform:perspective(80px) rotateX(4deg);-webkit-text-stroke:.5px rgba(255,255,255,.35);text-shadow:0 1px 0 rgba(255,255,255,.35),0 3px 2px rgba(0,0,0,.5),0 0 6px currentColor,0 0 14px currentColor,0 0 25px currentColor;filter:drop-shadow(0 0 7px currentColor)}
+.neon-expense-icon{width:100%;height:100%;min-width:42px;min-height:42px;display:flex;align-items:center;justify-content:center;line-height:1;filter:drop-shadow(0 0 7px currentColor)}
+.neon-expense-icon svg{width:34px;height:34px;overflow:visible;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 3px currentColor) drop-shadow(0 0 8px currentColor)}
+.neon-expense-icon svg .fill{fill:currentColor;stroke:none;opacity:.9}
+.neon-expense-icon svg .hi{stroke:#fff;stroke-width:1.1;opacity:.65}
 .neon-orange{color:#ff9d32}.neon-blue{color:#5f86ff}.neon-amber{color:#ffbd38}.neon-cyan{color:#27d9ff}.neon-purple{color:#c069ff}.neon-green{color:#43e8ad}.neon-red{color:#ff526b}.neon-violet{color:#8872ff}.neon-pink{color:#ef62e9}.neon-silver{color:#d9e4f4}
 </style>
 </head>
@@ -1531,22 +1534,46 @@ db.accounts=db.accounts||[];db.cards=db.cards||[];db.categories=db.categories||[
 db.transactions.forEach(t=>{if(!t.status)t.status='realized';if(t.card===undefined)t.card=db.cards.some(c=>c.id===t.account)?t.account:null;});db.recurring.forEach(r=>{if(r.active===undefined)r.active=true;if(!r.freq)r.freq='Mensal';if(!r.kind)r.kind='Recorrente';});db.cards.forEach(c=>{if(!c.type)c.type='Crédito';});db.invoices=db.invoices||[];db.auditLog=db.auditLog||[];db.dismissedAlerts=db.dismissedAlerts||{};db.budgets=db.budgets||[];db.goals=db.goals||[];db.goals.forEach(g=>{if(Number(g.current||0)>0&&!('legacyCurrent' in g))g.legacyCurrent=Number(g.current||0)});db.androidNotifications=db.androidNotifications||[];db.captureIgnored=db.captureIgnored||{};
 
 const neonIconMap=[
- [/aliment|mercado|padaria|delivery|restaurante|refeicao/,'♨','orange'],[/aluguel|moradia/,'⌂','blue'],[/luz|energia/,'ϟ','amber'],[/agua|esgoto/,'●','cyan'],
- [/internet|wifi/,'≋','cyan'],[/tim|celular|telefone|comunicacao/,'▯','purple'],[/prestacao.*carro|financiamento.*veic/,'▰','green'],[/pensao/,'＄','red'],
- [/moveis|emprestimo/,'▣','purple'],[/saude|farmacia|medic|drogaria/,'♥','red'],[/academia|esporte|bem-estar/,'═','green'],[/airsoft/,'✣','violet'],
- [/entreten|stream|cinema|evento|lazer/,'▶','pink'],[/combust|transporte|estacionamento|pedagio|99|uber/,'▰','green'],[/compras|vestuario|eletron/,'⌑','green'],
- [/educacao|curso|livro/,'◆','blue'],[/invest|aporte|aplicac/,'●','amber'],[/transfer/,'⇄','cyan'],[/pix/,'◆','cyan'],[/cartao|fatura|parcela/,'▭','purple'],
- [/taxa|imposto|tarifa|iof/,'▤','silver'],[/seguro|reserva/,'✓','green'],[/trabalho|equipamento|reuniao/,'▣','orange'],[/viagem|passagem|hosped/,'✈','blue'],
- [/pet|veterin|racao/,'●','pink'],[/casa|manutencao|reparo|condominio/,'⌂','green'],[/doac|caridade|contribu/,'♥','red'],[/presente|aniversario/,'✦','pink'],
- [/meta|objetivo/,'◎','pink'],[/patrimonio|bem|conquista/,'◇','amber'],[/receita|salario|rendimento|entrada/,'↗','green'],[/despesa|gasto|pagamento|saida/,'↘','red'],
- [/recorr|assinatura|fixo/,'⟳','blue'],[/compromisso|vencimento|agenda/,'▦','orange'],[/ia|insight|sugest/,'✺','purple'],[/sincron|importa.*extrato|nuvem/,'↻','blue']
+ [/aliment|mercado|padaria|delivery|restaurante|refeicao/,'food','orange'],[/aluguel|moradia/,'home','blue'],[/luz|energia/,'bolt','amber'],[/agua|esgoto/,'water','cyan'],
+ [/internet|wifi/,'wifi','cyan'],[/tim|celular|telefone|comunicacao/,'phone','purple'],[/prestacao.*carro|financiamento.*veic|combust|transporte|estacionamento|pedagio|99|uber/,'car','green'],[/pensao/,'pension','red'],
+ [/moveis|emprestimo/,'chair','purple'],[/saude|farmacia|medic|drogaria/,'heart','red'],[/academia|esporte|bem-estar/,'fitness','green'],[/airsoft/,'game','violet'],
+ [/entreten|stream|cinema|evento|lazer/,'play','pink'],[/compras|vestuario|eletron/,'cart','green'],[/educacao|curso|livro/,'education','blue'],[/invest|aporte|aplicac/,'invest','amber'],
+ [/transfer/,'transfer','cyan'],[/pix/,'pix','cyan'],[/cartao|fatura|parcela/,'card','purple'],[/taxa|imposto|tarifa|iof/,'receipt','silver'],[/seguro|reserva/,'shield','green'],
+ [/trabalho|equipamento|reuniao/,'work','orange'],[/viagem|passagem|hosped/,'travel','blue'],[/pet|veterin|racao/,'pet','pink'],[/casa|manutencao|reparo|condominio/,'home','green'],
+ [/doac|caridade|contribu/,'heart','red'],[/presente|aniversario/,'gift','pink'],[/meta|objetivo/,'target','pink'],[/patrimonio|bem|conquista/,'diamond','amber'],
+ [/receita|salario|rendimento|entrada/,'up','green'],[/despesa|gasto|pagamento|saida/,'down','red'],[/recorr|assinatura|fixo/,'repeat','blue'],[/compromisso|vencimento|agenda/,'calendar','orange'],
+ [/ia|insight|sugest/,'ai','purple'],[/sincron|importa.*extrato|nuvem/,'sync','blue']
 ];
 const iconSpecFor=(cat,sub='')=>{
  const text=(String(cat||'')+' '+String(sub||'')).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
  for(const [rx,glyph,tone] of neonIconMap)if(rx.test(text))return {glyph,tone};
  return {glyph:'•••',tone:'silver'};
 };
-const iconFor=(cat,sub='')=>{const s=iconSpecFor(cat,sub);return '<span class="neon-expense-icon neon-'+s.tone+'">'+s.glyph+'</span>'};
+const neonSvg={
+food:'<svg viewBox="0 0 32 32"><path d="M8 3v10M4 3v7c0 3 2 4 4 4s4-1 4-4V3M8 14v15M21 3c-3 4-4 9-4 13h6V3M21 16v13"/></svg>',
+home:'<svg viewBox="0 0 32 32"><path d="M3 15 16 4l13 11v14H20v-9h-8v9H3z"/><path class="hi" d="m6 15 10-8 10 8"/></svg>',
+bolt:'<svg viewBox="0 0 32 32"><path class="fill" d="M18 2 7 18h8l-2 12 12-17h-8z"/><path class="hi" d="m18 5-7 11"/></svg>',
+wifi:'<svg viewBox="0 0 32 32"><path d="M3 11c8-7 18-7 26 0M7 16c6-5 12-5 18 0M11 21c3-3 7-3 10 0"/><circle class="fill" cx="16" cy="26" r="2.4"/></svg>',
+phone:'<svg viewBox="0 0 32 32"><rect x="9" y="2" width="14" height="28" rx="3"/><path d="M13 6h6M14 26h4"/><path class="hi" d="M11 8v12"/></svg>',
+car:'<svg viewBox="0 0 32 32"><path class="fill" d="M5 13 8 6h16l3 7 3 3v9h-3v3h-4v-3H9v3H5v-3H2v-9z" opacity=".8"/><path d="m6 13 3-7h14l3 7M6 13h20M7 20h4M21 20h4"/><path class="hi" d="M10 8h12"/></svg>',
+pension:'<svg viewBox="0 0 32 32"><path d="M4 19c5 0 7 3 10 5 3 2 8 0 14-5M6 19l6-8c2-3 6-3 8 0l3 5"/><circle cx="17" cy="8" r="6"/><path d="M17 4v8M14 6h5M14 10h5"/></svg>',
+chair:'<svg viewBox="0 0 32 32"><path class="fill" d="M7 15V8c0-4 3-6 9-6s9 2 9 6v7c3 0 5 2 5 5v8H2v-8c0-3 2-5 5-5z" opacity=".65"/><path d="M7 16V8c0-4 3-6 9-6s9 2 9 6v8M3 18v10h26V18M7 28v2M25 28v2"/><path class="hi" d="M10 7h12"/></svg>',
+heart:'<svg viewBox="0 0 32 32"><path d="M16 28S3 21 3 11c0-7 9-10 13-4 4-6 13-3 13 4 0 10-13 17-13 17z"/><path d="M8 16h5l2-5 3 10 2-5h5"/></svg>',
+fitness:'<svg viewBox="0 0 32 32"><path d="M9 11v10M23 11v10M5 13v6M27 13v6M9 16h14"/></svg>',
+game:'<svg viewBox="0 0 32 32"><path d="M8 10h16c4 0 7 12 5 15-2 3-6-2-8-5H11c-2 3-6 8-8 5-2-3 1-15 5-15zM8 15h6M11 12v6"/><circle cx="22" cy="14" r="1"/><circle cx="25" cy="17" r="1"/></svg>',
+play:'<svg viewBox="0 0 32 32"><rect x="4" y="7" width="24" height="20" rx="3"/><path d="m13 12 8 5-8 5zM4 12l24-5"/></svg>',
+cart:'<svg viewBox="0 0 32 32"><path d="M3 5h4l3 16h14l4-11H9M12 25a2 2 0 1 0 0 4 2 2 0 0 0 0-4M24 25a2 2 0 1 0 0 4 2 2 0 0 0 0-4"/></svg>',
+education:'<svg viewBox="0 0 32 32"><path class="fill" d="m2 12 14-7 14 7-14 7z" opacity=".75"/><path d="m6 14v8c6 4 14 4 20 0v-8M29 13v10"/></svg>',
+invest:'<svg viewBox="0 0 32 32"><path d="M7 12c0-5 4-8 10-8s10 3 10 8c3 2 4 5 3 9l-3 8H8l-4-8c-2-4 0-8 3-9zM15 10h4M17 7v7"/><circle cx="24" cy="8" r="3"/></svg>',
+transfer:'<svg viewBox="0 0 32 32"><path d="M3 12h23l-5-5M29 20H6l5 5"/></svg>',pix:'<svg viewBox="0 0 32 32"><path d="m16 3 6 6-6 6-6-6zM16 17l6 6-6 6-6-6zM3 16l6-6 6 6-6 6zM17 16l6-6 6 6-6 6z"/></svg>',
+card:'<svg viewBox="0 0 32 32"><rect x="3" y="7" width="26" height="18" rx="3"/><path d="M3 12h26M7 20h7"/></svg>',receipt:'<svg viewBox="0 0 32 32"><path d="M7 3h18v27l-3-2-3 2-3-2-3 2-3-2-3 2zM11 10h10M11 15h10M11 20h7"/></svg>',
+shield:'<svg viewBox="0 0 32 32"><path d="M16 3 28 7v8c0 8-5 12-12 15C9 27 4 23 4 15V7zM10 16l4 4 8-9"/></svg>',work:'<svg viewBox="0 0 32 32"><rect x="3" y="9" width="26" height="19" rx="2"/><path d="M11 9V5h10v4M3 16h26M13 16v3h6v-3"/></svg>',
+travel:'<svg viewBox="0 0 32 32"><path class="fill" d="m3 18 11-4 6-11 4 1-4 11 8 5-2 3-9-2-5 8-3-1 3-9-8 2z"/></svg>',pet:'<svg viewBox="0 0 32 32"><circle cx="8" cy="10" r="3"/><circle cx="24" cy="10" r="3"/><circle cx="5" cy="17" r="3"/><circle cx="27" cy="17" r="3"/><path class="fill" d="M16 13c5 0 9 6 8 11-1 5-6 4-8 2-2 2-7 3-8-2-1-5 3-11 8-11z"/></svg>',
+gift:'<svg viewBox="0 0 32 32"><rect x="3" y="12" width="26" height="17" rx="2"/><path d="M16 12v17M2 12h28V8H2zM16 8c-7 0-9-7-4-7 3 0 4 4 4 7zM16 8c7 0 9-7 4-7-3 0-4 4-4 7z"/></svg>',target:'<svg viewBox="0 0 32 32"><circle cx="15" cy="17" r="12"/><circle cx="15" cy="17" r="7"/><circle cx="15" cy="17" r="2"/><path d="m17 15 11-11M23 4h5v5"/></svg>',
+diamond:'<svg viewBox="0 0 32 32"><path class="fill" d="m3 11 6-8h14l6 8-13 18z" opacity=".6"/><path d="M3 11h26M9 3l7 26 7-26M3 11l13 18 13-18"/></svg>',up:'<svg viewBox="0 0 32 32"><path d="M4 27h24M7 24V16h5v8M14 24V11h5v13M21 24V6h5v18M20 7l6-5 4 4"/></svg>',down:'<svg viewBox="0 0 32 32"><path d="M4 27h24M7 8v16h5V12h5v12h5v-7h5M20 8l7 7 3-4"/></svg>',
+repeat:'<svg viewBox="0 0 32 32"><path d="M26 11a11 11 0 0 0-19-3L3 12M6 8l1 4-4 1M6 21a11 11 0 0 0 19 3l4-4M26 24l-1-4 4-1"/></svg>',calendar:'<svg viewBox="0 0 32 32"><rect x="3" y="6" width="21" height="22" rx="3"/><path d="M8 3v6M19 3v6M3 12h21"/><circle cx="24" cy="22" r="6"/><path d="M24 19v4l3 2"/></svg>',ai:'<svg viewBox="0 0 32 32"><path d="M16 5c-4-5-10-1-8 4-6 0-7 8-2 10-3 5 3 10 7 7 1 5 7 4 7 0 5 3 10-2 7-7 5-3 3-10-2-10 1-5-5-8-9-4zM16 5v22M9 11h7M16 18h8"/></svg>',sync:'<svg viewBox="0 0 32 32"><path d="M8 23H7a6 6 0 0 1 0-12c1-6 9-9 14-5 3 1 5 4 5 7 5 0 6 8 1 10h-3M11 21a7 7 0 0 0 11 3l2-3M21 27l1-3 3 1M21 19a7 7 0 0 0-11-3l-2 3M11 13l-1 3-3-1"/></svg>'
+};
+const iconFor=(cat,sub='')=>{const s=iconSpecFor(cat,sub),svg=neonSvg[s.glyph]||neonSvg.receipt;return '<span class="neon-expense-icon neon-'+s.tone+'">'+svg+'</span>'};
 
 /* v1.8.0 SIMULAÇÃO R6.5 · POPUPS EDITÁVEIS — camada central de regras financeiras */
 const FinanceDomain=(()=>{
