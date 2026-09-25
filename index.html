@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260925-r211';
+ const RELEASE='atual-ui-20260925-r212';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -955,6 +955,12 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
  body:has(#recurringEditModal.open) .mobile-bottom-nav{visibility:hidden!important;pointer-events:none!important}
 }
 </style>
+
+<style id="r212-neon-expense-icons">
+.ico:has(.neon-expense-icon){background:#071827!important;border:1px solid rgba(75,180,255,.22)!important;border-radius:15px!important;overflow:visible!important}
+.neon-expense-icon{width:100%;height:100%;min-width:42px;min-height:42px;display:flex;align-items:center;justify-content:center;font-size:25px;font-weight:900;line-height:1;font-family:Arial,sans-serif;text-shadow:0 0 5px currentColor,0 0 12px currentColor,0 0 22px currentColor;filter:drop-shadow(0 0 6px currentColor)}
+.neon-orange{color:#ff9d32}.neon-blue{color:#5f86ff}.neon-amber{color:#ffbd38}.neon-cyan{color:#27d9ff}.neon-purple{color:#c069ff}.neon-green{color:#43e8ad}.neon-red{color:#ff526b}.neon-violet{color:#8872ff}.neon-pink{color:#ef62e9}.neon-silver{color:#d9e4f4}
+</style>
 </head>
 <body>
 <div class="tooltip" id="tooltip"></div>
@@ -1524,20 +1530,21 @@ const save=()=>{localStorage.setItem(STORAGE,JSON.stringify(db));try{if(window.F
 db.accounts=db.accounts||[];db.cards=db.cards||[];db.categories=db.categories||[];db.transactions=db.transactions||[];db.recurring=db.recurring||[];db.investments=db.investments||[];
 db.transactions.forEach(t=>{if(!t.status)t.status='realized';if(t.card===undefined)t.card=db.cards.some(c=>c.id===t.account)?t.account:null;});db.recurring.forEach(r=>{if(r.active===undefined)r.active=true;if(!r.freq)r.freq='Mensal';if(!r.kind)r.kind='Recorrente';});db.cards.forEach(c=>{if(!c.type)c.type='Crédito';});db.invoices=db.invoices||[];db.auditLog=db.auditLog||[];db.dismissedAlerts=db.dismissedAlerts||{};db.budgets=db.budgets||[];db.goals=db.goals||[];db.goals.forEach(g=>{if(Number(g.current||0)>0&&!('legacyCurrent' in g))g.legacyCurrent=Number(g.current||0)});db.androidNotifications=db.androidNotifications||[];db.captureIgnored=db.captureIgnored||{};
 
-const iconFor=(cat,sub='')=>{
+const neonIconMap=[
+ [/aliment|mercado|padaria|delivery|restaurante|refeicao/,'🍴','orange'],[/aluguel|moradia/,'⌂','blue'],[/luz|energia/,'ϟ','amber'],[/agua|esgoto/,'●','cyan'],
+ [/internet|wifi/,'⌁','cyan'],[/tim|celular|telefone|comunicacao/,'▯','purple'],[/prestacao.*carro|financiamento.*veic/,'▰','green'],[/pensao/,'$','red'],
+ [/moveis|emprestimo/,'▣','purple'],[/saude|farmacia|medic|drogaria/,'♥','red'],[/academia|esporte|bem-estar/,'═','green'],[/airsoft/,'✣','violet'],
+ [/entreten|stream|cinema|evento|lazer/,'▶','pink'],[/combust|transporte|estacionamento|pedagio|99|uber/,'▰','green'],[/compras|vestuario|eletron/,'⌑','green'],
+ [/educacao|curso|livro/,'◆','blue'],[/invest|aporte|aplicac/,'●','amber'],[/transfer/,'▥','cyan'],[/cartao|fatura|parcela/,'▭','purple'],
+ [/taxa|imposto|tarifa|iof/,'▤','silver'],[/seguro/,'✓','green'],[/trabalho|equipamento|reuniao/,'▣','orange'],[/viagem|passagem|hosped/,'✈','blue'],
+ [/pet|veterin|racao/,'●','pink'],[/casa|manutencao|reparo|condominio/,'⌂','green'],[/doac|caridade|contribu/,'♥','red'],[/presente|aniversario/,'✦','pink']
+];
+const iconSpecFor=(cat,sub='')=>{
  const text=(String(cat||'')+' '+String(sub||'')).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
- const rules=[
-  [/aliment|mercado|padaria|delivery|restaurante|refeicao/,'🍴'],[/aluguel|moradia/,'🏠'],[/luz|energia/,'⚡'],[/agua|esgoto/,'💧'],
-  [/internet|wifi/,'📶'],[/tim|celular|telefone|comunicacao/,'📱'],[/prestacao.*carro|financiamento.*veic/,'🚙'],[/pensao/,'🤲'],
-  [/moveis|emprestimo/,'🛋️'],[/saude|farmacia|medic|drogaria/,'❤️'],[/academia|esporte|bem-estar/,'🏋️'],[/airsoft/,'🎮'],
-  [/entreten|stream|cinema|evento|lazer/,'🎬'],[/combust|transporte|estacionamento|pedagio|99|uber/,'🚗'],[/compras|vestuario|eletron/,'🛒'],
-  [/educacao|curso|livro/,'🎓'],[/invest|aporte|aplicac/,'🐷'],[/transfer/,'🏦'],[/cartao|fatura|parcela/,'💳'],
-  [/taxa|imposto|tarifa|iof/,'🧾'],[/seguro/,'🛡️'],[/trabalho|equipamento|reuniao/,'💼'],[/viagem|passagem|hosped/,'✈️'],
-  [/pet|veterin|racao/,'🐾'],[/casa|manutencao|reparo|condominio/,'🏡'],[/doac|caridade|contribu/,'💝'],[/presente|aniversario/,'🎁']
- ];
- for(const [rx,icon] of rules)if(rx.test(text))return icon;
- const c=db.categories.find(x=>String(x.name||'').toLowerCase()===String(cat||'').toLowerCase());return c?.icon||'•••';
+ for(const [rx,glyph,tone] of neonIconMap)if(rx.test(text))return {glyph,tone};
+ return {glyph:'•••',tone:'silver'};
 };
+const iconFor=(cat,sub='')=>{const s=iconSpecFor(cat,sub);return '<span class="neon-expense-icon neon-'+s.tone+'">'+s.glyph+'</span>'};
 
 /* v1.8.0 SIMULAÇÃO R6.5 · POPUPS EDITÁVEIS — camada central de regras financeiras */
 const FinanceDomain=(()=>{
@@ -1813,7 +1820,7 @@ function filteredTransactions(){return transactionsForMonth(scopeMonth('transact
 function renderLists(){
  const rec=document.getElementById('recurringList'), page=document.getElementById('recurringPage');
  const recurringVisible=(db.recurring||[]).filter(r=>{const key=activeMonth,st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return (!st||key>=st)&&(!en||key<=en)});
- const html=recurringVisible.map(r=>`<div class="item clickable recurring-card" data-detail-type="recurring" data-detail-id="${r.id}"><div class="ico">${r.icon||iconFor(r.cat,r.sub)}</div><div><b>${r.desc}</b><small>${r.freq} · Dia ${String(r.due).padStart(2,'0')} · ${r.kind} · ${(r.active??true)?'Ativa':'Inativa'}${r.endDate?' · até '+fmt(r.endDate):''}</small></div><div><div class="amount ${Number(r.value)<0?'down':''}">${brl(r.value)}</div><div class="recurring-actions"><button class="secondary tx-edit-btn" data-edit-recurring="${r.id}">Editar</button></div></div></div>`).join('');
+ const html=recurringVisible.map(r=>`<div class="item clickable recurring-card" data-detail-type="recurring" data-detail-id="${r.id}"><div class="ico">${iconFor(r.cat,r.sub)}</div><div><b>${r.desc}</b><small>${r.freq} · Dia ${String(r.due).padStart(2,'0')} · ${r.kind} · ${(r.active??true)?'Ativa':'Inativa'}${r.endDate?' · até '+fmt(r.endDate):''}</small></div><div><div class="amount ${Number(r.value)<0?'down':''}">${brl(r.value)}</div><div class="recurring-actions"><button class="secondary tx-edit-btn" data-edit-recurring="${r.id}">Editar</button></div></div></div>`).join('');
  rec.innerHTML=html; page.innerHTML=html;document.querySelectorAll('[data-edit-recurring]').forEach(b=>b.onclick=e=>{e.stopPropagation();openRecurringEdit(b.dataset.editRecurring)});
  document.getElementById('recentList').innerHTML=transactionsForMonth(scopeMonth('recent')).slice(-5).reverse().map(t=>`<div class="item clickable" data-detail-type="transaction" data-detail-id="${t.id}"><div class="ico">${iconFor(t.cat,t.sub)}</div><div><b>${t.desc}</b><small>${fmt(t.date)} · ${t.cat} › ${t.sub||''} · ${t.origin}</small></div><div class="amount ${t.value>=0?'up':'down'}">${t.value>=0?'+ ':''}${brl(t.value)}</div></div>`).join('');
  document.getElementById('transactionTable').innerHTML=filteredTransactions().slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(t=>`<tr class="clickable" data-detail-type="transaction" data-detail-id="${t.id}"><td>${fmt(t.date)}</td><td>${t.desc}</td><td>${t.cat} › ${t.sub||''}</td><td>${db.cards.find(c=>c.id===t.card)?.name||db.accounts.find(a=>a.id===t.account)?.name||t.account||'—'}</td><td><span class="tag">${t.origin}</span></td><td class="${t.value>=0?'up':'down'}">${brl(t.value)}</td><td><button class="secondary tx-edit-btn" data-edit-tx="${t.id}">Editar</button></td></tr>`).join('');
@@ -1826,7 +1833,7 @@ function nextDate(day){let d=new Date(); d.setHours(12,0,0,0); if(d.getDate()>da
 function renderCommitments(){
  const days=+document.getElementById('commitDays').value, end=Date.now()+days*86400000;
  const rows=db.recurring.filter(r=>(r.active??true)).map(r=>({...r,next:nextDate(r.due)})).filter(r=>r.next.getTime()<=end).sort((a,b)=>a.next-b.next);
- document.getElementById('commitments').innerHTML=rows.length?rows.map(r=>`<div class="item"><div class="ico">${r.icon||iconFor(r.cat,r.sub)}</div><div><b>${r.desc}</b><small>${r.next.toLocaleDateString('pt-BR')} · ${r.kind}</small></div><div class="amount">${brl(r.value)}</div></div>`).join(''):`<div class="notice">Nenhum compromisso nos próximos ${days} dias.</div>`;
+ document.getElementById('commitments').innerHTML=rows.length?rows.map(r=>`<div class="item"><div class="ico">${iconFor(r.cat,r.sub)}</div><div><b>${r.desc}</b><small>${r.next.toLocaleDateString('pt-BR')} · ${r.kind}</small></div><div class="amount">${brl(r.value)}</div></div>`).join(''):`<div class="notice">Nenhum compromisso nos próximos ${days} dias.</div>`;
 }
 function calendarEventsForDay(day){
  const key=scopeMonth('calendar');
@@ -1854,7 +1861,7 @@ function openCalendarDay(day){
  detailTitle.textContent=title;
  detailBody.innerHTML=`
    <div class="calendar-day-detail">
-     ${events.length?events.map(r=>`<div class="item clickable" data-calendar-recurring="${r.id}"><div class="ico">${r.icon||iconFor(r.cat,r.sub)}</div><div><b>${r.desc}</b><small>${r.cat} › ${r.sub||''} · ${r.freq} · ${r.kind}</small></div><div class="amount">${brl(r.value)}</div></div>`).join(''):'<div class="notice">Nenhum compromisso cadastrado para este dia.</div>'}
+     ${events.length?events.map(r=>`<div class="item clickable" data-calendar-recurring="${r.id}"><div class="ico">${iconFor(r.cat,r.sub)}</div><div><b>${r.desc}</b><small>${r.cat} › ${r.sub||''} · ${r.freq} · ${r.kind}</small></div><div class="amount">${brl(r.value)}</div></div>`).join(''):'<div class="notice">Nenhum compromisso cadastrado para este dia.</div>'}
    </div>
    <div class="day-actions">
      <button class="primary" id="dayNewTransaction">+ Novo lançamento</button>
@@ -1880,7 +1887,7 @@ function renderCalendar(){
  };
  make('miniCalendar',true);make('fullCalendar',false);
  const key=scopeMonth('calendar');
- document.getElementById('calendarEvents').innerHTML=db.recurring.filter(r=>{const st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return (r.active??true)&&(!st||key>=st)&&(!en||key<=en)}).slice().sort((a,b)=>a.due-b.due).map(r=>`<div class="item clickable" data-calendar-recurring="${r.id}"><div class="ico">${r.icon||iconFor(r.cat,r.sub)}</div><div><b>${monthLabelKey(key)} · Dia ${String(r.due).padStart(2,'0')} · ${r.desc}</b><small>${r.cat} › ${r.sub||''} · ${r.kind} · ${r.freq}</small></div><div class="amount">${brl(r.value)}</div></div>`).join('');
+ document.getElementById('calendarEvents').innerHTML=db.recurring.filter(r=>{const st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return (r.active??true)&&(!st||key>=st)&&(!en||key<=en)}).slice().sort((a,b)=>a.due-b.due).map(r=>`<div class="item clickable" data-calendar-recurring="${r.id}"><div class="ico">${iconFor(r.cat,r.sub)}</div><div><b>${monthLabelKey(key)} · Dia ${String(r.due).padStart(2,'0')} · ${r.desc}</b><small>${r.cat} › ${r.sub||''} · ${r.kind} · ${r.freq}</small></div><div class="amount">${brl(r.value)}</div></div>`).join('');
  document.querySelectorAll('#calendarEvents [data-calendar-recurring]').forEach(el=>el.onclick=()=>openRecurringEdit(el.dataset.calendarRecurring));
 }
 
@@ -2536,7 +2543,7 @@ recurringEditForm.onsubmit=e=>{
  const before=JSON.parse(JSON.stringify(r));
  r.desc=recEditDesc.value;r.value=-Math.abs(Number(recEditValue.value)||0);r.cat=recEditCategory.value;r.sub=recEditSub.value;
  r.freq=recEditFreq.value;r.due=Math.max(1,Math.min(31,Number(recEditDue.value)||1));r.kind=recEditKind.value;r.active=recEditActive.value==='true';
- r.icon=iconFor(r.cat,r.sub);audit('edit','recurring',before,r,{scope:'recorrência'});
+ r.icon='';audit('edit','recurring',before,r,{scope:'recorrência'});
  save();recurringEditModal.classList.remove('open');renderAll();renderAudit();
 };
 deleteRecurringBtn.onclick=()=>{
@@ -2560,7 +2567,7 @@ document.getElementById('entryForm').onsubmit=e=>{
    db.transactions.push(tx);
    if(fStatus.value==='realized'){card.availableLimit=Math.max(0,Math.round((Number(card.availableLimit??card.balance??card.limit??0)-val)*100)/100);card.balance=card.availableLimit}
  }else if(type==='recurring'){
-   db.recurring.push({id:'r'+Date.now(),desc:fDesc.value,value:val,cat:fCategory.value,sub:fSub.value,due:+fDue.value||1,freq:fFrequency.value||'Mensal',kind:'Recorrente',icon:iconFor(fCategory.value,fSub.value),account:fAccount.value||null,active:true});
+   db.recurring.push({id:'r'+Date.now(),desc:fDesc.value,value:val,cat:fCategory.value,sub:fSub.value,due:+fDue.value||1,freq:fFrequency.value||'Mensal',kind:'Recorrente',icon:'',account:fAccount.value||null,active:true});
  }else if(type==='transfer'||type==='investment'){
    db.transactions.push({...base,value:-val,transfer:true,dest:fDest.value,status:fStatus.value});
    if(fStatus.value==='realized'){const a=db.accounts.find(a=>a.id===fAccount.value),d=db.accounts.find(a=>a.id===fDest.value);if(a)a.balance-=val;if(d)d.balance+=val}
