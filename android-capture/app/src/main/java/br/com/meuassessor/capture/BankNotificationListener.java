@@ -16,6 +16,7 @@ public final class BankNotificationListener extends NotificationListenerService 
     static final String KEY_RESULT = "last_result";
     static final String KEY_TIME = "last_time";
     static final String KEY_CONNECTED = "listener_connected";
+    static final String KEY_RECENT_PACKAGES = "recent_packages";
 
     @Override
     public void onListenerConnected() {
@@ -29,13 +30,13 @@ public final class BankNotificationListener extends NotificationListenerService 
 
     @Override
     public void onListenerDisconnected() {
+        super.onListenerDisconnected();
         getSharedPreferences(DIAG_PREFS, Context.MODE_PRIVATE).edit()
                 .putBoolean(KEY_CONNECTED, false)
                 .putString(KEY_RESULT, "Serviço desconectado; solicitando reconexão")
                 .putLong(KEY_TIME, System.currentTimeMillis())
                 .apply();
         requestRebind(new ComponentName(this, BankNotificationListener.class));
-        super.onListenerDisconnected();
     }
 
     @Override
@@ -43,6 +44,7 @@ public final class BankNotificationListener extends NotificationListenerService 
         if (status == null) return;
 
         String packageName = status.getPackageName();
+        rememberPackage(packageName);
         boolean allowed = BankAllowlist.contains(this, packageName);
 
         // Privacy: for non-authorized apps, record ONLY the package name/status.
@@ -73,6 +75,25 @@ public final class BankNotificationListener extends NotificationListenerService 
         boolean added = new EncryptedQueueStore(this).add(event);
         saveDiagnostic(packageName, true, true,
                 added ? "Capturada e adicionada à fila" : "Reconhecida, mas já existente/erro de fila");
+    }
+
+    private void rememberPackage(String packageName) {
+        if (packageName == null || packageName.isEmpty()) return;
+        SharedPreferences prefs = getSharedPreferences(DIAG_PREFS, Context.MODE_PRIVATE);
+        String old = prefs.getString(KEY_RECENT_PACKAGES, "");
+        java.util.LinkedHashSet<String> items = new java.util.LinkedHashSet<>();
+        items.add(packageName);
+        if (old != null && !old.isEmpty()) {
+            for (String item : old.split("\\n")) if (!item.isEmpty()) items.add(item);
+        }
+        StringBuilder out = new StringBuilder();
+        int count = 0;
+        for (String item : items) {
+            if (count++ >= 12) break;
+            if (out.length() > 0) out.append('\n');
+            out.append(item);
+        }
+        prefs.edit().putString(KEY_RECENT_PACKAGES, out.toString()).apply();
     }
 
     static void reconnect(Context context) {

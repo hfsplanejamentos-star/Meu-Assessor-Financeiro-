@@ -46,6 +46,7 @@ public final class CaptureSettingsActivity extends Activity {
             boolean financial = d.getBoolean(BankNotificationListener.KEY_FINANCIAL, false);
             boolean connected = d.getBoolean(BankNotificationListener.KEY_CONNECTED, false);
             String result = d.getString(BankNotificationListener.KEY_RESULT, "");
+            String recent = d.getString(BankNotificationListener.KEY_RECENT_PACKAGES, "");
             diagnostic.setText(
                     "Listener conectado: " + (connected ? "SIM" : "NÃO") +
                     "\nFila criptografada: " + new EncryptedQueueStore(this).size() +
@@ -53,7 +54,8 @@ public final class CaptureSettingsActivity extends Activity {
                     "Último pacote: " + pkg +
                     "\nAplicativo autorizado: " + (allowed ? "SIM" : "NÃO") +
                     "\nFinanceira reconhecida: " + (financial ? "SIM" : "NÃO") +
-                    "\nResultado: " + result
+                    "\nResultado: " + result +
+                    "\nPacotes recentes:\n" + (recent == null || recent.isEmpty() ? "—" : recent)
             );
         }
     }

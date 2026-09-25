@@ -57,6 +57,7 @@ final class WebAppBridge {
             out.put("pending", notificationCount());
             out.put("connected", d.getBoolean(BankNotificationListener.KEY_CONNECTED, false));
             out.put("accessEnabled", isNotificationAccessEnabled());
+            out.put("recentPackages", d.getString(BankNotificationListener.KEY_RECENT_PACKAGES, ""));
             return out.toString();
         } catch (Exception ignored) {
             return "{}";
