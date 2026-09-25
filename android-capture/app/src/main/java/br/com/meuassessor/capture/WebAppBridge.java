@@ -71,7 +71,7 @@ final class WebAppBridge {
     @JavascriptInterface
     public void openNotificationAccessSettings() {
         activity.runOnUiThread(() ->
-                activity.startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)));
+                activity.startActivity(new Intent(activity, CaptureSettingsActivity.class)));
     }
 
     @JavascriptInterface
