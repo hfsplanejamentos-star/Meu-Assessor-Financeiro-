@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260925-r202';
+ const RELEASE='atual-ui-20260925-r203';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -2040,7 +2040,7 @@ function ensureMonthlyIncomeAutomation(){
  db.automationState=db.automationState||{};db.transactions=db.transactions||[];db.cards=db.cards||[];
  let caju=db.cards.find(c=>String(c.id)==='card_caju_alimentacao'||String(c.name||'').toLowerCase().includes('caju'));
  if(!caju){caju={id:'card_caju_alimentacao',name:'Caju Alimentação',type:'Benefício',limit:1500,balance:0};db.cards.push(caju)}
- caju.type='Benefício';caju.limit=1500;caju.accumulative=true;
+ caju.type='Benefício';caju.limit=1500;caju.monthlyCredit=1500;caju.accumulative=true;caju.creditStart='2026-10-01';
  const hist=[
   ['caju_2026_09_17_credit','2026-09-17','Caju Benefícios',1006.89,'Crédito benefício'],
   ['caju_2026_09_17_padaria_1','2026-09-17','PADARIA E CONFEITARIA',-1.00,'Alimentação'],
@@ -2071,7 +2071,7 @@ function ensureMonthlyIncomeAutomation(){
  }}
  const movements=db.transactions.filter(t=>(t.cardId===caju.id||t.card===caju.id)&&t.status!=='planned').sort((a,b)=>String(a.date).localeCompare(String(b.date)));
  caju.balance=movements.reduce((s,t)=>s+Number(t.value||0),0);caju.availableLimit=caju.balance;
- db.automationState.monthlyIncome={enabled:true,start:'2026-10-01',salary:6500,caju:1500,day:1};
+ db.automationState.monthlyIncome={enabled:true,start:'2026-10-01',salary:6500,caju:1500,cajuAccumulative:true,day:1};
  save();
 }
 function cajuBalanceAt(cardId,key){
@@ -2988,7 +2988,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r202',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r203',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
