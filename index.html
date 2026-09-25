@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260925-r208';
+ const RELEASE='atual-ui-20260925-r209';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -2068,23 +2068,18 @@ function ensureMonthlyIncomeAutomation(){
  save();
 }
 function cajuSnapshot(cardId,key){
- if(key==='2026-09'&&db.meta?.cajuStatementVersion)return {available:Number(db.meta.cajuStatementAvailable||303.02),spent:Number(db.meta.cajuStatementSpent||703.87),credit:Number(db.meta.cajuStatementCredit||1006.89),source:'statement'};
- const available=cajuBalanceAt(cardId,key),credit=cajuCapacityAt(cardId,key),spent=(db.transactions||[]).filter(t=>(t.cardId===cardId||t.card===cardId)&&String(t.date||'').slice(0,7)===key&&t.status!=='planned'&&Number(t.value)<0&&!t.excludeFromBalance).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);return {available,spent,credit,source:'ledger'};
+ const baseCredit=Number(db.meta?.cajuStatementCredit||1006.89),baseAvailable=Number(db.meta?.cajuStatementAvailable||303.02),baseSpent=Number(db.meta?.cajuStatementSpent||703.87);
+ if(key==='2026-09')return {available:baseAvailable,spent:baseSpent,credit:baseCredit,source:'statement'};
+ if(key>'2026-09'){
+  const [y,m]=key.split('-').map(Number),months=(y-2026)*12+(m-10)+1,monthlyCredit=Math.max(0,months)*1500;
+  const spentAfterSep=(db.transactions||[]).filter(t=>(t.cardId===cardId||t.card===cardId)&&String(t.date||'').slice(0,7)>='2026-10'&&String(t.date||'').slice(0,7)<=key&&t.status!=='planned'&&t.status!=='ignored'&&Number(t.value)<0&&!t.excludeFromBalance).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);
+  const spentMonth=(db.transactions||[]).filter(t=>(t.cardId===cardId||t.card===cardId)&&String(t.date||'').slice(0,7)===key&&t.status!=='planned'&&t.status!=='ignored'&&Number(t.value)<0&&!t.excludeFromBalance).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);
+  return {available:Math.round((baseAvailable+monthlyCredit-spentAfterSep)*100)/100,spent:Math.round(spentMonth*100)/100,credit:Math.round((baseCredit+monthlyCredit)*100)/100,source:'cumulative-rule'};
+ }
+ return {available:0,spent:0,credit:0,source:'ledger'};
 }
-function cajuBalanceAt(cardId,key){
- const current=monthKey(today);
- return Math.round((db.transactions||[]).filter(t=>{
-  const month=String(t.date||'').slice(0,7),planned=t.status==='planned';
-  return (t.cardId===cardId||t.card===cardId)&&month<=key&&t.status!=='ignored'&&!t.excludeFromBalance&&(!planned||(key>current&&Number(t.value)>0));
- }).reduce((sum,t)=>sum+Number(t.value||0),0)*100)/100;
-}
-function cajuCapacityAt(cardId,key){
- const current=monthKey(today);
- return Math.round((db.transactions||[]).filter(t=>{
-  const month=String(t.date||'').slice(0,7);
-  return (t.cardId===cardId||t.card===cardId)&&month<=key&&t.status!=='ignored'&&!t.excludeFromBalance&&Number(t.value)>0&&(t.status!=='planned'||key>current);
- }).reduce((sum,t)=>sum+Number(t.value||0),0)*100)/100;
-}
+function cajuBalanceAt(cardId,key){return cajuSnapshot(cardId,key).available}
+function cajuCapacityAt(cardId,key){return cajuSnapshot(cardId,key).credit}
 function renderCajuDetails(){
  const card=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||String(c.name||'').toLowerCase().includes('caju'));if(!card)return;
  const key=scopeMonth('caju')||activeMonth,all=(db.transactions||[]).filter(t=>t.cardId===card.id&&String(t.date||'').slice(0,7)===key&&t.status!=='planned'&&Number(t.value)<0).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.time||'').localeCompare(String(a.time||'')));
