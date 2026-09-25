@@ -25,14 +25,22 @@ import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
 import java.util.ArrayList;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.Executors;
+import java.util.zip.GZIPInputStream;
 
 public final class MainActivity extends Activity {
     static final int REQUEST_VOICE = 701;
     private static final int REQUEST_FILE = 702;
     private static final String APP_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.3.3";
+            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.3.4";
+    private static final String APP_BASE_URL =
+            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/";
 
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
@@ -48,10 +56,10 @@ public final class MainActivity extends Activity {
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
                 .getString("web_cache_version", "");
-        if (!"1.3.3".equals(nativeVersion)) {
+        if (!"1.3.4".equals(nativeVersion)) {
             webView.clearCache(true);
             getSharedPreferences("native_runtime", MODE_PRIVATE).edit()
-                    .putString("web_cache_version", "1.3.3").apply();
+                    .putString("web_cache_version", "1.3.4").apply();
         }
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.parseColor("#020A14"));
@@ -83,7 +91,7 @@ public final class MainActivity extends Activity {
         webView.setVisibility(View.VISIBLE);
 
         if (pendingState == null) {
-            if (webView.getUrl() == null) webView.loadUrl(APP_URL);
+            if (webView.getUrl() == null) loadDashboardHtml();
         } else {
             webView.restoreState(pendingState);
             String savedImageUri = pendingState.getString("captured_image_uri");
@@ -98,6 +106,39 @@ public final class MainActivity extends Activity {
         }
         requestNativePermissions();
         UpdateChecker.check(this);
+    }
+
+    private void loadDashboardHtml() {
+        Executors.newSingleThreadExecutor().execute(() -> {
+            HttpURLConnection connection = null;
+            try {
+                connection = (HttpURLConnection) new URL(
+                        APP_URL + "&t=" + System.currentTimeMillis()).openConnection();
+                connection.setConnectTimeout(12000);
+                connection.setReadTimeout(25000);
+                connection.setRequestProperty("Accept", "text/html,application/xhtml+xml");
+                connection.setRequestProperty("Accept-Encoding", "identity");
+                connection.setRequestProperty("Cache-Control", "no-cache");
+                if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) throw new Exception();
+                InputStream stream = connection.getInputStream();
+                if ("gzip".equalsIgnoreCase(connection.getContentEncoding())) {
+                    stream = new GZIPInputStream(stream);
+                }
+                StringBuilder html = new StringBuilder();
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) html.append(line).append('\n');
+                }
+                String document = html.toString();
+                runOnUiThread(() -> webView.loadDataWithBaseURL(
+                        APP_BASE_URL, document, "text/html", "UTF-8", APP_URL));
+            } catch (Exception ignored) {
+                runOnUiThread(() -> webView.loadUrl(APP_URL));
+            } finally {
+                if (connection != null) connection.disconnect();
+            }
+        });
     }
 
     private void requestNativePermissions() {

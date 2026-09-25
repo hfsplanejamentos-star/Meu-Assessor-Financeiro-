@@ -1,6 +1,6 @@
 {
-  "versionCode": 12,
-  "versionName": "1.3.3",
-  "downloadUrl": "https://github.com/hfsplanejamentos-star/Meu-Assessor-Financeiro-/releases/download/v1.3.3/Meu-Assessor-Financeiro-IA-v1.3.3.apk",
-  "notes": "Corrige a abertura do dashboard em WebViews que exibiam conteúdo compactado como texto ilegível."
+  "versionCode": 13,
+  "versionName": "1.3.4",
+  "downloadUrl": "https://github.com/hfsplanejamentos-star/Meu-Assessor-Financeiro-/releases/download/v1.3.4/Meu-Assessor-Financeiro-IA-v1.3.4.apk",
+  "notes": "Carrega e decodifica o HTML pelo módulo nativo antes de entregá-lo ao WebView, eliminando caracteres ilegíveis."
 }
