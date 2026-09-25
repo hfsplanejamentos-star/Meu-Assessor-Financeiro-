@@ -136,7 +136,7 @@ function migrateExtratosSep22(){
    if(canonicalId){t.value=0;t.status='ignored';t.duplicateOf=canonicalId;t.excludeFromBalance=true;t.excludeFromExpense=true;changed=true}
  });
  const cj=db.cards.find(x=>x.id==='card_caju_alimentacao');
- if(cj&&db.meta.cajuKnownBalanceVersion!=='2026-09-22-extrato-v7'){cj.limit=1006.89;cj.availableLimit=456.23;cj.balance=456.23;cj.excludeFromPatrimony=true;db.meta.cajuKnownBalanceVersion='2026-09-22-extrato-v7';changed=true}
+ if(cj){cj.excludeFromPatrimony=true;if(db.meta.cajuStatementVersion){cj.limit=Number(db.meta.cajuStatementCredit||1006.89);cj.availableLimit=Number(db.meta.cajuStatementAvailable||303.02);cj.balance=Number(db.meta.cajuStatementAvailable||303.02)}else if(db.meta.cajuKnownBalanceVersion!=='2026-09-22-extrato-v7'){cj.limit=1006.89;cj.availableLimit=456.23;cj.balance=456.23;db.meta.cajuKnownBalanceVersion='2026-09-22-extrato-v7';changed=true}}
  if(changed){try{save()}catch(_){localStorage.setItem(KEY,JSON.stringify(db))}}
  return changed;
 }
