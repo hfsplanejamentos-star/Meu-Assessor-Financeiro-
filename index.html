@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260926-r219';
+ const RELEASE='atual-ui-20260926-r220';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -2468,7 +2468,7 @@ function renderReconciliation(){
  box.querySelectorAll('[data-recon-b]').forEach(btn=>btn.onclick=()=>{const c=cases[+btn.dataset.reconB];openDetail(c.b.desc,[['Data',fmt(c.b.date)],['Valor',brl(c.b.value)],['Categoria',c.b.cat],['Origem',c.b.origin],['Status',c.b.status||'realized']])});
 }
 
-const HOME_BLOCKS=[['projection','Evolução do Patrimônio'],['category','Despesas por Categoria'],['commitments','Próximos Compromissos'],['recurring','Recorrências Ativas'],['calendar','Agenda Financeira'],['recent','Últimas Transações'],['investments','Investimentos'],['alerts','Alertas Financeiros'],['health','Saúde Financeira']];
+const HOME_BLOCKS=[['projection','Evolução do Patrimônio'],['category','Despesas por Categoria'],['commitments','Próximos Compromissos'],['recurring','Recorrências Ativas'],['calendar','Agenda Financeira'],['dayexpenses','Despesas do Dia'],['distribution','Distribuição do Mês'],['recent','Últimas Transações'],['investments','Investimentos'],['alerts','Alertas Financeiros'],['health','Saúde Financeira']];
 const __normalizeLayout=(raw,defs)=>{const base=defs.map(x=>({id:x[0],visible:true}));if(!Array.isArray(raw))return base;const allowed=new Set(defs.map(x=>x[0])),seen=new Set(),out=[];raw.forEach(x=>{if(x&&allowed.has(x.id)&&!seen.has(x.id)){out.push({id:x.id,visible:x.visible!==false});seen.add(x.id)}});base.forEach(x=>{if(!seen.has(x.id))out.push(x)});return out};
 let homeLayout=(()=>{try{return __normalizeLayout(JSON.parse(localStorage.getItem('assessor_home_layout')||'null'),HOME_BLOCKS)}catch(e){return HOME_BLOCKS.map(x=>({id:x[0],visible:true}))}})();
 const KPI_ITEMS=[['c6account','C6 Bank'],['caju','Caju'],['patrimony','Patrimônio Total'],['available','Disponível Hoje'],['income','Receitas realizadas'],['income_planned','Receitas previstas'],['expense','Despesas realizadas'],['expense_planned','Despesas previstas'],['investments','Investimentos'],['goal','Meta'],['accumulated','Saldo Acumulado'],['itauaccount','Itaú'],['xpaccount','XP'],['creditcard','C6 Carbono']];let kpiLayout=(()=>{try{return __normalizeLayout(JSON.parse(localStorage.getItem('assessor_kpi_layout')||'null'),KPI_ITEMS)}catch(e){return KPI_ITEMS.map(x=>({id:x[0],visible:true}))}})();
@@ -2501,13 +2501,15 @@ function renderAll(){
 function renderMobileDayAndDistribution(){
  const host=document.getElementById('miniCalendar')?.closest('.card.panel'); if(!host)return;
  let dayBox=document.getElementById('mobileDayExpenses'),distBox=document.getElementById('mobileMonthDistribution');
- if(!dayBox){dayBox=document.createElement('div');dayBox.id='mobileDayExpenses';dayBox.className='mobile-fin-insight';host.insertAdjacentElement('afterend',dayBox)}
- if(!distBox){distBox=document.createElement('div');distBox.id='mobileMonthDistribution';distBox.className='mobile-fin-insight';dayBox.insertAdjacentElement('afterend',distBox)}
- const key=scopeMonth('calendar'), tx=transactionsForMonth(key).filter(t=>Number(t.value)<0), byDay={}; tx.forEach(t=>{const d=Number(String(t.date).slice(8,10));(byDay[d]??=[]).push(t)});
- const days=Object.keys(byDay).map(Number).sort((a,b)=>b-a), selected=days[0];
- dayBox.innerHTML=selected?'<div class="insight-head"><h3>Despesas do dia '+String(selected).padStart(2,'0')+'/'+key.slice(5,7)+'</h3><b>'+brl(byDay[selected].reduce((s,t)=>s+Math.abs(Number(t.value)||0),0))+'</b></div><div class="row-list">'+byDay[selected].map(t=>'<div class="item"><div class="ico">'+iconFor(t.cat,t.sub)+'</div><div><b>'+t.desc+'</b><small>'+fmt(t.date)+' · '+t.cat+(t.sub?' › '+t.sub:'')+'</small></div><div class="amount down">'+brl(t.value)+'</div></div>').join('')+'</div>':'';
- const sums={};tx.forEach(t=>sums[t.cat]=(sums[t.cat]||0)+Math.abs(Number(t.value)||0));const total=Object.values(sums).reduce((a,b)=>a+b,0),top=Object.entries(sums).sort((a,b)=>b[1]-a[1]).slice(0,4);
- distBox.innerHTML='<div class="insight-head"><h3>Distribuição do mês</h3></div><div class="month-dist-grid">'+top.map(([cat,val])=>'<div class="dist-item"><div class="dist-icon">'+iconFor(cat,'')+'</div><b>'+cat+'</b><strong>'+brl(val)+'</strong><small>'+(total?Math.round(val/total*100):0)+'%</small></div>').join('')+'</div>';
+ if(!dayBox){dayBox=document.createElement('div');dayBox.id='mobileDayExpenses';dayBox.className='mobile-fin-insight';dayBox.dataset.homeBlock='dayexpenses';host.insertAdjacentElement('afterend',dayBox)}
+ if(!distBox){distBox=document.createElement('div');distBox.id='mobileMonthDistribution';distBox.className='mobile-fin-insight';distBox.dataset.homeBlock='distribution';dayBox.insertAdjacentElement('afterend',distBox)}
+ const key=scopeMonth('calendar'), tx=transactionsForMonth(key).filter(t=>Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense&&t.status!=='planned'), byDay={};tx.forEach(t=>{const d=Number(String(t.date).slice(8,10));(byDay[d]??=[]).push(t)});
+ const todayKey=monthKey(today), selected=key===todayKey?today.getDate():1, dayRows=byDay[selected]||[];
+ dayBox.innerHTML='<div class="insight-head"><h3>Despesas do dia '+String(selected).padStart(2,'0')+'/'+key.slice(5,7)+'</h3><b>'+brl(dayRows.reduce((s,t)=>s+Math.abs(Number(t.value)||0),0))+'</b></div>'+(dayRows.length?'<div class="row-list">'+dayRows.map(t=>'<div class="item"><div class="ico">'+iconFor(t.cat,t.sub)+'</div><div><b>'+t.desc+'</b><small>'+fmt(t.date)+' · '+t.cat+(t.sub?' › '+t.sub:'')+'</small></div><div class="amount down">'+brl(t.value)+'</div></div>').join('')+'</div>':'<div class="notice">Nenhuma despesa registrada neste dia.</div>');
+ const sums={};tx.forEach(t=>{const cat=String(t.cat||'Outros').trim()||'Outros';sums[cat]=(sums[cat]||0)+Math.abs(Number(t.value)||0)});
+ const entries=Object.entries(sums).sort((a,b)=>b[1]-a[1]),total=entries.reduce((s,x)=>s+x[1],0),raw=entries.map(x=>total?x[1]/total*100:0),base=raw.map(Math.floor),remain=100-base.reduce((a,b)=>a+b,0),order=raw.map((x,i)=>[i,x-base[i]]).sort((a,b)=>b[1]-a[1]);for(let j=0;j<remain;j++)base[order[j%order.length]?.[0]||0]++;
+ distBox.innerHTML='<div class="insight-head"><h3>Distribuição do mês</h3><b>'+ (entries.length?base.reduce((a,b)=>a+b,0)+'%':'0%') +'</b></div><div class="month-dist-grid">'+entries.map(([cat,val],i)=>'<div class="dist-item"><div class="dist-icon">'+iconFor(cat,'')+'</div><b>'+cat+'</b><strong>'+brl(val)+'</strong><small>'+base[i]+'%</small></div>').join('')+'</div>';
+ applyHomeLayout();
 }
 function hideTooltip(){const t=document.getElementById('tooltip');if(t)t.style.display='none'}
 window.addEventListener('scroll',hideTooltip,{passive:true});
