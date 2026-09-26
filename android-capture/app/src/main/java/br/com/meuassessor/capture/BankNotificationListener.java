@@ -13,7 +13,7 @@ public final class BankNotificationListener extends NotificationListenerService 
     static final String DIAG_PREFS="capture_diagnostics", KEY_PACKAGE="last_package", KEY_ALLOWED="last_allowed",
             KEY_FINANCIAL="last_financial", KEY_RESULT="last_result", KEY_TIME="last_time",
             KEY_CONNECTED="listener_connected", KEY_RECENT_PACKAGES="recent_packages",
-            KEY_TITLE="last_title", KEY_TEXT="last_text", KEY_AMOUNT="last_amount", KEY_DIRECTION="last_direction";
+            KEY_TITLE="last_title", KEY_TEXT="last_text", KEY_AMOUNT="last_amount", KEY_DIRECTION="last_direction",\n            KEY_RAW_PACKAGE="last_raw_package", KEY_RAW_TITLE="last_raw_title", KEY_RAW_TEXT="last_raw_text", KEY_RAW_TIME="last_raw_time";
 
     @Override public void onListenerConnected() {
         super.onListenerConnected();
@@ -29,19 +29,23 @@ public final class BankNotificationListener extends NotificationListenerService 
     @Override public void onNotificationPosted(StatusBarNotification status) {
         if(status==null)return;
         String pkg=status.getPackageName(); rememberPackage(pkg);
-        boolean allowed=BankAllowlist.contains(this,pkg);
-        if(!allowed){saveDiagnostic(pkg,false,false,"Ignorada: aplicativo não autorizado","","",null,"");return;}
         Notification n=status.getNotification();
-        if(n==null){saveDiagnostic(pkg,true,false,"Ignorada: notificação sem conteúdo","","",null,"");return;}
-        Bundle e=n.extras;
-        String title=first(e,Notification.EXTRA_TITLE,Notification.EXTRA_TITLE_BIG);
-        String body=joinUnique(
-                text(e.getCharSequence(Notification.EXTRA_BIG_TEXT)),
-                text(e.getCharSequence(Notification.EXTRA_TEXT)),
-                text(e.getCharSequence(Notification.EXTRA_SUB_TEXT)),
-                text(e.getCharSequence(Notification.EXTRA_INFO_TEXT)),
-                lines(e.getCharSequenceArray(Notification.EXTRA_TEXT_LINES))
-        );
+        String title="",body="";
+        if(n!=null){
+            Bundle e=n.extras;
+            title=first(e,Notification.EXTRA_TITLE,Notification.EXTRA_TITLE_BIG);
+            body=joinUnique(
+                    text(e.getCharSequence(Notification.EXTRA_BIG_TEXT)),
+                    text(e.getCharSequence(Notification.EXTRA_TEXT)),
+                    text(e.getCharSequence(Notification.EXTRA_SUB_TEXT)),
+                    text(e.getCharSequence(Notification.EXTRA_INFO_TEXT)),
+                    lines(e.getCharSequenceArray(Notification.EXTRA_TEXT_LINES))
+            );
+        }
+        saveRawDiagnostic(pkg,title,body,status.getPostTime());
+        boolean allowed=BankAllowlist.contains(this,pkg);
+        if(!allowed){saveDiagnostic(pkg,false,false,"Ignorada: aplicativo não autorizado",title,body,null,"");return;}
+        if(n==null){saveDiagnostic(pkg,true,false,"Ignorada: notificação sem conteúdo",title,body,null,"");return;}
         boolean financial=NotificationParser.looksFinancial(title,body);
         CapturedNotification event=NotificationParser.parse(pkg,title,body,status.getPostTime());
         if(!financial){
@@ -63,7 +67,7 @@ public final class BankNotificationListener extends NotificationListenerService 
         StringBuilder out=new StringBuilder();int count=0;for(String item:items){if(count++>=12)break;if(out.length()>0)out.append('\n');out.append(item);}
         p.edit().putString(KEY_RECENT_PACKAGES,out.toString()).apply();
     }
-    static void reconnect(Context c){requestRebind(new ComponentName(c,BankNotificationListener.class));}
+    static void reconnect(Context c){requestRebind(new ComponentName(c,BankNotificationListener.class));}\n    private void saveRawDiagnostic(String pkg,String title,String body,long postedAt){getSharedPreferences(DIAG_PREFS,Context.MODE_PRIVATE).edit().putString(KEY_RAW_PACKAGE,pkg==null?\"\":pkg).putString(KEY_RAW_TITLE,title==null?\"\":title).putString(KEY_RAW_TEXT,body==null?\"\":body).putLong(KEY_RAW_TIME,postedAt).apply();}
     private void saveDiagnostic(String pkg,boolean allowed,boolean financial,String result,String title,String body,Long amount,String direction){
         SharedPreferences.Editor x=getSharedPreferences(DIAG_PREFS,Context.MODE_PRIVATE).edit().putString(KEY_PACKAGE,pkg==null?"":pkg)
                 .putBoolean(KEY_ALLOWED,allowed).putBoolean(KEY_FINANCIAL,financial).putString(KEY_RESULT,result).putLong(KEY_TIME,System.currentTimeMillis())
