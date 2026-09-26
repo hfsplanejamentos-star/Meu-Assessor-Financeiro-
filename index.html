@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260926-r225';
+ const RELEASE='atual-ui-20260926-r226';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -992,6 +992,14 @@ input[list]{background:#071426;color:var(--text);border:1px solid var(--line);bo
 #recurringList .neon-expense-icon,#recurringPage .neon-expense-icon{display:flex!important;width:40px!important;height:40px!important;align-items:center!important;justify-content:center!important}
 #recurringList .neon-expense-icon svg,#recurringPage .neon-expense-icon svg{display:block!important;width:31px!important;height:31px!important}
 </style>
+<style id="r226-mobile-fix">
+.neon-expense-icon,.neon-expense-icon svg{opacity:1!important;visibility:visible!important}
+#commitments .ico,#recurringList .ico,#recurringPage .ico{overflow:visible!important}
+#commitments .ico .neon-expense-icon,#recurringList .ico .neon-expense-icon,#recurringPage .ico .neon-expense-icon{display:flex!important;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important}
+#commitments .ico .neon-expense-icon svg,#recurringList .ico .neon-expense-icon svg,#recurringPage .ico .neon-expense-icon svg{display:block!important;width:30px!important;height:30px!important;filter:none!important}
+#cajuExpenseChart{display:block!important;width:100%!important;height:220px!important;min-height:220px!important}
+.caju-detail-panel .chart-wrap{display:block!important;min-height:220px!important}
+</style>
 </head>
 <body>
 <div class="tooltip" id="tooltip"></div>
@@ -1616,7 +1624,7 @@ diamond:'<svg viewBox="0 0 32 32"><path class="fill" d="m3 11 6-8h14l6 8-13 18z"
 repeat:'<svg viewBox="0 0 32 32"><path d="M26 11a11 11 0 0 0-19-3L3 12M6 8l1 4-4 1M6 21a11 11 0 0 0 19 3l4-4M26 24l-1-4 4-1"/></svg>',calendar:'<svg viewBox="0 0 32 32"><rect x="3" y="6" width="21" height="22" rx="3"/><path d="M8 3v6M19 3v6M3 12h21"/><circle cx="24" cy="22" r="6"/><path d="M24 19v4l3 2"/></svg>',ai:'<svg viewBox="0 0 32 32"><path d="M16 5c-4-5-10-1-8 4-6 0-7 8-2 10-3 5 3 10 7 7 1 5 7 4 7 0 5 3 10-2 7-7 5-3 3-10-2-10 1-5-5-8-9-4zM16 5v22M9 11h7M16 18h8"/></svg>',sync:'<svg viewBox="0 0 32 32"><path d="M8 23H7a6 6 0 0 1 0-12c1-6 9-9 14-5 3 1 5 4 5 7 5 0 6 8 1 10h-3M11 21a7 7 0 0 0 11 3l2-3M21 27l1-3 3 1M21 19a7 7 0 0 0-11-3l-2 3M11 13l-1 3-3-1"/></svg>'
 };
 const iconFor=(cat,sub='')=>{const s=iconSpecFor(cat,sub),svg=neonSvg[s.glyph]||neonSvg.receipt;return '<span class="neon-expense-icon neon-'+s.tone+'" aria-hidden="true">'+svg+'</span>'};
-const commitmentIconFor=r=>iconFor([r.cat,r.desc].filter(Boolean).join(' '),[r.sub,r.desc].filter(Boolean).join(' '));
+const commitmentIconFor=r=>{const d=String(r.desc||'').toLowerCase();if(/pens[aã]o/.test(d))return iconFor('Pensão','');if(/presta[cç][aã]o.*carro|carro/.test(d))return iconFor('Prestação do carro','');if(/aluguel/.test(d))return iconFor('Aluguel','');if(/internet/.test(d))return iconFor('Internet','');if(/tim|telefone|celular/.test(d))return iconFor('Plano TIM','');if(/luz|energia/.test(d))return iconFor('Conta de Luz','');if(/m[oó]ve|emprest/.test(d))return iconFor('Móveis','');return iconFor(r.cat||r.desc,r.sub||r.desc)};
 
 /* v1.8.0 SIMULAÇÃO R6.5 · POPUPS EDITÁVEIS — camada central de regras financeiras */
 const FinanceDomain=(()=>{
@@ -2188,12 +2196,13 @@ function cajuBalanceAt(cardId,key){return cajuSnapshot(cardId,key).available}
 function cajuCapacityAt(cardId,key){return cajuSnapshot(cardId,key).credit}
 function renderCajuDetails(){
  const card=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||String(c.name||'').toLowerCase().includes('caju'));if(!card)return;
- const key=scopeMonth('caju')||activeMonth,all=(db.transactions||[]).filter(t=>(t.cardId===card.id||t.card===card.id||t.account===card.id||t.accountId===card.id)&&String(t.date||'').slice(0,7)===key&&t.status!=='planned'&&t.status!=='ignored'&&!t.excludeFromBalance&&Number(t.value)<0).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.time||'').localeCompare(String(a.time||'')));
+ const key=scopeMonth('caju')||activeMonth,isCajuTx=t=>{const ids=[t.cardId,t.card,t.account,t.accountId].map(String);const text=[t.origin,t.source,t.accountName,t.cardName,t.bank,t.desc].filter(Boolean).join(' ').toLowerCase();return ids.includes(String(card.id))||t.benefit===true||/caju/.test(text)},all=(db.transactions||[]).filter(t=>isCajuTx(t)&&String(t.date||'').slice(0,7)===key&&t.status!=='planned'&&t.status!=='ignored'&&!t.excludeFromBalance&&Number(t.value)<0).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.time||'').localeCompare(String(a.time||'')));
  const balanceById=new Map();let running=0;
  (db.transactions||[]).filter(t=>(t.cardId===card.id||t.card===card.id)&&String(t.date||'').slice(0,7)<=key&&t.status!=='planned'&&!t.excludeFromBalance).sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.time||'').localeCompare(String(b.time||''))).forEach(t=>{running=Math.round((running+Number(t.value||0))*100)/100;balanceById.set(String(t.id),running)});
  const snap=cajuSnapshot(card.id,key),spent=snap.spent,avail=snap.available,limit=snap.credit,pct=limit?avail/limit*100:0,future=key>monthKey(today);
  const k=document.getElementById('cajuDetailKpis');if(k)k.innerHTML=`<div class="card-kpi"><small>${future?'Saldo previsto':'Saldo disponível real'}</small><b class="up">${brl(avail)}</b></div><div class="card-kpi"><small>Gasto em ${monthLabelKey(key)}</small><b class="down">${brl(spent)}</b></div><div class="card-kpi"><small>Créditos acumulados</small><b>${brl(limit)}</b></div><div class="card-kpi"><small>Saldo disponível</small><b>${pct.toFixed(1)}%</b></div>`;
  const cajuMap={};all.forEach(t=>{const name=String(t.sub||t.cat||'Alimentação').trim()||'Alimentação';cajuMap[name]=(cajuMap[name]||0)+Math.abs(Number(t.value)||0)});const cajuItems=Object.entries(cajuMap).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);const cajuCanvas=document.getElementById('cajuExpenseChart');if(cajuCanvas){drawDonut(cajuCanvas,cajuItems);attachTooltip(cajuCanvas)}const cajuLegend=document.getElementById('cajuExpenseLegend');if(cajuLegend)cajuLegend.innerHTML=cajuItems.map((it,i)=>'<div class="legend-line"><span>'+it.name+'</span><b>'+brl(it.value)+'</b></div>').join('')||'<div class="notice">Sem gastos Caju neste mês.</div>';
+ if(cajuCanvas){cajuCanvas.style.display='block';cajuCanvas.style.width='100%';cajuCanvas.style.height='220px';cajuCanvas.closest('.chart-wrap')?.classList.toggle('empty-chart',!cajuItems.length)}
  const tb=document.getElementById('cajuDetailTable');if(tb)tb.innerHTML=all.length?all.map(t=>`<tr><td>${fmt(t.date)} ${t.time||''}</td><td>${t.desc||t.description||''}</td><td>${t.cat||'Alimentação'} › ${t.sub||''}</td><td class="down">-${brl(Math.abs(Number(t.value)||0))}</td><td>${balanceById.has(String(t.id))?brl(balanceById.get(String(t.id))):'—'}</td></tr>`).join(''):`<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:22px">Nenhuma movimentação Caju em ${monthLabelKey(key)}.</td></tr>`;
 }
 function renderCardDashboard(){
