@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260926-r226';
+ const RELEASE='atual-ui-20260926-r227';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -1000,7 +1000,7 @@ input[list]{background:#071426;color:var(--text);border:1px solid var(--line);bo
 #cajuExpenseChart{display:block!important;width:100%!important;height:220px!important;min-height:220px!important}
 .caju-detail-panel .chart-wrap{display:block!important;min-height:220px!important}
 </style>
-</head>
+<style id="r227-hardfix">#commitments .neon-expense-icon{display:grid!important;place-items:center!important;width:42px!important;height:42px!important;color:#fff!important;filter:none!important}#commitments .neon-expense-icon svg{display:block!important;width:30px!important;height:30px!important;stroke:currentColor!important;fill:none;filter:none!important}.neon-orange{color:#ff9f43!important}.neon-blue{color:#56b6ff!important}.neon-cyan{color:#55e7ff!important}.neon-purple{color:#b58cff!important}.neon-red{color:#ff6f87!important}.neon-green{color:#54df9b!important}.neon-amber{color:#ffd166!important}#homeCajuExpenses .chart-wrap{height:230px;min-height:230px}#homeCajuExpenseChart{display:block!important;width:100%!important;height:230px!important}</style></head>
 <body>
 <div class="tooltip" id="tooltip"></div>
 <div class="mobile-overlay" id="overlay"></div>
@@ -1058,6 +1058,10 @@ input[list]{background:#071426;color:var(--text);border:1px solid var(--line);bo
         <div class="category-content"><div class="chart-wrap"><canvas id="categoryChart"></canvas></div><div class="legend" id="categoryLegend"></div><div class="chart-note">Mês atual/passado: gastos realizados. Meses futuros: compromissos previstos por categoria. Clique em uma fatia para detalhes.</div></div>
       </div>
 
+      <div class="card panel" id="homeCajuExpenses" data-home-block="cajuexpenses">
+        <div class="panel-head"><div><h3>Despesas Caju</h3><small style="color:var(--muted)">Alimentação e benefício · mês selecionado</small></div><button class="secondary" data-nav="cards">Detalhes</button></div>
+        <div class="chart-wrap"><canvas id="homeCajuExpenseChart"></canvas></div><div class="legend" id="homeCajuExpenseLegend"></div>
+      </div>
       <div class="card panel clickable-card" data-card-nav="recurring" tabindex="0">
         <div class="panel-head"><h3>Próximos Compromissos</h3><select id="commitDays"><option value="7">7 dias</option><option value="15">15 dias</option><option value="30">30 dias</option></select></div>
         <div class="row-list" id="commitments"></div>
@@ -1915,12 +1919,13 @@ function recurringDateInMonth(r,key){
  if(st&&d<st||en&&d>en)return null; return d;
 }
 function renderCommitments(){
+ const semanticCommitmentIcon=r=>{const d=String(r.desc||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');if(d.includes('pensao'))return iconFor('pensao','');if(d.includes('prestacao')||d.includes('carro'))return iconFor('prestacao carro','');if(d.includes('aluguel'))return iconFor('aluguel','');if(d.includes('internet'))return iconFor('internet','');if(d.includes('tim')||d.includes('telefone'))return iconFor('plano tim','');if(d.includes('luz')||d.includes('energia'))return iconFor('luz','');if(d.includes('moveis')||d.includes('emprest'))return iconFor('moveis','');return commitmentIconFor(r)};
  const days=+document.getElementById('commitDays').value,key=scopeMonth('calendar'),[y,m]=key.split('-').map(Number),periodStart=new Date(y,m-1,1,0,0,0,0),periodEnd=new Date(y,m,0,23,59,59,999);
  const windowEnd=new Date(periodStart.getTime()+Math.max(0,days-1)*86400000); if(windowEnd<periodEnd)periodEnd.setTime(windowEnd.getTime());
  let rows=(db.recurring||[]).filter(r=>(r.active??true)).map(r=>({...r,next:recurringDateInMonth(r,key)})).filter(r=>r.next&&r.next>=periodStart&&r.next<=periodEnd).sort((a,b)=>a.next-b.next);
  const allMonth=(db.recurring||[]).filter(r=>(r.active??true)).map(r=>({...r,next:recurringDateInMonth(r,key)})).filter(r=>r.next).sort((a,b)=>a.next-b.next);
  let note=''; if(!rows.length&&allMonth.length){rows=allMonth;note='<div class="notice commitment-note">Nenhum vencimento nos primeiros '+days+' dias. Exibindo os compromissos de '+monthLabelKey(key)+'.</div>'}
- document.getElementById('commitments').innerHTML=note+(rows.length?rows.map(r=>`<div class="item commitment-item clickable" data-edit-recurring="${r.id}"><div class="ico">${commitmentIconFor(r)}</div><div><b>${r.desc}</b><small>${r.next.toLocaleDateString('pt-BR')} · dia ${String(r.due).padStart(2,'0')}</small></div><div class="amount ${Number(r.value)<0?'down':''}">${brl(r.value)}</div></div>`).join(''):`<div class="notice">Nenhum compromisso cadastrado em ${monthLabelKey(key)}.</div>`);
+ document.getElementById('commitments').innerHTML=note+(rows.length?rows.map(r=>`<div class="item commitment-item clickable" data-edit-recurring="${r.id}"><div class="ico">${semanticCommitmentIcon(r)}</div><div><b>${r.desc}</b><small>${r.next.toLocaleDateString('pt-BR')} · dia ${String(r.due).padStart(2,'0')}</small></div><div class="amount ${Number(r.value)<0?'down':''}">${brl(r.value)}</div></div>`).join(''):`<div class="notice">Nenhum compromisso cadastrado em ${monthLabelKey(key)}.</div>`);
  document.querySelectorAll('#commitments [data-edit-recurring]').forEach(el=>el.onclick=()=>openRecurringEdit(el.dataset.editRecurring));
 }
 function calendarEventsForDay(day){
@@ -2194,6 +2199,8 @@ function cajuSnapshot(cardId,key){
 }
 function cajuBalanceAt(cardId,key){return cajuSnapshot(cardId,key).available}
 function cajuCapacityAt(cardId,key){return cajuSnapshot(cardId,key).credit}
+function cajuExpenseItems(key){const card=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||/caju/i.test(String(c.name||'')));if(!card)return[];const rows=(db.transactions||[]).filter(t=>{const ids=[t.cardId,t.card,t.account,t.accountId].map(String),txt=[t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' ').toLowerCase();return String(t.date||'').slice(0,7)===key&&Number(t.value)<0&&t.status!=='planned'&&t.status!=='ignored'&&(ids.includes(String(card.id))||t.benefit===true||/caju/.test(txt))});const m={};rows.forEach(t=>{const n=String(t.sub||t.cat||'Alimentação').trim()||'Alimentação';m[n]=(m[n]||0)+Math.abs(Number(t.value)||0)});return Object.entries(m).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value)}
+function renderHomeCajuExpenses(){const canvas=document.getElementById('homeCajuExpenseChart'),legend=document.getElementById('homeCajuExpenseLegend');if(!canvas||!legend)return;const items=cajuExpenseItems(activeMonth);drawDonut(canvas,items);attachTooltip(canvas);legend.innerHTML=items.length?items.map(x=>'<div class="legend-line"><span>'+x.name+'</span><b>'+brl(x.value)+'</b></div>').join(''):'<div class="notice">Sem gastos Caju em '+monthLabelKey(activeMonth)+'.</div>'}
 function renderCajuDetails(){
  const card=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||String(c.name||'').toLowerCase().includes('caju'));if(!card)return;
  const key=scopeMonth('caju')||activeMonth,isCajuTx=t=>{const ids=[t.cardId,t.card,t.account,t.accountId].map(String);const text=[t.origin,t.source,t.accountName,t.cardName,t.bank,t.desc].filter(Boolean).join(' ').toLowerCase();return ids.includes(String(card.id))||t.benefit===true||/caju/.test(text)},all=(db.transactions||[]).filter(t=>isCajuTx(t)&&String(t.date||'').slice(0,7)===key&&t.status!=='planned'&&t.status!=='ignored'&&!t.excludeFromBalance&&Number(t.value)<0).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.time||'').localeCompare(String(a.time||'')));
@@ -2521,10 +2528,10 @@ document.getElementById('mobileRefreshBtn')?.addEventListener('click',mobileRefr
 })();
 function renderAll(){
  const steps=[
-  ['income',()=>ensureMonthlyIncomeAutomation()],['filters',()=>fillMonthFilters()],['kpis',()=>renderKpis()],['quick',()=>renderQuickFinancialCards()],['layout',()=>applyHomeLayout()],['kpi-nav',()=>bindKpiNavigation()],['lists',()=>renderLists()],['commitments',()=>renderCommitments()],['calendar',()=>renderCalendar()],['mobile-insights',()=>renderMobileDayAndDistribution()],['investment',()=>renderInvestment()],['cards',()=>renderCardDashboard()],['invoices',()=>renderInvoiceManagement()],['audit',()=>renderAudit()],['alerts',()=>renderAlerts()],['goals',()=>renderBudgetsGoals()],['android',()=>renderAndroidInbox()],['bridge',()=>updateAndroidBridgeStatus()],['details',()=>bindDetailClicks()],['hover',()=>bindValueHover()],['reconciliation',()=>renderReconciliation()]
+  ['income',()=>ensureMonthlyIncomeAutomation()],['filters',()=>fillMonthFilters()],['kpis',()=>renderKpis()],['quick',()=>renderQuickFinancialCards()],['layout',()=>applyHomeLayout()],['kpi-nav',()=>bindKpiNavigation()],['lists',()=>renderLists()],['commitments',()=>renderCommitments()],['calendar',()=>renderCalendar()],['mobile-insights',()=>renderMobileDayAndDistribution()],['caju-home',()=>renderHomeCajuExpenses()],['investment',()=>renderInvestment()],['cards',()=>renderCardDashboard()],['invoices',()=>renderInvoiceManagement()],['audit',()=>renderAudit()],['alerts',()=>renderAlerts()],['goals',()=>renderBudgetsGoals()],['android',()=>renderAndroidInbox()],['bridge',()=>updateAndroidBridgeStatus()],['details',()=>bindDetailClicks()],['hover',()=>bindValueHover()],['reconciliation',()=>renderReconciliation()]
  ];
  const errors=[];for(const [name,fn] of steps){try{fn()}catch(e){errors.push(name);console.error('[renderAll:'+name+']',e)}}
- requestAnimationFrame(()=>{for(const [name,fn] of [['charts',()=>renderCharts()],['card-trend',()=>renderCardTrend()],['hover-raf',()=>bindValueHover()]])try{fn()}catch(e){errors.push(name);console.error('[renderAll:'+name+']',e)}});
+ requestAnimationFrame(()=>{for(const [name,fn] of [['charts',()=>{renderCharts();renderHomeCajuExpenses()}],['card-trend',()=>renderCardTrend()],['hover-raf',()=>bindValueHover()]])try{fn()}catch(e){errors.push(name);console.error('[renderAll:'+name+']',e)}});
  window.assessorRenderErrors=errors;document.documentElement.dataset.financeRender=errors.length?'partial':'ok';
 }
 
@@ -2716,7 +2723,7 @@ document.getElementById('entryForm').onsubmit=e=>{
 };
 [fValue,fDate,fCard,fInstallments,fInstallmentNo,fInstallmentMode].forEach(el=>{el.addEventListener('input',renderInstallmentPreview);el.addEventListener('change',renderInstallmentPreview)});
 
-let navHistory=['overview'];function updateBackButton(){backBtn.classList.toggle('show',navHistory.length>1)}function returnHomeAfterSave(){navHistory=['overview'];nav('overview',false);requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:'smooth'}))}function nav(view,push=true){document.querySelectorAll('.module').forEach(x=>x.classList.remove('active'));document.getElementById('view-'+view).classList.add('active');window.scrollTo({top:0,left:0,behavior:'instant'});const main=document.querySelector('.main');if(main)main.scrollTop=0;document.querySelectorAll('.nav button[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===view));document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');if(push&&navHistory[navHistory.length-1]!==view)navHistory.push(view);updateBackButton();if(view==='overview'){applyHomeLayout();requestAnimationFrame(renderCharts)}if(view==='customize')renderCustomize();if(view==='import')fillImportSelectors();if(view==='reconcile')renderReconciliation();if(view==='audit')renderAudit();if(view==='budgets')renderBudgetsGoals();if(view==='androidcaptures')renderAndroidCaptures();if(view==='alerts')renderAlerts()}
+let navHistory=['overview'];function updateBackButton(){backBtn.classList.toggle('show',navHistory.length>1)}function returnHomeAfterSave(){navHistory=['overview'];nav('overview',false);requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:'smooth'}))}function nav(view,push=true){document.querySelectorAll('.module').forEach(x=>x.classList.remove('active'));document.getElementById('view-'+view).classList.add('active');window.scrollTo({top:0,left:0,behavior:'instant'});const main=document.querySelector('.main');if(main)main.scrollTop=0;document.querySelectorAll('.nav button[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===view));document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');if(push&&navHistory[navHistory.length-1]!==view)navHistory.push(view);updateBackButton();if(view==='overview'){applyHomeLayout();requestAnimationFrame(renderCharts)}if(view==='cards'){requestAnimationFrame(()=>{renderCardDashboard();renderCajuDetails()})}if(view==='customize')renderCustomize();if(view==='import')fillImportSelectors();if(view==='reconcile')renderReconciliation();if(view==='audit')renderAudit();if(view==='budgets')renderBudgetsGoals();if(view==='androidcaptures')renderAndroidCaptures();if(view==='alerts')renderAlerts()}
 const globalMonthFilter=document.getElementById('globalMonthFilter');if(globalMonthFilter)globalMonthFilter.onchange=e=>setActiveMonth(e.target.value);
 // Mobile: setas + swipe para trocar o mês sem interferir no gesto da borda do Android.
 const mobileMonthNav=document.getElementById('mobileMonthNav'), mobileMonthLabel=document.getElementById('mobileMonthLabel');
