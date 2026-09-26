@@ -71,6 +71,8 @@ final class BankAllowlist {
 
     static boolean contains(Context context, String packageName) {
         if (packageName == null) return false;
+        SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        if (preferences.getStringSet(KEY_DISABLED, new HashSet<>()).contains(packageName)) return false;
         if (packages(context).contains(packageName)) return true;
         String value = packageName.toLowerCase(java.util.Locale.ROOT);
         // Bancos alteram packageName entre versões, marcas e módulos de Pix.
@@ -82,7 +84,10 @@ final class BankAllowlist {
     }
 
     static boolean isEnabled(Context context, String packageName) {
-        return contains(context, packageName);
+        if (packageName == null) return false;
+        SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        return contains(context, packageName)
+                && !preferences.getStringSet(KEY_DISABLED, new HashSet<>()).contains(packageName);
     }
 
     static void setEnabled(Context context, String packageName, boolean enabled) {
