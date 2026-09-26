@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260926-r221';
+ const RELEASE='atual-ui-20260926-r222';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -983,6 +983,7 @@ input[list]{background:#071426;color:var(--text);border:1px solid var(--line);bo
 </style>
 <style id="r219-icon-fix">#commitments .ico{display:flex!important;align-items:center!important;justify-content:center!important;overflow:visible!important}#commitments .neon-expense-icon{display:flex!important;width:42px!important;height:42px!important;min-width:42px!important;align-items:center!important;justify-content:center!important}#commitments .neon-expense-icon svg{display:block!important;width:32px!important;height:32px!important;stroke:currentColor!important}</style>
 <style id="r221-selected-day">.calendar [data-calendar-day].selected-day{outline:2px solid rgba(50,190,255,.85)!important;box-shadow:0 0 0 3px rgba(50,190,255,.10)!important}</style>
+<style id="r222-pull-refresh">#pullRefreshIndicator{position:fixed;z-index:99999;left:50%;top:0;transform:translate(-50%,-70px);padding:9px 14px;border-radius:999px;background:rgba(8,19,32,.96);border:1px solid rgba(90,190,255,.35);box-shadow:0 8px 24px rgba(0,0,0,.28);font:700 12px system-ui;color:#b9d7ea;pointer-events:none;transition:transform .16s ease,opacity .16s ease;opacity:0}#pullRefreshIndicator.show{opacity:1}#pullRefreshIndicator.ready{color:#fff}</style>
 </head>
 <body>
 <div class="tooltip" id="tooltip"></div>
@@ -2489,6 +2490,15 @@ async function mobileRefresh(){
  }finally{setTimeout(()=>{if(b){b.classList.remove('refreshing');b.querySelector('span').textContent='Atualizar'}},450)}
 }
 document.getElementById('mobileRefreshBtn')?.addEventListener('click',mobileRefresh);
+(function installPullToRefresh(){
+ if(document.getElementById('pullRefreshIndicator'))return;
+ const el=document.createElement('div');el.id='pullRefreshIndicator';el.textContent='↓ Puxe para atualizar';document.body.appendChild(el);
+ let sy=0,pulling=false,dy=0,busy=false;
+ const reset=()=>{pulling=false;dy=0;el.classList.remove('ready','show');el.style.transform='translate(-50%,-70px)'};
+ document.addEventListener('touchstart',e=>{if(busy||window.scrollY>1||e.touches.length!==1)return;sy=e.touches[0].clientY;pulling=true},{passive:true});
+ document.addEventListener('touchmove',e=>{if(!pulling)return;dy=e.touches[0].clientY-sy;if(dy<=0){reset();return}if(window.scrollY>1){reset();return}const shown=Math.min(86,dy*.55);el.classList.add('show');el.style.transform='translate(-50%,'+(shown-58)+'px)';const ready=dy>=105;el.classList.toggle('ready',ready);el.textContent=ready?'↻ Solte para atualizar':'↓ Puxe para atualizar';if(ready&&e.cancelable)e.preventDefault()},{passive:false});
+ document.addEventListener('touchend',async()=>{if(!pulling)return;const go=dy>=105;pulling=false;if(!go){reset();return}busy=true;el.classList.add('show','ready');el.textContent='↻ Atualizando...';el.style.transform='translate(-50%,12px)';try{await mobileRefresh();el.textContent='✓ Atualizado'}finally{setTimeout(()=>{busy=false;reset()},650)}},{passive:true});
+})();
 function renderAll(){
  const steps=[
   ['income',()=>ensureMonthlyIncomeAutomation()],['filters',()=>fillMonthFilters()],['kpis',()=>renderKpis()],['quick',()=>renderQuickFinancialCards()],['layout',()=>applyHomeLayout()],['kpi-nav',()=>bindKpiNavigation()],['lists',()=>renderLists()],['commitments',()=>renderCommitments()],['calendar',()=>renderCalendar()],['mobile-insights',()=>renderMobileDayAndDistribution()],['investment',()=>renderInvestment()],['cards',()=>renderCardDashboard()],['invoices',()=>renderInvoiceManagement()],['audit',()=>renderAudit()],['alerts',()=>renderAlerts()],['goals',()=>renderBudgetsGoals()],['android',()=>renderAndroidInbox()],['bridge',()=>updateAndroidBridgeStatus()],['details',()=>bindDetailClicks()],['hover',()=>bindValueHover()],['reconciliation',()=>renderReconciliation()]
