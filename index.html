@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260926-r217';
+ const RELEASE='atual-ui-20260926-r218';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -978,6 +978,9 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
 .calendar .event.income{box-shadow:inset 0 -2px 0 rgba(32,231,166,.42)}
 .calendar .event.recurring{outline:1px solid rgba(40,156,255,.28)}
 </style>
+<style id="r218-category-editor">
+input[list]{background:#071426;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+</style>
 </head>
 <body>
 <div class="tooltip" id="tooltip"></div>
@@ -1279,8 +1282,8 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
     <div class="field"><label>Descrição</label><input id="fDesc" required placeholder="Ex.: Supermercado"></div>
     <div class="field"><label>Valor</label><input id="fValue" type="number" step="0.01" required></div>
     <div class="field"><label>Data</label><input id="fDate" type="date" required></div>
-    <div class="field"><label>Categoria</label><select id="fCategory"></select></div>
-    <div class="field"><label>Subcategoria</label><input id="fSub" placeholder="Ex.: Mercado"></div>
+    <div class="field"><label>Categoria</label><input id="fCategory" list="categorySuggestions" placeholder="Selecione ou escreva uma categoria"></div>
+    <div class="field"><label>Subcategoria</label><input id="fSub" list="subcategorySuggestions" placeholder="Selecione ou escreva. Ex.: Cerveja"></div>
     <div class="field"><label>Conta origem</label><select id="fAccount"></select></div>
     <div class="field"><label>Conta destino</label><select id="fDest"></select></div><div class="field"><label>Cartão (opcional)</label><select id="fCard"><option value="">—</option></select></div><div class="field"><label>Modo do parcelamento</label><select id="fInstallmentMode"><option value="single">À vista</option><option value="total">Valor total da compra</option><option value="installment">Valor informado é da parcela</option></select></div><div class="field"><label>Nº de parcelas</label><input id="fInstallments" type="number" min="1" max="48" value="1"></div><div class="field"><label>Parcela inicial</label><input id="fInstallmentNo" type="number" min="1" max="48" value="1"></div>
     <div class="field"><label>Status</label><select id="fStatus"><option value="realized">Realizada</option><option value="planned">Prevista / Projetada</option></select></div>
@@ -1369,7 +1372,7 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
   </form>
  </div>
 </div>
-<div class="modal" id="editTransactionModal"><div class="modal-box"><div class="modal-head"><h3>Editar lançamento</h3><button class="secondary" id="closeEditModal">✕</button></div><form id="editTransactionForm"><input type="hidden" id="editTxId"><div class="form-grid"><div class="field"><label>Tipo</label><select id="editType"><option value="income">Receita</option><option value="expense">Despesa / custo</option></select></div><div class="field"><label>Data</label><input id="editDate" type="date" required></div><div class="field"><label>Descrição</label><input id="editDesc" required></div><div class="field"><label>Valor</label><input id="editValue" type="number" min="0" step="0.01" required></div><div class="field"><label>Categoria</label><select id="editCategory"></select></div><div class="field"><label>Subcategoria</label><input id="editSub"></div><div class="field"><label>Conta</label><select id="editAccount"></select></div><div class="field"><label>Cartão (opcional)</label><select id="editCard"></select></div><div class="field"><label>Origem</label><select id="editOrigin"><option>Manual</option><option>Importação</option><option>WhatsApp</option><option>Notificação Android</option><option>Google Wallet</option><option>Open Finance</option></select></div><div class="field"><label>Status</label><select id="editStatus"><option value="realized">Realizado / Pago / Recebido</option><option value="planned">Previsto / Planejado</option><option value="provisional">Provisório</option></select></div></div><div class="edit-actions"><button type="button" class="danger" id="deleteOneBtn">Excluir lançamento</button><button type="button" class="danger" id="deleteFutureBtn">Excluir esta e futuras parcelas</button><button type="button" class="danger" id="deleteGroupBtn">Excluir compra parcelada inteira</button><span style="flex:1"></span><button type="button" class="secondary" id="cancelEditModal">Cancelar</button><button class="primary">Salvar alterações</button></div></form></div></div>
+<div class="modal" id="editTransactionModal"><div class="modal-box"><div class="modal-head"><h3>Editar lançamento</h3><button class="secondary" id="closeEditModal">✕</button></div><form id="editTransactionForm"><input type="hidden" id="editTxId"><div class="form-grid"><div class="field"><label>Tipo</label><select id="editType"><option value="income">Receita</option><option value="expense">Despesa / custo</option></select></div><div class="field"><label>Data</label><input id="editDate" type="date" required></div><div class="field"><label>Descrição</label><input id="editDesc" required></div><div class="field"><label>Valor</label><input id="editValue" type="number" min="0" step="0.01" required></div><div class="field"><label>Categoria</label><input id="editCategory" list="categorySuggestions" placeholder="Selecione ou escreva"></div><div class="field"><label>Subcategoria</label><input id="editSub" list="subcategorySuggestions" placeholder="Selecione ou escreva"></div><div class="field"><label>Conta</label><select id="editAccount"></select></div><div class="field"><label>Cartão (opcional)</label><select id="editCard"></select></div><div class="field"><label>Origem</label><select id="editOrigin"><option>Manual</option><option>Importação</option><option>WhatsApp</option><option>Notificação Android</option><option>Google Wallet</option><option>Open Finance</option></select></div><div class="field"><label>Status</label><select id="editStatus"><option value="realized">Realizado / Pago / Recebido</option><option value="planned">Previsto / Planejado</option><option value="provisional">Provisório</option></select></div></div><div class="edit-actions"><button type="button" class="danger" id="deleteOneBtn">Excluir lançamento</button><button type="button" class="danger" id="deleteFutureBtn">Excluir esta e futuras parcelas</button><button type="button" class="danger" id="deleteGroupBtn">Excluir compra parcelada inteira</button><span style="flex:1"></span><button type="button" class="secondary" id="cancelEditModal">Cancelar</button><button class="primary">Salvar alterações</button></div></form></div></div>
 <div class="modal" id="invoicePaymentModal">
   <div class="modal-box">
     <div class="modal-head"><h3>Pagar fatura do cartão</h3><button class="secondary" id="closeInvoicePaymentModal">✕</button></div>
@@ -1534,7 +1537,18 @@ const seed={
  investments:[{month:'Jul',planned:1000,realized:900},{month:'Ago',planned:1200,realized:1200},{month:'Set',planned:1500,realized:2000},{month:'Out',planned:1500,realized:0},{month:'Nov',planned:1800,realized:0},{month:'Dez',planned:2000,realized:0}]
 };
 let db=JSON.parse(localStorage.getItem(STORAGE)||'null')||structuredClone(seed);
-const save=()=>{localStorage.setItem(STORAGE,JSON.stringify(db));try{if(window.FinanceCloud?.detectLocalChange)window.FinanceCloud.detectLocalChange();else localStorage.setItem('assessor_cloud_dirty','1');document.dispatchEvent(new CustomEvent('finance-data-changed'));}catch(_){}};
+function learnCategory(cat,sub=''){
+ cat=String(cat||'').trim();sub=String(sub||'').trim();if(!cat)return;
+ let row=(db.categories||[]).find(x=>String(x.name).toLowerCase()===cat.toLowerCase());
+ if(!row){row={name:cat,icon:'◈',subs:[]};db.categories.push(row)}
+ row.subs=Array.isArray(row.subs)?row.subs:[];if(sub&&!row.subs.some(x=>String(x).toLowerCase()===sub.toLowerCase()))row.subs.push(sub);
+}
+function refreshCategorySuggestions(){
+ const a=document.getElementById('categorySuggestions'),b=document.getElementById('subcategorySuggestions');if(!a||!b)return;
+ a.innerHTML=(db.categories||[]).map(x=>'<option value="'+String(x.name).replace(/"/g,'&quot;')+'"></option>').join('');
+ b.innerHTML=[...new Set((db.categories||[]).flatMap(x=>x.subs||[]))].sort().map(x=>'<option value="'+String(x).replace(/"/g,'&quot;')+'"></option>').join('');
+}
+const save=()=>{refreshCategorySuggestions();localStorage.setItem(STORAGE,JSON.stringify(db));try{if(window.FinanceCloud?.detectLocalChange)window.FinanceCloud.detectLocalChange();else localStorage.setItem('assessor_cloud_dirty','1');document.dispatchEvent(new CustomEvent('finance-data-changed'));}catch(_){}};
 
 /* Versão Atual: preservar a base real existente. A antiga rotina de seed fictício foi desativada porque podia substituir o banco real no Desktop. */
 (function preserveCurrentRealBase(){
@@ -1545,7 +1559,9 @@ const save=()=>{localStorage.setItem(STORAGE,JSON.stringify(db));try{if(window.F
 
 /* Versão Atual: não injetar seed fictício quando a base real estiver temporariamente vazia durante a sincronização. */
 db.accounts=db.accounts||[];db.cards=db.cards||[];db.categories=db.categories||[];db.transactions=db.transactions||[];db.recurring=db.recurring||[];db.investments=db.investments||[];
-db.transactions.forEach(t=>{if(!t.status)t.status='realized';if(t.card===undefined)t.card=db.cards.some(c=>c.id===t.account)?t.account:null;});db.recurring.forEach(r=>{if(r.active===undefined)r.active=true;if(!r.freq)r.freq='Mensal';if(!r.kind)r.kind='Recorrente';});db.cards.forEach(c=>{if(!c.type)c.type='Crédito';});db.invoices=db.invoices||[];db.auditLog=db.auditLog||[];db.dismissedAlerts=db.dismissedAlerts||{};db.budgets=db.budgets||[];db.goals=db.goals||[];db.goals.forEach(g=>{if(Number(g.current||0)>0&&!('legacyCurrent' in g))g.legacyCurrent=Number(g.current||0)});db.androidNotifications=db.androidNotifications||[];db.captureIgnored=db.captureIgnored||{};
+db.transactions.forEach(t=>{if(!t.status)t.status='realized';if(t.card===undefined)t.card=db.cards.some(c=>c.id===t.account)?t.account:null;});
+// R218: categorias editáveis persistem e "Depósito Cego" é aprendido como Entretenimento > Cerveja.
+db.transactions.forEach(t=>{const d=String(t.desc||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');if(d.includes('deposito cego')){t.cat='Entretenimento';t.sub='Cerveja';learnCategory('Entretenimento','Cerveja')}else learnCategory(t.cat,t.sub)});db.recurring.forEach(r=>{if(r.active===undefined)r.active=true;if(!r.freq)r.freq='Mensal';if(!r.kind)r.kind='Recorrente';});db.cards.forEach(c=>{if(!c.type)c.type='Crédito';});db.invoices=db.invoices||[];db.auditLog=db.auditLog||[];db.dismissedAlerts=db.dismissedAlerts||{};db.budgets=db.budgets||[];db.goals=db.goals||[];db.goals.forEach(g=>{if(Number(g.current||0)>0&&!('legacyCurrent' in g))g.legacyCurrent=Number(g.current||0)});db.androidNotifications=db.androidNotifications||[];db.captureIgnored=db.captureIgnored||{};
 
 const neonIconMap=[
  [/aliment|mercado|padaria|delivery|restaurante|refeicao/,'food','orange'],[/aluguel|moradia/,'home','blue'],[/luz|energia/,'bolt','amber'],[/agua|esgoto/,'water','cyan'],
@@ -2012,8 +2028,7 @@ function reverseTransactionAccountEffect(t){applyTransactionAccountEffect(t,-1)}
 function openEditTransaction(id){
  const t=txById(id);if(!t)return;
  editTxId.value=t.id;editType.value=t.value>=0?'income':'expense';editDate.value=t.date||'';editDesc.value=t.desc||'';editValue.value=Math.abs(Number(t.value)||0);
- editCategory.innerHTML=db.categories.map(c=>`<option ${c.name===t.cat?'selected':''}>${c.name}</option>`).join('');
- editSub.value=t.sub||'';editStatus.value=t.status||'realized';
+ editCategory.value=t.cat||''; editSub.value=t.sub||'';editStatus.value=t.status||'realized';
  editAccount.innerHTML=db.accounts.map(a=>`<option value="${a.id}" ${a.id===t.account?'selected':''}>${a.name}</option>`).join('');
  editCard.innerHTML='<option value="">— Sem cartão —</option>'+db.cards.map(c=>`<option value="${c.id}" ${c.id===t.card?'selected':''}>${c.name}</option>`).join('');
  editOrigin.value=[...editOrigin.options].some(o=>o.value===t.origin)?t.origin:'Manual';
@@ -2363,7 +2378,7 @@ function renderCharts(){
    <div><small>Saldo / patrimônio projetado</small><b>${brl(last.patrimony||0)}</b></div>`;
  const cats={},catMonth=scopeMonth('category'),currentKey=monthKey(today);
  // Realized expenses for past/current months; planned recurring commitments for future months.
- db.transactions.filter(t=>t.value<0&&!t.transfer&&!t.excludeFromExpense&&t.status!=='planned'&&monthOfTx(t)===catMonth).forEach(t=>cats[t.cat]=(cats[t.cat]||0)+Math.abs(Number(t.value)||0));
+ db.transactions.filter(t=>Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense&&t.status!=='planned'&&monthOfTx(t)===catMonth).forEach(t=>{const cat=String(t.cat||'').trim()||'Outros';cats[cat]=(cats[cat]||0)+Math.abs(Number(t.value)||0)});
  if(catMonth>currentKey){
    (db.recurring||[]).filter(r=>r.active!==false).forEach(r=>cats[r.cat||'Outros']=(cats[r.cat||'Outros']||0)+Math.abs(Number(r.value)||0));
    // Include explicit planned expenses that are not transfers. Do not count investment transfers as expenses.
@@ -2755,7 +2770,7 @@ document.addEventListener('keydown',e=>{
 
 menuBtn.onclick=()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show')};overlay.onclick=()=>{sidebar.classList.remove('open');overlay.classList.remove('show')};
 [btnNew,btnNew2].forEach(b=>b.onclick=()=>openModal('expense'));quickRecurring.onclick=btnRecurring.onclick=()=>openModal('recurring');btnInvestment.onclick=()=>{openModal('investment');setTimeout(()=>{if(typeof fDest!=='undefined'&&[...fDest.options].some(o=>o.value==='acc_invest_plan'))fDest.value='acc_invest_plan'},0)};closeModal.onclick=cancelModal.onclick=()=>modal.classList.remove('open');commitDays.onchange=renderCommitments;periodProjection.onchange=renderCharts;projectionModeBtn.onclick=()=>{projectionFocusMode=!projectionFocusMode;projectionModeBtn.textContent=projectionFocusMode?'Área destacada':'Comparativo completo';projectionModeBtn.classList.toggle('active',projectionFocusMode);renderCharts()};
-btnCategory.onclick=()=>{const name=prompt('Nome da categoria:');if(!name)return;const icon=prompt('Ícone (emoji ou símbolo):','◈')||'◈';db.categories.push({name,icon,subs:[]});save();renderAll()};
+btnCategory.onclick=()=>{const name=prompt('Nome da categoria:');if(!name)return;learnCategory(name,'');save();renderAll()};
 
 function inferNotificationData(raw){
  raw=raw||{};const text=[raw.title,raw.text,raw.bigText,raw.subText].filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
@@ -3013,7 +3028,7 @@ editTransactionForm.onsubmit=e=>{
  e.preventDefault();const t=txById(editTxId.value);if(!t)return;const before=JSON.parse(JSON.stringify(t));
  reverseTransactionAccountEffect(before);
  const amount=Math.abs(Number(editValue.value)||0);
- t.date=editDate.value;t.desc=editDesc.value;t.value=editType.value==='income'?amount:-amount;t.cat=editCategory.value;t.sub=editSub.value;t.status=editStatus.value;t.origin=editOrigin.value;
+ t.date=editDate.value;t.desc=editDesc.value;t.value=editType.value==='income'?amount:-amount;t.cat=editCategory.value.trim()||'Outros';t.sub=editSub.value.trim();learnCategory(t.cat,t.sub);t.status=editStatus.value;t.origin=editOrigin.value;
  t.card=editCard.value||null;t.account=editAccount.value||t.account;
  if(t.card)t.invoiceMonth=cardInvoiceMonthForDate(t.card,t.date);else delete t.invoiceMonth;t.accountId=t.account||null;t.cardId=t.card||null;
  applyTransactionAccountEffect(t,1);
@@ -3150,4 +3165,5 @@ document.addEventListener('click',function(e){
 <script src="r98-desktop-home-layout.js?v=20260923-r183"></script>
 <script src="r99-sep25-transactions.js?v=20260925-r208"></script>
 <script src="r100-desktop-stability.js?v=20260925-r200"></script>
+<datalist id="categorySuggestions"></datalist><datalist id="subcategorySuggestions"></datalist>
 </body></html>
