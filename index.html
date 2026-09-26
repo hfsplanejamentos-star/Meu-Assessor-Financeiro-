@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260926-r218';
+ const RELEASE='atual-ui-20260926-r219';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -981,6 +981,7 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
 <style id="r218-category-editor">
 input[list]{background:#071426;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
 </style>
+<style id="r219-icon-fix">#commitments .ico{display:flex!important;align-items:center!important;justify-content:center!important;overflow:visible!important}#commitments .neon-expense-icon{display:flex!important;width:42px!important;height:42px!important;min-width:42px!important;align-items:center!important;justify-content:center!important}#commitments .neon-expense-icon svg{display:block!important;width:32px!important;height:32px!important;stroke:currentColor!important}</style>
 </head>
 <body>
 <div class="tooltip" id="tooltip"></div>
@@ -1604,7 +1605,8 @@ gift:'<svg viewBox="0 0 32 32"><rect x="3" y="12" width="26" height="17" rx="2"/
 diamond:'<svg viewBox="0 0 32 32"><path class="fill" d="m3 11 6-8h14l6 8-13 18z" opacity=".6"/><path d="M3 11h26M9 3l7 26 7-26M3 11l13 18 13-18"/></svg>',up:'<svg viewBox="0 0 32 32"><path d="M4 27h24M7 24V16h5v8M14 24V11h5v13M21 24V6h5v18M20 7l6-5 4 4"/></svg>',down:'<svg viewBox="0 0 32 32"><path d="M4 27h24M7 8v16h5V12h5v12h5v-7h5M20 8l7 7 3-4"/></svg>',
 repeat:'<svg viewBox="0 0 32 32"><path d="M26 11a11 11 0 0 0-19-3L3 12M6 8l1 4-4 1M6 21a11 11 0 0 0 19 3l4-4M26 24l-1-4 4-1"/></svg>',calendar:'<svg viewBox="0 0 32 32"><rect x="3" y="6" width="21" height="22" rx="3"/><path d="M8 3v6M19 3v6M3 12h21"/><circle cx="24" cy="22" r="6"/><path d="M24 19v4l3 2"/></svg>',ai:'<svg viewBox="0 0 32 32"><path d="M16 5c-4-5-10-1-8 4-6 0-7 8-2 10-3 5 3 10 7 7 1 5 7 4 7 0 5 3 10-2 7-7 5-3 3-10-2-10 1-5-5-8-9-4zM16 5v22M9 11h7M16 18h8"/></svg>',sync:'<svg viewBox="0 0 32 32"><path d="M8 23H7a6 6 0 0 1 0-12c1-6 9-9 14-5 3 1 5 4 5 7 5 0 6 8 1 10h-3M11 21a7 7 0 0 0 11 3l2-3M21 27l1-3 3 1M21 19a7 7 0 0 0-11-3l-2 3M11 13l-1 3-3-1"/></svg>'
 };
-const iconFor=(cat,sub='')=>{const s=iconSpecFor(cat,sub),svg=neonSvg[s.glyph]||neonSvg.receipt;return '<span class="neon-expense-icon neon-'+s.tone+'">'+svg+'</span>'};
+const iconFor=(cat,sub='')=>{const s=iconSpecFor(cat,sub),svg=neonSvg[s.glyph]||neonSvg.receipt;return '<span class="neon-expense-icon neon-'+s.tone+'" aria-hidden="true">'+svg+'</span>'};
+const commitmentIconFor=r=>iconFor([r.cat,r.desc].filter(Boolean).join(' '),[r.sub,r.desc].filter(Boolean).join(' '));
 
 /* v1.8.0 SIMULAÇÃO R6.5 · POPUPS EDITÁVEIS — camada central de regras financeiras */
 const FinanceDomain=(()=>{
@@ -1900,7 +1902,7 @@ function renderCommitments(){
  let rows=(db.recurring||[]).filter(r=>(r.active??true)).map(r=>({...r,next:recurringDateInMonth(r,key)})).filter(r=>r.next&&r.next>=periodStart&&r.next<=periodEnd).sort((a,b)=>a.next-b.next);
  const allMonth=(db.recurring||[]).filter(r=>(r.active??true)).map(r=>({...r,next:recurringDateInMonth(r,key)})).filter(r=>r.next).sort((a,b)=>a.next-b.next);
  let note=''; if(!rows.length&&allMonth.length){rows=allMonth;note='<div class="notice commitment-note">Nenhum vencimento nos primeiros '+days+' dias. Exibindo os compromissos de '+monthLabelKey(key)+'.</div>'}
- document.getElementById('commitments').innerHTML=note+(rows.length?rows.map(r=>`<div class="item commitment-item clickable" data-edit-recurring="${r.id}"><div class="ico">${iconFor(r.cat,r.sub||r.desc)}</div><div><b>${r.desc}</b><small>${r.next.toLocaleDateString('pt-BR')} · dia ${String(r.due).padStart(2,'0')}</small></div><div class="amount ${Number(r.value)<0?'down':''}">${brl(r.value)}</div></div>`).join(''):`<div class="notice">Nenhum compromisso cadastrado em ${monthLabelKey(key)}.</div>`);
+ document.getElementById('commitments').innerHTML=note+(rows.length?rows.map(r=>`<div class="item commitment-item clickable" data-edit-recurring="${r.id}"><div class="ico">${commitmentIconFor(r)}</div><div><b>${r.desc}</b><small>${r.next.toLocaleDateString('pt-BR')} · dia ${String(r.due).padStart(2,'0')}</small></div><div class="amount ${Number(r.value)<0?'down':''}">${brl(r.value)}</div></div>`).join(''):`<div class="notice">Nenhum compromisso cadastrado em ${monthLabelKey(key)}.</div>`);
  document.querySelectorAll('#commitments [data-edit-recurring]').forEach(el=>el.onclick=()=>openRecurringEdit(el.dataset.editRecurring));
 }
 function calendarEventsForDay(day){
@@ -2999,7 +3001,9 @@ importConfirmBtn.onclick=()=>{
  save();renderAll();stagedImport=[];importConfirmBtn.disabled=true;importPreview.innerHTML=`<div class="notice">✅ Importação concluída: ${imported} novas · ${merged} mescladas · ${ignored} ignoradas.</div>`;importSummary.innerHTML='';
 };
 
-sendChat.onclick=()=>{const q=chatInput.value.trim();if(!q)return;const b=balances();let a='Posso analisar seus dados cadastrados.';const l=q.toLowerCase();if(l.includes('dispon'))a=`Seu disponível atual é ${brl(b.liquid)}.`;else if(l.includes('gaste'))a=`Suas despesas registradas somam ${brl(b.exp)}.`;else if(l.includes('invest'))a=`Seu patrimônio em investimentos é ${brl(b.invest)}.`;chat.innerHTML+=`<div class="item"><div class="ico">Você</div><div><b>${q}</b></div></div><div class="item"><div class="ico">✦</div><div><b>Assessor</b><small>${a}</small></div></div>`;chatInput.value=''};
+function assistantMonthFromQuestion(l){const names=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];let m=names.findIndex(x=>l.includes(x));if(m<0)return activeMonth||monthKey(today);let y=(l.match(/20\d{2}/)||[])[0]||String(today.getFullYear());return y+'-'+String(m+1).padStart(2,'0')}
+function assistantExpenseQuery(q){const l=q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''),key=assistantMonthFromQuestion(l);const stop=new Set(['quanto','gastei','gasto','despesa','despesas','mes','este','esse','com','no','na','de','do','da','em']);const words=l.replace(/20\d{2}/g,' ').replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(x=>x.length>2&&!stop.has(x));const rows=(db.transactions||[]).filter(t=>Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense&&t.status!=='planned'&&monthOfTx(t)===key);const matched=rows.filter(t=>{const hay=[t.cat,t.sub,t.desc].join(' ').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');return words.some(w=>hay.includes(w))});if(!matched.length)return null;const total=matched.reduce((s,t)=>s+Math.abs(Number(t.value)||0),0),label=words.join(' ')||'essa categoria';return `Em ${monthLabelKey(key)}, você gastou ${brl(total)} com ${label}. Encontrei ${matched.length} lançamento(s).`}
+sendChat.onclick=()=>{const q=chatInput.value.trim();if(!q)return;const b=balances();let a='Posso analisar seus dados cadastrados.';const l=q.toLowerCase();const detail=assistantExpenseQuery(q);if((l.includes('gaste')||l.includes('gasto')||l.includes('despesa'))&&detail)a=detail;else if(l.includes('dispon'))a=`Seu disponível atual é ${brl(b.liquid)}.`;else if(l.includes('gaste'))a=`Suas despesas registradas somam ${brl(b.exp)}.`;else if(l.includes('invest'))a=`Seu patrimônio em investimentos é ${brl(b.invest)}.`;chat.innerHTML+=`<div class="item"><div class="ico">Você</div><div><b>${q}</b></div></div><div class="item"><div class="ico">✦</div><div><b>Assessor</b><small>${a}</small></div></div>`;chatInput.value=''};
 exportBtn.onclick=()=>{const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup_assessor_financeiro.json';a.click();URL.revokeObjectURL(a.href)};
 resetBtn.onclick=()=>{if(localStorage.getItem('assessor_r67_real_mode')==='1'){alert('Modo real ativo: a restauração de dados fictícios está desabilitada para proteger suas informações.');return}if(confirm('Restaurar dados fictícios?')){db=structuredClone(seed);save();renderAll()}};
 clearBtn.onclick=()=>{if(confirm('Zerar todos os dados?')){db={accounts:[],cards:[],categories:structuredClone(seed.categories),transactions:[],recurring:[],investments:[],invoices:[],auditLog:[],dismissedAlerts:{},budgets:[],goals:[]};save();renderAll()}};
