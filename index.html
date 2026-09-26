@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260926-r220';
+ const RELEASE='atual-ui-20260926-r221';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -982,6 +982,7 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
 input[list]{background:#071426;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
 </style>
 <style id="r219-icon-fix">#commitments .ico{display:flex!important;align-items:center!important;justify-content:center!important;overflow:visible!important}#commitments .neon-expense-icon{display:flex!important;width:42px!important;height:42px!important;min-width:42px!important;align-items:center!important;justify-content:center!important}#commitments .neon-expense-icon svg{display:block!important;width:32px!important;height:32px!important;stroke:currentColor!important}</style>
+<style id="r221-selected-day">.calendar [data-calendar-day].selected-day{outline:2px solid rgba(50,190,255,.85)!important;box-shadow:0 0 0 3px rgba(50,190,255,.10)!important}</style>
 </head>
 <body>
 <div class="tooltip" id="tooltip"></div>
@@ -1927,7 +1928,7 @@ function activateRecoveryAgenda(){
 }
 
 function openCalendarDay(day){
- const key=scopeMonth('calendar'),events=calendarEventsForDay(day);
+ const key=scopeMonth('calendar'),events=calendarEventsForDay(day); window.assessorSelectedCalendarDay={key,day:Number(day)}; renderMobileDayAndDistribution();
  const title=`Agenda · ${String(day).padStart(2,'0')}/${key.split('-').reverse().join('/')}`;
  const [yy,mm]=key.split('-').map(Number),safeDay=Math.min(Number(day),new Date(yy,mm,0).getDate()),date=`${yy}-${String(mm).padStart(2,'0')}-${String(safeDay).padStart(2,'0')}`;
  detailTitle.textContent=title;
@@ -1957,7 +1958,7 @@ function renderCalendar(){
     h+=`<div class="${cls}" data-calendar-day="${d}" title="${ev.length?ev.map(e=>e.desc+' '+brl(e.value)).join(' | '):'Clique para abrir este dia'}"><span>${d}</span>${types.length?'<i class="cal-dots">'+types.map(t=>'<em class="'+t+'"></em>').join('')+'</i>':''}</div>`
   }
   el.innerHTML=h;
-  el.querySelectorAll('[data-calendar-day]').forEach(day=>day.onclick=()=>openCalendarDay(day.dataset.calendarDay));
+  el.querySelectorAll('[data-calendar-day]').forEach(day=>{if(window.assessorSelectedCalendarDay&&window.assessorSelectedCalendarDay.key===key&&Number(day.dataset.calendarDay)===window.assessorSelectedCalendarDay.day)day.classList.add('selected-day');day.onclick=()=>{openCalendarDay(day.dataset.calendarDay);renderCalendar()}});
  };
  make('miniCalendar',true);make('fullCalendar',false);
  const key=scopeMonth('calendar');
@@ -2503,8 +2504,8 @@ function renderMobileDayAndDistribution(){
  let dayBox=document.getElementById('mobileDayExpenses'),distBox=document.getElementById('mobileMonthDistribution');
  if(!dayBox){dayBox=document.createElement('div');dayBox.id='mobileDayExpenses';dayBox.className='mobile-fin-insight';dayBox.dataset.homeBlock='dayexpenses';host.insertAdjacentElement('afterend',dayBox)}
  if(!distBox){distBox=document.createElement('div');distBox.id='mobileMonthDistribution';distBox.className='mobile-fin-insight';distBox.dataset.homeBlock='distribution';dayBox.insertAdjacentElement('afterend',distBox)}
- const key=scopeMonth('calendar'), tx=transactionsForMonth(key).filter(t=>Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense&&t.status!=='planned'), byDay={};tx.forEach(t=>{const d=Number(String(t.date).slice(8,10));(byDay[d]??=[]).push(t)});
- const todayKey=monthKey(today), selected=key===todayKey?today.getDate():1, dayRows=byDay[selected]||[];
+ const key=scopeMonth('calendar'); if(window.assessorSelectedCalendarDay&&window.assessorSelectedCalendarDay.key!==key)window.assessorSelectedCalendarDay=null; const tx=transactionsForMonth(key).filter(t=>Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense&&t.status!=='planned'), byDay={};tx.forEach(t=>{const d=Number(String(t.date).slice(8,10));(byDay[d]??=[]).push(t)});
+ const todayKey=monthKey(today), picked=window.assessorSelectedCalendarDay, selected=(picked&&picked.key===key)?picked.day:(key===todayKey?today.getDate():1), dayRows=byDay[selected]||[];
  dayBox.innerHTML='<div class="insight-head"><h3>Despesas do dia '+String(selected).padStart(2,'0')+'/'+key.slice(5,7)+'</h3><b>'+brl(dayRows.reduce((s,t)=>s+Math.abs(Number(t.value)||0),0))+'</b></div>'+(dayRows.length?'<div class="row-list">'+dayRows.map(t=>'<div class="item"><div class="ico">'+iconFor(t.cat,t.sub)+'</div><div><b>'+t.desc+'</b><small>'+fmt(t.date)+' · '+t.cat+(t.sub?' › '+t.sub:'')+'</small></div><div class="amount down">'+brl(t.value)+'</div></div>').join('')+'</div>':'<div class="notice">Nenhuma despesa registrada neste dia.</div>');
  const sums={};tx.forEach(t=>{const cat=String(t.cat||'Outros').trim()||'Outros';sums[cat]=(sums[cat]||0)+Math.abs(Number(t.value)||0)});
  const entries=Object.entries(sums).sort((a,b)=>b[1]-a[1]),total=entries.reduce((s,x)=>s+x[1],0),raw=entries.map(x=>total?x[1]/total*100:0),base=raw.map(Math.floor),remain=100-base.reduce((a,b)=>a+b,0),order=raw.map((x,i)=>[i,x-base[i]]).sort((a,b)=>b[1]-a[1]);for(let j=0;j<remain;j++)base[order[j%order.length]?.[0]||0]++;
