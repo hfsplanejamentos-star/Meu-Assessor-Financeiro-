@@ -47,6 +47,12 @@ public final class CaptureSettingsActivity extends Activity {
             boolean connected = d.getBoolean(BankNotificationListener.KEY_CONNECTED, false);
             String result = d.getString(BankNotificationListener.KEY_RESULT, "");
             String recent = d.getString(BankNotificationListener.KEY_RECENT_PACKAGES, "");
+            String lastTitle = d.getString(BankNotificationListener.KEY_TITLE, "");
+            String lastText = d.getString(BankNotificationListener.KEY_TEXT, "");
+            String direction = d.getString(BankNotificationListener.KEY_DIRECTION, "");
+            String amount = d.contains(BankNotificationListener.KEY_AMOUNT)
+                    ? String.format(java.util.Locale.forLanguageTag("pt-BR"), "R$ %.2f", d.getLong(BankNotificationListener.KEY_AMOUNT,0L)/100.0)
+                    : "—";
             diagnostic.setText(
                     "Listener conectado: " + (connected ? "SIM" : "NÃO") +
                     "\nFila criptografada: " + new EncryptedQueueStore(this).size() +
@@ -55,6 +61,10 @@ public final class CaptureSettingsActivity extends Activity {
                     "\nAplicativo autorizado: " + (allowed ? "SIM" : "NÃO") +
                     "\nFinanceira reconhecida: " + (financial ? "SIM" : "NÃO") +
                     "\nResultado: " + result +
+                    "\nValor detectado: " + amount +
+                    "\nDireção: " + (direction == null || direction.isEmpty() ? "—" : direction) +
+                    "\nTítulo detectado: " + (lastTitle == null || lastTitle.isEmpty() ? "—" : lastTitle) +
+                    "\nTexto detectado: " + (lastText == null || lastText.isEmpty() ? "—" : lastText) +
                     "\nPacotes recentes:\n" + (recent == null || recent.isEmpty() ? "—" : recent)
             );
         }
