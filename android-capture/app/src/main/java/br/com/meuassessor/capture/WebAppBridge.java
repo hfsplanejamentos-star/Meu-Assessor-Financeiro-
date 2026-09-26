@@ -58,6 +58,10 @@ final class WebAppBridge {
             out.put("connected", d.getBoolean(BankNotificationListener.KEY_CONNECTED, false));
             out.put("accessEnabled", isNotificationAccessEnabled());
             out.put("recentPackages", d.getString(BankNotificationListener.KEY_RECENT_PACKAGES, ""));
+            out.put("title", d.getString(BankNotificationListener.KEY_TITLE, ""));
+            out.put("text", d.getString(BankNotificationListener.KEY_TEXT, ""));
+            out.put("direction", d.getString(BankNotificationListener.KEY_DIRECTION, ""));
+            if (d.contains(BankNotificationListener.KEY_AMOUNT)) out.put("amountCents", d.getLong(BankNotificationListener.KEY_AMOUNT, 0L));
             return out.toString();
         } catch (Exception ignored) {
             return "{}";
