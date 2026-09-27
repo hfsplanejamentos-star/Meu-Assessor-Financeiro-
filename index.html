@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260927-r236';
+ const RELEASE='atual-ui-20260927-r237';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -2180,7 +2180,7 @@ function ensureMonthlyIncomeAutomation(){
   ['caju_2026_09_18_kaique_4905','2026-09-18','IFD*64802138 KAIQUE...',-49.05,'Delivery'],
   ['caju_2026_09_19_restaurante_7800','2026-09-19','Restaurante MACAE BR',-78.00,'Restaurante'],
   ['caju_2026_09_20_luana_3189','2026-09-20','IFD*56162560 LUANA...',-31.89,'Delivery'],
-  ['caju_2026_09_21_netos_2494','2026-09-21','IFD*NETOS DELIVERY',-24.94,'Delivery'],
+  ['caju_2026_09_21_netos_2494','2026-09-21','IFD*NETOS DELIVERY',-24.94,'Cerveja'],
   ['caju_2026_09_21_super_market_24689','2026-09-21','SUPER MARKET CAX...',-246.89,'Supermercado'],
   ['caju_2026_09_22_dafoca_4400','2026-09-22','DAFOCA BAR RIO DE J...',-44.00,'Restaurante'],
   ['caju_2026_09_23_julia_2941','2026-09-23','IFD*51.419.326 JULIA',-29.41,'Delivery'],
@@ -2224,13 +2224,13 @@ function cajuSnapshot(cardId,key){
 function cajuBalanceAt(cardId,key){return cajuSnapshot(cardId,key).available}
 function cajuCapacityAt(cardId,key){return cajuSnapshot(cardId,key).credit}
 function cajuNormalizedSub(t){
- const raw=String(t.sub||t.cat||'Alimentação').trim()||'Alimentação',desc=String(t.desc||t.description||'').toLowerCase();
- if(/ifd\*|ifood|i-food/.test(desc))return 'Delivery';
- if(/super\s*market|mercado|supermercado/.test(desc))return 'Mercado';
- if(/padaria|confeitaria/.test(desc))return 'Padaria';
- if(/restaurante|boteco|\bbar\b/.test(desc))return 'Restaurante';
- if(/cerveja/.test(desc))return 'Cerveja';
- return raw==='Supermercado'?'Mercado':raw;
+ const raw=String(t.sub||t.cat||'Alimentação').trim()||'Alimentação',desc=String(t.desc||t.description||'').toLowerCase(),rawKey=raw.toLowerCase();
+ if(/cerveja|bebida/.test(rawKey)||/cerveja/.test(desc))return 'Cerveja';
+ if(/super\s*market|mercado|supermercado/.test(desc)||rawKey==='supermercado')return 'Mercado';
+ if(/padaria|confeitaria/.test(desc)||rawKey==='padaria')return 'Padaria';
+ if(/restaurante|boteco|\bbar\b/.test(desc)||rawKey==='restaurante')return 'Restaurante';
+ if(/ifd\*|ifood|i-food/.test(desc)||rawKey==='delivery')return 'Delivery';
+ return raw;
 }
 function cajuExpenseItems(key){const card=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||/caju/i.test(String(c.name||'')));if(!card)return[];const rows=(db.transactions||[]).filter(t=>{const ids=[t.cardId,t.card,t.account,t.accountId].map(String),txt=[t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' ').toLowerCase();return String(t.date||'').slice(0,7)===key&&Number(t.value)<0&&t.status!=='planned'&&t.status!=='ignored'&&(ids.includes(String(card.id))||t.benefit===true||/caju/.test(txt))});const m={};rows.forEach(t=>{const n=cajuNormalizedSub(t);m[n]=(m[n]||0)+Math.abs(Number(t.value)||0)});return Object.entries(m).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value)}
 function cajuRowsForCategory(name,key=activeMonth){const card=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||/caju/i.test(String(c.name||'')));if(!card)return[];return (db.transactions||[]).filter(t=>{const ids=[t.cardId,t.card,t.account,t.accountId].map(String),txt=[t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' ').toLowerCase(),sub=cajuNormalizedSub(t);return String(t.date||'').slice(0,7)===key&&Number(t.value)<0&&t.status!=='planned'&&t.status!=='ignored'&&sub===name&&(ids.includes(String(card.id))||t.benefit===true||/caju/.test(txt))})}
@@ -2754,17 +2754,17 @@ deleteRecurringBtn.onclick=()=>{
  save();recurringEditModal.classList.remove('open');renderAll();renderAudit();
 };
 function openModal(type){document.getElementById('modal').classList.add('open');document.getElementById('fType').value=type||'expense';document.getElementById('fDate').value=iso(today);fillFormSelects();fInstallmentMode.value='single';fInstallments.value=1;fInstallmentNo.value=1;renderInstallmentPreview()}
-function fillFormSelects(){document.getElementById('fCategory').innerHTML=db.categories.map(c=>`<option>${c.name}</option>`).join('');const opts=db.accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');const caju=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||/caju/i.test(String(c.name||'')));const cajuOpt=caju?`<option value="caju:${caju.id}">Caju Alimentação (benefício)</option>`:'';document.getElementById('fAccount').innerHTML=opts+cajuOpt;document.getElementById('fDest').innerHTML='<option value="">—</option>'+opts;document.getElementById('fCard').innerHTML='<option value="">—</option>'+db.cards.map(c=>`<option value="${c.id}">${c.name} · ${c.type||'Crédito'}</option>`).join('')}
+function fillFormSelects(){document.getElementById('fCategory').innerHTML=db.categories.map(c=>`<option>${c.name}</option>`).join('');const opts=db.accounts.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');const caju=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||/caju/i.test(String(c.name||'')));const cajuOpt=caju?`<option value="caju:${caju.id}">Caju Alimentação (benefício)</option>`:'';document.getElementById('fAccount').innerHTML=opts+cajuOpt;document.getElementById('fDest').innerHTML='<option value="">—</option>'+opts;document.getElementById('fCard').innerHTML='<option value="">—</option>'+db.cards.map(c=>`<option value="${c.id}">${c.name} · ${c.type||'Crédito'}</option>`).join(''); if(caju&&!document.getElementById('fCard').querySelector(`option[value="${caju.id}"]`))document.getElementById('fCard').insertAdjacentHTML('beforeend',`<option value="${caju.id}">Caju Alimentação · Benefício</option>`)}
 document.getElementById('entryForm').onsubmit=e=>{
  e.preventDefault();
  const __beforeIds=new Set((db.transactions||[]).map(t=>String(t.id)));
- const type=fType.value,val=Math.abs(+fValue.value||0),cajuSource=String(fAccount.value||'').startsWith('caju:'),cajuCardId=cajuSource?String(fAccount.value).slice(5):'';
+ const type=fType.value,val=Math.abs(+fValue.value||0),cajuByAccount=String(fAccount.value||'').startsWith('caju:'),cajuByCard=String(fCard.value||'')==='card_caju_alimentacao'||/caju/i.test(String((db.cards||[]).find(c=>String(c.id)===String(fCard.value))?.name||'')),cajuSource=cajuByAccount||cajuByCard,cajuCardId=cajuByAccount?String(fAccount.value).slice(5):String(fCard.value||'');
  if(cajuSource&&type!=='expense')return alert('O Caju está disponível como conta de origem somente para despesas.');
  const base={id:Date.now(),date:fDate.value,desc:fDesc.value,cat:fCategory.value,sub:fSub.value,account:fAccount.value,origin:fOrigin.value,card:fCard.value||null,installments:+fInstallments.value||1,installmentNo:+fInstallmentNo.value||1,installmentMode:fInstallmentMode.value,inputValue:val};
  if(cajuSource){
    const card=(db.cards||[]).find(c=>String(c.id)===cajuCardId);
    if(!card)return alert('Não foi possível localizar o cartão Caju.');
-   const tx={...base,account:'',accountId:'',card:cajuCardId,cardId:cajuCardId,value:-val,status:fStatus.value,source:'Caju',origin:'Caju',paymentType:'Cartão benefício',benefit:true,excludeFromPatrimony:true};
+   const tx={...base,account:'',accountId:'',cat:'Alimentação',sub:String(fSub.value||'Alimentação').trim()||'Alimentação',card:cajuCardId,cardId:cajuCardId,value:-val,status:fStatus.value,source:'Caju',origin:'Caju',paymentType:'Cartão benefício',benefit:true,excludeFromExpense:true,excludeFromPatrimony:true};
    db.transactions.push(tx);
    if(fStatus.value==='realized'){card.availableLimit=Math.max(0,Math.round((Number(card.availableLimit??card.balance??card.limit??0)-val)*100)/100);card.balance=card.availableLimit}
  }else if(type==='recurring'){
