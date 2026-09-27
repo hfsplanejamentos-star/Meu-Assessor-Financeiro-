@@ -52,7 +52,6 @@ public final class MainActivity extends Activity {
     private Bundle pendingState;
     private boolean authenticated;
     private boolean authenticationInProgress;
-    private long backgroundAt;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -91,7 +90,6 @@ public final class MainActivity extends Activity {
         if (isFinishing()) return;
         authenticationInProgress = false;
         authenticated = true;
-        backgroundAt = 0L;
         webView.setVisibility(View.VISIBLE);
 
         if (pendingState == null) {
@@ -173,20 +171,6 @@ public final class MainActivity extends Activity {
     protected void onStart() {
         super.onStart();
         BankNotificationListener.reconnect(this);
-        if (authenticated && backgroundAt > 0L
-                && System.currentTimeMillis() - backgroundAt >= 30000L) {
-            authenticated = false;
-            webView.setVisibility(View.INVISIBLE);
-            requestAuthentication();
-        }
-    }
-
-    @Override
-    protected void onStop() {
-        if (authenticated && !isChangingConfigurations()) {
-            backgroundAt = System.currentTimeMillis();
-        }
-        super.onStop();
     }
 
     private WebView buildWebView() {
