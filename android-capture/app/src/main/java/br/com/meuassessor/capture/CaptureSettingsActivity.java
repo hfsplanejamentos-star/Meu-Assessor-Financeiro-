@@ -48,13 +48,21 @@ public final class CaptureSettingsActivity extends Activity {
             String result = d.getString(BankNotificationListener.KEY_RESULT, "");
             String recent = d.getString(BankNotificationListener.KEY_RECENT_PACKAGES, "");
             String lastTitle = d.getString(BankNotificationListener.KEY_TITLE, "");
-            String lastText = d.getString(BankNotificationListener.KEY_TEXT, "");\n            String rawPkg = d.getString(BankNotificationListener.KEY_RAW_PACKAGE, "");\n            String rawTitle = d.getString(BankNotificationListener.KEY_RAW_TITLE, "");\n            String rawText = d.getString(BankNotificationListener.KEY_RAW_TEXT, "");
+            String lastText = d.getString(BankNotificationListener.KEY_TEXT, "");
+            String rawPkg = d.getString(BankNotificationListener.KEY_RAW_PACKAGE, "");
+            String rawTitle = d.getString(BankNotificationListener.KEY_RAW_TITLE, "");
+            String rawText = d.getString(BankNotificationListener.KEY_RAW_TEXT, "");
             String direction = d.getString(BankNotificationListener.KEY_DIRECTION, "");
             String amount = d.contains(BankNotificationListener.KEY_AMOUNT)
                     ? String.format(java.util.Locale.forLanguageTag("pt-BR"), "R$ %.2f", d.getLong(BankNotificationListener.KEY_AMOUNT,0L)/100.0)
                     : "—";
             diagnostic.setText(
-                    "Listener conectado: " + (connected ? "SIM" : "NÃO") +\n                    "\\n\\nÚLTIMA NOTIFICAÇÃO RECEBIDA (antes do filtro)" +\n                    "\\nPacote bruto: " + (rawPkg == null || rawPkg.isEmpty() ? "—" : rawPkg) +\n                    "\\nTítulo bruto: " + (rawTitle == null || rawTitle.isEmpty() ? "—" : rawTitle) +\n                    "\\nTexto bruto: " + (rawText == null || rawText.isEmpty() ? "—" : rawText) +\n                    "\\n\\nRESULTADO DO FILTRO" +
+                    "Listener conectado: " + (connected ? "SIM" : "NÃO") +
+                    "\\n\\nÚLTIMA NOTIFICAÇÃO RECEBIDA (antes do filtro)" +
+                    "\\nPacote bruto: " + (rawPkg == null || rawPkg.isEmpty() ? "—" : rawPkg) +
+                    "\\nTítulo bruto: " + (rawTitle == null || rawTitle.isEmpty() ? "—" : rawTitle) +
+                    "\\nTexto bruto: " + (rawText == null || rawText.isEmpty() ? "—" : rawText) +
+                    "\\n\\nRESULTADO DO FILTRO" +
                     "\nFila criptografada: " + new EncryptedQueueStore(this).size() +
                     "\n" +
                     "Último pacote: " + pkg +
