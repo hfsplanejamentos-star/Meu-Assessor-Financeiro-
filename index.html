@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260927-r235';
+ const RELEASE='atual-ui-20260927-r236';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -1017,7 +1017,7 @@ input[list]{background:#071426;color:var(--text);border:1px solid var(--line);bo
  #aiFloatPanel{z-index:10040!important}
  #aiFloatPanel.open{display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important}
 }
-</style></head>
+</style><style id="r236-modal-ai">body:has(#recoveryBackdrop.show) #aiFloatBtn,body:has(#recoveryBackdrop.show) #aiFloatPanel,body:has(.modal.show) #aiFloatBtn,body:has(.modal.show) #aiFloatPanel{opacity:0!important;visibility:hidden!important;pointer-events:none!important}</style></head>
 <body>
 <div class="tooltip" id="tooltip"></div>
 <div class="mobile-overlay" id="overlay"></div>
@@ -2167,6 +2167,11 @@ function ensureMonthlyIncomeAutomation(){
  caju.type='Benefício';caju.limit=1500;caju.monthlyCredit=1500;caju.accumulative=true;caju.creditStart='2026-10-01';
  /* Setembro/2026: razão Caju confirmado. Fonte única para lista, detalhes e saldos. */
  db.transactions=db.transactions.filter(t=>!(String(t.cardId||t.card||'')===caju.id&&String(t.date||'').slice(0,7)==='2026-09'&&Number(t.value)===0));
+ const canonicalSepCajuIds=new Set([
+  'caju_2026_09_17_credit','caju_2026_09_17_padaria_14','caju_2026_09_17_marilza_2999','caju_2026_09_18_padaria_3090','caju_2026_09_18_kaique_4905','caju_2026_09_19_restaurante_7800','caju_2026_09_20_luana_3189','caju_2026_09_21_netos_2494','caju_2026_09_21_super_market_24689','caju_2026_09_22_dafoca_4400','caju_2026_09_23_julia_2941','caju_2026_09_23_padaria_3140','caju_2026_09_23_dom_bar_5590','caju_2026_09_24_boteco_3750'
+ ]);
+ const canonicalSepSig=new Set(['2026-09-17|1006.89','2026-09-17|-14.00','2026-09-17|-29.99','2026-09-18|-30.90','2026-09-18|-49.05','2026-09-19|-78.00','2026-09-20|-31.89','2026-09-21|-24.94','2026-09-21|-246.89','2026-09-22|-44.00','2026-09-23|-29.41','2026-09-23|-31.40','2026-09-23|-55.90','2026-09-24|-37.50']);
+ db.transactions=db.transactions.filter(t=>{if(String(t.date||'').slice(0,7)!=='2026-09')return true;const isCaju=String(t.cardId||t.card||'')===caju.id||t.benefit===true||/caju/i.test([t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' '));if(!isCaju)return true;if(canonicalSepCajuIds.has(String(t.id)))return true;const sig=String(t.date||'').slice(0,10)+'|'+Number(t.value||0).toFixed(2);return !canonicalSepSig.has(sig)});
  const hist=[
   ['caju_2026_09_17_credit','2026-09-17','Caju Benefícios',1006.89,'Crédito benefício'],
   ['caju_2026_09_17_padaria_14','2026-09-17','PADARIA E CONFEITARIA',-14.00,'Padaria'],
@@ -2218,8 +2223,17 @@ function cajuSnapshot(cardId,key){
 }
 function cajuBalanceAt(cardId,key){return cajuSnapshot(cardId,key).available}
 function cajuCapacityAt(cardId,key){return cajuSnapshot(cardId,key).credit}
-function cajuExpenseItems(key){const card=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||/caju/i.test(String(c.name||'')));if(!card)return[];const rows=(db.transactions||[]).filter(t=>{const ids=[t.cardId,t.card,t.account,t.accountId].map(String),txt=[t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' ').toLowerCase();return String(t.date||'').slice(0,7)===key&&Number(t.value)<0&&t.status!=='planned'&&t.status!=='ignored'&&(ids.includes(String(card.id))||t.benefit===true||/caju/.test(txt))});const m={};rows.forEach(t=>{const n=String(t.sub||t.cat||'Alimentação').trim()||'Alimentação';m[n]=(m[n]||0)+Math.abs(Number(t.value)||0)});return Object.entries(m).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value)}
-function cajuRowsForCategory(name,key=activeMonth){const card=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||/caju/i.test(String(c.name||'')));if(!card)return[];return (db.transactions||[]).filter(t=>{const ids=[t.cardId,t.card,t.account,t.accountId].map(String),txt=[t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' ').toLowerCase(),sub=String(t.sub||t.cat||'Alimentação').trim()||'Alimentação';return String(t.date||'').slice(0,7)===key&&Number(t.value)<0&&t.status!=='planned'&&t.status!=='ignored'&&sub===name&&(ids.includes(String(card.id))||t.benefit===true||/caju/.test(txt))})}
+function cajuNormalizedSub(t){
+ const raw=String(t.sub||t.cat||'Alimentação').trim()||'Alimentação',desc=String(t.desc||t.description||'').toLowerCase();
+ if(/ifd\*|ifood|i-food/.test(desc))return 'Delivery';
+ if(/super\s*market|mercado|supermercado/.test(desc))return 'Mercado';
+ if(/padaria|confeitaria/.test(desc))return 'Padaria';
+ if(/restaurante|boteco|\bbar\b/.test(desc))return 'Restaurante';
+ if(/cerveja/.test(desc))return 'Cerveja';
+ return raw==='Supermercado'?'Mercado':raw;
+}
+function cajuExpenseItems(key){const card=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||/caju/i.test(String(c.name||'')));if(!card)return[];const rows=(db.transactions||[]).filter(t=>{const ids=[t.cardId,t.card,t.account,t.accountId].map(String),txt=[t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' ').toLowerCase();return String(t.date||'').slice(0,7)===key&&Number(t.value)<0&&t.status!=='planned'&&t.status!=='ignored'&&(ids.includes(String(card.id))||t.benefit===true||/caju/.test(txt))});const m={};rows.forEach(t=>{const n=cajuNormalizedSub(t);m[n]=(m[n]||0)+Math.abs(Number(t.value)||0)});return Object.entries(m).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value)}
+function cajuRowsForCategory(name,key=activeMonth){const card=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||/caju/i.test(String(c.name||'')));if(!card)return[];return (db.transactions||[]).filter(t=>{const ids=[t.cardId,t.card,t.account,t.accountId].map(String),txt=[t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' ').toLowerCase(),sub=cajuNormalizedSub(t);return String(t.date||'').slice(0,7)===key&&Number(t.value)<0&&t.status!=='planned'&&t.status!=='ignored'&&sub===name&&(ids.includes(String(card.id))||t.benefit===true||/caju/.test(txt))})}
 function openCajuCategoryDetail(name,key=activeMonth){const rows=cajuRowsForCategory(name,key).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))),total=rows.reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);const details=[['Mês',monthLabelKey(key)],['Categoria',name],['Total',brl(total)],['Lançamentos',String(rows.length)]];rows.forEach(t=>details.push([String(t.date||'').split('-').reverse().join('/')+' · '+(t.desc||t.description||name),brl(Math.abs(Number(t.value)||0))]));openDetail('Caju · '+name,details)}
 function bindCajuChart(canvas,key=activeMonth){if(!canvas)return;attachTooltip(canvas);canvas.onclick=e=>{const hit=chartHit(canvas,e);if(hit?.detail?.name)openCajuCategoryDetail(hit.detail.name,key)}}
 function renderHomeCajuExpenses(){const canvas=document.getElementById('homeCajuExpenseChart'),legend=document.getElementById('homeCajuExpenseLegend');if(!canvas||!legend)return;const items=cajuExpenseItems(activeMonth);drawDonut(canvas,items);bindCajuChart(canvas,activeMonth);legend.innerHTML=items.length?items.map((x,i)=>'<div class="legend-line clickable" data-caju-cat="'+String(x.name).replace(/"/g,'&quot;')+'"><span><i class="dot" style="background:'+colors[i%colors.length]+'"></i>'+x.name+'</span><b>'+brl(x.value)+'</b></div>').join(''):'<div class="notice">Sem gastos Caju em '+monthLabelKey(activeMonth)+'.</div>';legend.querySelectorAll('[data-caju-cat]').forEach(el=>el.onclick=()=>openCajuCategoryDetail(el.dataset.cajuCat,activeMonth))}
@@ -2230,7 +2244,7 @@ function renderCajuDetails(){
  (db.transactions||[]).filter(t=>(t.cardId===card.id||t.card===card.id)&&String(t.date||'').slice(0,7)<=key&&t.status!=='planned'&&!t.excludeFromBalance).sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.time||'').localeCompare(String(b.time||''))).forEach(t=>{running=Math.round((running+Number(t.value||0))*100)/100;balanceById.set(String(t.id),running)});
  const snap=cajuSnapshot(card.id,key),spent=snap.spent,avail=snap.available,limit=snap.credit,pct=limit?avail/limit*100:0,future=key>monthKey(today);
  const k=document.getElementById('cajuDetailKpis');if(k)k.innerHTML=`<div class="card-kpi"><small>${future?'Saldo previsto':'Saldo disponível real'}</small><b class="up">${brl(avail)}</b></div><div class="card-kpi"><small>Gasto em ${monthLabelKey(key)}</small><b class="down">${brl(spent)}</b></div><div class="card-kpi"><small>Créditos acumulados</small><b>${brl(limit)}</b></div><div class="card-kpi"><small>Saldo disponível</small><b>${pct.toFixed(1)}%</b></div>`;
- const cajuMap={};all.forEach(t=>{const name=String(t.sub||t.cat||'Alimentação').trim()||'Alimentação';cajuMap[name]=(cajuMap[name]||0)+Math.abs(Number(t.value)||0)});const cajuItems=Object.entries(cajuMap).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);const cajuCanvas=document.getElementById('cajuExpenseChart');if(cajuCanvas){drawDonut(cajuCanvas,cajuItems);bindCajuChart(cajuCanvas,key)}const cajuLegend=document.getElementById('cajuExpenseLegend');if(cajuLegend){cajuLegend.innerHTML=cajuItems.map((it,i)=>'<div class="legend-line clickable" data-caju-cat="'+String(it.name).replace(/"/g,'&quot;')+'"><span><i class="dot" style="background:'+colors[i%colors.length]+'"></i>'+it.name+'</span><b>'+brl(it.value)+'</b></div>').join('')||'<div class="notice">Sem gastos Caju neste mês.</div>';cajuLegend.querySelectorAll('[data-caju-cat]').forEach(el=>el.onclick=()=>openCajuCategoryDetail(el.dataset.cajuCat,key))}
+ const cajuMap={};all.forEach(t=>{const name=cajuNormalizedSub(t);cajuMap[name]=(cajuMap[name]||0)+Math.abs(Number(t.value)||0)});const cajuItems=Object.entries(cajuMap).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);const cajuCanvas=document.getElementById('cajuExpenseChart');if(cajuCanvas){drawDonut(cajuCanvas,cajuItems);bindCajuChart(cajuCanvas,key)}const cajuLegend=document.getElementById('cajuExpenseLegend');if(cajuLegend){cajuLegend.innerHTML=cajuItems.map((it,i)=>'<div class="legend-line clickable" data-caju-cat="'+String(it.name).replace(/"/g,'&quot;')+'"><span><i class="dot" style="background:'+colors[i%colors.length]+'"></i>'+it.name+'</span><b>'+brl(it.value)+'</b></div>').join('')||'<div class="notice">Sem gastos Caju neste mês.</div>';cajuLegend.querySelectorAll('[data-caju-cat]').forEach(el=>el.onclick=()=>openCajuCategoryDetail(el.dataset.cajuCat,key))}
  if(cajuCanvas){cajuCanvas.style.display='block';cajuCanvas.style.width='100%';cajuCanvas.style.height='220px';cajuCanvas.closest('.chart-wrap')?.classList.toggle('empty-chart',!cajuItems.length)}
  const tb=document.getElementById('cajuDetailTable');if(tb)tb.innerHTML=all.length?all.map(t=>`<tr><td>${fmt(t.date)} ${t.time||''}</td><td>${t.desc||t.description||''}</td><td>${t.cat||'Alimentação'} › ${t.sub||''}</td><td class="down">-${brl(Math.abs(Number(t.value)||0))}</td><td>${balanceById.has(String(t.id))?brl(balanceById.get(String(t.id))):'—'}</td></tr>`).join(''):`<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:22px">Nenhuma movimentação Caju em ${monthLabelKey(key)}.</td></tr>`;
 }
