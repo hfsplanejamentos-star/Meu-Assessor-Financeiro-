@@ -22,7 +22,7 @@
   /* Conciliação definitiva do extrato Caju de 17 a 23/09/2026.
      Mantém somente as 13 compras visíveis no extrato e elimina versões duplicadas. */
   db.meta=db.meta||{};
-  if(db.meta.cajuStatementVersion!=='2026-09-23-v1'){
+  if(!db.meta.sep28ConfirmedBalances&&db.meta.cajuStatementVersion!=='2026-09-23-v1'){
    const base={status:'realized',origin:'Extrato Caju confirmado',source:'Extrato Caju confirmado',card:'card_caju_alimentacao',cardId:'card_caju_alimentacao',benefit:true,excludeFromExpense:true,statementVerified:true,cat:'Alimentação'};
    const statement=[
     ['caju_stmt_2026_09_17_padaria_100','2026-09-17','Padaria e Confeitaria',-1.00,'Padaria'],
