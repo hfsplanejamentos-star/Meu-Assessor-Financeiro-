@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260928-r244';
+ const RELEASE='atual-ui-20260928-r245';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -3343,7 +3343,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r244',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r245',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
@@ -3422,7 +3422,7 @@ document.addEventListener('click',function(e){
 <script src="r98-desktop-home-layout.js?v=20260923-r183"></script>
 <script src="r99-sep25-transactions.js?v=20260925-r208"></script>
 <script src="r100-desktop-stability.js?v=20260925-r200"></script>
-<script src="r101-sep28-balances.js?v=20260928-r243"></script>
+<script src="r101-sep28-balances.js?v=20260928-r245"></script>
 <datalist id="categorySuggestions"></datalist><datalist id="subcategorySuggestions"></datalist>
 <script id="r235-ai-float">
 (()=>{const $=id=>document.getElementById(id),btn=$('aiFloatBtn'),panel=$('aiFloatPanel'),input=$('aiQuickInput');if(!btn||!panel||!input)return;

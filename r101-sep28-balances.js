@@ -1,6 +1,6 @@
 /* R10.1 — extratos confirmados em 28/09/2026 (C6 e Caju) */
 (()=>{'use strict';
- const VERSION='2026-09-28-v1',round=v=>Math.round(Number(v||0)*100)/100;
+ const VERSION='2026-09-28-v2',round=v=>Math.round(Number(v||0)*100)/100;
  const rows=[
   {id:'c6_2026_09_26_pix_luis_1_1500',date:'2026-09-26',desc:'PIX enviado para Luis Ricardo da Silva Sales',value:-15,cat:'Transferências',sub:'PIX'},
   {id:'c6_2026_09_26_pix_luis_2_1500',date:'2026-09-26',desc:'PIX enviado para Luis Ricardo da Silva Sales',value:-15,cat:'Transferências',sub:'PIX'},
