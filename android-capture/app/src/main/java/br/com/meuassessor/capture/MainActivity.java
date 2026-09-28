@@ -52,6 +52,7 @@ public final class MainActivity extends Activity {
     private Bundle pendingState;
     private boolean authenticated;
     private boolean authenticationInProgress;
+    private boolean queueReceiverRegistered;
     private final android.content.BroadcastReceiver queueReceiver = new android.content.BroadcastReceiver(){ @Override public void onReceive(android.content.Context context, android.content.Intent intent){ if(webView!=null) webView.post(() -> webView.evaluateJavascript("window.meuAssessorAndroidAutoSync&&window.meuAssessorAndroidAutoSync()", null)); }};
 
     @Override
@@ -108,8 +109,8 @@ public final class MainActivity extends Activity {
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 703);
         }
         requestNativePermissions();
-        android.content.IntentFilter queueFilter=new android.content.IntentFilter("br.com.meuassessor.capture.QUEUE_CHANGED");
-        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.TIRAMISU) registerReceiver(queueReceiver,queueFilter,RECEIVER_NOT_EXPORTED); else registerReceiver(queueReceiver,queueFilter);
+        if(!queueReceiverRegistered){android.content.IntentFilter queueFilter=new android.content.IntentFilter("br.com.meuassessor.capture.QUEUE_CHANGED");
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.TIRAMISU) registerReceiver(queueReceiver,queueFilter,RECEIVER_NOT_EXPORTED); else registerReceiver(queueReceiver,queueFilter);queueReceiverRegistered=true;}
         UpdateChecker.check(this);
     }
 
@@ -171,7 +172,7 @@ public final class MainActivity extends Activity {
     }
 
     @Override
-    protected void onDestroy(){ try{unregisterReceiver(queueReceiver);}catch(Exception ignored){} super.onDestroy(); }
+    protected void onDestroy(){ if(queueReceiverRegistered){try{unregisterReceiver(queueReceiver);}catch(Exception ignored){}queueReceiverRegistered=false;} super.onDestroy(); }
 
     @Override
     protected void onStart() {
