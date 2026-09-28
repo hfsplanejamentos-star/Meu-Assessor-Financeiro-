@@ -29,21 +29,25 @@ function accumulatedRealized(key){
  // Exclusivo do card Saldo Acumulado.
  // Mês-base real (set/26): usa somente o que existe no mês, realizado ou previsto.
  // Meses posteriores: considera receitas, despesas e recorrências do próprio mês como efetivadas.
- const until=String(key||'9999-12'),base='2026-09';
+ const until=String(key||'9999-12'),base='2026-09',current=keyOf(new Date().toISOString());
  let income=0,expense=0,investment=0;
- const openingBalance=n((db.accounts||[]).find(a=>String(a.id)==='acc_c6')?.openingBalance); // saldo inicial real da conta C6; não usar valor fixo no motor
+ // O saldo atual das contas já contém todas as movimentações realizadas. Usá-lo
+ // como âncora impede que despesas importadas sejam descontadas uma segunda vez
+ // quando não existe um openingBalance histórico confiável.
+ const liveBalance=currentBalances().liquid;
+ if(until<=current)return {income:0,expense:0,investment:0,balance:liveBalance};
  const accountType=id=>String((db.accounts||[]).find(a=>a.id===id)?.type||'').toLowerCase();
- const months=[];let d=new Date(base+'-01T12:00:00'),last=new Date(until+'-01T12:00:00');
+ const months=[];let d=new Date(current+'-01T12:00:00');d=new Date(d.getFullYear(),d.getMonth()+1,1);const last=new Date(until+'-01T12:00:00');
  while(d<=last){months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));d=new Date(d.getFullYear(),d.getMonth()+1,1)}
  months.forEach(mk=>{
    const tx=(db.transactions||[]).filter(t=>keyOf(t.date)===mk);
    const op=tx.filter(t=>!isTransfer(t)&&!t.excludeFromExpense&&!isInvoicePayment(t));
-   const effective=op.filter(t=>mk===base?real(t.status):(real(t.status)||planned(t.status)));
+   const effective=op.filter(t=>real(t.status)||planned(t.status));
    income+=effective.filter(t=>n(t.value)>0).reduce((s,t)=>s+n(t.value),0);
    const monthExpense=effective.filter(t=>n(t.value)<0);
    expense+=monthExpense.reduce((s,t)=>s+abs(t.value),0);
    investment+=tx.filter(t=>isTransfer(t)&&real(t.status)&&n(t.value)>0&&(t.dest===INV||t.destAccountId===INV||/invest/.test(accountType(t.dest||t.destAccountId||t.account||t.accountId)))).reduce((s,t)=>s+n(t.value),0);
-   if(mk>base){
+   if(mk>current){
      recurringFor(mk).forEach(r=>{
        const rv=abs(r.value);if(!rv)return;
        const name=String(r.name||r.desc||'').trim().toLowerCase();
@@ -52,7 +56,7 @@ function accumulatedRealized(key){
      });
    }
  });
- return {income,expense,investment,balance:openingBalance+income-expense-investment};
+ return {income,expense,investment,balance:liveBalance+income-expense-investment};
 }
 function projection(start='2026-10',count=12){
  let p=currentBalances().patrimony,liq=currentBalances().liquid,inv=currentBalances().invest,costs=0;const [y,m]=start.split('-').map(Number),rows=[];

@@ -10,7 +10,7 @@
  function migrate(){
   if(typeof db!=='object'||!db)return false;
   db.transactions=db.transactions||[];db.accounts=db.accounts||[];db.cards=db.cards||[];db.meta=db.meta||{};
-  if(db.meta.sep25ConfirmedTransactions===VERSION){const cj=db.cards.find(c=>String(c.id)==='card_caju_alimentacao');let fix=false;if(cj&&(Math.abs(Number(cj.balance||0)-303.02)>0.005||Math.abs(Number(cj.availableLimit||0)-303.02)>0.005)){cj.balance=303.02;cj.availableLimit=303.02;fix=true}if(Number(db.meta.cajuStatementAvailable)!==303.02){db.meta.cajuStatementAvailable=303.02;fix=true}if(Number(db.meta.cajuStatementSpent)!==703.87){db.meta.cajuStatementSpent=703.87;fix=true}if(fix){try{save()}catch(_){}try{renderAll()}catch(_){}}return fix;}
+  if(db.meta.sep25ConfirmedTransactions===VERSION){if(db.meta.sep28ConfirmedBalances)return false;const cj=db.cards.find(c=>String(c.id)==='card_caju_alimentacao');let fix=false;if(cj&&(Math.abs(Number(cj.balance||0)-303.02)>0.005||Math.abs(Number(cj.availableLimit||0)-303.02)>0.005)){cj.balance=303.02;cj.availableLimit=303.02;fix=true}if(Number(db.meta.cajuStatementAvailable)!==303.02){db.meta.cajuStatementAvailable=303.02;fix=true}if(Number(db.meta.cajuStatementSpent)!==703.87){db.meta.cajuStatementSpent=703.87;fix=true}if(fix){try{save()}catch(_){}try{renderAll()}catch(_){}}return fix;}
   let changed=false;
 
   const c6Date='2026-09-25',c6Value=-15.00;

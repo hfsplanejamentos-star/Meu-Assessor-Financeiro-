@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260928-r241';
+ const RELEASE='atual-ui-20260928-r243';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -1087,6 +1087,27 @@ body.modal-lock #aiFloatBtn,body.modal-lock #aiFloatPanel{display:none!important
  #view-overview #kpis .r98-bank-row{grid-template-columns:repeat(3,minmax(0,1fr))!important}
  #view-overview #kpis .r98-summary-row{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 }
+</style>
+<style id="r242-desktop-two-column-fix">
+@media(min-width:901px){
+ body #view-overview>.dashboard{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-auto-flow:row!important;gap:10px!important;align-items:start!important}
+ body #view-overview>.dashboard>[data-home-block]{grid-column:auto!important;width:auto!important;min-width:0!important;min-height:0!important;height:auto!important;max-height:none!important;overflow:hidden!important;padding:12px!important;margin:0!important}
+ body #view-overview>.dashboard>[data-home-block="category"],body #view-overview>.dashboard>[data-home-block="cajuexpenses"]{height:290px!important;min-height:290px!important;max-height:290px!important}
+ body #view-overview>.dashboard>[data-home-block="category"] .chart-wrap,body #view-overview>.dashboard>[data-home-block="cajuexpenses"] .chart-wrap{height:155px!important;min-height:155px!important;max-height:155px!important;margin:0!important}
+ body #view-overview>.dashboard>[data-home-block="category"] canvas,body #view-overview>.dashboard>[data-home-block="cajuexpenses"] canvas{width:100%!important;height:155px!important}
+ body #view-overview>.dashboard>[data-home-block="category"] .legend,body #view-overview>.dashboard>[data-home-block="cajuexpenses"] .legend{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:1px 12px!important;max-height:72px!important;overflow:hidden!important;margin-top:2px!important}
+ body #view-overview>.dashboard>[data-home-block="recent"],body #view-overview>.dashboard>[data-home-block="commitments"]{height:286px!important;min-height:286px!important;max-height:286px!important}
+ body #view-overview>.dashboard>[data-home-block="recent"] .row-list,body #view-overview>.dashboard>[data-home-block="commitments"] .row-list{max-height:226px!important;overflow:auto!important;padding-right:3px!important}
+ body #view-overview>.dashboard>[data-home-block="calendar"],body #view-overview>.dashboard>[data-home-block="projection"]{grid-column:1/-1!important}
+ body #view-overview>.dashboard>[data-home-block="recurring"],body #view-overview>.dashboard>[data-home-block="investments"],body #view-overview>.dashboard>[data-home-block="alerts"],body #view-overview>.dashboard>[data-home-block="health"]{min-height:250px!important;max-height:320px!important}
+ body #view-overview .panel-head{min-height:30px!important;margin-bottom:4px!important}
+ body #view-overview .panel-head h3{font-size:13px!important}
+ body #view-overview .chart-note{font-size:9px!important;line-height:1.2!important;margin-top:2px!important}
+ body #view-overview .card,body #view-overview .kpi,#aiFloatBtn,#aiFloatBtn::before{animation:none!important;transition:none!important}
+ #aiFloatBtn,#aiFloatBtn.ai-online{box-shadow:0 0 0 2px rgba(20,216,255,.14),0 0 18px rgba(27,202,255,.5),0 0 28px rgba(196,52,255,.25),0 9px 24px rgba(0,0,0,.42)!important}
+ #aiFloatBtn .ai-chip-icon{filter:none!important}
+}
+@media(min-width:901px) and (max-width:1120px){body #view-overview>.dashboard{grid-template-columns:1fr!important}body #view-overview>.dashboard>[data-home-block="calendar"],body #view-overview>.dashboard>[data-home-block="projection"]{grid-column:auto!important}}
 </style></head>
 <body>
 <div class="tooltip" id="tooltip"></div>
@@ -3322,7 +3343,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r241',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r243',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
@@ -3394,13 +3415,14 @@ document.addEventListener('click',function(e){
 <script src="./r69-real-budget-repair.js?v=2"></script>
 <script src="./r70-real-reset.js?v=28"></script>
 <script src="./r75-final-validation-fix.js?v=11"></script>
-<script src="./r80-investment-status-fix.js?v=9"></script>
+<script src="./r80-investment-status-fix.js?v=10"></script>
 <div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=32"></script><script src="./r92-stable-startup.js?v=1"></script><script src="r95-image-entry.js?v=20260923-r183"></script>
 <script src="r96-category-details.js?v=20260922-r134"></script>
 <script src="r97-integrity-audit.js?v=20260923-r183"></script>
 <script src="r98-desktop-home-layout.js?v=20260923-r183"></script>
 <script src="r99-sep25-transactions.js?v=20260925-r208"></script>
 <script src="r100-desktop-stability.js?v=20260925-r200"></script>
+<script src="r101-sep28-balances.js?v=20260928-r243"></script>
 <datalist id="categorySuggestions"></datalist><datalist id="subcategorySuggestions"></datalist>
 <script id="r235-ai-float">
 (()=>{const $=id=>document.getElementById(id),btn=$('aiFloatBtn'),panel=$('aiFloatPanel'),input=$('aiQuickInput');if(!btn||!panel||!input)return;

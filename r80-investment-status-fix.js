@@ -12,9 +12,10 @@
  db.transactions=db.transactions.filter(t=>t.id!=='caju_2026_09_17_padaria_xanxere');
  known.forEach(k=>{let t=db.transactions.find(x=>x.id===k.id);const base={...k,description:k.desc,cat:'Alimentação',sub:'Padaria/Alimentação',status:'posted',source:'Caju',origin:'Caju Crédito',cardId:'card_caju_alimentacao',excludeFromPatrimony:true};if(!t)db.transactions.push(base);else Object.assign(t,base)});
  const movements=db.transactions.filter(t=>(t.cardId===CAJU||t.card===CAJU)&&!isPlanned(t.status)&&!t.excludeFromBalance);
- const computed=Math.round(movements.reduce((sum,t)=>sum+Number(t.value||0),0)*100)/100;
+ const computed=Math.round(movements.reduce((sum,t)=>sum+Number(t.value||0),0)*100)/100,statementAvailable=Number(db.meta?.cajuStatementAvailable);
  card.limit=String(new Date().toISOString().slice(0,7))==='2026-09'?1006.89:1500;
- if(computed>=0){card.availableLimit=computed;card.balance=computed}
+ if(db.meta?.cajuStatementVersion&&Number.isFinite(statementAvailable)){card.availableLimit=statementAvailable;card.balance=statementAvailable}
+ else if(computed>=0){card.availableLimit=computed;card.balance=computed}
  card.meta={...(card.meta||{}),balanceSource:'transactions',balanceUpdatedAt:new Date().toISOString()};
  db.meta.cajuKnownBalance=card.balance;db.meta.cajuKnownBalanceAt=card.meta.balanceUpdatedAt;
  if(typeof save==='function')save();if(typeof renderAll==='function')renderAll();return true;
