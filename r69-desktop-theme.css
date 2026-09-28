@@ -71,3 +71,15 @@
     max-width:none!important;
   }
 }
+/* R10.4 desktop compact/customization guard */
+@media(min-width:901px){
+ #view-overview .dashboard>[data-home-block]{cursor:default!important}
+ body.desktop-customize-mode #view-overview .dashboard>[data-home-block]{cursor:grab!important;outline:1px dashed rgba(53,215,255,.24);outline-offset:2px}
+ body.desktop-customize-mode #view-overview .dashboard>[data-home-block]:active{cursor:grabbing!important}
+ #desktopCustomizeToggle{min-height:34px!important;padding:7px 11px!important;font-size:12px!important;white-space:nowrap}
+ #view-overview #kpis .r98-bank-row{gap:9px!important;margin-bottom:9px!important}
+ #view-overview #kpis .r98-bank-row>.brand-fin-card{min-height:178px!important;padding:12px!important}
+ #view-overview #kpis .r98-summary-row{gap:9px!important}
+ #view-overview #kpis .r98-summary-row>.kpi{min-height:100px!important;padding:12px!important}
+ #view-overview .dashboard{gap:10px!important}
+}
