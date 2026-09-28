@@ -28,3 +28,17 @@
 @media (max-width:340px){
   #view-overview .grid-kpi{grid-template-columns:1fr!important}
 }
+
+/* R10.3 — mobile safe-area, readable legends and floating controls */
+@media(max-width:520px){
+ .main,.content,main{padding-bottom:calc(118px + env(safe-area-inset-bottom))!important}
+ #view-overview #categoryLegend{grid-template-columns:1fr!important;gap:4px!important}
+ #view-overview #categoryLegend .legend-line{min-width:0!important;gap:8px!important}
+ #view-overview #categoryLegend .legend-line span{min-width:0!important;overflow-wrap:anywhere!important}
+ #fcFab{bottom:calc(78px + env(safe-area-inset-bottom))!important;right:12px!important;width:46px!important;height:46px!important;border-radius:15px!important}
+ .fab-wrap{position:fixed!important;right:12px!important;bottom:calc(132px + env(safe-area-inset-bottom))!important;z-index:9996!important;margin:0!important;width:auto!important;pointer-events:none!important}
+ .fab-wrap .fab-main{pointer-events:auto!important}
+ #r67AiAssessor{scroll-margin-bottom:120px!important}
+ table{font-size:11px!important}
+ .table-wrap{padding-bottom:12px!important}
+}
