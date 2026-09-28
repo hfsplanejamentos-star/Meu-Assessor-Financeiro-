@@ -3087,7 +3087,7 @@ function importAndroidNotification(id){
  if(candidate&&candidate.score>=90){mergeCapturedDuplicate(candidate.tx,candidateRow);n.importedAt=new Date().toISOString();n.mergedInto=candidate.tx.id;save();document.dispatchEvent(new CustomEvent('finance-data-changed',{detail:{reason:'android_duplicate_merged'}}));renderAndroidInbox();renderAndroidCaptures();return;}
  const reportedBalance=(n.reportedBalanceCents!==undefined&&n.reportedBalanceCents!==null)?Number(n.reportedBalanceCents)/100:null;const tx={id:Date.now()+Math.random(),date,desc:p.merchant,value:-p.value,cat:p.cat||'Não categorizado',sub:p.sub||'Captura Android',account:p.account,card:p.card,origin:p.source,status:'provisional',androidNotificationId:n.id,androidPackage:n.packageName||'',androidAppName:n.appName||'',androidRawText:p.text,captureConfidence:p.confidence,detectedBank:p.bank,detectedCardLast4:p.last4,externalId:n.id,reportedBalance:Number.isFinite(reportedBalance)?reportedBalance:null,reportedBalanceSource:Number.isFinite(reportedBalance)?'android-notification':null,reportedBalanceAt:Number.isFinite(reportedBalance)?new Date(n.postedAt||n.timestamp||Date.now()).toISOString():null};
  if(tx.card)tx.invoiceMonth=cardInvoiceMonthForDate(tx.card,tx.date);
- db.transactions.push(FinanceDomain.normalizeTransaction(tx));n.importedAt=new Date().toISOString();if(typeof audit==='function')audit('create','transaction',null,tx,{scope:'captura Android v1.8.0 SIMULAÇÃO R6.5 · POPUPS EDITÁVEIS'});save();refreshFinancialUI(monthOfTx(tx));renderAndroidInbox();renderAndroidCaptures();alert('Transação provisória criada e enviada para conciliação.');
+ applyTrustedReportedBalance(tx);db.transactions.push(FinanceDomain.normalizeTransaction(tx));n.importedAt=new Date().toISOString();if(typeof audit==='function')audit('create','transaction',null,tx,{scope:'captura Android v1.8.0 SIMULAÇÃO R6.5 · POPUPS EDITÁVEIS'});save();refreshFinancialUI(monthOfTx(tx));renderAndroidInbox();renderAndroidCaptures();alert('Transação provisória criada e enviada para conciliação.');
 }
 function renderAndroidCaptures(){
  const list=(db.androidNotifications||[]).slice().sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
@@ -3161,7 +3161,19 @@ function mergeCapturedDuplicate(existing,row){
  const fields=['reportedBalance','reportedBalanceSource','reportedBalanceAt','androidNotificationId','androidPackage','androidAppName','androidRawText','captureConfidence','detectedBank','detectedCardLast4','externalId'];
  fields.forEach(k=>{if((existing[k]===undefined||existing[k]===null||existing[k]==='')&&row[k]!==undefined&&row[k]!==null&&row[k]!=='')existing[k]=row[k]});
  existing.reconciled=true;existing.reconciledAt=new Date().toISOString();existing.reconciledSource='android-dedup';
+ applyTrustedReportedBalance(row);
  return existing;
+}
+function applyTrustedReportedBalance(row){
+ const v=Number(row?.reportedBalance),at=String(row?.reportedBalanceAt||'');
+ if(!Number.isFinite(v)||!at)return false;
+ db.meta=db.meta||{};const prev=String(db.meta.cajuLatestReportedAt||'');
+ const caju=String(row.card||row.cardId||'')==='card_caju_alimentacao'||/caju/i.test(String(row.reportedBalanceSource||'')+' '+String(row.origin||''));
+ if(!caju||prev&&at<=prev)return false;
+ const card=(db.cards||[]).find(x=>String(x.id)==='card_caju_alimentacao');if(!card)return false;
+ card.balance=v;card.availableLimit=v;card.balanceDate=at.slice(0,10);card.balanceUpdatedAt=at;card.excludeFromPatrimony=true;
+ db.meta.cajuLatestReportedBalance=v;db.meta.cajuLatestReportedAt=at;db.meta.cajuStatementAvailable=v;
+ return true;
 }
 function guessCategory(desc,value){
  const s=normalizeText(desc);
