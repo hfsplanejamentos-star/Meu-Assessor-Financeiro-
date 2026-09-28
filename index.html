@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260927-r238';
+ const RELEASE='atual-ui-20260928-r239';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -1610,6 +1610,38 @@ const save=()=>{refreshCategorySuggestions();localStorage.setItem(STORAGE,JSON.s
 /* Versão Atual: não injetar seed fictício quando a base real estiver temporariamente vazia durante a sincronização. */
 db.accounts=db.accounts||[];db.cards=db.cards||[];db.categories=db.categories||[];db.transactions=db.transactions||[];db.recurring=db.recurring||[];db.investments=db.investments||[];
 db.transactions.forEach(t=>{if(!t.status)t.status='realized';if(t.card===undefined)t.card=db.cards.some(c=>c.id===t.account)?t.account:null;});
+/* R239 — conciliação C6 confirmada pelos prints de 28/09/2026. */
+(function reconcileC6Sep(){
+ const rows=[
+  ['c6_20260927_99_1233','2026-09-27','Pix Enviado Para 99 Tecnologia Ltda',-12.33,'Transporte','Uber/99'],
+  ['c6_20260927_99_900','2026-09-27','Pix Enviado Para 99 Tecnologia Ltda',-9.00,'Transporte','Uber/99'],
+  ['c6_20260927_bruno_3900','2026-09-27','BRUNO CESAR GONCALVES RIO DE JANEIRO BRA',-39.00,'Entretenimento','Cerveja'],
+  ['c6_20260926_luis_1500_a','2026-09-26','Pix Enviado Para Luis Ricardo Da Silva Sales',-15.00,'Transferências','Pix'],
+  ['c6_20260926_luis_1500_b','2026-09-26','Pix Enviado Para Luis Ricardo Da Silva Sales',-15.00,'Transferências','Pix'],
+  ['c6_20260925_padaria_1500','2026-09-25','PADARIA E CONFEITARIA DUQUE DE CAXI BRA',-15.00,'Alimentação','Padaria'],
+  ['c6_20260925_pix_in_100','2026-09-25','Pix Recebido De Hebert Ferreira Da Silva',1.00,'Receita','Pix'],
+  ['c6_20260925_pix_out_100','2026-09-25','Pix Enviado Para Hebert Ferreira Da Silva',-1.00,'Transferências','Pix'],
+  ['c6_20260924_valdivino_600','2026-09-24','Pix Enviado Para Valdivino Antonio Miranda',-6.00,'Transporte','Estacionamento'],
+  ['c6_20260923_pacheco_1498','2026-09-23','DROGARIAS PACHECO SA DUQUE DE CAXI BRA',-14.98,'Saúde','Farmácia'],
+  ['c6_20260923_cumani_2699','2026-09-23','CUMANI - ROSARIO DUQUE DE CAXI BRA',-26.99,'Saúde','Farmácia'],
+  ['c6_20260923_antonio_600','2026-09-23','Pix Enviado Para Antonio Carlos Eugenio Barreto',-6.00,'Transferências','Pix'],
+  ['c6_20260923_combustivel_10000','2026-09-23','AutoPostoJardim DUQUE DE CAXI BRA',-100.00,'Transporte','Combustível']
+ ];
+ const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+ rows.forEach(([id,date,desc,value,cat,sub])=>{
+   let same=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,10)===date&&Math.abs(Number(t.value||0)-value)<0.005&&norm(t.desc).includes(norm(desc).slice(0,Math.min(18,norm(desc).length))));
+   if(id==='c6_20260926_luis_1500_b'){
+     same=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,10)===date&&Math.abs(Number(t.value||0)+15)<0.005&&/luis ricardo/i.test(String(t.desc||'')));
+     if(same.length>=2)return;
+   } else if(same.length)return;
+   db.transactions.push({id,date,desc,value,cat,sub,account:'c6',accountId:'c6',origin:'Extrato C6 confirmado',status:'realized'});
+ });
+ const c6=(db.accounts||[]).find(a=>String(a.id)==='c6'||/c6.*conta|conta.*c6/i.test(String(a.name||'')));
+ if(c6){c6.balance=140.40;c6.statementBalance=140.40;c6.statementBalanceDate='2026-09-27'}
+ learnCategory('Entretenimento','Cerveja');learnCategory('Transporte','Estacionamento');learnCategory('Transporte','Uber/99');
+ save();
+})();
+
 // R218: categorias editáveis persistem e "Depósito Cego" é aprendido como Entretenimento > Cerveja.
 db.transactions.forEach(t=>{const d=String(t.desc||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');if(d.includes('deposito cego')){t.cat='Entretenimento';t.sub='Cerveja';learnCategory('Entretenimento','Cerveja')}else learnCategory(t.cat,t.sub)});db.recurring.forEach(r=>{if(r.active===undefined)r.active=true;if(!r.freq)r.freq='Mensal';if(!r.kind)r.kind='Recorrente';});db.cards.forEach(c=>{if(!c.type)c.type='Crédito';});db.invoices=db.invoices||[];db.auditLog=db.auditLog||[];db.dismissedAlerts=db.dismissedAlerts||{};db.budgets=db.budgets||[];db.goals=db.goals||[];db.goals.forEach(g=>{if(Number(g.current||0)>0&&!('legacyCurrent' in g))g.legacyCurrent=Number(g.current||0)});db.androidNotifications=db.androidNotifications||[];db.captureIgnored=db.captureIgnored||{};
 
