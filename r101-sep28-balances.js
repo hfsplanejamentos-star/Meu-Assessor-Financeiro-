@@ -16,8 +16,8 @@
   const cajuId='card_caju_alimentacao',cajuTx={id:'caju_2026_09_28_padaria_19600',date:'2026-09-28',desc:'Padaria e Confeitaria',description:'Padaria e Confeitaria',value:-196,cat:'Alimentação',sub:'Padaria',status:'realized',origin:'Extrato Caju confirmado',source:'Extrato Caju confirmado',card:cajuId,cardId:cajuId,benefit:true,excludeFromExpense:true,excludeFromPatrimony:true,statementVerified:true};
   if(!db.transactions.some(t=>String(t.id)===cajuTx.id)){db.transactions.push(cajuTx);changed=true}
   if(db.meta.sep28ConfirmedBalances!==VERSION){
-   const c6=db.accounts.find(a=>String(a.id)==='acc_c6');if(c6){c6.balance=140.40;c6.balanceDate='2026-09-28';c6.statementVerified=true}
-   const caju=db.cards.find(c=>String(c.id)===cajuId);if(caju){caju.balance=107.02;caju.availableLimit=107.02;caju.excludeFromPatrimony=true}
+   const c6=db.accounts.find(a=>String(a.id)==='acc_c6');if(c6&&String(c6.balanceDate||'')<='2026-09-28'){c6.balance=140.40;c6.balanceDate='2026-09-28';c6.statementVerified=true}
+   const caju=db.cards.find(c=>String(c.id)===cajuId);if(caju&&String(caju.balanceDate||'')<='2026-09-28'&&!db.meta.cajuLatestReportedAt){caju.balance=107.02;caju.availableLimit=107.02;caju.balanceDate='2026-09-28';caju.excludeFromPatrimony=true}
    Object.assign(db.meta,{sep28ConfirmedBalances:VERSION,c6StatementAvailable:140.40,c6StatementVersion:VERSION,cajuStatementCredit:1006.89,cajuStatementSpent:899.87,cajuStatementAvailable:107.02,cajuStatementVersion:VERSION});
    changed=true;
   }
