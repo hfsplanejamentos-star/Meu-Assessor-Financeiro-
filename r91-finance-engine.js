@@ -109,7 +109,7 @@ function renderCanonicalExpenseChart(){
 }
 function canonicalRenderKpis(){
  const b=currentBalances(),k=(typeof activeMonth!=='undefined'?activeMonth:'2026-09'),s=summary(k),acc=accumulatedRealized(k),box=document.getElementById('kpis');if(!box||typeof brl!=='function')return;
- let pref;try{pref=JSON.parse(localStorage.getItem('assessor_kpi_layout')||'[]')}catch(_){pref=[]}
+ let pref,cardPref;try{pref=JSON.parse(localStorage.getItem('assessor_kpi_layout')||'[]')}catch(_){pref=[]}try{cardPref=JSON.parse(localStorage.getItem('assessor_card_layout')||'[]')}catch(_){cardPref=[]}
  const defs={
   c6account:{html:typeof accountBrandCard==='function'?accountBrandCard('c6account',k):'',route:'transactions'},
   itauaccount:{html:typeof accountBrandCard==='function'?accountBrandCard('itauaccount',k):'',route:'accounts'},
@@ -127,8 +127,8 @@ function canonicalRenderKpis(){
   goal:{html:kpiCard('META',brl(Math.max(0,n((db.accounts||[]).find(a=>/\\bxp\\b/i.test(String(a.name||a.institution||'')))?.balance))),'Saldo de referência XP','neutral'),route:'budgets'}
  };
  const mobile=window.matchMedia('(max-width:820px)').matches;
- const fallback=(typeof KPI_ITEMS!=='undefined'?KPI_ITEMS.map(x=>({id:x[0],visible:true})):Object.keys(defs).map(id=>({id,visible:true}))),raw=Array.isArray(pref)?pref:[],order=[],known=new Set();
- raw.forEach(x=>{if(x&&defs[x.id]&&!known.has(x.id)){order.push(x);known.add(x.id)}});fallback.forEach(x=>{if(!known.has(x.id)){order.push(x);known.add(x.id)}});
+ const cardFallback=(typeof CARD_ITEMS!=='undefined'?CARD_ITEMS.map(x=>({id:x[0],visible:true})):['c6account','caju','itauaccount','xpaccount','creditcard'].map(id=>({id,visible:true}))),fallback=(typeof KPI_ITEMS!=='undefined'?KPI_ITEMS.map(x=>({id:x[0],visible:true})):Object.keys(defs).map(id=>({id,visible:true}))),rawCards=Array.isArray(cardPref)?cardPref:[],raw=Array.isArray(pref)?pref:[],order=[],known=new Set();
+ rawCards.forEach(x=>{if(x&&defs[x.id]&&!known.has(x.id)){order.push(x);known.add(x.id)}});cardFallback.forEach(x=>{if(!known.has(x.id)){order.push(x);known.add(x.id)}});raw.forEach(x=>{if(x&&defs[x.id]&&!known.has(x.id)){order.push(x);known.add(x.id)}});fallback.forEach(x=>{if(!known.has(x.id)){order.push(x);known.add(x.id)}});
  ['income_planned','expense_planned'].forEach(id=>{if(!known.has(id)){order.push({id,visible:true});known.add(id)}});
  if(mobile){
    const core=['c6account','caju'];
