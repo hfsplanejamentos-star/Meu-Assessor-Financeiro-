@@ -46,7 +46,7 @@ public final class BankNotificationListener extends NotificationListenerService 
         saveRawDiagnostic(pkg,title,body,status.getPostTime());
         boolean allowed=BankAllowlist.contains(this,pkg);
         if(!allowed){saveDiagnostic(pkg,false,false,"Ignorada: aplicativo não autorizado",title,body,null,null,"");return;}
-        if(n==null){saveDiagnostic(pkg,true,false,"Ignorada: notificação sem conteúdo",title,body,null,"");return;}
+        if(n==null){saveDiagnostic(pkg,true,false,"Ignorada: notificação sem conteúdo",title,body,null,null,"");return;}
         boolean financial=NotificationParser.looksFinancial(title,body);
         CapturedNotification event=NotificationParser.parse(pkg,title,body,status.getPostTime());
         if(!financial){
@@ -57,7 +57,7 @@ public final class BankNotificationListener extends NotificationListenerService 
         }
         boolean added=new EncryptedQueueStore(this).add(event);
         saveDiagnostic(pkg,true,true,added?"Capturada e adicionada à fila":"Reconhecida, mas duplicada/erro de fila",title,body,event.amountCents,event.reportedBalanceCents,event.direction);
-        sendBroadcast(new android.content.Intent("br.com.meuassessor.capture.QUEUE_CHANGED").setPackage(getPackageName()));
+        if(added)sendBroadcast(new android.content.Intent("br.com.meuassessor.capture.QUEUE_CHANGED").setPackage(getPackageName()));
     }
     private static String first(Bundle e,String...keys){for(String k:keys){String v=text(e.getCharSequence(k));if(!v.isEmpty())return v;}return "";}
     private static String lines(CharSequence[] values){if(values==null)return "";StringBuilder b=new StringBuilder();for(CharSequence v:values){String s=text(v);if(!s.isEmpty()){if(b.length()>0)b.append(" | ");b.append(s);}}return b.toString();}
