@@ -62,6 +62,12 @@ final class WebAppBridge {
             out.put("text", d.getString(BankNotificationListener.KEY_TEXT, ""));
             out.put("direction", d.getString(BankNotificationListener.KEY_DIRECTION, ""));
             if (d.contains(BankNotificationListener.KEY_AMOUNT)) out.put("amountCents", d.getLong(BankNotificationListener.KEY_AMOUNT, 0L));
+            String pendingJson = new EncryptedQueueStore(activity).snapshotJson();
+            org.json.JSONArray pendingItems = new org.json.JSONArray(pendingJson);
+            if (pendingItems.length() > 0) {
+                JSONObject latest = pendingItems.getJSONObject(pendingItems.length() - 1);
+                if (!latest.isNull("reportedBalanceCents")) out.put("reportedBalanceCents", latest.getLong("reportedBalanceCents"));
+            }
             return out.toString();
         } catch (Exception ignored) {
             return "{}";
