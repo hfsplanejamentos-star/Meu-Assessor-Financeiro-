@@ -18,7 +18,7 @@
   if(db.meta.sep28ConfirmedBalances!==VERSION){
    const c6=db.accounts.find(a=>String(a.id)==='acc_c6');if(c6&&String(c6.balanceDate||'')<='2026-09-28'){c6.balance=140.40;c6.balanceDate='2026-09-28';c6.statementVerified=true}
    const caju=db.cards.find(c=>String(c.id)===cajuId);if(caju&&String(caju.balanceDate||'')<='2026-09-28'&&!db.meta.cajuLatestReportedAt){caju.balance=107.02;caju.availableLimit=107.02;caju.balanceDate='2026-09-28';caju.excludeFromPatrimony=true}
-   Object.assign(db.meta,{sep28ConfirmedBalances:VERSION,c6StatementAvailable:140.40,c6StatementVersion:VERSION,cajuStatementCredit:1006.89,cajuStatementSpent:899.87,cajuStatementAvailable:107.02,cajuStatementVersion:VERSION});
+   Object.assign(db.meta,{sep28ConfirmedBalances:VERSION,c6StatementAvailable:140.40,c6StatementVersion:VERSION});if(!db.meta.cajuLatestReportedAt){Object.assign(db.meta,{cajuStatementCredit:1006.89,cajuStatementSpent:899.87,cajuStatementAvailable:107.02,cajuStatementVersion:VERSION})}
    changed=true;
   }
   if(changed){try{save()}catch(_){try{localStorage.setItem('assessor_v180_simulacao_ficticia',JSON.stringify(db))}catch(__){}}try{renderAll()}catch(_){}document.dispatchEvent(new CustomEvent('finance-data-changed',{detail:{reason:'sep28_confirmed_balances'}}))}
