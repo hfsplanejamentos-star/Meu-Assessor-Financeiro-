@@ -21,14 +21,15 @@ async function flush(reason='mutation'){
   try{window.FinanceCloud?.detectLocalChange?.()}catch(_){}
   render();
   document.dispatchEvent(new CustomEvent('finance-ui-synchronized',{detail:{reason,at:Date.now()}}));
+  /* Cloud propagation is pull/version-first. Never force-push from the render bus. */
   if(window.FinanceCloud?.configured?.()){
-   try{await window.FinanceCloud.pushLocalControlled?.()}catch(_){}
+   try{window.FinanceCloud.detectLocalChange?.();window.FinanceCloud.sync?.()}catch(_){}
   }
  }finally{running=false;if(queued){queued=false;schedule('queued')}}
 }
 function schedule(reason='mutation',delay=25){clearTimeout(timer);timer=setTimeout(()=>flush(reason),delay)}
 document.addEventListener('finance-data-changed',e=>schedule(e.detail?.reason||'finance-data-changed'));
-document.addEventListener('finance-cloud-status',e=>{if(/Sincronizado|Conectado|Desktop enviado/.test(String(e.detail?.text||'')))schedule('cloud-applied',40)});
+document.addEventListener('finance-cloud-status',e=>{if(/Sincronizado|Conectado/.test(String(e.detail?.text||'')))setTimeout(render,40)});
 window.addEventListener('storage',e=>{if(e.key&&/assessor|finance/i.test(e.key))schedule('storage-change',40)});
 window.addEventListener('focus',()=>schedule('focus-check',60));
 // Safety net: catches legacy paths that mutate db/save without emitting finance-data-changed.
