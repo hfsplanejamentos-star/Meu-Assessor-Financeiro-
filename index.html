@@ -3083,8 +3083,8 @@ function importAndroidNotification(id){
  const n=(db.androidNotifications||[]).find(x=>String(x.id)===String(id));if(!n)return;const p=inferNotificationData(n);if(!p.value)return alert('Não foi possível identificar o valor desta notificação.');
  if((db.transactions||[]).some(t=>t.androidNotificationId===n.id))return alert('Esta notificação já foi importada.');
  const date=new Date(n.timestamp||Date.now()).toISOString().slice(0,10);
- const candidate=typeof duplicateCandidate==='function'?duplicateCandidate({date,desc:p.merchant,value:-p.value,externalId:n.id}):null;
- if(candidate&&candidate.score>=90&&!confirm(`Possível duplicidade com "${candidate.tx.desc}" (${candidate.score}%). Importar mesmo assim?`))return;
+ const reportedBalance=(n.reportedBalanceCents!==undefined&&n.reportedBalanceCents!==null)?Number(n.reportedBalanceCents)/100:null;const candidateRow={date,desc:p.merchant,value:-p.value,externalId:n.id,androidNotificationId:n.id,account:p.account,card:p.card,reportedBalance:Number.isFinite(reportedBalance)?reportedBalance:null,reportedBalanceSource:Number.isFinite(reportedBalance)?'android-notification':null,reportedBalanceAt:Number.isFinite(reportedBalance)?new Date(n.postedAt||n.timestamp||Date.now()).toISOString():null};const candidate=typeof duplicateCandidate==='function'?duplicateCandidate(candidateRow):null;
+ if(candidate&&candidate.score>=90){mergeCapturedDuplicate(candidate.tx,candidateRow);n.importedAt=new Date().toISOString();n.mergedInto=candidate.tx.id;save();document.dispatchEvent(new CustomEvent('finance-data-changed',{detail:{reason:'android_duplicate_merged'}}));renderAndroidInbox();renderAndroidCaptures();return;}
  const reportedBalance=(n.reportedBalanceCents!==undefined&&n.reportedBalanceCents!==null)?Number(n.reportedBalanceCents)/100:null;const tx={id:Date.now()+Math.random(),date,desc:p.merchant,value:-p.value,cat:p.cat||'Não categorizado',sub:p.sub||'Captura Android',account:p.account,card:p.card,origin:p.source,status:'provisional',androidNotificationId:n.id,androidPackage:n.packageName||'',androidAppName:n.appName||'',androidRawText:p.text,captureConfidence:p.confidence,detectedBank:p.bank,detectedCardLast4:p.last4,externalId:n.id,reportedBalance:Number.isFinite(reportedBalance)?reportedBalance:null,reportedBalanceSource:Number.isFinite(reportedBalance)?'android-notification':null,reportedBalanceAt:Number.isFinite(reportedBalance)?new Date(n.postedAt||n.timestamp||Date.now()).toISOString():null};
  if(tx.card)tx.invoiceMonth=cardInvoiceMonthForDate(tx.card,tx.date);
  db.transactions.push(FinanceDomain.normalizeTransaction(tx));n.importedAt=new Date().toISOString();if(typeof audit==='function')audit('create','transaction',null,tx,{scope:'captura Android v1.8.0 SIMULAÇÃO R6.5 · POPUPS EDITÁVEIS'});save();refreshFinancialUI(monthOfTx(tx));renderAndroidInbox();renderAndroidCaptures();alert('Transação provisória criada e enviada para conciliação.');
@@ -3140,17 +3140,28 @@ function similarity(a,b){
 }
 function duplicateCandidate(row){
  let best=null;
+ const rid=String(row.externalId||row.androidNotificationId||'').trim();
  for(const t of db.transactions){
+   const tid=String(t.externalId||t.androidNotificationId||'').trim();
+   if(rid&&tid&&rid===tid)return {tx:t,score:100,reason:'external-id'};
    const amountOk=Math.abs(Math.abs(Number(t.value)||0)-Math.abs(Number(row.value)||0))<0.011;
    if(!amountOk)continue;
    const d1=new Date(t.date+'T12:00:00'),d2=new Date(row.date+'T12:00:00'),dayDiff=Math.abs(d1-d2)/86400000;
    if(dayDiff>1)continue;
    const sim=similarity(t.desc,row.desc);
-   let score=55 + (dayDiff===0?20:10) + Math.round(sim*25);
-   if(row.externalId && t.externalId && row.externalId===t.externalId)score=100;
-   if(!best||score>best.score)best={tx:t,score};
+   const sameAccount=!!row.account&&String(t.account||t.accountId||'')===String(row.account);
+   const sameCard=!!row.card&&String(t.card||t.cardId||'')===String(row.card);
+   let score=55+(dayDiff===0?20:10)+Math.round(sim*20)+(sameAccount||sameCard?5:0);
+   if(!best||score>best.score)best={tx:t,score,reason:'amount-date-description'};
  }
- return best && best.score>=72 ? best : null;
+ return best&&best.score>=72?best:null;
+}
+function mergeCapturedDuplicate(existing,row){
+ if(!existing||!row)return existing;
+ const fields=['reportedBalance','reportedBalanceSource','reportedBalanceAt','androidNotificationId','androidPackage','androidAppName','androidRawText','captureConfidence','detectedBank','detectedCardLast4','externalId'];
+ fields.forEach(k=>{if((existing[k]===undefined||existing[k]===null||existing[k]==='')&&row[k]!==undefined&&row[k]!==null&&row[k]!=='')existing[k]=row[k]});
+ existing.reconciled=true;existing.reconciledAt=new Date().toISOString();existing.reconciledSource='android-dedup';
+ return existing;
 }
 function guessCategory(desc,value){
  const s=normalizeText(desc);
