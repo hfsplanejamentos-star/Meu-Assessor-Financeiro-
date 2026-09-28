@@ -83,3 +83,17 @@
  #view-overview #kpis .r98-summary-row>.kpi{min-height:100px!important;padding:12px!important}
  #view-overview .dashboard{gap:10px!important}
 }
+
+/* R10.5 — saved desktop P/M/G reflow overrides legacy fixed spans */
+@media(min-width:901px){
+ #view-overview>.dashboard>[data-home-block][data-home-size="p"]{grid-column:span 4!important}
+ #view-overview>.dashboard>[data-home-block][data-home-size="m"]{grid-column:span 6!important}
+ #view-overview>.dashboard>[data-home-block][data-home-size="g"]{grid-column:span 8!important}
+ #view-overview>.dashboard>[data-home-block="category"],#view-overview>.dashboard>[data-home-block="cajuexpenses"]{height:auto!important;min-height:360px!important}
+ #view-overview>.dashboard>[data-home-block][data-home-size="p"] .chart-wrap{height:180px!important;min-height:180px!important}
+ #view-overview>.dashboard>[data-home-block][data-home-size="m"] .chart-wrap{height:205px!important;min-height:205px!important}
+ #view-overview>.dashboard>[data-home-block][data-home-size="g"] .chart-wrap{height:235px!important;min-height:235px!important}
+ #view-overview>.dashboard>[data-home-block] canvas{max-width:100%!important}
+ body.desktop-customize-mode #view-overview>.dashboard>[data-home-block]::after{content:"P/M/G"!important;color:rgba(110,220,255,.7)!important}
+ body:not(.desktop-customize-mode) #view-overview>.dashboard>[data-home-block]::after{display:none!important}
+}
