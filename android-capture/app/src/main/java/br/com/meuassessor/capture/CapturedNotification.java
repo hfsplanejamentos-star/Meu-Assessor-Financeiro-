@@ -9,17 +9,19 @@ final class CapturedNotification {
     final String title;
     final String text;
     final Long amountCents;
+    final Long reportedBalanceCents;
     final String direction;
     final long postedAt;
     final long capturedAt;
 
     CapturedNotification(String id, String sourcePackage, String title, String text,
-                         Long amountCents, String direction, long postedAt, long capturedAt) {
+                         Long amountCents, Long reportedBalanceCents, String direction, long postedAt, long capturedAt) {
         this.id = id;
         this.sourcePackage = sourcePackage;
         this.title = title;
         this.text = text;
         this.amountCents = amountCents;
+        this.reportedBalanceCents = reportedBalanceCents;
         this.direction = direction;
         this.postedAt = postedAt;
         this.capturedAt = capturedAt;
@@ -33,10 +35,11 @@ final class CapturedNotification {
         value.put("text", text);
         if (amountCents == null) value.put("amountCents", JSONObject.NULL);
         else value.put("amountCents", amountCents);
+        if (reportedBalanceCents == null) value.put("reportedBalanceCents", JSONObject.NULL); else value.put("reportedBalanceCents", reportedBalanceCents);
         value.put("direction", direction);
         value.put("postedAt", postedAt);
         value.put("capturedAt", capturedAt);
-        value.put("schemaVersion", 1);
+        value.put("schemaVersion", 2);
         return value;
     }
 }
