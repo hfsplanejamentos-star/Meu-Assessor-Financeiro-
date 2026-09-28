@@ -10,7 +10,7 @@
  function migrate(){
   if(typeof db!=='object'||!db)return false;
   db.transactions=db.transactions||[];db.accounts=db.accounts||[];db.cards=db.cards||[];db.meta=db.meta||{};
-  if(db.meta.sep25ConfirmedTransactions===VERSION){if(db.meta.sep28ConfirmedBalances)return false;const cj=db.cards.find(c=>String(c.id)==='card_caju_alimentacao');let fix=false;if(cj&&(Math.abs(Number(cj.balance||0)-303.02)>0.005||Math.abs(Number(cj.availableLimit||0)-303.02)>0.005)){cj.balance=303.02;cj.availableLimit=303.02;fix=true}if(Number(db.meta.cajuStatementAvailable)!==303.02){db.meta.cajuStatementAvailable=303.02;fix=true}if(Number(db.meta.cajuStatementSpent)!==703.87){db.meta.cajuStatementSpent=703.87;fix=true}if(fix){try{save()}catch(_){}try{renderAll()}catch(_){}}return fix;}
+  if(db.meta.sep25ConfirmedTransactions===VERSION){if(db.meta.sep28ConfirmedBalances||String(db.meta.cajuLatestReportedAt||'').slice(0,10)>'2026-09-25')return false;const cj=db.cards.find(c=>String(c.id)==='card_caju_alimentacao');let fix=false;if(cj&&(Math.abs(Number(cj.balance||0)-303.02)>0.005||Math.abs(Number(cj.availableLimit||0)-303.02)>0.005)){cj.balance=303.02;cj.availableLimit=303.02;fix=true}if(Number(db.meta.cajuStatementAvailable)!==303.02){db.meta.cajuStatementAvailable=303.02;fix=true}if(Number(db.meta.cajuStatementSpent)!==703.87){db.meta.cajuStatementSpent=703.87;fix=true}if(fix){try{save()}catch(_){}try{renderAll()}catch(_){}}return fix;}
   let changed=false;
 
   const c6Date='2026-09-25',c6Value=-15.00;
@@ -63,11 +63,11 @@
     excludeFromExpense:true,excludeFromPatrimony:true,statementVerified:true
    });
    const caju=db.cards.find(c=>String(c.id)===cajuId);
-   if(caju){caju.balance=303.02;caju.availableLimit=303.02;caju.excludeFromPatrimony=true}
+   if(caju&&String(caju.balanceDate||'')<='2026-09-24'&&!db.meta.cajuLatestReportedAt){caju.balance=303.02;caju.availableLimit=303.02;caju.balanceDate='2026-09-25';caju.excludeFromPatrimony=true}
    changed=true;
   }else{
    const caju=db.cards.find(c=>String(c.id)===cajuId);
-   if(caju&&Math.abs(Number(caju.balance||0)-303.02)>0.005){caju.balance=303.02;caju.availableLimit=303.02;changed=true}
+   if(caju&&String(caju.balanceDate||'')<='2026-09-25'&&!db.meta.cajuLatestReportedAt&&Math.abs(Number(caju.balance||0)-303.02)>0.005){caju.balance=303.02;caju.availableLimit=303.02;caju.balanceDate='2026-09-25';changed=true}
   }
 
   db.meta.sep25ConfirmedTransactions=VERSION;
@@ -86,7 +86,7 @@
    try{save()}catch(_){try{localStorage.setItem('assessor_v180_simulacao_ficticia',JSON.stringify(db))}catch(__){}}
    try{renderAll()}catch(_){}
    document.dispatchEvent(new CustomEvent('finance-data-changed',{detail:{reason:'sep25_confirmed_transactions'}}));
-   try{window.FinanceCloud?.detectLocalChange?.();setTimeout(()=>window.FinanceCloud?.pushLocalControlled?.(),900)}catch(_){}
+   try{window.FinanceCloud?.detectLocalChange?.();setTimeout(()=>window.FinanceCloud?.sync?.(),900)}catch(_){}
   }
   return changed;
  }
