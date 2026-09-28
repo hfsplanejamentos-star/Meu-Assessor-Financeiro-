@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260928-r245';
+ const RELEASE='atual-ui-20260928-r243';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -1108,7 +1108,42 @@ body.modal-lock #aiFloatBtn,body.modal-lock #aiFloatPanel{display:none!important
  #aiFloatBtn .ai-chip-icon{filter:none!important}
 }
 @media(min-width:901px) and (max-width:1120px){body #view-overview>.dashboard{grid-template-columns:1fr!important}body #view-overview>.dashboard>[data-home-block="calendar"],body #view-overview>.dashboard>[data-home-block="projection"]{grid-column:auto!important}}
-</style></head>
+</style><style id="r243-desktop-compact-821">
+/* R243 — Desktop compacto também em janelas/escala do Windows entre 821 e 900px CSS. Mobile permanece inalterado. */
+@media(min-width:821px){
+ body #view-overview #kpis.grid-kpi{margin-bottom:8px!important}
+ body #view-overview #kpis .r98-bank-row{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:8px!important;margin-bottom:8px!important}
+ body #view-overview #kpis .r98-bank-row>.brand-fin-card{min-height:104px!important;height:104px!important;padding:10px 12px!important;border-radius:14px!important}
+ body #view-overview #kpis .r98-bank-row .brand-name{font-size:15px!important;margin-top:6px!important}
+ body #view-overview #kpis .r98-bank-row .brand-sub,body #view-overview #kpis .r98-bank-row .brand-num,body #view-overview #kpis .r98-bank-row .brand-foot,body #view-overview #kpis .r98-bank-row .benefit-progress{display:none!important}
+ body #view-overview #kpis .r98-bank-row .brand-top{font-size:10px!important}
+ body #view-overview #kpis .r98-bank-row .brand-logo{font-size:12px!important}
+ body #view-overview #kpis .r98-bank-row .brand-stats{margin-top:6px!important;padding-top:6px!important;gap:6px!important}
+ body #view-overview #kpis .r98-bank-row .brand-stats small{font-size:9px!important}
+ body #view-overview #kpis .r98-bank-row .brand-stats strong{font-size:14px!important;margin-top:1px!important}
+ body #view-overview #kpis .r98-summary-row{display:grid!important;grid-template-columns:repeat(8,minmax(0,1fr))!important;gap:7px!important}
+ body #view-overview #kpis .r98-summary-row>.kpi{min-height:70px!important;height:70px!important;padding:9px 10px!important;border-radius:13px!important}
+ body #view-overview #kpis .r98-summary-row .label{font-size:8px!important;white-space:nowrap!important}
+ body #view-overview #kpis .r98-summary-row .value{font-size:16px!important;margin:5px 0 1px!important;white-space:nowrap!important}
+ body #view-overview #kpis .r98-summary-row .up,body #view-overview #kpis .r98-summary-row .down,body #view-overview #kpis .r98-summary-row .neutral{font-size:9px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+ body #view-overview #kpis .r98-summary-row .spark{display:none!important}
+ body #view-overview>.dashboard{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-auto-flow:row!important;gap:9px!important;align-items:start!important}
+ body #view-overview>.dashboard>[data-home-block]{grid-column:auto!important;width:auto!important;min-width:0!important;min-height:0!important;height:auto!important;max-height:none!important;overflow:hidden!important;padding:11px!important;margin:0!important;border-radius:14px!important}
+ body #view-overview>.dashboard>[data-home-block="category"],body #view-overview>.dashboard>[data-home-block="cajuexpenses"]{height:260px!important;min-height:260px!important;max-height:260px!important}
+ body #view-overview>.dashboard>[data-home-block="category"] .chart-wrap,body #view-overview>.dashboard>[data-home-block="cajuexpenses"] .chart-wrap{height:135px!important;min-height:135px!important;max-height:135px!important;margin:0!important}
+ body #view-overview>.dashboard>[data-home-block="category"] canvas,body #view-overview>.dashboard>[data-home-block="cajuexpenses"] canvas{height:135px!important}
+ body #view-overview>.dashboard>[data-home-block="category"] .legend,body #view-overview>.dashboard>[data-home-block="cajuexpenses"] .legend{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:1px 10px!important;max-height:66px!important;overflow:hidden!important;margin-top:2px!important}
+ body #view-overview>.dashboard>[data-home-block="recent"],body #view-overview>.dashboard>[data-home-block="commitments"]{height:260px!important;min-height:260px!important;max-height:260px!important}
+ body #view-overview>.dashboard>[data-home-block="recent"] .row-list,body #view-overview>.dashboard>[data-home-block="commitments"] .row-list{max-height:205px!important;overflow:auto!important}
+ body #view-overview>.dashboard>[data-home-block="calendar"],body #view-overview>.dashboard>[data-home-block="projection"]{grid-column:1/-1!important}
+ body #view-overview .panel-head{min-height:28px!important;margin-bottom:4px!important}
+ body #view-overview .panel-head h3{font-size:12px!important}
+ body #view-overview .panel-head small{font-size:9px!important}
+ body #view-overview .panel-head button,body #view-overview .panel-head select{min-height:29px!important;padding:5px 8px!important;font-size:9px!important}
+ body #view-overview .chart-note{font-size:8px!important;line-height:1.15!important;margin-top:2px!important}
+}
+</style>
+</head>
 <body>
 <div class="tooltip" id="tooltip"></div>
 <div class="mobile-overlay" id="overlay"></div>
