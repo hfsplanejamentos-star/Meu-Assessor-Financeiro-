@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 
 final class NotificationParser {
     private static final Pattern MONEY = Pattern.compile("(?i)(?:R\\$|BRL)?\\s*([0-9]{1,3}(?:\\.[0-9]{3})*,[0-9]{2}|[0-9]+,[0-9]{2})");
+    private static final Pattern BALANCE = Pattern.compile("(?i)\\bsaldo(?:\\s+(?:em|dispon[ií]vel(?:\\s+em)?))?[^R$0-9]{0,60}(?:R\\$|BRL)?\\s*([0-9]{1,3}(?:\\.[0-9]{3})*,[0-9]{2}|[0-9]+,[0-9]{2})");
     private static final Pattern OUT = Pattern.compile("(?i)\\b(compra|comprou|pagamento|pagou|pix enviado|pix realizado|pix feito|enviou(?: um)? pix|d[eé]bito|debitado|sa[ií]da|transfer[eê]ncia enviada|transferiu|cart[aã]o|aprovad[ao]|gasto)\\b");
     private static final Pattern IN = Pattern.compile("(?i)\\b(recebido|recebeu(?: um)? pix|pix recebido|dep[oó]sito recebido|creditado|cr[eé]dito|entrada|transfer[eê]ncia recebida|recebeu|cashback|estorno)\\b");
     private static final Pattern FINANCIAL_CONTEXT = Pattern.compile("(?i)\\b(pix|compra|pagamento|cart[aã]o|d[eé]bito|cr[eé]dito|transfer[eê]ncia|saldo|conta|fatura|cashback|estorno)\\b");
@@ -19,16 +20,41 @@ final class NotificationParser {
         String safeTitle = clean(title);
         String safeText = clean(text);
         String combined = (safeTitle + " " + safeText).trim();
-        Long amount = extractAmountCents(combined);
+        Long amount = extractTransactionAmountCents(combined);
+        Long reportedBalance = extractReportedBalanceCents(combined);
         String direction = OUT.matcher(combined).find() ? "expense" : IN.matcher(combined).find() ? "income" : "unknown";
         long bucket = postedAt / 60_000L;
         String id = sha256(sourcePackage + "|" + normalize(combined) + "|" + amount + "|" + bucket);
-        return new CapturedNotification(id, sourcePackage, safeTitle, safeText, amount, direction, postedAt, System.currentTimeMillis());
+        return new CapturedNotification(id, sourcePackage, safeTitle, safeText, amount, reportedBalance, direction, postedAt, System.currentTimeMillis());
     }
 
     static boolean looksFinancial(String title, String text) {
         String value = clean(title) + " " + clean(text);
         return MONEY.matcher(value).find() && (OUT.matcher(value).find() || IN.matcher(value).find() || FINANCIAL_CONTEXT.matcher(value).find());
+    }
+
+    static Long extractTransactionAmountCents(String value) {
+        String clean = clean(value);
+        Matcher matcher = MONEY.matcher(clean);
+        while (matcher.find()) {
+            int from = Math.max(0, matcher.start()-28), to = Math.min(clean.length(), matcher.end()+12);
+            if (Pattern.compile("(?i)saldo").matcher(clean.substring(from,to)).find()) continue;
+            return parseCents(matcher.group(1));
+        }
+        return null;
+    }
+
+    static Long extractReportedBalanceCents(String value) {
+        Matcher matcher = BALANCE.matcher(clean(value));
+        if (!matcher.find()) return null;
+        return parseCents(matcher.group(1));
+    }
+
+    private static Long parseCents(String raw) {
+        if (raw == null) return null;
+        String decimal = raw.replace(".", "").replace(',', '.');
+        try { return new BigDecimal(decimal).setScale(2, RoundingMode.HALF_UP).movePointRight(2).longValueExact(); }
+        catch (RuntimeException ignored) { return null; }
     }
 
     static Long extractAmountCents(String value) {
