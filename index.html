@@ -1173,6 +1173,19 @@ body.modal-lock #aiFloatBtn,body.modal-lock #aiFloatPanel{display:none!important
  body #view-overview>.dashboard>[data-home-block="recent"],
  body #view-overview>.dashboard>[data-home-block="commitments"]{grid-column:span 6!important;height:270px!important;min-height:270px!important;max-height:270px!important}
  body #view-overview>.dashboard>[data-home-block="calendar"]{grid-column:1/-1!important}
+ /* Approved desktop sequence; optional secondary panels stay available in Personalizar. */
+ body #view-overview>.dashboard>[data-home-block="projection"],
+ body #view-overview>.dashboard>[data-home-block="recurring"],
+ body #view-overview>.dashboard>[data-home-block="investments"],
+ body #view-overview>.dashboard>[data-home-block="alerts"],
+ body #view-overview>.dashboard>[data-home-block="health"],
+ body #view-overview>.dashboard>[data-home-block="dayexpenses"],
+ body #view-overview>.dashboard>[data-home-block="distribution"]{display:none!important}
+ body #view-overview>.dashboard>[data-home-block="category"]{order:10}
+ body #view-overview>.dashboard>[data-home-block="cajuexpenses"]{order:11}
+ body #view-overview>.dashboard>[data-home-block="recent"]{order:20}
+ body #view-overview>.dashboard>[data-home-block="commitments"]{order:21}
+ body #view-overview>.dashboard>[data-home-block="calendar"]{order:30}
  body #view-overview .panel-head{margin-bottom:5px!important}
 }
 </style>
