@@ -1186,6 +1186,15 @@ body.modal-lock #aiFloatBtn,body.modal-lock #aiFloatPanel{display:none!important
  body #view-overview>.dashboard>[data-home-block="recent"]{order:20}
  body #view-overview>.dashboard>[data-home-block="commitments"]{order:21}
  body #view-overview>.dashboard>[data-home-block="calendar"]{order:30}
+ body.desktop-customize-mode #view-overview>.dashboard>[data-home-block]{display:block!important;resize:both!important;overflow:auto!important;min-width:280px!important;min-height:180px!important;outline:1px dashed rgba(44,220,255,.28)}
+ body.desktop-customize-mode #view-overview>.dashboard>[data-home-block]::before{content:"⋮⋮  Arrastar / redimensionar"!important;display:block!important;opacity:1!important;pointer-events:none!important}
+ body.desktop-customize-mode #view-overview>.dashboard>[data-home-block="projection"],
+ body.desktop-customize-mode #view-overview>.dashboard>[data-home-block="recurring"],
+ body.desktop-customize-mode #view-overview>.dashboard>[data-home-block="investments"],
+ body.desktop-customize-mode #view-overview>.dashboard>[data-home-block="alerts"],
+ body.desktop-customize-mode #view-overview>.dashboard>[data-home-block="health"],
+ body.desktop-customize-mode #view-overview>.dashboard>[data-home-block="dayexpenses"],
+ body.desktop-customize-mode #view-overview>.dashboard>[data-home-block="distribution"]{display:block!important}
  body #view-overview .panel-head{margin-bottom:5px!important}
 }
 </style>
