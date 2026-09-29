@@ -4,13 +4,14 @@
 let timer=0, running=false, queued=false, lastHash='';
 const hash=()=>{try{return window.FinanceCloud?.hashPayload&&typeof db==='object'?window.FinanceCloud.hashPayload(db):JSON.stringify({t:db?.transactions?.length||0,a:(db?.accounts||[]).map(x=>[x.id,x.balance]),c:(db?.cards||[]).map(x=>[x.id,x.balance,x.availableLimit])})}catch(_){return''}};
 function render(){
- try{window.FinanceCanonical?.refreshCanonicalMonth?.()}catch(_){}
- try{typeof renderAll==='function'&&renderAll()}catch(_){}
+ /* One canonical render owner: avoid nested renderAll/renderCharts loops between legacy patches. */
+ try{
+  if(window.FinanceCanonical?.refreshCanonicalMonth)window.FinanceCanonical.refreshCanonicalMonth();
+  else if(typeof renderAll==='function')renderAll();
+ }catch(_){}
  requestAnimationFrame(()=>{
-  try{typeof renderKpis==='function'&&renderKpis()}catch(_){}
-  try{typeof renderCharts==='function'&&renderCharts()}catch(_){}
-  try{typeof renderCardTrend==='function'&&renderCardTrend()}catch(_){}
-  try{typeof renderCardPurchases==='function'&&renderCardPurchases()}catch(_){}
+  try{window.FinanceDesktopStability?.refresh?.()}catch(_){}
+  try{window.FinanceDesktopHomeLayout?.refresh?.()}catch(_){}
   try{window.FinanceIntegrity?.audit?.()}catch(_){}
  });
 }
