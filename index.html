@@ -2652,6 +2652,7 @@ function isInvestmentAccount(id){const t=String(db.accounts.find(a=>a.id===id)?.
 function buildProjection(n){const start=scopeMonth('projection');if(window.FinanceCanonical?.projection)return window.FinanceCanonical.projection(start,n).map(r=>({...r,invest:r.invest,costs:r.costs}));return []}
 let projectionFocusMode=true;
 function renderCharts(){
+ if(!db||!Array.isArray(db.transactions))return;
  const projectionEl=document.getElementById('periodProjection');
  const n=Number(projectionEl?.value||12);
  const proj=buildProjection(n),labels=proj.map(x=>x.label);
@@ -2675,8 +2676,9 @@ function renderCharts(){
    (db.transactions||[]).filter(t=>monthOfTx(t)===catMonth&&t.status==='planned'&&Number(t.value)<0&&!t.transfer&&!t.excludeFromExpense).forEach(t=>cats[t.cat||'Outros']=(cats[t.cat||'Outros']||0)+Math.abs(Number(t.value)||0));
  }
  const items=Object.entries(cats).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
- drawDonut(document.getElementById('categoryChart'),items);
- document.getElementById('categoryLegend').innerHTML=items.map((it,i)=>`<div class="legend-line clickable" onclick="openCategoryDetail('${String(it.name).replace(/'/g,"\\'")}')"><span><i class="dot" style="background:${colors[i%colors.length]}"></i>${it.name}</span><b>${brl(it.value)}</b></div>`).join('');
+ const categoryCanvas=document.getElementById('categoryChart'),categoryLegend=document.getElementById('categoryLegend');
+ if(categoryCanvas)drawDonut(categoryCanvas,items);
+ if(categoryLegend)categoryLegend.innerHTML=items.length?items.map((it,i)=>`<div class="legend-line clickable" onclick="openCategoryDetail('${String(it.name).replace(/'/g,"\\'")}')"><span><i class="dot" style="background:${colors[i%colors.length]}"></i>${it.name}</span><b>${brl(it.value)}</b></div>`).join(''):'<div class="notice">Sem despesas realizadas neste mês.</div>';
  const ikey=scopeMonth('investment'),[iy,im]=ikey.split('-').map(Number),invRows=[];for(let i=-2;i<=3;i++){const d=new Date(iy,im-1+i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),xs=(db.investments||[]).filter(x=>String(x.month||x.date||'').slice(0,7)===k),planned=xs.reduce((s,x)=>s+Math.abs(Number(x.planned??(x.status==='planned'?(x.amount??x.value):0))||0),0),realized=xs.reduce((s,x)=>s+Math.abs(Number(x.realized??(x.status!=='planned'?(x.amount??x.value):0))||0),0);invRows.push({label:d.toLocaleDateString('pt-BR',{month:'short'}).replace('.',''),planned,realized})}const labs=invRows.map(x=>x.label);let ip=0,ir=0;drawLineChart(document.getElementById('investmentChart'),[{name:'Realizado acumulado',data:invRows.map(x=>ir+=x.realized),color:'#20e7a6'},{name:'Planejado acumulado',data:invRows.map(x=>ip+=x.planned),color:'#9a6cff'}],labs);
  ['projectionChart','categoryChart','investmentChart'].forEach(id=>attachTooltip(document.getElementById(id)));bindValueHover();
 }
