@@ -2195,7 +2195,8 @@ function openCalendarDay(day){
 }
 function renderCalendar(){
  const make=(id,mini)=>{
-  const el=document.getElementById(id),key=scopeMonth('calendar'),[y,m1]=key.split('-').map(Number),m=m1-1,first=new Date(y,m,1).getDay(),last=new Date(y,m+1,0).getDate();
+  const el=document.getElementById(id);if(!el)return;
+  const key=scopeMonth('calendar'),[y,m1]=key.split('-').map(Number),m=m1-1,first=new Date(y,m,1).getDay(),last=new Date(y,m+1,0).getDate();
   let h=['D','S','T','Q','Q','S','S'].map(x=>`<div><b>${x}</b></div>`).join('');
   h+='<div></div>'.repeat(first);
   for(let d=1;d<=last;d++){
@@ -2207,9 +2208,8 @@ function renderCalendar(){
   el.querySelectorAll('[data-calendar-day]').forEach(day=>{if(window.assessorSelectedCalendarDay&&window.assessorSelectedCalendarDay.key===key&&Number(day.dataset.calendarDay)===window.assessorSelectedCalendarDay.day)day.classList.add('selected-day');day.onclick=()=>{openCalendarDay(day.dataset.calendarDay);renderCalendar()}});
  };
  make('miniCalendar',true);make('fullCalendar',false);
- const key=scopeMonth('calendar');
- document.getElementById('calendarEvents').innerHTML=db.recurring.filter(r=>{const st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return (r.active??true)&&(!st||key>=st)&&(!en||key<=en)}).slice().sort((a,b)=>a.due-b.due).map(r=>`<div class="item clickable" data-calendar-recurring="${r.id}"><div class="ico">${iconFor(r.cat,r.sub)}</div><div><b>${monthLabelKey(key)} · Dia ${String(r.due).padStart(2,'0')} · ${r.desc}</b><small>${r.cat} › ${r.sub||''} · ${r.kind} · ${r.freq}</small></div><div class="amount">${brl(r.value)}</div></div>`).join('');
- document.querySelectorAll('#calendarEvents [data-calendar-recurring]').forEach(el=>el.onclick=()=>openRecurringEdit(el.dataset.calendarRecurring));
+ const key=scopeMonth('calendar'),calendarEvents=document.getElementById('calendarEvents');
+ if(calendarEvents){calendarEvents.innerHTML=db.recurring.filter(r=>{const st=String(r.startDate||'').slice(0,7),en=String(r.endDate||'').slice(0,7);return (r.active??true)&&(!st||key>=st)&&(!en||key<=en)}).slice().sort((a,b)=>a.due-b.due).map(r=>`<div class="item clickable" data-calendar-recurring="${r.id}"><div class="ico">${iconFor(r.cat,r.sub)}</div><div><b>${monthLabelKey(key)} · Dia ${String(r.due).padStart(2,'0')} · ${r.desc}</b><small>${r.cat} › ${r.sub||''} · ${r.kind} · ${r.freq}</small></div><div class="amount">${brl(r.value)}</div></div>`).join('');calendarEvents.querySelectorAll('[data-calendar-recurring]').forEach(el=>el.onclick=()=>openRecurringEdit(el.dataset.calendarRecurring))}
 }
 
 
