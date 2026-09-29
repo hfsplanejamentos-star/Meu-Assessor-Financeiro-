@@ -40,7 +40,7 @@ function arrange(){
  /* Never organize an empty KPI host: canonical renderer must create the financial cards first. */
  if(!box.querySelector(':scope > [data-kpi-id], :scope > .brand-fin-card, :scope > .kpi')){
    try{window.FinanceCanonical?.canonicalRenderKpis?.()}catch(_){}
-   if(!box.children.length)return;
+   if(!box.children.length){setTimeout(schedule,180);return}
  }
  busy=true;observer?.disconnect();
  try{
@@ -79,7 +79,7 @@ function restoreMobile(){
  try{[...(bank?.children||[]),...(summary?.children||[])].forEach(el=>box.appendChild(el));bank?.remove();summary?.remove();}finally{busy=false;observe()}
 }
 function schedule(){if(queued||busy)return;queued=true;requestAnimationFrame(()=>{queued=false;matchMedia(DESKTOP).matches?arrange():restoreMobile()})}
-function init(){ensureStyle();schedule();observe();window.addEventListener('resize',schedule,{passive:true});document.addEventListener('finance-data-changed',schedule);document.addEventListener('change',e=>{if(e.target.closest?.('.customize-list'))setTimeout(schedule,0)},true)}
+function init(){ensureStyle();schedule();setTimeout(schedule,220);setTimeout(schedule,700);setTimeout(schedule,1600);observe();window.addEventListener('resize',schedule,{passive:true});document.addEventListener('finance-data-changed',schedule);document.addEventListener('change',e=>{if(e.target.closest?.('.customize-list'))setTimeout(schedule,0)},true)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 window.FinanceDesktopHomeLayout={refresh:arrange};
 })();
