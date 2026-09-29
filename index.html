@@ -2638,7 +2638,8 @@ function isInvestmentAccount(id){const t=String(db.accounts.find(a=>a.id===id)?.
 function buildProjection(n){const start=scopeMonth('projection');if(window.FinanceCanonical?.projection)return window.FinanceCanonical.projection(start,n).map(r=>({...r,invest:r.invest,costs:r.costs}));return []}
 let projectionFocusMode=true;
 function renderCharts(){
- const n=+document.getElementById('periodProjection').value;
+ const projectionEl=document.getElementById('periodProjection');
+ const n=Number(projectionEl?.value||12);
  const proj=buildProjection(n),labels=proj.map(x=>x.label);
  const incomeAccum=[];let ia=0;proj.forEach(x=>incomeAccum.push(ia+=Number(x.income)||0));
  const projectionSeries=projectionFocusMode?
@@ -2646,8 +2647,8 @@ function renderCharts(){
  [{name:'Patrimônio',data:proj.map(x=>x.patrimony),color:'#20d8ff'},{name:'Despesas acumuladas',data:proj.map(x=>x.costs),color:'#ff5876'},{name:'Investimentos projetados',data:proj.map(x=>x.invest),color:'#9a6cff'}];
  drawLineChart(document.getElementById('projectionChart'),projectionSeries,labels);
  const first=proj[0]||{},last=proj[proj.length-1]||{};
- document.getElementById('projectionHighlights').innerHTML=`<div class="projection-highlight"><small>Patrimônio atual</small><b>${brl(balances().patrimony)}</b></div><div class="projection-highlight"><small>Patrimônio projetado</small><b>${brl(last.patrimony||0)}</b></div><div class="projection-highlight"><small>Custos no período</small><b>${brl(last.costs||0)}</b></div><div class="projection-highlight"><small>Investimentos projetados</small><b>${brl(last.invest||0)}</b></div>`;
- document.getElementById('projectionExplain').innerHTML=`
+ const projectionHighlights=document.getElementById('projectionHighlights');if(projectionHighlights)projectionHighlights.innerHTML=`<div class="projection-highlight"><small>Patrimônio atual</small><b>${brl(balances().patrimony)}</b></div><div class="projection-highlight"><small>Patrimônio projetado</small><b>${brl(last.patrimony||0)}</b></div><div class="projection-highlight"><small>Custos no período</small><b>${brl(last.costs||0)}</b></div><div class="projection-highlight"><small>Investimentos projetados</small><b>${brl(last.invest||0)}</b></div>`;
+ const projectionExplain=document.getElementById('projectionExplain');if(projectionExplain)projectionExplain.innerHTML=`
    <div><small>Total de receitas no período</small><b>${brl(incomeAccum[incomeAccum.length-1]||0)}</b></div>
    <div><small>Total de despesas no período</small><b>${brl(last.costs||0)}</b></div>
    <div><small>Saldo / patrimônio projetado</small><b>${brl(last.patrimony||0)}</b></div>`;
