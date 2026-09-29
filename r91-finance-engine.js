@@ -112,7 +112,9 @@ function renderCanonicalExpenseChart(){
  const note=panel?.querySelector('.chart-note');if(note)note.textContent=key>current?'Despesas previstas · recorrências e lançamentos planejados.':'Gastos realizados · transferências, estornos e pagamentos de fatura não entram no total.';if(legend)legend.querySelectorAll('[data-canonical-category]').forEach(el=>el.onclick=()=>typeof openCategoryDetail==='function'&&openCategoryDetail(el.dataset.canonicalCategory));
 }
 function canonicalRenderKpis(){
- const b=currentBalances(),k=(typeof activeMonth!=='undefined'?activeMonth:'2026-09'),s=summary(k),acc=accumulatedRealized(k),box=document.getElementById('kpis');if(!box||typeof brl!=='function')return;
+ const box=document.getElementById('kpis');if(!box||typeof brl!=='function')return false;
+ let b,s,acc;const k=(typeof activeMonth!=='undefined'?activeMonth:'2026-09');
+ try{b=currentBalances();s=summary(k);acc=accumulatedRealized(k)}catch(err){console.warn('[FinanceCanonical] KPI data not ready',err);return false}
  let pref,cardPref;try{pref=JSON.parse(localStorage.getItem('assessor_kpi_layout')||'[]')}catch(_){pref=[]}try{cardPref=JSON.parse(localStorage.getItem('assessor_card_layout')||'[]')}catch(_){cardPref=[]}
  const defs={
   c6account:{html:typeof accountBrandCard==='function'?accountBrandCard('c6account',k):'',route:'transactions'},
@@ -144,7 +146,14 @@ function canonicalRenderKpis(){
  box.innerHTML=rows.map(x=>x.html).join('');
  [...box.children].forEach((el,i)=>{el.classList.add('clickable-card');el.tabIndex=0;el.setAttribute('role','button');el.dataset.cardNav=rows[i].route;el.dataset.kpiId=rows[i].id;el.style.pointerEvents='auto'});
  const summaryCells=[...box.children].filter(el=>!el.classList.contains('brand-fin-card'));summaryCells.forEach(el=>el.classList.remove('summary-wide'));if(summaryCells.length%2===1)summaryCells.at(-1)?.classList.add('summary-wide');
- bind();
+ bind();return box.children.length>0;
+}
+function ensureDesktopFinancialHeader(attempt=0){
+ if(window.matchMedia('(max-width:820px)').matches)return;
+ const box=document.getElementById('kpis');if(!box)return;
+ const ready=canonicalRenderKpis();
+ if((!ready||!box.children.length)&&attempt<8)setTimeout(()=>ensureDesktopFinancialHeader(attempt+1),250+attempt*180);
+ else if(ready){try{window.FinanceDesktopHomeLayout?.refresh?.()}catch(_){}}
 }
 function bind(){
  document.querySelectorAll('.month-filter').forEach(sel=>{sel.disabled=false;sel.style.pointerEvents='auto';if(sel.dataset.r94Bound!=='1'){sel.dataset.r94Bound='1';sel.addEventListener('change',()=>setTimeout(()=>{try{renderCanonicalExpenseChart()}catch(_){}},35))}});
@@ -206,7 +215,7 @@ function renderMobileFinSummary(){
 }
 function install(){
  ensurePlan();
- window.FinanceCanonical={summary,projection,recurringFor,currentBalances,accumulatedRealized,ensurePlan,normalizeCore,audit,bind,canonicalRenderKpis,renderCanonicalExpenseChart,renderMobileFinSummary,refreshCanonicalMonth};window.renderKpis=canonicalRenderKpis;
+ window.FinanceCanonical={summary,projection,recurringFor,currentBalances,accumulatedRealized,ensurePlan,normalizeCore,audit,bind,canonicalRenderKpis,ensureDesktopFinancialHeader,renderCanonicalExpenseChart,renderMobileFinSummary,refreshCanonicalMonth};window.renderKpis=canonicalRenderKpis;ensureDesktopFinancialHeader();
  if(typeof window.renderCharts==='function'&&!window.renderCharts.__canonicalExpenseWrapped){
    const baseRenderCharts=window.renderCharts;
    const wrappedRenderCharts=function(...args){const out=baseRenderCharts.apply(this,args);try{renderCanonicalExpenseChart()}catch(_){}return out};
