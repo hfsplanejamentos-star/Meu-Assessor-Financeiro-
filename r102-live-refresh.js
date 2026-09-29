@@ -4,12 +4,13 @@
 let timer=0, running=false, queued=false, lastHash='';
 const hash=()=>{try{return window.FinanceCloud?.hashPayload&&typeof db==='object'?window.FinanceCloud.hashPayload(db):JSON.stringify({t:db?.transactions?.length||0,a:(db?.accounts||[]).map(x=>[x.id,x.balance]),c:(db?.cards||[]).map(x=>[x.id,x.balance,x.availableLimit])})}catch(_){return''}};
 function render(){
- /* One canonical render owner: avoid nested renderAll/renderCharts loops between legacy patches. */
- try{
-  if(window.FinanceCanonical?.refreshCanonicalMonth)window.FinanceCanonical.refreshCanonicalMonth();
-  else if(typeof renderAll==='function')renderAll();
- }catch(_){}
+ /* Render the complete overview first, then let the canonical engine normalize KPIs/charts. */
+ try{if(typeof renderAll==='function')renderAll()}catch(_){}
  requestAnimationFrame(()=>{
+  try{window.FinanceCanonical?.canonicalRenderKpis?.()}catch(_){}
+  try{window.FinanceCanonical?.renderCanonicalExpenseChart?.()}catch(_){}
+  try{window.FinanceCanonical?.renderMobileFinSummary?.()}catch(_){}
+  try{window.FinanceCanonical?.bind?.()}catch(_){}
   try{window.FinanceDesktopStability?.refresh?.()}catch(_){}
   try{window.FinanceDesktopHomeLayout?.refresh?.()}catch(_){}
   try{window.FinanceIntegrity?.audit?.()}catch(_){}
