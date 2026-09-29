@@ -1143,6 +1143,42 @@ body.modal-lock #aiFloatBtn,body.modal-lock #aiFloatPanel{display:none!important
  body #view-overview .chart-note{font-size:8px!important;line-height:1.15!important;margin-top:2px!important}
 }
 </style>
+<style id="r248-desktop-approved-layout">
+/* R248 — Desktop compacto aprovado. Somente >=821px; mobile preservado. */
+@media(min-width:821px){
+ body .app{grid-template-columns:92px minmax(0,1fr)!important}
+ body #sidebar{width:92px!important;padding:12px 8px!important}
+ body #sidebar .brand{justify-content:center!important}
+ body #sidebar .brand>div:last-child{display:none!important}
+ body #sidebar .nav button{font-size:0!important;justify-content:center!important;padding:11px 6px!important;min-height:42px!important}
+ body #sidebar .nav button::first-letter{font-size:17px}
+ body #sidebar .nav button .alert-badge{font-size:9px!important;position:absolute;margin-left:26px;margin-top:-22px}
+ body #sidebar .sidefoot{display:none!important}
+ body .main{padding:12px 14px 28px!important;min-width:0!important}
+ body .topbar{gap:8px!important;margin-bottom:10px!important}
+ body .search{min-height:42px!important}
+ body .mobile-month-nav{width:min(390px,32vw)!important;grid-template-columns:42px minmax(150px,1fr) 42px!important}
+ body .mobile-month-nav button{min-width:38px!important;min-height:38px!important;font-size:22px!important}
+ body #view-overview #kpis .r98-bank-row{gap:8px!important}
+ body #view-overview #kpis .r98-bank-row>.brand-fin-card{height:94px!important;min-height:94px!important;padding:9px 11px!important}
+ body #view-overview #kpis .r98-summary-row{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important}
+ body #view-overview #kpis .r98-summary-row>.kpi{height:76px!important;min-height:76px!important}
+ body #view-overview #kpis .r98-summary-row>[data-kpi-id="patrimony"],
+ body #view-overview #kpis .r98-summary-row>[data-kpi-id="income_planned"],
+ body #view-overview #kpis .r98-summary-row>[data-kpi-id="expense_planned"],
+ body #view-overview #kpis .r98-summary-row>[data-kpi-id="investments"]{display:none!important}
+ body #view-overview>.dashboard{grid-template-columns:repeat(12,minmax(0,1fr))!important;gap:9px!important}
+ body #view-overview>.dashboard>[data-home-block]{grid-column:span 6!important;padding:11px!important}
+ body #view-overview>.dashboard>[data-home-block="projection"]{grid-column:1/-1!important;min-height:260px!important}
+ body #view-overview>.dashboard>[data-home-block="projection"] .chart-wrap{height:205px!important}
+ body #view-overview>.dashboard>[data-home-block="category"],
+ body #view-overview>.dashboard>[data-home-block="cajuexpenses"]{grid-column:span 6!important;height:285px!important;min-height:285px!important;max-height:285px!important}
+ body #view-overview>.dashboard>[data-home-block="recent"],
+ body #view-overview>.dashboard>[data-home-block="commitments"]{grid-column:span 6!important;height:270px!important;min-height:270px!important;max-height:270px!important}
+ body #view-overview>.dashboard>[data-home-block="calendar"]{grid-column:1/-1!important}
+ body #view-overview .panel-head{margin-bottom:5px!important}
+}
+</style>
 </head>
 <body>
 <div class="tooltip" id="tooltip"></div>
