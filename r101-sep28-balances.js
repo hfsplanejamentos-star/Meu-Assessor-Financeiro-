@@ -1,6 +1,6 @@
 /* R10.1 — extratos confirmados em 28/09/2026 (C6 e Caju) */
 (()=>{'use strict';
- const VERSION='2026-09-28-v2',round=v=>Math.round(Number(v||0)*100)/100;
+ const VERSION='2026-09-29-v3',round=v=>Math.round(Number(v||0)*100)/100;
  const rows=[
   {id:'c6_2026_09_26_pix_luis_1_1500',date:'2026-09-26',desc:'PIX enviado para Luis Ricardo da Silva Sales',value:-15,cat:'Transferências',sub:'PIX'},
   {id:'c6_2026_09_26_pix_luis_2_1500',date:'2026-09-26',desc:'PIX enviado para Luis Ricardo da Silva Sales',value:-15,cat:'Transferências',sub:'PIX'},
@@ -14,7 +14,17 @@
   let changed=false;
   rows.forEach(x=>{if(!db.transactions.some(t=>String(t.id)===x.id)){db.transactions.push({...x,description:x.desc,status:'realized',origin:'Extrato C6 confirmado',source:'Extrato C6 confirmado',account:'acc_c6',accountId:'acc_c6',statementVerified:true,classificationPending:false});changed=true}});
   const cajuId='card_caju_alimentacao',cajuTx={id:'caju_2026_09_28_padaria_19600',date:'2026-09-28',desc:'Padaria e Confeitaria',description:'Padaria e Confeitaria',value:-196,cat:'Alimentação',sub:'Padaria',status:'realized',origin:'Extrato Caju confirmado',source:'Extrato Caju confirmado',card:cajuId,cardId:cajuId,benefit:true,excludeFromExpense:true,excludeFromPatrimony:true,statementVerified:true};
-  if(!db.transactions.some(t=>String(t.id)===cajuTx.id)){db.transactions.push(cajuTx);changed=true}
+  /* Mantém apenas a despesa confirmada de R$ 196. Registros manuais/importados
+     equivalentes foram a causa do total R$ 1.095,87 no detalhe do Caju. */
+  let kept=false;
+  db.transactions=db.transactions.filter(t=>{
+   const isCaju=String(t.cardId||t.card||'')===cajuId||t.benefit===true||/caju/i.test([t.origin,t.source,t.accountName,t.cardName].filter(Boolean).join(' '));
+   const is196=isCaju&&String(t.date||'').slice(0,7)==='2026-09'&&Math.abs(Math.abs(Number(t.value||0))-196)<.001;
+   if(!is196)return true;
+   if(String(t.id)===cajuTx.id&&!kept){kept=true;return true}
+   changed=true;return false;
+  });
+  if(!kept){db.transactions.push(cajuTx);changed=true}
   if(db.meta.sep28ConfirmedBalances!==VERSION){
    const c6=db.accounts.find(a=>String(a.id)==='acc_c6');if(c6&&String(c6.balanceDate||'')<='2026-09-28'){c6.balance=140.40;c6.balanceDate='2026-09-28';c6.statementVerified=true}
    const caju=db.cards.find(c=>String(c.id)===cajuId);if(caju&&String(caju.balanceDate||'')<='2026-09-28'&&!db.meta.cajuLatestReportedAt){caju.balance=107.02;caju.availableLimit=107.02;caju.balanceDate='2026-09-28';caju.excludeFromPatrimony=true}
