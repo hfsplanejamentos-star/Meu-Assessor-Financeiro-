@@ -29,13 +29,14 @@ async function flush(reason='mutation'){
   }
  }finally{running=false;if(queued){queued=false;schedule('queued')}}
 }
-function schedule(reason='mutation',delay=25){clearTimeout(timer);timer=setTimeout(()=>flush(reason),delay)}
+function schedule(reason='mutation',delay=120){clearTimeout(timer);timer=setTimeout(()=>flush(reason),delay)}
 document.addEventListener('finance-data-changed',e=>schedule(e.detail?.reason||'finance-data-changed'));
 document.addEventListener('finance-cloud-status',e=>{if(/Sincronizado|Conectado/.test(String(e.detail?.text||'')))setTimeout(render,40)});
 window.addEventListener('storage',e=>{if(e.key&&/assessor|finance/i.test(e.key))setTimeout(render,40)});
 window.addEventListener('focus',()=>{setTimeout(render,60);try{window.FinanceCloud?.configured?.()&&window.FinanceCloud.sync?.()}catch(_){}});
-// Safety net: catches legacy paths that mutate db/save without emitting finance-data-changed.
-setInterval(()=>{const h=hash();if(lastHash&&h&&h!==lastHash)schedule('legacy-change',10);lastHash=h},1000);
+// Safety net only records the last state. save() already emits finance-data-changed;
+ // re-rendering every second caused visible flicker on Android.
+setInterval(()=>{lastHash=hash()},5000);
 setTimeout(()=>{lastHash=hash();render()},350);
 window.FinanceRefreshBus={refresh:schedule,flush};
 })();
