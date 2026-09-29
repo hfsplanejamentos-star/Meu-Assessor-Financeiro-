@@ -55,6 +55,10 @@ function arrange(){
    });
    if(bank.parentElement!==box)box.prepend(bank);
    if(summary.parentElement!==box)box.appendChild(summary);
+   /* The approved desktop home always shows the five financial accounts and four core KPIs.
+      Ignore stale personalization flags from older desktop layouts for these nine cards only. */
+   [...bank.children].forEach(el=>{if(BANK_IDS.has(el.dataset?.kpiId||'')){el.classList.remove('dashboard-hidden');el.style.removeProperty('display')}});
+   [...summary.children].forEach(el=>{if(PRIMARY_SUMMARY.has(el.dataset?.kpiId||'')){el.classList.remove('dashboard-hidden');el.style.removeProperty('display')}});
    const visibleBanks=[...bank.children].filter(el=>getComputedStyle(el).display!=='none'&&!el.classList.contains('dashboard-hidden'));
    bank.style.setProperty('--r98-bank-count',String(Math.max(1,visibleBanks.length)));
    bank.style.display=visibleBanks.length?'grid':'none';
