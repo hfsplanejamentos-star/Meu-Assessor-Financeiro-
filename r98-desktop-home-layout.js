@@ -3,7 +3,7 @@
 const DESKTOP='(min-width:821px)';
 const BANK_IDS=new Set(['c6account','caju','itauaccount','xpaccount','creditcard']);
 const PRIMARY_SUMMARY=new Set(['available','income','expense','accumulated']);
-let busy=false,queued=false;
+let busy=false,queued=false,observer=null;
 function ensureStyle(){
  if(document.getElementById('r98DesktopHomeStyle'))return;
  const s=document.createElement('style');s.id='r98DesktopHomeStyle';s.textContent=`
@@ -37,7 +37,7 @@ function ensureStyle(){
 function arrange(){
  if(busy||!matchMedia(DESKTOP).matches)return;
  const box=document.getElementById('kpis');if(!box)return;
- busy=true;
+ busy=true;observer?.disconnect();
  try{
    ensureStyle();
    let bank=box.querySelector(':scope > .r98-bank-row'),summary=box.querySelector(':scope > .r98-summary-row');
@@ -59,17 +59,18 @@ function arrange(){
    const primary=[...summary.children].filter(el=>PRIMARY_SUMMARY.has(el.dataset?.kpiId||''));
    primary.sort((a,b)=>['available','income','expense','accumulated'].indexOf(a.dataset.kpiId)-['available','income','expense','accumulated'].indexOf(b.dataset.kpiId)).forEach(el=>summary.appendChild(el));
    [...summary.children].filter(el=>!PRIMARY_SUMMARY.has(el.dataset?.kpiId||'')).forEach(el=>summary.appendChild(el));
- }finally{busy=false}
+ }finally{busy=false;observe()}
 }
+function observe(){const box=document.getElementById('kpis');if(!box)return;if(!observer)observer=new MutationObserver(schedule);observer.disconnect();observer.observe(box,{childList:true,subtree:false})}
 function restoreMobile(){
  const box=document.getElementById('kpis');if(!box)return;
  const bank=box.querySelector(':scope > .r98-bank-row'),summary=box.querySelector(':scope > .r98-summary-row');
  if(!bank&&!summary)return;
- busy=true;
- try{[...(bank?.children||[]),...(summary?.children||[])].forEach(el=>box.appendChild(el));bank?.remove();summary?.remove();}finally{busy=false}
+ busy=true;observer?.disconnect();
+ try{[...(bank?.children||[]),...(summary?.children||[])].forEach(el=>box.appendChild(el));bank?.remove();summary?.remove();}finally{busy=false;observe()}
 }
 function schedule(){if(queued||busy)return;queued=true;requestAnimationFrame(()=>{queued=false;matchMedia(DESKTOP).matches?arrange():restoreMobile()})}
-function init(){ensureStyle();schedule();const box=document.getElementById('kpis');if(box)new MutationObserver(schedule).observe(box,{childList:true,subtree:false,attributes:true,attributeFilter:['class','style']});window.addEventListener('resize',schedule,{passive:true});document.addEventListener('finance-data-changed',schedule);document.addEventListener('change',e=>{if(e.target.closest?.('.customize-list'))setTimeout(schedule,0)},true)}
+function init(){ensureStyle();schedule();observe();window.addEventListener('resize',schedule,{passive:true});document.addEventListener('finance-data-changed',schedule);document.addEventListener('change',e=>{if(e.target.closest?.('.customize-list'))setTimeout(schedule,0)},true)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 window.FinanceDesktopHomeLayout={refresh:arrange};
 })();
