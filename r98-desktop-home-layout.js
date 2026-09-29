@@ -37,6 +37,11 @@ function ensureStyle(){
 function arrange(){
  if(busy||!matchMedia(DESKTOP).matches)return;
  const box=document.getElementById('kpis');if(!box)return;
+ /* Never organize an empty KPI host: canonical renderer must create the financial cards first. */
+ if(!box.querySelector(':scope > [data-kpi-id], :scope > .brand-fin-card, :scope > .kpi')){
+   try{window.FinanceCanonical?.canonicalRenderKpis?.()}catch(_){}
+   if(!box.children.length)return;
+ }
  busy=true;observer?.disconnect();
  try{
    ensureStyle();
