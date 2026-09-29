@@ -2813,12 +2813,15 @@ document.getElementById('mobileRefreshBtn')?.addEventListener('click',mobileRefr
  document.addEventListener('touchend',async()=>{if(!pulling)return;const go=dy>=105;pulling=false;if(!go){reset();return}busy=true;el.classList.add('show','ready');el.textContent='↻ Atualizando...';el.style.transform='translate(-50%,12px)';try{await mobileRefresh();el.textContent='✓ Atualizado'}finally{setTimeout(()=>{busy=false;reset()},650)}},{passive:true});
 })();
 function renderAll(){
+ /* Always restore the shared financial state before rendering either viewport. */
+ try{if(typeof load==='function')load()}catch(e){console.warn('[renderAll:load]',e)}
  const steps=[
   ['income',()=>ensureMonthlyIncomeAutomation()],['filters',()=>fillMonthFilters()],['kpis',()=>renderKpis()],['quick',()=>renderQuickFinancialCards()],['layout',()=>applyHomeLayout()],['kpi-nav',()=>bindKpiNavigation()],['lists',()=>renderLists()],['commitments',()=>renderCommitments()],['calendar',()=>renderCalendar()],['mobile-insights',()=>renderMobileDayAndDistribution()],['caju-home',()=>renderHomeCajuExpenses()],['investment',()=>renderInvestment()],['cards',()=>renderCardDashboard()],['invoices',()=>renderInvoiceManagement()],['audit',()=>renderAudit()],['alerts',()=>renderAlerts()],['goals',()=>renderBudgetsGoals()],['android',()=>renderAndroidInbox()],['bridge',()=>updateAndroidBridgeStatus()],['details',()=>{bindDetailClicks();bindDesktopPanelPopups()}],['hover',()=>bindValueHover()],['reconciliation',()=>renderReconciliation()]
  ];
  const errors=[];for(const [name,fn] of steps){try{fn()}catch(e){errors.push(name);console.error('[renderAll:'+name+']',e)}}
  requestAnimationFrame(()=>{for(const [name,fn] of [['charts',()=>{renderCharts();renderHomeCajuExpenses()}],['card-trend',()=>renderCardTrend()],['hover-raf',()=>bindValueHover()]])try{fn()}catch(e){errors.push(name);console.error('[renderAll:'+name+']',e)}});
  window.assessorRenderErrors=errors;document.documentElement.dataset.financeRender=errors.length?'partial':'ok';
+ if(errors.length)console.warn('[Finance UI] partial render:',errors.join(', '));
 }
 
 
