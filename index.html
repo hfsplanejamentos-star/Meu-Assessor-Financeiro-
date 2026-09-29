@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260929-r256';
+ const RELEASE='atual-ui-20260929-r257';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -622,6 +622,50 @@ body.modal-lock{overflow:hidden!important;touch-action:none}
  #kpis .brand-fin-card.caju-card .brand-fin-stat b{font-size:17px!important;white-space:nowrap!important}
 }
 </style>
+<style id="r257-desktop-donut-legends-base">
+@media(min-width:901px){
+ #view-overview>.dashboard>[data-home-block="category"],
+ #view-overview>.dashboard>[data-home-block="cajuexpenses"]{
+  height:310px!important;min-height:310px!important;overflow:hidden!important
+ }
+ #categoryPanel .category-content{
+  display:grid!important;grid-template-columns:minmax(210px,.85fr) minmax(240px,1.15fr)!important;
+  grid-template-rows:1fr auto!important;column-gap:16px!important;align-items:center!important;
+  flex:1!important;min-height:0!important
+ }
+ #categoryPanel .chart-wrap{
+  grid-column:1!important;grid-row:1!important;height:210px!important;min-height:210px!important;
+  max-height:210px!important;margin:0!important
+ }
+ #categoryPanel #categoryChart{height:210px!important;max-height:210px!important}
+ #categoryPanel #categoryLegend{
+  grid-column:2!important;grid-row:1!important;display:grid!important;
+  grid-template-columns:1fr!important;align-content:center!important;gap:0!important;
+  max-height:210px!important;overflow:auto!important;margin:0!important
+ }
+ #categoryPanel #categoryLegend .legend-line,
+ #homeCajuExpenses #homeCajuExpenseLegend .legend-line{
+  display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;
+  min-height:30px!important;line-height:1.2!important;padding:4px 2px!important;font-size:11px!important;
+  border-bottom:1px solid rgba(255,255,255,.045)!important
+ }
+ #categoryPanel .chart-note{grid-column:1/-1!important;grid-row:2!important;margin-top:4px!important}
+ #homeCajuExpenses{
+  display:grid!important;grid-template-columns:minmax(210px,.85fr) minmax(240px,1.15fr)!important;
+  grid-template-rows:auto 1fr!important;column-gap:16px!important;align-items:center!important
+ }
+ #homeCajuExpenses .panel-head{grid-column:1/-1!important;grid-row:1!important;width:100%!important}
+ #homeCajuExpenses .chart-wrap{
+  grid-column:1!important;grid-row:2!important;height:210px!important;min-height:210px!important;
+  max-height:210px!important;margin:0!important
+ }
+ #homeCajuExpenses #homeCajuExpenseChart{height:210px!important;max-height:210px!important}
+ #homeCajuExpenses #homeCajuExpenseLegend{
+  grid-column:2!important;grid-row:2!important;display:grid!important;grid-template-columns:1fr!important;
+  align-content:center!important;gap:0!important;max-height:210px!important;overflow:auto!important;margin:0!important
+ }
+}
+</style>
 <link rel="stylesheet" href="./r68-mobile-ui.css?v=5"><link rel="stylesheet" href="./r69-desktop-theme.css?v=20260928-r105"><script>window.__ASSESSOR_RELEASE__='ATUAL-MOBILE-R13.3-2026.09.22';document.documentElement.dataset.assessorRelease=window.__ASSESSOR_RELEASE__;</script>
 <style id="atual-r11-fintech">
 /* ATUAL R11 · MOBILE FINTECH APROVADO */
@@ -1190,6 +1234,22 @@ body.modal-lock #aiFloatBtn,body.modal-lock #aiFloatPanel{display:none!important
  body.desktop-customize-mode #view-overview>.dashboard>[data-home-block="dayexpenses"],
  body.desktop-customize-mode #view-overview>.dashboard>[data-home-block="distribution"]{display:block!important}
  body #view-overview .panel-head{margin-bottom:5px!important}
+}
+</style>
+<style id="r257-desktop-donut-legends-final">
+@media(min-width:901px){
+#view-overview>.dashboard>[data-home-block="category"],#view-overview>.dashboard>[data-home-block="cajuexpenses"]{height:310px!important;min-height:310px!important;overflow:hidden!important}
+#categoryPanel .category-content{display:grid!important;grid-template-columns:minmax(210px,.85fr) minmax(240px,1.15fr)!important;grid-template-rows:1fr auto!important;column-gap:16px!important;align-items:center!important;flex:1!important;min-height:0!important}
+#categoryPanel .chart-wrap{grid-column:1!important;grid-row:1!important;height:210px!important;min-height:210px!important;max-height:210px!important;margin:0!important}
+#categoryPanel #categoryChart{height:210px!important;max-height:210px!important}
+#categoryPanel #categoryLegend{grid-column:2!important;grid-row:1!important;display:grid!important;grid-template-columns:1fr!important;align-content:center!important;gap:0!important;max-height:210px!important;overflow:auto!important;margin:0!important}
+#categoryPanel #categoryLegend .legend-line,#homeCajuExpenses #homeCajuExpenseLegend .legend-line{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;min-height:30px!important;line-height:1.2!important;padding:4px 2px!important;font-size:11px!important;border-bottom:1px solid rgba(255,255,255,.045)!important}
+#categoryPanel .chart-note{grid-column:1/-1!important;grid-row:2!important;margin-top:4px!important}
+#homeCajuExpenses{display:grid!important;grid-template-columns:minmax(210px,.85fr) minmax(240px,1.15fr)!important;grid-template-rows:auto 1fr!important;column-gap:16px!important;align-items:center!important}
+#homeCajuExpenses .panel-head{grid-column:1/-1!important;grid-row:1!important;width:100%!important}
+#homeCajuExpenses .chart-wrap{grid-column:1!important;grid-row:2!important;height:210px!important;min-height:210px!important;max-height:210px!important;margin:0!important}
+#homeCajuExpenses #homeCajuExpenseChart{height:210px!important;max-height:210px!important}
+#homeCajuExpenses #homeCajuExpenseLegend{grid-column:2!important;grid-row:2!important;display:grid!important;grid-template-columns:1fr!important;align-content:center!important;gap:0!important;max-height:210px!important;overflow:auto!important;margin:0!important}
 }
 </style>
 </head>
@@ -3464,7 +3524,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r256',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r257',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
