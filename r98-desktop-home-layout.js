@@ -70,7 +70,7 @@ function arrange(){
    [...summary.children].filter(el=>!PRIMARY_SUMMARY.has(el.dataset?.kpiId||'')).forEach(el=>summary.appendChild(el));
  }finally{busy=false;observe()}
 }
-function observe(){const box=document.getElementById('kpis');if(!box)return;if(!observer)observer=new MutationObserver(schedule);observer.disconnect();observer.observe(box,{childList:true,subtree:false})}
+function observe(){if(!matchMedia(DESKTOP).matches){observer?.disconnect();return}const box=document.getElementById('kpis');if(!box)return;if(!observer)observer=new MutationObserver(schedule);observer.disconnect();observer.observe(box,{childList:true,subtree:false})}
 function restoreMobile(){
  const box=document.getElementById('kpis');if(!box)return;
  const bank=box.querySelector(':scope > .r98-bank-row'),summary=box.querySelector(':scope > .r98-summary-row');
@@ -79,7 +79,7 @@ function restoreMobile(){
  try{[...(bank?.children||[]),...(summary?.children||[])].forEach(el=>box.appendChild(el));bank?.remove();summary?.remove();}finally{busy=false;observe()}
 }
 function schedule(){if(queued||busy)return;queued=true;requestAnimationFrame(()=>{queued=false;matchMedia(DESKTOP).matches?arrange():restoreMobile()})}
-function init(){ensureStyle();schedule();setTimeout(schedule,220);setTimeout(schedule,700);setTimeout(schedule,1600);observe();window.addEventListener('resize',schedule,{passive:true});document.addEventListener('finance-data-changed',schedule);document.addEventListener('change',e=>{if(e.target.closest?.('.customize-list'))setTimeout(schedule,0)},true)}
+function init(){ensureStyle();if(matchMedia(DESKTOP).matches){schedule();setTimeout(schedule,220);setTimeout(schedule,700);setTimeout(schedule,1600);observe()}window.addEventListener('resize',schedule,{passive:true});document.addEventListener('finance-data-changed',schedule);document.addEventListener('change',e=>{if(e.target.closest?.('.customize-list'))setTimeout(schedule,0)},true)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 window.FinanceDesktopHomeLayout={refresh:arrange};
 })();
