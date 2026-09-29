@@ -1192,6 +1192,18 @@ body.modal-lock #aiFloatBtn,body.modal-lock #aiFloatPanel{display:none!important
  body #view-overview .panel-head{margin-bottom:5px!important}
 }
 </style>
+<style id="r257-mobile-stability">
+@media(max-width:900px){
+ #view-overview #kpis{min-height:0!important}
+ #view-overview>.dashboard>[data-home-block="projection"],
+ #view-overview>.dashboard>[data-home-block="recurring"],
+ #view-overview>.dashboard>[data-home-block="investments"],
+ #view-overview>.dashboard>[data-home-block="alerts"],
+ #view-overview>.dashboard>[data-home-block="health"],
+ #view-overview>.dashboard>[data-home-block="dayexpenses"],
+ #view-overview>.dashboard>[data-home-block="distribution"]{display:block}
+}
+</style>
 </head>
 <body>
 <div class="tooltip" id="tooltip"></div>
@@ -3540,7 +3552,7 @@ document.addEventListener('click',function(e){
 <div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=20260929-r256"></script><script src="./r92-stable-startup.js?v=1"></script><script src="r95-image-entry.js?v=20260923-r183"></script>
 <script src="r96-category-details.js?v=20260922-r134"></script>
 <script src="r97-integrity-audit.js?v=20260928-r244"></script>
-<script src="r98-desktop-home-layout.js?v=20260929-r254"></script>
+<script src="r98-desktop-home-layout.js?v=20260929-r257"></script>
 <script src="r99-sep25-transactions.js?v=20260925-r208"></script>
 <script src="r100-desktop-stability.js?v=20260925-r200"></script>
 <script src="r101-sep28-balances.js?v=20260928-r245"></script>
