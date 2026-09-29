@@ -2,6 +2,7 @@
 (()=>{'use strict';
 const DESKTOP='(min-width:821px)';
 const BANK_IDS=new Set(['c6account','caju','itauaccount','xpaccount','creditcard']);
+const PRIMARY_SUMMARY=new Set(['available','income','expense','accumulated']);
 let busy=false,queued=false;
 function ensureStyle(){
  if(document.getElementById('r98DesktopHomeStyle'))return;
@@ -54,6 +55,10 @@ function arrange(){
    bank.style.display=visibleBanks.length?'grid':'none';
    const visibleSummary=[...summary.children].filter(el=>getComputedStyle(el).display!=='none'&&!el.classList.contains('dashboard-hidden'));
    summary.style.display=visibleSummary.length?'grid':'none';
+   /* Desktop approved order: four decision KPIs first; secondary KPIs remain available in Personalizar. */
+   const primary=[...summary.children].filter(el=>PRIMARY_SUMMARY.has(el.dataset?.kpiId||''));
+   primary.sort((a,b)=>['available','income','expense','accumulated'].indexOf(a.dataset.kpiId)-['available','income','expense','accumulated'].indexOf(b.dataset.kpiId)).forEach(el=>summary.appendChild(el));
+   [...summary.children].filter(el=>!PRIMARY_SUMMARY.has(el.dataset?.kpiId||'')).forEach(el=>summary.appendChild(el));
  }finally{busy=false}
 }
 function restoreMobile(){
