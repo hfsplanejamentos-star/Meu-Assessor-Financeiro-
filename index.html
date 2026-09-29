@@ -1163,10 +1163,7 @@ body.modal-lock #aiFloatBtn,body.modal-lock #aiFloatPanel{display:none!important
  body #view-overview #kpis .r98-bank-row>.brand-fin-card{height:94px!important;min-height:94px!important;padding:9px 11px!important}
  body #view-overview #kpis .r98-summary-row{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important}
  body #view-overview #kpis .r98-summary-row>.kpi{height:76px!important;min-height:76px!important}
- body #view-overview #kpis .r98-summary-row>[data-kpi-id="patrimony"],
- body #view-overview #kpis .r98-summary-row>[data-kpi-id="income_planned"],
- body #view-overview #kpis .r98-summary-row>[data-kpi-id="expense_planned"],
- body #view-overview #kpis .r98-summary-row>[data-kpi-id="investments"]{display:none!important}
+ body #view-overview #kpis .r98-summary-row>[data-kpi-id]:not([data-kpi-id="available"]):not([data-kpi-id="income"]):not([data-kpi-id="expense"]):not([data-kpi-id="accumulated"]){display:none!important}
  body #view-overview>.dashboard{grid-template-columns:repeat(12,minmax(0,1fr))!important;gap:9px!important}
  body #view-overview>.dashboard>[data-home-block]{grid-column:span 6!important;padding:11px!important}
  body #view-overview>.dashboard>[data-home-block="projection"]{grid-column:1/-1!important;min-height:260px!important}
@@ -3520,7 +3517,7 @@ document.addEventListener('click',function(e){
 <div class="sim-badge">MEU ASSESSOR FINANCEIRO · VERSÃO ATUAL · MODO REAL</div><div id="recoveryBackdrop" aria-hidden="true"></div><script src="./r91-finance-engine.js?v=32"></script><script src="./r92-stable-startup.js?v=1"></script><script src="r95-image-entry.js?v=20260923-r183"></script>
 <script src="r96-category-details.js?v=20260922-r134"></script>
 <script src="r97-integrity-audit.js?v=20260928-r244"></script>
-<script src="r98-desktop-home-layout.js?v=20260928-r105"></script>
+<script src="r98-desktop-home-layout.js?v=20260929-r248"></script>
 <script src="r99-sep25-transactions.js?v=20260925-r208"></script>
 <script src="r100-desktop-stability.js?v=20260925-r200"></script>
 <script src="r101-sep28-balances.js?v=20260928-r245"></script>
