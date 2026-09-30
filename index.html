@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20260930-r261';
+ const RELEASE='atual-ui-20260930-r263';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -1292,26 +1292,6 @@ body.modal-lock #aiFloatBtn,body.modal-lock #aiFloatPanel{display:none!important
  body #view-overview #kpis .r98-bank-row>.brand-fin-card{min-width:0!important;width:auto!important}
  .sidebar .nav{scrollbar-width:none!important;-ms-overflow-style:none!important}
  .sidebar .nav::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
-}
-</style>
-<style id="r261-desktop-stable-layout">
-/* R261 — restaura largura original dos cartões e estabiliza o grid. */
-@media(min-width:901px){
- body #view-overview #kpis .r98-bank-row{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))!important}
- body #view-overview #kpis .r98-bank-row>.brand-fin-card{min-width:220px!important}
- body #view-overview>.dashboard{grid-auto-flow:row!important;align-items:start!important}
- body #view-overview>.dashboard>[data-home-block="recent"]{order:10!important}
- body #view-overview>.dashboard>[data-home-block="commitments"]{order:20!important}
- body #view-overview>.dashboard>[data-home-block="recurring"]{order:30!important}
- body #view-overview>.dashboard>[data-home-block="investments"]{order:40!important}
- body #view-overview>.dashboard>[data-home-block="category"]{order:50!important}
- body #view-overview>.dashboard>[data-home-block="cajuexpenses"]{order:60!important}
- body #view-overview>.dashboard>[data-home-block="calendar"]{order:70!important}
- body #view-overview>.dashboard>[data-home-block="alerts"]{order:80!important}
- body #view-overview>.dashboard>[data-home-block="health"]{order:90!important}
- body #view-overview>.dashboard>[data-home-block="projection"]{order:100!important}
- body #view-overview>.dashboard>[data-home-block="dayexpenses"]{order:110!important}
- body #view-overview>.dashboard>[data-home-block="distribution"]{order:120!important}
 }
 </style>
 </head>
@@ -2866,18 +2846,18 @@ function renderReconciliation(){
  box.querySelectorAll('[data-recon-b]').forEach(btn=>btn.onclick=()=>{const c=cases[+btn.dataset.reconB];openDetail(c.b.desc,[['Data',fmt(c.b.date)],['Valor',brl(c.b.value)],['Categoria',c.b.cat],['Origem',c.b.origin],['Status',c.b.status||'realized']])});
 }
 
-const HOME_BLOCKS=[['recent','Últimas Transações'],['commitments','Próximos Compromissos'],['recurring','Recorrências Ativas'],['investments','Investimentos'],['category','Despesas por Categoria'],['cajuexpenses','Despesas Caju'],['calendar','Agenda Financeira'],['alerts','Alertas Financeiros'],['health','Saúde Financeira'],['projection','Evolução do Patrimônio'],['dayexpenses','Despesas do Dia'],['distribution','Distribuição do Mês']];
+const HOME_BLOCKS=[['category','Despesas por Categoria'],['cajuexpenses','Despesas Caju'],['dayexpenses','Despesas do Dia'],['distribution','Distribuição do Mês'],['calendar','Agenda Financeira'],['commitments','Próximos Compromissos'],['recent','Últimas Transações'],['recurring','Recorrências Ativas'],['projection','Evolução do Patrimônio'],['investments','Investimentos'],['alerts','Alertas Financeiros'],['health','Saúde Financeira']];
 const HOME_DEFAULT_SIZE={category:'m',cajuexpenses:'m',dayexpenses:'g',distribution:'p',calendar:'g',commitments:'p',recent:'m',recurring:'m',projection:'g',investments:'p',alerts:'m',health:'m'};
 const __normalizeLayout=(raw,defs)=>{const base=defs.map(x=>({id:x[0],visible:true}));if(!Array.isArray(raw))return base;const allowed=new Set(defs.map(x=>x[0])),seen=new Set(),out=[];raw.forEach(x=>{if(x&&allowed.has(x.id)&&!seen.has(x.id)){out.push({id:x.id,visible:x.visible!==false,...(['p','m','g'].includes(x.size)?{size:x.size}:{})});seen.add(x.id)}});base.forEach(x=>{if(!seen.has(x.id))out.push(x)});return out};
 let homeLayout=(()=>{let out;try{out=__normalizeLayout(JSON.parse(localStorage.getItem('assessor_home_layout_r232')||'null'),HOME_BLOCKS)}catch(e){out=HOME_BLOCKS.map(x=>({id:x[0],visible:true}))}return out.map(x=>({...x,size:x.size||HOME_DEFAULT_SIZE[x.id]||'m'}))})();
-if(matchMedia('(min-width:901px)').matches&&localStorage.getItem('assessor_sidebar_order_r261')!=='1'){
+if(matchMedia('(min-width:901px)').matches&&localStorage.getItem('assessor_restore_layout_r263')!=='1'){
  const previous=new Map(homeLayout.map(x=>[x.id,x]));
  homeLayout=HOME_BLOCKS.map(([id])=>({id,visible:previous.get(id)?.visible!==false,size:previous.get(id)?.size||HOME_DEFAULT_SIZE[id]||'m'}));
  localStorage.setItem('assessor_home_layout_r232',JSON.stringify(homeLayout));
  localStorage.removeItem('assessor_desktop_corner_layout_r258');
  localStorage.removeItem('assessor_desktop_panel_dimensions_r249');
  localStorage.setItem('assessor_desktop_customize_mode','0');
- localStorage.setItem('assessor_sidebar_order_r261','1');
+ localStorage.setItem('assessor_restore_layout_r263','1');
 }
 const CARD_ITEMS=[['c6account','C6 Bank'],['caju','Caju'],['itauaccount','Itaú'],['xpaccount','XP'],['creditcard','C6 Carbono']];let cardHomeLayout=(()=>{try{return __normalizeLayout(JSON.parse(localStorage.getItem('assessor_card_layout')||'null'),CARD_ITEMS)}catch(e){return CARD_ITEMS.map(x=>({id:x[0],visible:true}))}})();
 if(matchMedia('(min-width:901px)').matches&&localStorage.getItem('assessor_desktop_compact_r241')!=='1'){
@@ -3598,7 +3578,7 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
        const keys=await caches.keys();
        await Promise.all(keys.filter(k=>/v10|assessor-live-20260919-1530/i.test(k)).map(k=>caches.delete(k)));
      }
-     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r261',{updateViaCache:'none'});
+     const registration=await navigator.serviceWorker.register('./sw.js?release=atual-r263',{updateViaCache:'none'});
      await registration.update();
      const s=document.getElementById('pwaStatus');if(s)s.textContent='Versão Atual carregada. Modo offline preparado.';
    }catch(_){}
