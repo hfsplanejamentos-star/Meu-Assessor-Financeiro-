@@ -2468,6 +2468,39 @@ function renderInvoiceManagement(){
  acc.balance=909.86;acc.statementBalanceDate='2026-09-18';acc.statementVerified=true;
  db.migrations[migrationId]=true;save();
 })();
+/* R260 — extratos C6/Caju confirmados por imagens de 30/09/2026. */
+(function reconcileStatementsSep30(){
+ db.migrations=db.migrations||{};const mid='statements_20260930_r260';if(db.migrations[mid])return;
+ const upsert=(row,match)=>{
+   const hit=(db.transactions||[]).find(match||((t)=>String(t.id)===String(row.id)));
+   if(hit)Object.assign(hit,row);else db.transactions.push(row);
+ };
+ const c6rows=[
+  ['c6_20260928_lavland_1990','2026-09-28','LAVLAND.JP DUQUE DE CAXI BRA',-19.90,'Outros','Débito'],
+  ['c6_20260928_lavland_1989','2026-09-28','LAVLAND.JP DUQUE DE CAXI BRA',-19.89,'Outros','Débito'],
+  ['c6_20260929_antonio_600','2026-09-29','Pix Enviado Para Antonio Carlos Eugenio Barreto',-6.00,'Transferências','Pix'],
+  ['c6_20260929_autoposto_5000','2026-09-29','AutoPostoJardim DUQUE DE CAXI BRA',-50.00,'Transporte','Combustível'],
+  ['c6_20260930_lourival_400','2026-09-30','Pix Enviado Para Lourival Marques Do Nascimento',-4.00,'Transferências','Pix'],
+  ['c6_20260930_autoposto_4000','2026-09-30','AutoPostoJardim DUQUE DE CAXI BRA',-40.00,'Transporte','Combustível']
+ ];
+ c6rows.forEach(([id,date,desc,value,cat,sub])=>upsert({id,date,desc,value,cat,sub,account:'c6',accountId:'c6',origin:'Extrato C6 confirmado · 30/09/2026',status:'realized',statementVerified:true},t=>String(t.id)===id));
+ const c6=(db.accounts||[]).find(a=>String(a.id)==='c6'||/c6.*conta|conta.*c6/i.test(String(a.name||'')));if(c6){c6.balance=.61;c6.statementBalance=.61;c6.statementBalanceDate='2026-09-30';c6.statementVerified=true}
+ const cid='card_caju_alimentacao',caju=(db.cards||[]).find(x=>String(x.id)===cid||/caju/i.test(String(x.name||'')));
+ const cajRows=[
+  ['caju_20260927_padaria_19600','2026-09-27','PADARIA E CONFEITARIA',-196.00,'Padaria'],
+  ['caju_20260928_ifd_4419','2026-09-28','IFD*40.953.426 MARI...',-44.19,'Delivery'],
+  ['caju_20260928_credit_157240','2026-09-28','Caju Benefícios',1572.40,'Crédito benefício'],
+  ['caju_20260929_homer_1250','2026-09-29','HOMER BEER DUQUE ...',-12.50,'Cerveja'],
+  ['caju_20260929_pura_1200','2026-09-29','PURA GENTILEZA DU...',-12.00,'Restaurante'],
+  ['caju_20260929_padaria_3640','2026-09-29','PADARIA E CONFEITARIA',-36.40,'Padaria'],
+  ['caju_20260929_dafoca_3575','2026-09-29','DAFOCA BAR RIO DE J...',-35.75,'Restaurante'],
+  ['caju_20260930_pura_11770','2026-09-30','PURA GENTILEZA DU...',-117.70,'Restaurante']
+ ];
+ cajRows.forEach(([id,date,desc,value,sub])=>upsert({id,date,desc,value,cat:'Alimentação',sub,card:cid,cardId:cid,origin:'Extrato Caju confirmado · 30/09/2026',status:'realized',benefit:true,excludeFromExpense:true,statementVerified:true},t=>String(t.id)===id));
+ db.meta=db.meta||{};db.meta.cajuStatementCredit=1572.40;db.meta.cajuStatementSpent=1198.20;db.meta.cajuStatementAvailable=374.20;db.meta.cajuStatementVersion='2026-09-30';db.meta.cajuLatestReportedBalance=374.20;db.meta.cajuLatestReportedAt='2026-09-30T07:09:00-03:00';
+ if(caju){caju.balance=374.20;caju.availableLimit=374.20;caju.balanceDate='2026-09-30';caju.statementVerified=true}
+ db.migrations[mid]=true;save();
+})();
 /* Caju acumulativo + efetivação mensal automática a partir de 01/10/2026 */
 function ensureMonthlyIncomeAutomation(){
  db.automationState=db.automationState||{};db.transactions=db.transactions||[];db.cards=db.cards||[];
