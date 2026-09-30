@@ -2522,13 +2522,18 @@ function ensureMonthlyIncomeAutomation(){
  save();
 }
 function cajuSnapshot(cardId,key){
- const baseCredit=Number(db.meta?.cajuStatementCredit||1006.89),baseAvailable=Number(db.meta?.cajuStatementAvailable||303.02),baseSpent=Number(db.meta?.cajuStatementSpent||703.87);
- if(key==='2026-09')return {available:baseAvailable,spent:baseSpent,credit:baseCredit,source:'statement'};
+ const baseAvailable=Number(db.meta?.cajuStatementAvailable??db.meta?.cajuLatestReportedBalance??303.02);
+ const baseSpent=Number(db.meta?.cajuStatementSpent||703.87),monthlyTopup=1500;
+ if(key==='2026-09')return {available:baseAvailable,spent:baseSpent,credit:baseAvailable,source:'statement-balance'};
  if(key>'2026-09'){
-  const [y,m]=key.split('-').map(Number),months=(y-2026)*12+(m-10)+1,monthlyCredit=Math.max(0,months)*1500;
+  const [y,m]=key.split('-').map(Number),months=(y-2026)*12+(m-10)+1,topups=Math.max(0,months)*monthlyTopup;
   const spentAfterSep=(db.transactions||[]).filter(t=>(t.cardId===cardId||t.card===cardId)&&String(t.date||'').slice(0,7)>='2026-10'&&String(t.date||'').slice(0,7)<=key&&t.status!=='planned'&&t.status!=='ignored'&&Number(t.value)<0&&!t.excludeFromBalance).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);
   const spentMonth=(db.transactions||[]).filter(t=>(t.cardId===cardId||t.card===cardId)&&String(t.date||'').slice(0,7)===key&&t.status!=='planned'&&t.status!=='ignored'&&Number(t.value)<0&&!t.excludeFromBalance).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);
-  return {available:Math.round((baseAvailable+monthlyCredit-spentAfterSep)*100)/100,spent:Math.round(spentMonth*100)/100,credit:Math.round((baseCredit+monthlyCredit)*100)/100,source:'cumulative-rule'};
+  const available=Math.round((baseAvailable+topups-spentAfterSep)*100)/100;
+  /* Caju carries only the remaining balance forward. Each month adds exactly R$1,500 to that remainder. */
+  const previousKey=m===1?String(y-1)+'-12':String(y)+'-'+String(m-1).padStart(2,'0');
+  const previousAvailable=key==='2026-10'?baseAvailable:cajuSnapshot(cardId,previousKey).available;
+  return {available,spent:Math.round(spentMonth*100)/100,credit:Math.round((previousAvailable+monthlyTopup)*100)/100,source:'carry-forward-plus-monthly-topup'};
  }
  return {available:0,spent:0,credit:0,source:'ledger'};
 }
