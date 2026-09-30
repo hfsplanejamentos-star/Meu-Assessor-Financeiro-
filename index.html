@@ -2468,6 +2468,18 @@ function renderInvoiceManagement(){
  acc.balance=909.86;acc.statementBalanceDate='2026-09-18';acc.statementVerified=true;
  db.migrations[migrationId]=true;save();
 })();
+/* R262 — crédito R$ 1.572,40 recebido em setembro pertence à competência outubro/2026. */
+(function fixCajuOctCreditCompetence(){
+ db.migrations=db.migrations||{};const mid='caju_oct_credit_competence_r262';if(db.migrations[mid])return;
+ db.automationState=db.automationState||{};db.automationState.cajuMonthlyTopups=db.automationState.cajuMonthlyTopups||{};
+ db.automationState.cajuMonthlyTopups['2026-10']=1572.40;
+ const t=(db.transactions||[]).find(x=>String(x.id)==='caju_20260928_credit_157240');
+ if(t){t.competenceMonth='2026-10';t.creditForMonth='2026-10';t.desc='Recarga Caju · competência Outubro/2026';t.origin='Extrato Caju confirmado · crédito antecipado de outubro';t.excludeFromExpense=true;t.statementVerified=true}
+ /* Evita criar uma segunda recarga automática de outubro: a recarga real já ocorreu em setembro. */
+ const auto=(db.transactions||[]).find(x=>String(x.id)==='auto_caju_2026-10');if(auto){auto.status='ignored';auto.replacedBy='caju_20260928_credit_157240'}
+ db.meta=db.meta||{};db.meta.cajuOctoberCredit=1572.40;db.meta.cajuOctoberCreditPostedAt='2026-09-28';db.meta.cajuOctoberCreditCompetence='2026-10';
+ db.migrations[mid]=true;save();
+})();
 /* R261 — saldo Caju confirmado em 30/09/2026: R$ 1.419,88. A recarga é mensal e variável. */
 (function reconcileCajuBalanceSep30(){
  db.migrations=db.migrations||{};const mid='caju_balance_20260930_r261';if(db.migrations[mid])return;
@@ -2555,7 +2567,7 @@ function ensureMonthlyIncomeAutomation(){
      if(planned){planned.date=date;planned.origin='Automação mensal prevista'}
      else db.transactions.push({id:salaryId,date,desc:'Salário previsto',value:6500,cat:'Receitas',sub:'Salário',origin:'Automação mensal prevista',status:'planned'});
    }
-   if(!db.transactions.some(t=>String(t.id)===cajuId))db.transactions.push({id:cajuId,date,desc:'Crédito Caju Alimentação previsto',value:1500,cat:'Alimentação',sub:'Crédito benefício',card:caju.id,cardId:caju.id,origin:'Automação mensal prevista',status:'planned',benefit:true,excludeFromExpense:true});
+   const realTopup=(db.transactions||[]).some(t=>String(t.creditForMonth||t.competenceMonth||'')===key&&Number(t.value)>0&&(String(t.cardId||t.card||'')===caju.id||t.benefit===true));if(!realTopup&&!db.transactions.some(t=>String(t.id)===cajuId)){const monthlyTopup=Number(db.automationState?.cajuMonthlyTopups?.[key]??1500);db.transactions.push({id:cajuId,date,desc:'Crédito Caju Alimentação previsto',value:monthlyTopup,cat:'Alimentação',sub:'Crédito benefício',card:caju.id,cardId:caju.id,origin:'Automação mensal prevista',status:'planned',benefit:true,excludeFromExpense:true,competenceMonth:key,creditForMonth:key});}
  }}
  const movements=db.transactions.filter(t=>(t.cardId===caju.id||t.card===caju.id)&&t.status!=='planned').sort((a,b)=>String(a.date).localeCompare(String(b.date)));
  caju.balance=movements.reduce((s,t)=>s+Number(t.value||0),0);caju.availableLimit=caju.balance;
