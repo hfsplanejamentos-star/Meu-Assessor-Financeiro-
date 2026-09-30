@@ -2468,6 +2468,14 @@ function renderInvoiceManagement(){
  acc.balance=909.86;acc.statementBalanceDate='2026-09-18';acc.statementVerified=true;
  db.migrations[migrationId]=true;save();
 })();
+/* R261 — saldo Caju confirmado em 30/09/2026: R$ 1.419,88. A recarga é mensal e variável. */
+(function reconcileCajuBalanceSep30(){
+ db.migrations=db.migrations||{};const mid='caju_balance_20260930_r261';if(db.migrations[mid])return;
+ db.meta=db.meta||{};db.meta.cajuStatementAvailable=1419.88;db.meta.cajuLatestReportedBalance=1419.88;db.meta.cajuLatestReportedAt='2026-09-30T07:12:00-03:00';db.meta.cajuStatementVersion='2026-09-30-balance';
+ const c=(db.cards||[]).find(x=>String(x.id)==='card_caju_alimentacao'||/caju/i.test(String(x.name||'')));if(c){c.balance=1419.88;c.availableLimit=1419.88;c.balanceDate='2026-09-30';c.statementVerified=true;c.monthlyCreditVariable=true}
+ db.automationState=db.automationState||{};db.automationState.cajuMonthlyTopups=db.automationState.cajuMonthlyTopups||{};db.automationState.cajuMonthlyTopups['2026-10']=Number(db.automationState.cajuMonthlyTopups['2026-10']??1500);
+ db.migrations[mid]=true;save();
+})();
 /* R260 — extratos C6/Caju confirmados por imagens de 30/09/2026. */
 (function reconcileStatementsSep30(){
  db.migrations=db.migrations||{};const mid='statements_20260930_r260';if(db.migrations[mid])return;
@@ -2497,8 +2505,8 @@ function renderInvoiceManagement(){
   ['caju_20260930_pura_11770','2026-09-30','PURA GENTILEZA DU...',-117.70,'Restaurante']
  ];
  cajRows.forEach(([id,date,desc,value,sub])=>upsert({id,date,desc,value,cat:'Alimentação',sub,card:cid,cardId:cid,origin:'Extrato Caju confirmado · 30/09/2026',status:'realized',benefit:true,excludeFromExpense:true,statementVerified:true},t=>String(t.id)===id));
- db.meta=db.meta||{};db.meta.cajuStatementCredit=1572.40;db.meta.cajuStatementSpent=1198.20;db.meta.cajuStatementAvailable=374.20;db.meta.cajuStatementVersion='2026-09-30';db.meta.cajuLatestReportedBalance=374.20;db.meta.cajuLatestReportedAt='2026-09-30T07:09:00-03:00';
- if(caju){caju.balance=374.20;caju.availableLimit=374.20;caju.balanceDate='2026-09-30';caju.statementVerified=true}
+ db.meta=db.meta||{};db.meta.cajuStatementCredit=1572.40;db.meta.cajuStatementSpent=1198.20;
+ if(!db.migrations?.caju_balance_20260930_r261){db.meta.cajuStatementAvailable=374.20;db.meta.cajuStatementVersion='2026-09-30';db.meta.cajuLatestReportedBalance=374.20;db.meta.cajuLatestReportedAt='2026-09-30T07:09:00-03:00';if(caju){caju.balance=374.20;caju.availableLimit=374.20;caju.balanceDate='2026-09-30';caju.statementVerified=true}}
  db.migrations[mid]=true;save();
 })();
 /* Caju acumulativo + efetivação mensal automática a partir de 01/10/2026 */
@@ -2556,17 +2564,17 @@ function ensureMonthlyIncomeAutomation(){
 }
 function cajuSnapshot(cardId,key){
  const baseAvailable=Number(db.meta?.cajuStatementAvailable??db.meta?.cajuLatestReportedBalance??303.02);
- const baseSpent=Number(db.meta?.cajuStatementSpent||703.87),monthlyTopup=1500;
+ const baseSpent=Number(db.meta?.cajuStatementSpent||703.87),topupMap=db.automationState?.cajuMonthlyTopups||{};
  if(key==='2026-09')return {available:baseAvailable,spent:baseSpent,credit:baseAvailable,source:'statement-balance'};
  if(key>'2026-09'){
-  const [y,m]=key.split('-').map(Number),months=(y-2026)*12+(m-10)+1,topups=Math.max(0,months)*monthlyTopup;
+  const [y,m]=key.split('-').map(Number);let topups=0;for(let d=new Date(2026,9,1);d<=new Date(y,m-1,1);d=new Date(d.getFullYear(),d.getMonth()+1,1)){const mk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');topups+=Number(topupMap[mk]??1500)}
   const spentAfterSep=(db.transactions||[]).filter(t=>(t.cardId===cardId||t.card===cardId)&&String(t.date||'').slice(0,7)>='2026-10'&&String(t.date||'').slice(0,7)<=key&&t.status!=='planned'&&t.status!=='ignored'&&Number(t.value)<0&&!t.excludeFromBalance).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);
   const spentMonth=(db.transactions||[]).filter(t=>(t.cardId===cardId||t.card===cardId)&&String(t.date||'').slice(0,7)===key&&t.status!=='planned'&&t.status!=='ignored'&&Number(t.value)<0&&!t.excludeFromBalance).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);
   const available=Math.round((baseAvailable+topups-spentAfterSep)*100)/100;
   /* Caju carries only the remaining balance forward. Each month adds exactly R$1,500 to that remainder. */
   const previousKey=m===1?String(y-1)+'-12':String(y)+'-'+String(m-1).padStart(2,'0');
-  const previousAvailable=key==='2026-10'?baseAvailable:cajuSnapshot(cardId,previousKey).available;
-  return {available,spent:Math.round(spentMonth*100)/100,credit:Math.round((previousAvailable+monthlyTopup)*100)/100,source:'carry-forward-plus-monthly-topup'};
+  const previousAvailable=key==='2026-10'?baseAvailable:cajuSnapshot(cardId,previousKey).available,monthlyTopup=Number(topupMap[key]??1500);
+  return {available,spent:Math.round(spentMonth*100)/100,credit:Math.round((previousAvailable+monthlyTopup)*100)/100,source:'carry-forward-plus-variable-monthly-topup'};
  }
  return {available:0,spent:0,credit:0,source:'ledger'};
 }
