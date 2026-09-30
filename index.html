@@ -3342,7 +3342,7 @@ function renderAndroidInbox(){
  box.querySelectorAll('[data-import-android]').forEach(b=>b.onclick=()=>importAndroidNotification(b.dataset.importAndroid));
 }
 function importAndroidNotification(id){
- const n=(db.androidNotifications||[]).find(x=>String(x.id)===String(id));if(!n)return;const p=inferNotificationData(n);if(!p.value)return alert('Não foi possível identificar o valor desta notificação.');
+ const n=(db.androidNotifications||[]).find(x=>String(x.id)===String(id));if(!n)return;const p=inferNotificationData(n);if(n.forcedCard!==undefined)p.card=n.forcedCard;if(n.forcedAccount!==undefined)p.account=n.forcedAccount;if(!p.value)return alert('Não foi possível identificar o valor desta notificação.');
  if((db.transactions||[]).some(t=>t.androidNotificationId===n.id))return alert('Esta notificação já foi importada.');
  const date=new Date(n.timestamp||Date.now()).toISOString().slice(0,10);
  const reportedBalance=(n.reportedBalanceCents!==undefined&&n.reportedBalanceCents!==null)?Number(n.reportedBalanceCents)/100:null;const candidateRow={date,desc:p.merchant,value:-p.value,externalId:n.id,androidNotificationId:n.id,account:p.account,card:p.card,reportedBalance:Number.isFinite(reportedBalance)?reportedBalance:null,reportedBalanceSource:Number.isFinite(reportedBalance)?'android-notification':null,reportedBalanceAt:Number.isFinite(reportedBalance)?new Date(n.postedAt||n.timestamp||Date.now()).toISOString():null};const candidate=typeof duplicateCandidate==='function'?duplicateCandidate(candidateRow):null;
@@ -3356,6 +3356,21 @@ function importAndroidNotification(id){
    else if(!normalized.card&&normalized.account)applyTransactionAccountEffect(normalized,1);
  }
  db.transactions.push(normalized);n.importedAt=new Date().toISOString();if(typeof audit==='function')audit('create','transaction',null,tx,{scope:'captura Android v1.8.0 SIMULAÇÃO R6.5 · POPUPS EDITÁVEIS'});save();refreshFinancialUI(monthOfTx(tx));renderAndroidInbox();renderAndroidCaptures();
+}
+function showNextAndroidReview(){
+ if(document.getElementById('androidReviewOverlay'))return;
+ const n=(db.androidNotifications||[]).find(x=>x.reviewPending&&!x.importedAt&&!db.captureIgnored?.[x.id]);if(!n)return;
+ const p=inferNotificationData(n),ov=document.createElement('div');ov.id='androidReviewOverlay';ov.style.cssText='position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:18px;backdrop-filter:blur(8px)';
+ ov.innerHTML=`<div class="card" style="width:min(430px,100%);padding:20px"><small style="color:var(--cyan)">NOVA COMPRA DETECTADA</small><h3 style="margin:8px 0 2px">${p.merchant||'Compra'}</h3><div style="font-size:28px;font-weight:800;margin:8px 0 16px">${brl(p.value)}</div><small style="color:var(--muted)">Onde lançar esta despesa?</small><div style="display:grid;gap:9px;margin-top:12px"><button class="primary" data-review-dest="c6">C6 Conta</button><button class="primary" data-review-dest="caju">Caju</button><button class="primary" data-review-dest="credit">Cartão de Crédito</button><button class="secondary" data-review-ignore>Ignorar</button></div></div>`;
+ document.body.appendChild(ov);
+ const finish=()=>{ov.remove();renderAndroidInbox();renderAndroidCaptures();setTimeout(showNextAndroidReview,80)};
+ ov.querySelectorAll('[data-review-dest]').forEach(b=>b.onclick=()=>{const dest=b.dataset.reviewDest;
+   if(dest==='caju'){p.card='card_caju_alimentacao';p.account=null;n.forcedCard='card_caju_alimentacao';n.forcedAccount=null}
+   else if(dest==='c6'){p.card=null;p.account='c6';n.forcedCard=null;n.forcedAccount='c6'}
+   else {const cc=(db.cards||[]).find(x=>!/caju/i.test(String(x.name||'')));n.forcedCard=cc?.id||p.card||null;n.forcedAccount=cc?.account||null}
+   n.reviewPending=false;n.reviewDestination=dest;save();importAndroidNotification(n.id);finish();
+ });
+ ov.querySelector('[data-review-ignore]').onclick=()=>{db.captureIgnored=db.captureIgnored||{};db.captureIgnored[n.id]=true;n.reviewPending=false;save();finish()};
 }
 function renderAndroidCaptures(){
  const list=(db.androidNotifications||[]).slice().sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
@@ -3378,9 +3393,9 @@ function syncAndroidNotifications(){
  const added=[];arr.forEach(n=>{const fp=fingerprint(n);if(!knownIds.has(String(n.id))&&!knownFp.has(fp)){existing.push(n);added.push(n);knownIds.add(String(n.id));knownFp.add(fp)}});
  db.androidNotifications=existing;save();AndroidBridge.markNotificationsConsumed();
  /* Importação automática: somente notificações novas, com valor reconhecido e banco permitido. A rotina de importação mantém deduplicação/conciliação e atualiza saldos/cards. */
- let autoImported=0,autoSkipped=0;
- added.forEach(n=>{try{const p=inferNotificationData(n),allowed=/^(C6 Bank|Caju|Itaú|XP)$/i.test(String(p.bank||''))||/c6|caju|itau|itaú|xp/i.test(String(n.packageName||'')+' '+String(n.appName||''));if(p.value>0&&allowed&&!n.importedAt){importAndroidNotification(n.id);autoImported++}else autoSkipped++}catch(_){autoSkipped++}});
- if(status)status.innerHTML=`✅ Captura automática ativa · ${added.length} nova(s) · ${autoImported} importada(s)${autoSkipped?' · '+autoSkipped+' aguardando revisão':''}.`;renderAndroidInbox();renderAndroidCaptures()}catch(e){if(status)status.innerHTML='⚠️ Falha ao sincronizar com Android: '+e.message}
+ let reviewQueued=0;
+ added.forEach(n=>{try{const p=inferNotificationData(n),allowed=/^(C6 Bank|Caju|Itaú|XP)$/i.test(String(p.bank||''))||/c6|caju|itau|itaú|xp/i.test(String(n.packageName||'')+' '+String(n.appName||''));if(p.value>0&&allowed&&!n.importedAt){n.reviewPending=true;reviewQueued++}}catch(_){}});
+ save();if(status)status.innerHTML=`✅ Captura ativa · ${added.length} nova(s) · ${reviewQueued} aguardando confirmação.`;renderAndroidInbox();renderAndroidCaptures();setTimeout(showNextAndroidReview,60)}catch(e){if(status)status.innerHTML='⚠️ Falha ao sincronizar com Android: '+e.message}
 }
 function updateAndroidBridgeStatus(){const s=document.getElementById('androidBridgeStatus');if(!s)return;if(androidBridgeAvailable()){let enabled=false;try{enabled=AndroidBridge.isNotificationAccessEnabled()}catch(e){}s.innerHTML=enabled?'✅ Captura Android ativa. Permissão de notificações concedida.':'⚠️ App Android conectado, mas a permissão de acesso às notificações precisa ser habilitada.'}else{s.innerHTML='🧪 Modo navegador/offline. A captura real funciona ao abrir esta mesma interface pelo app Android v1.8.0 SIMULAÇÃO R6.5 · POPUPS EDITÁVEIS.'}}
 parseNotif.onclick=()=>{const t=notifText.value;const p=inferNotificationData({title:'Teste manual',text:t,packageName:''});notifResult.innerHTML=`<div class="item"><div class="ico">📱</div><div><b>${p.merchant}</b><small>Origem: ${p.source} · aguardando conciliação</small></div><div><button class="primary" id="confirmNotif">Importar ${brl(p.value)}</button></div></div>`;setTimeout(()=>{const b=document.getElementById('confirmNotif');if(b)b.onclick=()=>{if(!p.value)return alert('Valor não identificado.');const tx={id:Date.now(),date:iso(today),desc:p.merchant,value:-p.value,cat:'Não categorizado',sub:'Captura Android',account:p.account,card:p.card,origin:p.source,status:'provisional',captureConfidence:.75};db.transactions.push(FinanceDomain.normalizeTransaction(tx));if(typeof audit==='function')audit('create','transaction',null,tx,{scope:'simulador Android'});save();renderAll();notifResult.innerHTML='<div class="notice">✅ Transação provisória importada e enviada para conciliação.</div>'}},0)};
