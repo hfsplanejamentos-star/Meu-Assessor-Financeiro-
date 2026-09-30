@@ -2468,6 +2468,38 @@ function renderInvoiceManagement(){
  acc.balance=909.86;acc.statementBalanceDate='2026-09-18';acc.statementVerified=true;
  db.migrations[migrationId]=true;save();
 })();
+/* R263 — conciliação C6 conforme extrato confirmado até 30/09/2026. */
+(function reconcileC6Sep30Final(){
+ db.migrations=db.migrations||{};const mid='c6_sep30_final_r263';if(db.migrations[mid])return;
+ const acc=(db.accounts||[]).find(a=>String(a.id)==='c6'||/c6.*conta|conta.*c6/i.test(String(a.name||'')));
+ const rows=[
+  ['c6_20260925_padaria_1500','2026-09-25','PADARIA E CONFEITARIA DUQUE DE CAXI BRA',-15.00,'Alimentação','Padaria'],
+  ['c6_20260926_luis_1500_a','2026-09-26','Pix Enviado Para Luis Ricardo Da Silva Sales',-15.00,'Transferências','Pix'],
+  ['c6_20260926_luis_1500_b','2026-09-26','Pix Enviado Para Luis Ricardo Da Silva Sales',-15.00,'Transferências','Pix'],
+  ['c6_20260927_bruno_3900','2026-09-27','BRUNO CESAR GONCALVES RIO DE JANEIR BRA',-39.00,'Bebidas','Cerveja'],
+  ['c6_20260928_99_900','2026-09-28','Pix Enviado Para 99 Tecnologia Ltda',-9.00,'Transporte','Aplicativo'],
+  ['c6_20260928_99_1233','2026-09-28','Pix Enviado Para 99 Tecnologia Ltda',-12.33,'Transporte','Aplicativo'],
+  ['c6_20260928_lavland_1990','2026-09-28','LAVLAND.JP DUQUE DE CAXI BRA',-19.90,'Outros','Débito'],
+  ['c6_20260928_lavland_1989','2026-09-28','LAVLAND.JP DUQUE DE CAXI BRA',-19.89,'Outros','Débito'],
+  ['c6_20260929_antonio_600','2026-09-29','Pix Enviado Para Antonio Carlos Eugenio Barreto',-6.00,'Transferências','Pix'],
+  ['c6_20260929_autoposto_5000','2026-09-29','AutoPostoJardim DUQUE DE CAXI BRA',-50.00,'Transporte','Combustível'],
+  ['c6_20260930_lourival_400','2026-09-30','Pix Enviado Para Lourival Marques Do Nascimento',-4.00,'Transferências','Pix'],
+  ['c6_20260930_autoposto_4000','2026-09-30','AutoPostoJardim DUQUE DE CAXI BRA',-40.00,'Transporte','Combustível']
+ ];
+ const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+ rows.forEach(([id,date,desc,value,cat,sub])=>{
+   const candidates=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,10)===date&&Math.abs(Number(t.value||0)-value)<.005);
+   let hit=candidates.find(t=>String(t.id)===id)||candidates.find(t=>norm(t.desc||t.description).includes(norm(desc).slice(0,16)));
+   if(hit)Object.assign(hit,{id,date,desc,value,cat,sub,account:'c6',accountId:'c6',origin:'Extrato C6 confirmado · 30/09/2026',status:'realized',statementVerified:true});
+   else db.transactions.push({id,date,desc,value,cat,sub,account:'c6',accountId:'c6',origin:'Extrato C6 confirmado · 30/09/2026',status:'realized',statementVerified:true});
+ });
+ /* Remove duplicatas Android/importação que representam exatamente os lançamentos conciliados acima. */
+ const keep=new Set(rows.map(r=>r[0]));const seen=new Set();
+ db.transactions=db.transactions.filter(t=>{if(String(t.date||'').slice(0,7)!=='2026-09')return true;const sig=String(t.date||'').slice(0,10)+'|'+Number(t.value||0).toFixed(2)+'|'+norm(t.desc||t.description).slice(0,18);if(keep.has(String(t.id))){seen.add(sig);return true}const isC6=/c6/i.test([t.origin,t.source,t.bank,t.accountName].filter(Boolean).join(' '))||String(t.account||t.accountId)==='c6';if(isC6&&seen.has(sig))return false;return true});
+ if(acc){acc.balance=.61;acc.statementBalance=.61;acc.statementBalanceDate='2026-09-30';acc.statementVerified=true}
+ db.meta=db.meta||{};db.meta.c6StatementBalance=.61;db.meta.c6StatementBalanceDate='2026-09-30';db.meta.c6StatementVersion='2026-09-30-final';
+ db.migrations[mid]=true;save();
+})();
 /* R262 — crédito R$ 1.572,40 recebido em setembro pertence à competência outubro/2026. */
 (function fixCajuOctCreditCompetence(){
  db.migrations=db.migrations||{};const mid='caju_oct_credit_competence_r262';if(db.migrations[mid])return;
