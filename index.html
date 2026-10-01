@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20261001-r271';
+ const RELEASE='atual-ui-20261001-r272';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -3693,7 +3693,7 @@ document.addEventListener('click',function(e){
 <script src="r101-sep28-balances.js?v=20260929-r256"></script>
 <script src="r103-financial-runtime-guard.js?v=20261001-r268"></script>
 <script src="r102-live-refresh.js?v=20261001-r269"></script>
-<script src="r104-dashboard-repair.js?v=20261001-r271"></script>
+<script src="r104-dashboard-repair.js?v=20261001-r272"></script>
 <datalist id="categorySuggestions"></datalist><datalist id="subcategorySuggestions"></datalist>
 <script id="r235-ai-float">
 (()=>{const $=id=>document.getElementById(id),btn=$('aiFloatBtn'),panel=$('aiFloatPanel'),input=$('aiQuickInput');if(!btn||!panel||!input)return;
