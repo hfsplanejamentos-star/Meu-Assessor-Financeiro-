@@ -176,8 +176,14 @@ function renderMobileFinSummary(){
  if(!box){box=document.createElement('section');box.id='mobileFinSummary';box.className='mobile-fin-summary';host.parentNode.insertBefore(box,host)}
  const label=typeof monthLabelKey==='function'?monthLabelKey(k):k;
  const [yy,mm]=k.split('-').map(Number),daysInMonth=new Date(yy,mm,0).getDate();
- const anchor=Math.min(today.getDate(),daysInMonth),first=Math.max(1,anchor-6);
- const days=Array.from({length:anchor-first+1},(_,i)=>first+i);
+ /* Janela do custo diário:
+    - mês passado: últimos 7 dias do mês (não depende do dia de hoje);
+    - mês atual: últimos 7 dias até hoje;
+    - mês futuro: 5 dias a partir do início do mês, exibindo compromissos previstos. */
+ let days;
+ if(k<cur){const end=daysInMonth,start=Math.max(1,end-6);days=Array.from({length:end-start+1},(_,i)=>start+i)}
+ else if(k===cur){const end=Math.min(today.getDate(),daysInMonth),start=Math.max(1,end-6);days=Array.from({length:end-start+1},(_,i)=>start+i)}
+ else {days=Array.from({length:Math.min(5,daysInMonth)},(_,i)=>i+1)}
  const isCajuTx=t=>{const aid=String(t.account||t.accountId||'');const a=(db.accounts||[]).find(x=>String(x.id)===aid);return /caju|benef[ií]cio/i.test([aid,a?.name,a?.type,t.card,t.cardId,t.origin,t.source].filter(Boolean).join(' '))||t.benefit===true};
  const isInvoicePayment=t=>!!(t.invoicePayment||t.cardPayment)||/pagamento.*fatura|fatura.*pagamento/i.test(String(t.desc||t.description||''));
  const plannedStatus=t=>planned(t.status)||['pending','forecast','prevista','previsto','planejada','planejado'].includes(String(t.status||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase());
