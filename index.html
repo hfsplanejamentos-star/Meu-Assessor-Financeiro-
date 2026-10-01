@@ -10,7 +10,7 @@
 <script>
 /* ATUAL R9.2 — isolamento visual da V10. Não altera dados financeiros. */
 (()=>{try{
- const RELEASE='atual-ui-20261001-r270';
+ const RELEASE='atual-ui-20261001-r271';
  if(localStorage.getItem('assessor_current_ui_release')!==RELEASE){
    /* Preserve personalização e filtros entre releases; migrações de schema cuidam apenas do que mudou. */
    if(!/^\\d{4}-\\d{2}$/.test(localStorage.getItem('assessor_active_month')||''))localStorage.setItem('assessor_active_month','2026-09');
@@ -2848,7 +2848,7 @@ function renderReconciliation(){
  box.querySelectorAll('[data-recon-b]').forEach(btn=>btn.onclick=()=>{const c=cases[+btn.dataset.reconB];openDetail(c.b.desc,[['Data',fmt(c.b.date)],['Valor',brl(c.b.value)],['Categoria',c.b.cat],['Origem',c.b.origin],['Status',c.b.status||'realized']])});
 }
 
-const HOME_BLOCKS=[['category','Despesas por Categoria'],['cajuexpenses','Despesas Caju'],['dayexpenses','Despesas do Dia'],['distribution','Distribuição do Mês'],['calendar','Agenda Financeira'],['commitments','Próximos Compromissos'],['recent','Últimas Transações'],['recurring','Recorrências Ativas'],['projection','Evolução do Patrimônio'],['investments','Investimentos'],['alerts','Alertas Financeiros'],['health','Saúde Financeira']];
+const HOME_BLOCKS=[['category','Despesas C6'],['cajuexpenses','Despesas Caju'],['recurring','Recorrências Ativas'],['recent','Últimas Transações'],['dayexpenses','Despesas do Dia'],['calendar','Agenda Financeira'],['commitments','Próximos Compromissos'],['distribution','Distribuição do Mês'],['projection','Evolução do Patrimônio'],['investments','Investimentos'],['alerts','Alertas Financeiros'],['health','Saúde Financeira']];
 const HOME_DEFAULT_SIZE={category:'m',cajuexpenses:'m',dayexpenses:'g',distribution:'p',calendar:'g',commitments:'p',recent:'m',recurring:'m',projection:'g',investments:'p',alerts:'m',health:'m'};
 const __normalizeLayout=(raw,defs)=>{const base=defs.map(x=>({id:x[0],visible:true}));if(!Array.isArray(raw))return base;const allowed=new Set(defs.map(x=>x[0])),seen=new Set(),out=[];raw.forEach(x=>{if(x&&allowed.has(x.id)&&!seen.has(x.id)){out.push({id:x.id,visible:x.visible!==false,...(['p','m','g'].includes(x.size)?{size:x.size}:{})});seen.add(x.id)}});base.forEach(x=>{if(!seen.has(x.id))out.push(x)});return out};
 let homeLayout=(()=>{let out;try{out=__normalizeLayout(JSON.parse(localStorage.getItem('assessor_home_layout_r232')||'null'),HOME_BLOCKS)}catch(e){out=HOME_BLOCKS.map(x=>({id:x[0],visible:true}))}return out.map(x=>({...x,size:x.size||HOME_DEFAULT_SIZE[x.id]||'m'}))})();
@@ -2864,12 +2864,20 @@ if(matchMedia('(min-width:901px)').matches&&localStorage.getItem('assessor_resto
 const CARD_ITEMS=[['c6account','C6 Bank'],['caju','Caju'],['itauaccount','Itaú'],['xpaccount','XP'],['creditcard','C6 Carbono']];let cardHomeLayout=(()=>{try{return __normalizeLayout(JSON.parse(localStorage.getItem('assessor_card_layout')||'null'),CARD_ITEMS)}catch(e){return CARD_ITEMS.map(x=>({id:x[0],visible:true}))}})();
 if(matchMedia('(min-width:901px)').matches&&localStorage.getItem('assessor_desktop_compact_r241')!=='1'){
  cardHomeLayout=CARD_ITEMS.map(x=>({id:x[0],visible:true}));
- const compactOrder=['cajuexpenses','category','recent','commitments','calendar','recurring','projection','investments','alerts','health'];
+ const compactOrder=['category','cajuexpenses','recurring','recent','dayexpenses','calendar','commitments','distribution','projection','investments','alerts','health'];
  const byId=new Map(homeLayout.map(x=>[x.id,x]));
  homeLayout=compactOrder.concat(HOME_BLOCKS.map(x=>x[0]).filter(id=>!compactOrder.includes(id))).map(id=>({...byId.get(id),id,visible:byId.get(id)?.visible!==false,size:['calendar'].includes(id)?'g':'m'}));
  localStorage.setItem('assessor_card_layout',JSON.stringify(cardHomeLayout));
  localStorage.setItem('assessor_home_layout_r232',JSON.stringify(homeLayout));
  localStorage.setItem('assessor_desktop_compact_r241','1');
+}
+/* R271 — ordem inicial solicitada para o desktop. Mantém visibilidade e tamanhos já escolhidos. */
+if(matchMedia('(min-width:901px)').matches&&localStorage.getItem('assessor_home_order_r271')!=='1'){
+ const requested=['category','cajuexpenses','recurring','recent','dayexpenses','calendar','commitments','distribution','projection','investments','alerts','health'];
+ const saved=new Map(homeLayout.map(x=>[x.id,x]));
+ homeLayout=requested.map(id=>({...saved.get(id),id,visible:saved.get(id)?.visible!==false,size:saved.get(id)?.size||HOME_DEFAULT_SIZE[id]||'m'}));
+ localStorage.setItem('assessor_home_layout_r232',JSON.stringify(homeLayout));
+ localStorage.setItem('assessor_home_order_r271','1');
 }
 function renderCustomizeCards(){const box=document.getElementById('customizeCardList');if(!box)return;const names=Object.fromEntries(CARD_ITEMS);box.innerHTML=cardHomeLayout.map((x,i)=>'<div class="customize-row"><div class="customize-move"><button data-card-up="'+i+'">↑</button><button data-card-down="'+i+'">↓</button></div><b>'+names[x.id]+'</b><label><input type="checkbox" data-card-visible="'+i+'" '+(x.visible!==false?'checked':'')+'> Exibir</label></div>').join('');box.querySelectorAll('[data-card-up]').forEach(b=>b.onclick=()=>{const i=+b.dataset.cardUp;if(i>0){[cardHomeLayout[i-1],cardHomeLayout[i]]=[cardHomeLayout[i],cardHomeLayout[i-1]];renderCustomizeCards()}});box.querySelectorAll('[data-card-down]').forEach(b=>b.onclick=()=>{const i=+b.dataset.cardDown;if(i<cardHomeLayout.length-1){[cardHomeLayout[i+1],cardHomeLayout[i]]=[cardHomeLayout[i],cardHomeLayout[i+1]];renderCustomizeCards()}});box.querySelectorAll('[data-card-visible]').forEach(b=>b.onchange=()=>cardHomeLayout[+b.dataset.cardVisible].visible=b.checked)}
 const KPI_ITEMS=[['patrimony','Patrimônio Total'],['available','Disponível Hoje'],['income','Receitas realizadas'],['income_planned','Receitas previstas'],['expense','Despesas realizadas'],['expense_planned','Despesas previstas'],['investments','Investimentos'],['goal','Meta'],['accumulated','Saldo Acumulado']];let kpiLayout=(()=>{try{return __normalizeLayout(JSON.parse(localStorage.getItem('assessor_kpi_layout')||'null'),KPI_ITEMS)}catch(e){return KPI_ITEMS.map(x=>({id:x[0],visible:true}))}})();
@@ -3679,7 +3687,7 @@ document.addEventListener('click',function(e){
 <script src="r101-sep28-balances.js?v=20260929-r256"></script>
 <script src="r103-financial-runtime-guard.js?v=20261001-r268"></script>
 <script src="r102-live-refresh.js?v=20261001-r269"></script>
-<script src="r104-dashboard-repair.js?v=20261001-r270"></script>
+<script src="r104-dashboard-repair.js?v=20261001-r271"></script>
 <datalist id="categorySuggestions"></datalist><datalist id="subcategorySuggestions"></datalist>
 <script id="r235-ai-float">
 (()=>{const $=id=>document.getElementById(id),btn=$('aiFloatBtn'),panel=$('aiFloatPanel'),input=$('aiQuickInput');if(!btn||!panel||!input)return;
