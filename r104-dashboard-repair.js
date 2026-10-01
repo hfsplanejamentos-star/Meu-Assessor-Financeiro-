@@ -68,6 +68,9 @@ function ensureStyle(){
   body #customizeList .desktop-layout-row .customize-move button,
   body #customizeList .desktop-layout-row .desktop-size-picker button{min-width:27px!important;min-height:26px!important;padding:3px 6px!important}
   body #customizeList .desktop-layout-row label{font-size:10px!important;white-space:nowrap!important}
+  body.desktop-customize-mode #view-overview>.dashboard>[data-home-block]{cursor:grab!important;user-select:none!important}
+  body.desktop-customize-mode #view-overview>.dashboard>[data-home-block]::after{content:"⋮⋮ Arrastar";position:absolute;z-index:5;right:10px;bottom:8px;padding:4px 7px;border:1px solid rgba(74,196,255,.22);border-radius:8px;background:rgba(3,15,28,.88);color:#bcecff;font-size:10px;font-weight:800;pointer-events:none}
+  body.desktop-customize-mode #view-overview>.dashboard>[data-home-block].dragging{cursor:grabbing!important}
  }
  @media(min-width:821px) and (max-width:1050px){
   body #view-overview>.dashboard>[data-home-block="category"],
@@ -113,6 +116,13 @@ function audit(){
  const recurring=db?.recurring||[],recurringIds=new Set(recurring.map(r=>String(r.id)));
  add('IDs de recorrência únicos',recurringIds.size===recurring.length,{unique:recurringIds.size,total:recurring.length});
  add('Valores de recorrência finitos',recurring.every(r=>Number.isFinite(Number(r.value))&&Number(r.value)!==0),recurring.filter(r=>!Number.isFinite(Number(r.value))||Number(r.value)===0).map(r=>({id:r.id,name:r.name||r.desc,value:r.value})));
+ const recurrenceKey=r=>{const name=String(r.name||r.desc||r.description||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\b(do|da|de|mensal)\b/g,'').replace(/[^a-z0-9]+/g,' ').trim();return name+'|'+Math.abs(Number(r.value)||0).toFixed(2)+'|'+Number(r.dueDay||r.due||r.day||r.dayOfMonth||0)};
+ const recurrenceGroups=new Map();recurring.filter(r=>r.active!==false).forEach(r=>{const k=recurrenceKey(r);if(!k.startsWith('|'))recurrenceGroups.set(k,[...(recurrenceGroups.get(k)||[]),r])});
+ const duplicateRecurrences=[...recurrenceGroups].filter(([,rows])=>rows.length>1).map(([key,rows])=>({key,ids:rows.map(r=>r.id)}));
+ add('Recorrências ativas sem duplicidade equivalente',duplicateRecurrences.length===0,duplicateRecurrences);
+ const salary=(db?.transactions||[]).find(t=>String(t.id)==='auto_salary_2026-10')||(db?.transactions||[]).find(t=>/sal[aá]rio/i.test(String(t.desc||t.description||''))&&String(t.date||'').slice(0,7)==='2026-10'&&isPlanned(t.status));
+ add('Salário previsto no último dia útil de outubro',!salary||!isPlanned(salary.status)||String(salary.date||'').slice(0,10)==='2026-10-30',{date:salary?.date,id:salary?.id});
+ 
  const result={version:'R271',ok:tests.every(t=>t.ok),passed:tests.filter(t=>t.ok).length,total:tests.length,failed:tests.filter(t=>!t.ok),tests,at:new Date().toISOString()};
  window.__ASSESSOR_R271_AUDIT__=result;
  try{localStorage.setItem('assessor_r271_audit',JSON.stringify(result))}catch(_){}
