@@ -19,7 +19,8 @@ function render(){
 async function flush(reason='mutation'){
  if(running){queued=true;return} running=true;
  try{
-  try{typeof save==='function'&&save()}catch(_){}
+  /* A mutation already persisted before emitting finance-data-changed. Never call save() here:
+     save() emits the same event and created a recursive refresh/render loop on Android. */
   try{window.FinanceCloud?.detectLocalChange?.()}catch(_){}
   render();
   document.dispatchEvent(new CustomEvent('finance-ui-synchronized',{detail:{reason,at:Date.now()}}));
@@ -29,7 +30,7 @@ async function flush(reason='mutation'){
   }
  }finally{running=false;if(queued){queued=false;schedule('queued')}}
 }
-function schedule(reason='mutation',delay=120){clearTimeout(timer);timer=setTimeout(()=>flush(reason),delay)}
+function schedule(reason='mutation',delay=180){clearTimeout(timer);timer=setTimeout(()=>flush(reason),delay)}
 document.addEventListener('finance-data-changed',e=>schedule(e.detail?.reason||'finance-data-changed'));
 document.addEventListener('finance-cloud-status',e=>{if(/Sincronizado|Conectado/.test(String(e.detail?.text||'')))setTimeout(render,40)});
 window.addEventListener('storage',e=>{if(e.key&&/assessor|finance/i.test(e.key))setTimeout(render,40)});
