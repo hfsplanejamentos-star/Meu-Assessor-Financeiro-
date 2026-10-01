@@ -7,7 +7,7 @@
    String(t.date||'').slice(0,10)===date&&
    Math.abs(Number(t.value||0)-value)<0.005&&predicate(t));
  }
- function migrate(){
+ function migrate(){if(db?.meta?.runtimeFinancialLockVersion==='R268')return false;
   if(typeof db!=='object'||!db)return false;
   db.transactions=db.transactions||[];db.accounts=db.accounts||[];db.cards=db.cards||[];db.meta=db.meta||{};
   if(db.meta.sep25ConfirmedTransactions===VERSION){if(db.meta.sep28ConfirmedBalances||String(db.meta.cajuLatestReportedAt||'').slice(0,10)>'2026-09-25')return false;const cj=db.cards.find(c=>String(c.id)==='card_caju_alimentacao');let fix=false;if(cj&&(Math.abs(Number(cj.balance||0)-303.02)>0.005||Math.abs(Number(cj.availableLimit||0)-303.02)>0.005)){cj.balance=303.02;cj.availableLimit=303.02;fix=true}if(Number(db.meta.cajuStatementAvailable)!==303.02){db.meta.cajuStatementAvailable=303.02;fix=true}if(Number(db.meta.cajuStatementSpent)!==703.87){db.meta.cajuStatementSpent=703.87;fix=true}if(fix){try{save()}catch(_){}try{renderAll()}catch(_){}}return fix;}
