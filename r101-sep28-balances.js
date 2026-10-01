@@ -8,7 +8,7 @@
   {id:'c6_2026_09_27_99_1233',date:'2026-09-27',desc:'99 Tecnologia',merchant:'99 Tecnologia Ltda',value:-12.33,cat:'Transporte',sub:'Aplicativo'},
   {id:'c6_2026_09_27_99_900',date:'2026-09-27',desc:'99 Tecnologia',merchant:'99 Tecnologia Ltda',value:-9,cat:'Transporte',sub:'Aplicativo'}
  ];
- function migrate(){
+ function migrate(){if(db?.meta?.runtimeFinancialLockVersion==='R268')return false;
   if(typeof db!=='object'||!db)return false;
   db.transactions=db.transactions||[];db.accounts=db.accounts||[];db.cards=db.cards||[];db.meta=db.meta||{};
   let changed=false;
