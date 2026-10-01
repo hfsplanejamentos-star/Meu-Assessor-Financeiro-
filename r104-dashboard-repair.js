@@ -1,4 +1,4 @@
-/* R270 — layout completo do dashboard e cálculo mensal do Caju.
+/* R271 — layout completo do dashboard e cálculo mensal do Caju.
    Mantém os dados-base intactos; a auditoria abaixo é somente leitura. */
 (()=>{'use strict';
 const round=v=>Math.round((Number(v)||0)*100)/100;
@@ -33,10 +33,10 @@ function monthlySnapshot(cardId,key){
 }
 const originalSnapshot=typeof window.cajuSnapshot==='function'?window.cajuSnapshot:null;
 window.cajuSnapshot=monthlySnapshot;
-window.FinanceCajuMonthly={snapshot:monthlySnapshot,topupFor,monthSpend,version:'R270'};
+window.FinanceCajuMonthly={snapshot:monthlySnapshot,topupFor,monthSpend,version:'R271'};
 function ensureStyle(){
- if(document.getElementById('r270DashboardStyle'))return;
- const style=document.createElement('style');style.id='r270DashboardStyle';
+ if(document.getElementById('r271DashboardStyle'))return;
+ const style=document.createElement('style');style.id='r271DashboardStyle';
  style.textContent=`
  @media(min-width:821px){
   body #view-overview #kpis .r98-bank-row{grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))!important;align-items:stretch!important}
@@ -96,6 +96,10 @@ function audit(){
  const savedMap=new Map(saved.map(x=>[x.id,x]));
  const panels=HOME_IDS.map(key=>{const el=dash?.querySelector('[data-home-block="'+key+'"]');const configured=savedMap.get(key)?.visible!==false;const shown=!!el&&getComputedStyle(el).display!=='none'&&!el.classList.contains('dashboard-hidden');return {id:key,exists:!!el,configured,shown}});
  add('12 painéis do dashboard presentes',panels.every(x=>x.exists),panels);
+ const order=[...(dash?.children||[])].filter(el=>el.dataset?.homeBlock).map(el=>el.dataset.homeBlock);
+ const requiredOrder=['category','cajuexpenses','recurring','recent','dayexpenses','calendar'];
+ add('Sequência principal do dashboard aplicada',requiredOrder.every((id,i)=>order[i]===id),{expected:requiredOrder,actual:order.slice(0,requiredOrder.length)});
+ add('Arraste com mouse disponível no modo Personalizar',!!document.getElementById('desktopCustomizeToggle')&&panels.filter(x=>x.exists).every(x=>dash.querySelector('[data-home-block="'+x.id+'"]')?.dataset.dragBound==='1'),{toggle:!!document.getElementById('desktopCustomizeToggle'),bound:panels.filter(x=>x.exists).every(x=>dash.querySelector('[data-home-block="'+x.id+'"]')?.dataset.dragBound==='1')});
  add('Painéis marcados visíveis aparecem',panels.filter(x=>x.configured).every(x=>x.shown),panels.filter(x=>x.configured&&!x.shown));
  const canvases=[...(dash?.querySelectorAll('canvas')||[])].map(c=>({id:c.id,visible:getComputedStyle(c).display!=='none'&&!!c.closest('[data-home-block]')&&!c.closest('[data-home-block]').classList.contains('dashboard-hidden'),width:c.getBoundingClientRect().width,height:c.getBoundingClientRect().height}));
  add('Todos os gráficos do layout estão visíveis',canvases.every(x=>x.visible&&x.width>0&&x.height>0),canvases);
@@ -109,18 +113,18 @@ function audit(){
  const recurring=db?.recurring||[],recurringIds=new Set(recurring.map(r=>String(r.id)));
  add('IDs de recorrência únicos',recurringIds.size===recurring.length,{unique:recurringIds.size,total:recurring.length});
  add('Valores de recorrência finitos',recurring.every(r=>Number.isFinite(Number(r.value))&&Number(r.value)!==0),recurring.filter(r=>!Number.isFinite(Number(r.value))||Number(r.value)===0).map(r=>({id:r.id,name:r.name||r.desc,value:r.value})));
- const result={version:'R270',ok:tests.every(t=>t.ok),passed:tests.filter(t=>t.ok).length,total:tests.length,failed:tests.filter(t=>!t.ok),tests,at:new Date().toISOString()};
- window.__ASSESSOR_R270_AUDIT__=result;
- try{localStorage.setItem('assessor_r270_audit',JSON.stringify(result))}catch(_){}
+ const result={version:'R271',ok:tests.every(t=>t.ok),passed:tests.filter(t=>t.ok).length,total:tests.length,failed:tests.filter(t=>!t.ok),tests,at:new Date().toISOString()};
+ window.__ASSESSOR_R271_AUDIT__=result;
+ try{localStorage.setItem('assessor_r271_audit',JSON.stringify(result))}catch(_){}
  const runtime=window.FinanceRuntimeGuard;
- if(runtime?.audit&&!runtime.audit.__r270Wrapped){
+ if(runtime?.audit&&!runtime.audit.__r271Wrapped){
   const prior=runtime.audit.bind(runtime);
-  const wrapped=()=>{const base=prior();let output;try{output={...base,tests:[...(base.tests||[]),...tests],failed:[...(base.failed||[]),...tests.filter(x=>!x.ok)],version:'R270'};output.ok=output.failed.length===0;output.passed=output.tests.filter(x=>x.ok).length;output.total=output.tests.length;window.__ASSESSOR_R268_AUDIT__=output;localStorage.setItem('assessor_r268_audit',JSON.stringify(output))}catch(_){output=base}return output};
-  wrapped.__r270Wrapped=true;runtime.audit=wrapped;
+  const wrapped=()=>{const base=prior();let output;try{output={...base,tests:[...(base.tests||[]),...tests],failed:[...(base.failed||[]),...tests.filter(x=>!x.ok)],version:'R271'};output.ok=output.failed.length===0;output.passed=output.tests.filter(x=>x.ok).length;output.total=output.tests.length;window.__ASSESSOR_R268_AUDIT__=output;localStorage.setItem('assessor_r268_audit',JSON.stringify(output))}catch(_){output=base}return output};
+  wrapped.__r271Wrapped=true;runtime.audit=wrapped;
  }
  return result;
 }
-window.FinanceDashboardR270={refresh,audit,panels:HOME_IDS.slice()};
+window.FinanceDashboardR271={refresh,audit,panels:HOME_IDS.slice()};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{refresh();setTimeout(()=>{refresh();audit()},700)},{once:true});
 else{refresh();setTimeout(()=>{refresh();audit()},700)}
 window.addEventListener('resize',()=>requestAnimationFrame(refresh),{passive:true});
