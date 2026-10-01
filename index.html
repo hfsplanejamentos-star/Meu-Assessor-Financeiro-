@@ -2510,17 +2510,23 @@ function ensureMonthlyIncomeAutomation(){
  });
  const now=new Date(),start=new Date(2026,9,1);
  if(now>=start){for(let d=new Date(start);d<=now;d=new Date(d.getFullYear(),d.getMonth()+1,1)){const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),date=key+'-01';
+   const last=new Date(d.getFullYear(),d.getMonth()+1,0);while(last.getDay()===0||last.getDay()===6)last.setDate(last.getDate()-1);
+   const salaryDate=last.getFullYear()+'-'+String(last.getMonth()+1).padStart(2,'0')+'-'+String(last.getDate()).padStart(2,'0');
    const salaryId='auto_salary_'+key,cajuId='auto_caju_'+key;
-   if(!db.transactions.some(t=>String(t.id)===salaryId)){
-     let planned=db.transactions.find(t=>String(t.date||'').slice(0,7)===key&&t.status==='planned'&&Number(t.value)>0&&/sal[aá]rio/i.test(String(t.desc||'')));
-     if(planned){planned.date=date;planned.origin='Automação mensal prevista'}
-     else db.transactions.push({id:salaryId,date,desc:'Salário previsto',value:6500,cat:'Receitas',sub:'Salário',origin:'Automação mensal prevista',status:'planned'});
+   let salary=db.transactions.find(t=>String(t.id)===salaryId);
+   if(!salary){
+     salary=db.transactions.find(t=>String(t.date||'').slice(0,7)===key&&t.status==='planned'&&Number(t.value)>0&&/sal[aá]rio/i.test(String(t.desc||'')));
+     if(!salary){salary={id:salaryId,date:salaryDate,desc:'Salário previsto',value:6500,cat:'Receitas',sub:'Salário',origin:'Automação mensal prevista',status:'planned'};db.transactions.push(salary)}
    }
-   if(!db.transactions.some(t=>String(t.id)===cajuId))db.transactions.push({id:cajuId,date,desc:'Crédito Caju Alimentação previsto',value:1500,cat:'Alimentação',sub:'Crédito benefício',card:caju.id,cardId:caju.id,origin:'Automação mensal prevista',status:'planned',benefit:true,excludeFromExpense:true});
+   if(salary.status==='planned'&&String(salary.date||'').slice(0,10)!==salaryDate){salary.date=salaryDate;salary.origin='Automação mensal prevista'}
+   const cajuAmount=key==='2026-10'?1572.40:1500;
+   let cajuCredit=db.transactions.find(t=>String(t.id)===cajuId);
+   if(!cajuCredit)db.transactions.push({id:cajuId,date,desc:'Crédito Caju Alimentação previsto',value:cajuAmount,cat:'Alimentação',sub:'Crédito benefício',card:caju.id,cardId:caju.id,origin:'Automação mensal prevista',status:'planned',benefit:true,excludeFromExpense:true});
+   else if(cajuCredit.status==='planned'&&Number(cajuCredit.value)!==cajuAmount)cajuCredit.value=cajuAmount;
  }}
  const movements=db.transactions.filter(t=>(t.cardId===caju.id||t.card===caju.id)&&t.status!=='planned').sort((a,b)=>String(a.date).localeCompare(String(b.date)));
  caju.balance=movements.reduce((s,t)=>s+Number(t.value||0),0);caju.availableLimit=caju.balance;
- db.automationState.monthlyIncome={enabled:true,start:'2026-10-01',salary:6500,caju:1500,cajuAccumulative:true,day:1};
+ db.automationState.monthlyIncome={enabled:true,start:'2026-10-01',salary:6500,salaryTiming:'last-business-day',caju:1500,octoberCaju:1572.40,cajuAccumulative:true};
  save();
 }
 function cajuSnapshot(cardId,key){
@@ -2875,7 +2881,7 @@ if(matchMedia('(min-width:901px)').matches&&localStorage.getItem('assessor_deskt
 if(matchMedia('(min-width:901px)').matches&&localStorage.getItem('assessor_home_order_r271')!=='1'){
  const requested=['category','cajuexpenses','recurring','recent','dayexpenses','calendar','commitments','distribution','projection','investments','alerts','health'];
  const saved=new Map(homeLayout.map(x=>[x.id,x]));
- homeLayout=requested.map(id=>({...saved.get(id),id,visible:saved.get(id)?.visible!==false,size:saved.get(id)?.size||HOME_DEFAULT_SIZE[id]||'m'}));
+ homeLayout=requested.map(id=>({...saved.get(id),id,visible:true,size:saved.get(id)?.size||HOME_DEFAULT_SIZE[id]||'m'}));
  localStorage.setItem('assessor_home_layout_r232',JSON.stringify(homeLayout));
  localStorage.setItem('assessor_home_order_r271','1');
 }
