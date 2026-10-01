@@ -46,7 +46,7 @@
   modal.classList.add('open');
  }
  function audit(m=selectedMonth()){
-  migrate();const rows=expenseRows(m),by={};rows.forEach(x=>by[x.cat]=(by[x.cat]||0)+x.value);
+  const rows=expenseRows(m),by={};rows.forEach(x=>by[x.cat]=(by[x.cat]||0)+x.value);
   const rec=(db.recurring||[]),tests=[
    ['Pensão categorizada',rec.some(r=>r.id==='rec_pensao'&&r.cat==='Pensão'&&Math.abs(n(r.value))===1500)],
    ['C4 Cactus categorizado',rec.some(r=>r.id==='rec_carro'&&r.cat==='C4 Cactus'&&Math.abs(n(r.value))===1000)],
