@@ -32,9 +32,9 @@ async function flush(reason='mutation'){
 }
 function schedule(reason='mutation',delay=180){clearTimeout(timer);timer=setTimeout(()=>flush(reason),delay)}
 document.addEventListener('finance-data-changed',e=>schedule(e.detail?.reason||'finance-data-changed'));
-document.addEventListener('finance-cloud-status',e=>{if(/Sincronizado|Conectado/.test(String(e.detail?.text||'')))setTimeout(render,40)});
-window.addEventListener('storage',e=>{if(e.key&&/assessor|finance/i.test(e.key))setTimeout(render,40)});
-window.addEventListener('focus',()=>{setTimeout(render,60);try{window.FinanceCloud?.configured?.()&&window.FinanceCloud.sync?.()}catch(_){}});
+document.addEventListener('finance-cloud-status',e=>{if(!/Sincronizado|Conectado/.test(String(e.detail?.text||'')))return;/* Cloud sync may emit several status events in sequence; coalesce them with the same refresh bus. */schedule('cloud-status',220)});
+window.addEventListener('storage',e=>{if(e.key&&/assessor|finance/i.test(e.key))schedule('storage',180)});
+window.addEventListener('focus',()=>{schedule('focus',220);try{window.FinanceCloud?.configured?.()&&window.FinanceCloud.sync?.()}catch(_){}});
 // Safety net only records the last state. save() already emits finance-data-changed;
  // re-rendering every second caused visible flicker on Android.
 setInterval(()=>{lastHash=hash()},5000);
