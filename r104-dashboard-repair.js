@@ -121,7 +121,7 @@ function audit(){
  const duplicateRecurrences=[...recurrenceGroups].filter(([,rows])=>rows.length>1).map(([key,rows])=>({key,ids:rows.map(r=>r.id)}));
  add('Recorrências ativas sem duplicidade equivalente',duplicateRecurrences.length===0,duplicateRecurrences);
  const salary=(db?.transactions||[]).find(t=>String(t.id)==='auto_salary_2026-10')||(db?.transactions||[]).find(t=>/sal[aá]rio/i.test(String(t.desc||t.description||''))&&String(t.date||'').slice(0,7)==='2026-10'&&isPlanned(t.status));
- add('Salário previsto no último dia útil de outubro',!salary||!isPlanned(salary.status)||String(salary.date||'').slice(0,10)==='2026-10-30',{date:salary?.date,id:salary?.id});
+ add('Salário previsto no último dia útil de outubro',!salary||!planned(salary.status)||String(salary.date||'').slice(0,10)==='2026-10-30',{date:salary?.date,id:salary?.id});
  
  const result={version:'R271',ok:tests.every(t=>t.ok),passed:tests.filter(t=>t.ok).length,total:tests.length,failed:tests.filter(t=>!t.ok),tests,at:new Date().toISOString()};
  window.__ASSESSOR_R271_AUDIT__=result;
