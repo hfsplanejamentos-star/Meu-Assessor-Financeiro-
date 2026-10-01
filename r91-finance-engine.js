@@ -181,9 +181,21 @@ function renderMobileFinSummary(){
     - mês atual: últimos 7 dias até hoje;
     - mês futuro: 5 dias a partir do início do mês, exibindo compromissos previstos. */
  let days;
- if(k<cur){const end=daysInMonth,start=Math.max(1,end-6);days=Array.from({length:end-start+1},(_,i)=>start+i)}
+ if(k<cur){
+   /* Histórico: a janela termina no último dia que realmente possui despesa,
+      em vez de terminar obrigatoriamente no último dia do calendário. */
+   const monthExpenseDays=(db.transactions||[]).filter(t=>keyOf(t.date)===k&&n(t.value)<0&&!t.transfer&&!t.excludeFromExpense).map(t=>Number(String(t.date||'').slice(8,10))||0).filter(Boolean);
+   const end=Math.max(1,...monthExpenseDays),start=Math.max(1,end-6);days=Array.from({length:end-start+1},(_,i)=>start+i)
+ }
  else if(k===cur){const end=Math.min(today.getDate(),daysInMonth),start=Math.max(1,end-6);days=Array.from({length:end-start+1},(_,i)=>start+i)}
- else {days=Array.from({length:Math.min(5,daysInMonth)},(_,i)=>i+1)}
+ else {
+   /* Futuro: cinco dias úteis/visíveis a partir do primeiro compromisso previsto.
+      Se não houver compromisso nos primeiros dias, ainda exibimos cinco pontos. */
+   const forecastDays=[];
+   (db.transactions||[]).filter(t=>keyOf(t.date)===k&&n(t.value)<0&&plannedStatus(t)&&!t.transfer&&!t.excludeFromExpense).forEach(t=>forecastDays.push(Number(String(t.date||'').slice(8,10))||0));
+   recurringFor(k).forEach(r=>forecastDays.push(Number(r.day||r.due||r.dueDay||r.dayOfMonth||0)));
+   const start=Math.max(1,Math.min(...forecastDays.filter(Boolean),1));days=Array.from({length:Math.min(5,daysInMonth-start+1)},(_,i)=>start+i)
+ }
  const isCajuTx=t=>{const aid=String(t.account||t.accountId||'');const a=(db.accounts||[]).find(x=>String(x.id)===aid);return /caju|benef[ií]cio/i.test([aid,a?.name,a?.type,t.card,t.cardId,t.origin,t.source].filter(Boolean).join(' '))||t.benefit===true};
  const isInvoicePayment=t=>!!(t.invoicePayment||t.cardPayment)||/pagamento.*fatura|fatura.*pagamento/i.test(String(t.desc||t.description||''));
  const plannedStatus=t=>planned(t.status)||['pending','forecast','prevista','previsto','planejada','planejado'].includes(String(t.status||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase());
