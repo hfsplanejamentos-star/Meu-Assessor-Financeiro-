@@ -7,17 +7,22 @@ const real=s=>{const v=String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g
 const isTransfer=t=>!!(t?.transfer||t?.transferId)||t?.kind==='transfer';
 const isInvoicePayment=t=>!!(t?.invoicePayment||t?.cardPayment)||t?.kind==='invoice_payment';
 function recurringFor(key){return (db.recurring||[]).filter(r=>{const st=keyOf(r.startDate),en=keyOf(r.endDate);return r.active!==false&&(!st||key>=st)&&(!en||key<=en)})}
+function recurrenceName(x){return String(x?.name||x?.desc||x?.description||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\b(previsto|prevista|automacao mensal|automacao)\b/g,'').replace(/\b(do|da|de|mensal)\b/g,'').replace(/[^a-z0-9]+/g,' ').trim()}
+function recurringAlreadyPosted(r,rows){const id=String(r.id||''),name=recurrenceName(r),value=abs(r.value);return rows.some(t=>(id&&String(t.recurringId||'')===id)||(name&&recurrenceName(t)===name&&Math.abs(abs(t.value)-value)<.02))}
 function summary(key){
  const tx=(db.transactions||[]).filter(t=>keyOf(t.date)===key);
  const op=tx.filter(t=>!isTransfer(t)&&!t.excludeFromExpense&&!isInvoicePayment(t));
  const realizedIncome=op.filter(t=>real(t.status)&&n(t.value)>0).reduce((s,t)=>s+n(t.value),0);
  const realizedExpense=op.filter(t=>real(t.status)&&n(t.value)<0).reduce((s,t)=>s+abs(t.value),0);
- const plannedIncome=op.filter(t=>planned(t.status)&&n(t.value)>0).reduce((s,t)=>s+n(t.value),0);
- const directPlannedExpense=op.filter(t=>planned(t.status)&&n(t.value)<0).reduce((s,t)=>s+abs(t.value),0);
- const recurringRows=recurringFor(key),plannedExpenseRows=op.filter(t=>planned(t.status)&&n(t.value)<0);
- const recurringExpense=recurringRows.reduce((s,r)=>{const rv=abs(r.value),name=String(r.name||r.desc||r.description||'').trim().toLowerCase(),already=plannedExpenseRows.some(t=>(r.id&&String(t.recurringId||'')===String(r.id))||(name&&String(t.desc||t.description||'').trim().toLowerCase()===name&&Math.abs(abs(t.value)-rv)<.02));return s+(already?0:rv)},0);
+ const plannedIncomeRows=op.filter(t=>planned(t.status)&&n(t.value)>0);
+ const plannedExpenseRows=op.filter(t=>planned(t.status)&&n(t.value)<0);
+ const recurringRows=recurringFor(key);
+ const recurringIncome=recurringRows.filter(r=>n(r.value)>0&&!recurringAlreadyPosted(r,plannedIncomeRows)).reduce((s,r)=>s+n(r.value),0);
+ const recurringExpense=recurringRows.filter(r=>n(r.value)<0&&!recurringAlreadyPosted(r,plannedExpenseRows)).reduce((s,r)=>s+abs(r.value),0);
+ const plannedIncome=plannedIncomeRows.reduce((s,t)=>s+n(t.value),0)+recurringIncome;
+ const directPlannedExpense=plannedExpenseRows.reduce((s,t)=>s+abs(t.value),0);
  const investment=(db.transactions||[]).filter(t=>keyOf(t.date)===key&&isTransfer(t)&&(t.dest===INV||t.destAccountId===INV)&&planned(t.status)).reduce((s,t)=>s+abs(t.value),0);
- return {key,realizedIncome,realizedExpense,plannedIncome,plannedExpense:directPlannedExpense+recurringExpense,recurringExpense,investment};
+ return {key,realizedIncome,realizedExpense,plannedIncome,plannedExpense:directPlannedExpense+recurringExpense,recurringIncome,recurringExpense,investment};
 }
 function currentBalances(){
  const isInv=a=>['investimento','investimentos','investment'].includes(String(a.type||'').toLowerCase());
@@ -26,35 +31,21 @@ function currentBalances(){
  return {liquid,invest,patrimony:liquid+invest};
 }
 function accumulatedRealized(key){
- // Exclusivo do card Saldo Acumulado.
- // Mês-base real (set/26): usa somente o que existe no mês, realizado ou previsto.
- // Meses posteriores: considera receitas, despesas e recorrências do próprio mês como efetivadas.
- const until=String(key||'9999-12'),base='2026-09',current=keyOf(new Date().toISOString());
- let income=0,expense=0,investment=0;
- // O saldo atual das contas já contém todas as movimentações realizadas. Usá-lo
- // como âncora impede que despesas importadas sejam descontadas uma segunda vez
- // quando não existe um openingBalance histórico confiável.
- const liveBalance=currentBalances().liquid;
+ const until=String(key||'9999-12'),current=keyOf(new Date().toISOString()),liveBalance=currentBalances().liquid;
  if(until<=current)return {income:0,expense:0,investment:0,balance:liveBalance};
  const accountType=id=>String((db.accounts||[]).find(a=>a.id===id)?.type||'').toLowerCase();
+ let income=0,expense=0,investment=0;
  const months=[];let d=new Date(current+'-01T12:00:00');d=new Date(d.getFullYear(),d.getMonth()+1,1);const last=new Date(until+'-01T12:00:00');
  while(d<=last){months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));d=new Date(d.getFullYear(),d.getMonth()+1,1)}
  months.forEach(mk=>{
-   const tx=(db.transactions||[]).filter(t=>keyOf(t.date)===mk);
-   const op=tx.filter(t=>!isTransfer(t)&&!t.excludeFromExpense&&!isInvoicePayment(t));
-   const effective=op.filter(t=>real(t.status)||planned(t.status));
-   income+=effective.filter(t=>n(t.value)>0).reduce((s,t)=>s+n(t.value),0);
-   const monthExpense=effective.filter(t=>n(t.value)<0);
-   expense+=monthExpense.reduce((s,t)=>s+abs(t.value),0);
-   investment+=tx.filter(t=>isTransfer(t)&&real(t.status)&&n(t.value)>0&&(t.dest===INV||t.destAccountId===INV||/invest/.test(accountType(t.dest||t.destAccountId||t.account||t.accountId)))).reduce((s,t)=>s+n(t.value),0);
-   if(mk>current){
-     recurringFor(mk).forEach(r=>{
-       const rv=abs(r.value);if(!rv)return;
-       const name=String(r.name||r.desc||'').trim().toLowerCase();
-       const already=monthExpense.some(t=>(r.id&&String(t.recurringId||'')===String(r.id))||(name&&String(t.desc||t.description||'').trim().toLowerCase()===name&&Math.abs(abs(t.value)-rv)<.02));
-       if(!already)expense+=rv;
-     });
-   }
+  const tx=(db.transactions||[]).filter(t=>keyOf(t.date)===mk),op=tx.filter(t=>!isTransfer(t)&&!t.excludeFromExpense&&!isInvoicePayment(t));
+  const effective=op.filter(t=>real(t.status)||planned(t.status)),incomeRows=effective.filter(t=>n(t.value)>0),expenseRows=effective.filter(t=>n(t.value)<0);
+  income+=incomeRows.reduce((s,t)=>s+n(t.value),0);expense+=expenseRows.reduce((s,t)=>s+abs(t.value),0);
+  investment+=tx.filter(t=>isTransfer(t)&&real(t.status)&&n(t.value)>0&&(t.dest===INV||t.destAccountId===INV||/invest/.test(accountType(t.dest||t.destAccountId||t.account||t.accountId)))).reduce((s,t)=>s+n(t.value),0);
+  recurringFor(mk).forEach(r=>{
+   if(n(r.value)>0&&!recurringAlreadyPosted(r,incomeRows))income+=n(r.value);
+   if(n(r.value)<0&&!recurringAlreadyPosted(r,expenseRows))expense+=abs(r.value);
+  });
  });
  return {income,expense,investment,balance:liveBalance+income-expense-investment};
 }
@@ -67,7 +58,7 @@ function projection(start='2026-10',count=12){
 function normalizeCore(){
  db.accounts=db.accounts||[];db.transactions=db.transactions||[];db.investments=db.investments||[];db.recurring=db.recurring||[];let changed=false;
  db.transactions.forEach(t=>{if(/^sal_/.test(String(t.id||''))||/salário/i.test(String(t.desc||t.description||''))){if(t.cat!=='Receitas'){t.cat='Receitas';changed=true}if(t.sub!=='Salário'){t.sub='Salário';changed=true}}if(String(t.id||'')==='decimo_2026'&&t.cat!=='Receitas'){t.cat='Receitas';changed=true}const caju=/caju/i.test(String(t.cardId||t.card||t.origin||t.source||''))||t.benefit===true;if(caju&&t.excludeFromExpense!==true){t.excludeFromExpense=true;changed=true}});
- db.recurring.forEach(r=>{if(n(r.value)>0){r.value=-Math.abs(n(r.value));changed=true}if((String(r.id||'')==='rec_pensao'||/pensão alimentícia|pensao alimenticia|^pensão$|^pensao$/i.test(String(r.name||r.desc||'')))&&r.cat!=='Pensão'){r.cat='Pensão';r.desc='Pensão';r.description='Pensão';changed=true}if(String(r.id||'')==='rec_emp_mae'&&r.cat!=='Móveis'){r.cat='Móveis';r.desc='Móveis';r.description='Móveis';changed=true}if((String(r.id||'')==='rec_tim'||(/plano tim/i.test(String(r.name||r.desc||r.description||''))&&Math.abs(n(r.value))===79.9))&&r.cat!=='Plano TIM'){r.cat='Plano TIM';r.desc='Plano TIM';r.description='Plano TIM';changed=true}if((String(r.id||'')==='rec_carro'||/prestação do carro|prestacao do carro/i.test(String(r.name||r.desc||'')))&&r.cat!=='C4 Cactus'){r.cat='C4 Cactus';changed=true}});
+ db.recurring.forEach(r=>{if((String(r.id||'')==='rec_pensao'||/pensão alimentícia|pensao alimenticia|^pensão$|^pensao$/i.test(String(r.name||r.desc||'')))&&r.cat!=='Pensão'){r.cat='Pensão';r.desc='Pensão';r.description='Pensão';changed=true}if(String(r.id||'')==='rec_emp_mae'&&r.cat!=='Móveis'){r.cat='Móveis';r.desc='Móveis';r.description='Móveis';changed=true}if((String(r.id||'')==='rec_tim'||(/plano tim/i.test(String(r.name||r.desc||r.description||''))&&Math.abs(n(r.value))===79.9))&&r.cat!=='Plano TIM'){r.cat='Plano TIM';r.desc='Plano TIM';r.description='Plano TIM';changed=true}if((String(r.id||'')==='rec_carro'||/prestação do carro|prestacao do carro/i.test(String(r.name||r.desc||'')))&&r.cat!=='C4 Cactus'){r.cat='C4 Cactus';changed=true}});
  return changed;
 }
 function ensurePlan(){
@@ -102,7 +93,7 @@ function renderCanonicalExpenseChart(){
  }else{
    const direct=(db.transactions||[]).filter(t=>((t.card||t.cardId)?(t.invoiceMonth||String(t.date||'').slice(0,7)):String(t.date||'').slice(0,7))===key&&Number(t.value)<0&&!isTransfer(t)&&!t.excludeFromExpense&&!isInvoicePayment(t)&&(real(t.status)||(key>=current&&planned(t.status))));
    direct.forEach(t=>cats[t.cat||'Outros']=(cats[t.cat||'Outros']||0)+Math.abs(n(t.value)));
-   if(key>=current){const seen=new Set(direct.map(t=>String(t.recurringId||'')+'|'+String(t.desc||t.description||'').trim().toLowerCase()+'|'+Math.abs(n(t.value)).toFixed(2)));recurringFor(key).forEach(r=>{const sig=String(r.id||'')+'|'+String(r.name||r.desc||'').trim().toLowerCase()+'|'+Math.abs(n(r.value)).toFixed(2);if(!seen.has(sig))cats[r.cat||'Outros']=(cats[r.cat||'Outros']||0)+Math.abs(n(r.value))})}
+   if(key>=current){const seen=new Set(direct.map(t=>String(t.recurringId||'')+'|'+String(t.desc||t.description||'').trim().toLowerCase()+'|'+Math.abs(n(t.value)).toFixed(2)));recurringFor(key).filter(r=>n(r.value)<0).forEach(r=>{const sig=String(r.id||'')+'|'+String(r.name||r.desc||'').trim().toLowerCase()+'|'+Math.abs(n(r.value)).toFixed(2);if(!seen.has(sig))cats[r.cat||'Outros']=(cats[r.cat||'Outros']||0)+Math.abs(n(r.value))})}
  }
  const items=Object.entries(cats).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
  const canvas=document.getElementById('categoryChart'),legend=document.getElementById('categoryLegend'),panel=document.getElementById('categoryPanel');
