@@ -178,14 +178,16 @@ function renderMobileFinSummary(){
    const monthExpenseDays=(db.transactions||[]).filter(t=>keyOf(t.date)===k&&n(t.value)<0&&!t.transfer&&!t.excludeFromExpense).map(t=>Number(String(t.date||'').slice(8,10))||0).filter(Boolean);
    const end=Math.max(1,...monthExpenseDays),start=Math.max(1,end-6);days=Array.from({length:end-start+1},(_,i)=>start+i)
  }
- else if(k===cur){const end=Math.min(today.getDate(),daysInMonth),start=Math.max(1,end-6);days=Array.from({length:end-start+1},(_,i)=>start+i)}
+ else if(k===cur){
+   /* Mês atual: mantém contexto recente e SEMPRE projeta cinco dias à frente.
+      Ex.: em 02/10, mostra 26/09? Não: a janela é limitada ao mês selecionado,
+      portanto 01/10..07/10, com zero nos dias sem movimento. */
+   const start=Math.max(1,today.getDate()-6),end=Math.min(daysInMonth,today.getDate()+5);
+   days=Array.from({length:end-start+1},(_,i)=>start+i)
+ }
  else {
-   /* Futuro: cinco dias úteis/visíveis a partir do primeiro compromisso previsto.
-      Se não houver compromisso nos primeiros dias, ainda exibimos cinco pontos. */
-   const forecastDays=[];
-   (db.transactions||[]).filter(t=>keyOf(t.date)===k&&n(t.value)<0&&plannedStatus(t)&&!t.transfer&&!t.excludeFromExpense).forEach(t=>forecastDays.push(Number(String(t.date||'').slice(8,10))||0));
-   recurringFor(k).forEach(r=>forecastDays.push(Number(r.day||r.due||r.dueDay||r.dayOfMonth||0)));
-   const start=Math.max(1,Math.min(...forecastDays.filter(Boolean),1));days=Array.from({length:Math.min(5,daysInMonth-start+1)},(_,i)=>start+i)
+   /* Mês futuro: cinco dias consecutivos desde o início do mês. */
+   const start=1;days=Array.from({length:Math.min(5,daysInMonth)},(_,i)=>start+i)
  }
  const isCajuTx=t=>{const aid=String(t.account||t.accountId||'');const a=(db.accounts||[]).find(x=>String(x.id)===aid);return /caju|benef[ií]cio/i.test([aid,a?.name,a?.type,t.card,t.cardId,t.origin,t.source].filter(Boolean).join(' '))||t.benefit===true};
  const isInvoicePayment=t=>!!(t.invoicePayment||t.cardPayment)||/pagamento.*fatura|fatura.*pagamento/i.test(String(t.desc||t.description||''));
