@@ -2533,6 +2533,7 @@ function ensureCajuMonthly(){
    if(!t)db.transactions.push(data);else Object.assign(t,data);
  });
  db.meta.cajuRechargeByMonth={'2026-09':1006.89,'2026-10':1572.40};
+ db.meta.cajuCurrentReportedBalance=1235.78;db.meta.cajuCurrentReportedDate='2026-10-02';
  db.meta.cajuRule='saldo_anterior_mais_recarga_do_mes_menos_gastos_do_mes';
  db.meta.cajuStatementAvailable=303.02;
  db.meta.cajuStatementVersion='2026-10-02-extrato-completo-r1019';
@@ -2556,8 +2557,10 @@ function cajuSnapshot(cardId,key){
    else previous=cajuSnapshot(cardId,prevKey).available;
  }
  const credit=Math.round((previous+recharge)*100)/100;
- const available=Math.round((credit-spent+refunds)*100)/100;
- return {available,spent:Math.round(spent*100)/100,credit,recharge,previous,refunds,source:'saldo-anterior+recarga-mes'};
+ const calculated=Math.round((credit-spent+refunds)*100)/100;
+ const reported=(key==='2026-10'&&Number.isFinite(Number(db.meta?.cajuCurrentReportedBalance)))?Number(db.meta.cajuCurrentReportedBalance):null;
+ const available=reported!==null?reported:calculated;
+ return {available,spent:Math.round(spent*100)/100,credit,recharge,previous,refunds,calculated,reported,source:reported!==null?'saldo-real-informado':'saldo-anterior+recarga-mes'};
 }
 function cajuBalanceAt(cardId,key){return cajuSnapshot(cardId,key).available}
 function cajuCapacityAt(cardId,key){return cajuSnapshot(cardId,key).credit}
