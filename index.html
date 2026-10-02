@@ -1827,7 +1827,7 @@ document.addEventListener('touchstart',e=>{
 },{passive:true});
 
 function monthOfTx(t){return (t?.card||t?.cardId)?(t.invoiceMonth||String(t.date||'').slice(0,7)):String(t.date||'').slice(0,7)}
-function transactionsForMonth(key=activeMonth){if(key==='2026-09'&&db.meta?.cleanResetVersion==='2026-10-02-clean-recurring-v2')return [];return (db.transactions||[]).filter(t=>monthOfTx(t)===key)}
+function transactionsForMonth(key=activeMonth){if((key==='2026-09'||key==='2026-10')&&db.meta?.cleanResetVersion==='2026-10-02-clean-recurring-v2')return [];return (db.transactions||[]).filter(t=>monthOfTx(t)===key)}
 
 const STORAGE='assessor_v180_simulacao_ficticia';
 const seed={
@@ -2585,6 +2585,7 @@ document.addEventListener('finance-data-changed',()=>setTimeout(enforceCleanRecu
 setTimeout(enforceCleanRecurringOnly,1200);
 
 function cajuSnapshot(cardId,key){
+ if(key==='2026-09'||key==='2026-10')return {available:0,spent:0,credit:0,recharge:0,previous:0,refunds:0,calculated:0,reported:null,reconciliation:0,unregisteredExpense:0,unregisteredCredit:0,source:'reset-forcado-set-out'};
  if(db.meta?.cleanResetVersion==='2026-10-02-clean-recurring-v2')return {available:0,spent:0,credit:0,recharge:0,previous:0,refunds:0,calculated:0,reported:null,reconciliation:0,unregisteredExpense:0,unregisteredCredit:0,source:'reset-total'};
  if(key==='2026-09')return {available:0,spent:0,credit:0,recharge:0,previous:0,refunds:0,calculated:0,reported:null,reconciliation:0,unregisteredExpense:0,unregisteredCredit:0,source:'setembro-zerado'};
  const isCaju=t=>t.benefit===true||String(t.cardId||t.card||'')===String(cardId)||/caju/i.test([t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' '));
@@ -2612,7 +2613,7 @@ function cajuSnapshot(cardId,key){
 function cajuBalanceAt(cardId,key){return cajuSnapshot(cardId,key).available}
 function cajuCapacityAt(cardId,key){return cajuSnapshot(cardId,key).credit}
 function cajuTxRows(key,negativeOnly=false){
- if(key==='2026-09')return [];
+ if(key==='2026-09'||key==='2026-10')return [];
  const card=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||/caju/i.test(String(c.name||'')));if(!card)return[];
  const seen=new Set();
  return (db.transactions||[]).filter(t=>{const ids=[t.cardId,t.card,t.account,t.accountId].map(String),txt=[t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' ').toLowerCase();return String(t.date||'').slice(0,7)===key&&t.status!=='planned'&&t.status!=='ignored'&&!t.excludeFromBalance&&(!negativeOnly||Number(t.value)<0)&&(ids.includes(String(card.id))||t.benefit===true||/caju/.test(txt))}).filter(t=>{const sig=[String(t.date||'').slice(0,10),Number(t.value||0).toFixed(2),String(t.desc||t.description||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()].join('|');if(seen.has(sig))return false;seen.add(sig);return true});
