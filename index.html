@@ -2474,7 +2474,7 @@ function renderInvoiceManagement(){
    Regra canônica: limite do mês = saldo anterior + recarga atribuída ao mês.
    Recargas de meses anteriores NÃO são acumuladas novamente. */
 function ensureCajuMonthly(){
- const RESET_VERSION='2026-10-02-clean-recurring-v1';
+ const RESET_VERSION='2026-10-02-clean-recurring-v2';
  if(db.meta?.cleanResetVersion!==RESET_VERSION){
    db.transactions=[];
    db.investments=[];
@@ -2568,8 +2568,24 @@ function ensureCajuMonthly(){
  save();
 }
 ensureCajuMonthly();
+function enforceCleanRecurringOnly(){
+ const V='2026-10-02-clean-recurring-v2';db.meta=db.meta||{};
+ if(db.meta.cleanResetVersion!==V)return false;
+ let changed=(db.transactions||[]).length||(db.investments||[]).length||(db.invoices||[]).length;
+ db.transactions=[];db.investments=[];db.invoices=[];db.auditLog=[];
+ (db.accounts||[]).forEach(a=>{if(Number(a.balance)||Number(a.openingBalance)){changed=true}a.balance=0;a.openingBalance=0});
+ (db.cards||[]).forEach(x=>{if(Number(x.balance)||Number(x.availableLimit)){changed=true}x.balance=0;x.availableLimit=0});
+ delete db.meta.cajuRechargeByMonth;delete db.meta.cajuCurrentReportedBalance;delete db.meta.cajuCurrentReportedDate;delete db.meta.cajuStatementAvailable;delete db.meta.c6Salary20260930;
+ if(changed){try{save()}catch(_){localStorage.setItem(KEY,JSON.stringify(db))}try{renderAll()}catch(_){}}
+ return !!changed;
+}
+window.enforceCleanRecurringOnly=enforceCleanRecurringOnly;
+document.addEventListener('finance-cloud-status',e=>{if(/Sincronizado|Conectado|carregada/i.test(String(e.detail?.text||'')))setTimeout(enforceCleanRecurringOnly,50)});
+document.addEventListener('finance-data-changed',()=>setTimeout(enforceCleanRecurringOnly,50));
+setTimeout(enforceCleanRecurringOnly,1200);
 
 function cajuSnapshot(cardId,key){
+ if(db.meta?.cleanResetVersion==='2026-10-02-clean-recurring-v2')return {available:0,spent:0,credit:0,recharge:0,previous:0,refunds:0,calculated:0,reported:null,reconciliation:0,unregisteredExpense:0,unregisteredCredit:0,source:'reset'};
  const isCaju=t=>t.benefit===true||String(t.cardId||t.card||'')===String(cardId)||/caju/i.test([t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' '));
  const raw=(db.transactions||[]).filter(t=>isCaju(t)&&t.status!=='planned'&&t.status!=='ignored'&&!t.excludeFromBalance);
  const seen=new Set(),all=raw.filter(t=>{const sig=[String(t.date||'').slice(0,10),Number(t.value||0).toFixed(2),String(t.desc||t.description||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()].join('|');if(seen.has(sig))return false;seen.add(sig);return true});
