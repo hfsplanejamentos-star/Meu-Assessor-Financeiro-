@@ -2536,8 +2536,18 @@ function ensureCajuMonthly(){
  db.meta.cajuCurrentReportedBalance=1235.78;db.meta.cajuCurrentReportedDate='2026-10-02';
  db.meta.cajuRule='saldo_anterior_mais_recarga_do_mes_menos_gastos_do_mes';
  db.meta.cajuStatementAvailable=303.02;
- db.meta.cajuStatementVersion='2026-10-02-extrato-completo-r1025';
+ db.meta.cajuStatementVersion='2026-10-02-extrato-completo-r1026';
  db.automationState.monthlyIncome={...(db.automationState.monthlyIncome||{}),enabled:true,start:'2026-10-01',caju:1500,octoberCaju:1572.40,cajuAccumulative:false};
+ /* C6 30/09/2026: crédito de R$ 7.059,85 confirmado como salário. */
+ const c6SalaryDate='2026-09-30',c6SalaryValue=7059.85;
+ const c6SalaryMatches=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,10)===c6SalaryDate&&Math.abs(Number(t.value||0)-c6SalaryValue)<0.01);
+ if(c6SalaryMatches.length){
+   c6SalaryMatches.forEach((t,i)=>{if(i===0){t.desc='Salário';t.cat='Receita';t.category='Receita';t.sub='Salário';t.status='realized';t.excludeFromExpense=false}else t.status='ignored'});
+ }else{
+   db.transactions.push({id:'c6_salario_20260930',date:c6SalaryDate,desc:'Salário',value:c6SalaryValue,cat:'Receita',category:'Receita',sub:'Salário',account:'c6',origin:'Extrato C6',status:'realized'});
+ }
+ db.meta.c6Salary20260930=c6SalaryValue;
+
  save();
 }
 ensureCajuMonthly();
