@@ -2536,7 +2536,7 @@ function ensureCajuMonthly(){
  db.meta.cajuCurrentReportedBalance=1235.78;db.meta.cajuCurrentReportedDate='2026-10-02';
  db.meta.cajuRule='saldo_anterior_mais_recarga_do_mes_menos_gastos_do_mes';
  db.meta.cajuStatementAvailable=303.02;
- db.meta.cajuStatementVersion='2026-10-02-extrato-completo-r1020';
+ db.meta.cajuStatementVersion='2026-10-02-extrato-completo-r1021';
  db.automationState.monthlyIncome={...(db.automationState.monthlyIncome||{}),enabled:true,start:'2026-10-01',caju:1500,octoberCaju:1572.40,cajuAccumulative:false};
  save();
 }
@@ -2560,7 +2560,7 @@ function cajuSnapshot(cardId,key){
  const calculated=Math.round((credit-spent+refunds)*100)/100;
  const reported=(key==='2026-10'&&Number.isFinite(Number(db.meta?.cajuCurrentReportedBalance)))?Number(db.meta.cajuCurrentReportedBalance):null;
  const available=reported!==null?reported:calculated;
- const reconciliation=reported!==null?Math.round((reported-calculated)*100)/100:0; return {available,spent:Math.round(spent*100)/100,credit,recharge,previous,refunds,calculated,reported,reconciliation,source:reported!==null?'saldo-real-informado':'saldo-anterior+recarga-mes'};
+ const reconciliation=reported!==null?Math.round((reported-calculated)*100)/100:0; const unregisteredExpense=reconciliation<0?Math.abs(reconciliation):0,unregisteredCredit=reconciliation>0?reconciliation:0; return {available,spent:Math.round(spent*100)/100,credit,recharge,previous,refunds,calculated,reported,reconciliation,unregisteredExpense,unregisteredCredit,source:reported!==null?'saldo-real-informado':'saldo-anterior+recarga-mes'};
 }
 function cajuBalanceAt(cardId,key){return cajuSnapshot(cardId,key).available}
 function cajuCapacityAt(cardId,key){return cajuSnapshot(cardId,key).credit}
