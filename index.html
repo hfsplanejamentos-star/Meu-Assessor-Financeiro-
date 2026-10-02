@@ -2534,7 +2534,7 @@ function ensureCajuMonthly(){
  });
  db.meta.cajuRechargeByMonth={'2026-09':1006.89,'2026-10':1572.40};
  db.meta.cajuRule='saldo_anterior_mais_recarga_do_mes_menos_gastos_do_mes';
- db.meta.cajuStatementVersion='2026-10-02-extrato-completo-r1016';
+ db.meta.cajuStatementVersion='2026-10-02-extrato-completo-r1017';
  db.automationState.monthlyIncome={...(db.automationState.monthlyIncome||{}),enabled:true,start:'2026-10-01',caju:1500,octoberCaju:1572.40,cajuAccumulative:false};
  save();
 }
@@ -2542,7 +2542,9 @@ ensureCajuMonthly();
 
 function cajuSnapshot(cardId,key){
  const isCaju=t=>t.benefit===true||String(t.cardId||t.card||'')===String(cardId)||/caju/i.test([t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' '));
- const all=(db.transactions||[]).filter(t=>isCaju(t)&&t.status!=='planned'&&t.status!=='ignored'&&!t.excludeFromBalance);
+ const raw=(db.transactions||[]).filter(t=>isCaju(t)&&t.status!=='planned'&&t.status!=='ignored'&&!t.excludeFromBalance);
+ /* R10.17: deduplicação semântica do Caju. Cloud/Android pode devolver o mesmo lançamento com outro ID. */
+ const seen=new Set(),all=raw.filter(t=>{const sig=[String(t.accountingMonth||t.date||'').slice(0,10),Number(t.value||0).toFixed(2),String(t.desc||t.description||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()].join('|');if(seen.has(sig))return false;seen.add(sig);return true});
  const recharge=Number(db.meta?.cajuRechargeByMonth?.[key]||((key>'2026-10')?1500:0));
  const spent=all.filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)<0).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);
  const refunds=all.filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)>0&&!/crédito benefício|caju benefícios/i.test(String(t.sub||t.desc||''))).reduce((s,t)=>s+Number(t.value||0),0);
