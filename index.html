@@ -2585,6 +2585,7 @@ document.addEventListener('finance-data-changed',()=>setTimeout(enforceCleanRecu
 setTimeout(enforceCleanRecurringOnly,1200);
 
 function cajuSnapshot(cardId,key){
+ if(key==='2026-09'||key==='2026-10')return {available:0,spent:0,credit:0,recharge:0,previous:0,refunds:0,calculated:0,reported:null,reconciliation:0,unregisteredExpense:0,unregisteredCredit:0,source:'caju-zerado-set-out'};
  if(key==='2026-09'||key==='2026-10')return {available:0,spent:0,credit:0,recharge:0,previous:0,refunds:0,calculated:0,reported:null,reconciliation:0,unregisteredExpense:0,unregisteredCredit:0,source:'reset-forcado-set-out'};
  if(db.meta?.cleanResetVersion==='2026-10-02-clean-recurring-v2')return {available:0,spent:0,credit:0,recharge:0,previous:0,refunds:0,calculated:0,reported:null,reconciliation:0,unregisteredExpense:0,unregisteredCredit:0,source:'reset-total'};
  if(key==='2026-09')return {available:0,spent:0,credit:0,recharge:0,previous:0,refunds:0,calculated:0,reported:null,reconciliation:0,unregisteredExpense:0,unregisteredCredit:0,source:'setembro-zerado'};
@@ -2613,6 +2614,7 @@ function cajuSnapshot(cardId,key){
 function cajuBalanceAt(cardId,key){return cajuSnapshot(cardId,key).available}
 function cajuCapacityAt(cardId,key){return cajuSnapshot(cardId,key).credit}
 function cajuTxRows(key,negativeOnly=false){
+ if(key==='2026-09'||key==='2026-10')return [];
  if(key==='2026-09'||key==='2026-10')return [];
  const card=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||/caju/i.test(String(c.name||'')));if(!card)return[];
  const seen=new Set();
