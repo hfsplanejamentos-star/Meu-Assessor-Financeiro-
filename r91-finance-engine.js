@@ -63,6 +63,7 @@ function normalizeCore(){
 }
 function ensurePlan(){
  db.accounts=db.accounts||[];db.transactions=db.transactions||[];db.investments=db.investments||[];let changed=normalizeCore();
+ if(db.meta?.cleanResetVersion==='2026-10-02-clean-recurring-v2'){db.transactions=[];db.investments=[];return changed}
  let ia=db.accounts.find(a=>a.id===INV);if(!ia){ia={id:INV,name:'Investimentos planejados',type:'Investimento',balance:0,openingBalance:0,source:PLAN_SOURCE};db.accounts.push(ia);changed=true}else if(ia.type!=='Investimento'){ia.type='Investimento';changed=true}
  for(let i=0;i<9;i++){const d=new Date(2026,10+i,1),k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),id='aporte_'+k.replace('-','_');
    const same=(db.transactions||[]).filter(t=>t.source===PLAN_SOURCE&&keyOf(t.date)===k&&t.transfer);if(same.length>1){const keep=same.find(t=>t.id===id)||same[0];db.transactions=db.transactions.filter(t=>t===keep||!(t.source===PLAN_SOURCE&&keyOf(t.date)===k&&t.transfer));changed=true}if(!db.transactions.some(t=>t.source===PLAN_SOURCE&&keyOf(t.date)===k&&t.transfer)){db.transactions.push({id,date:k+'-10',desc:'Aporte mensal de investimento',cat:'Investimentos',sub:'Aporte mensal',value:-3000,status:'planned',source:PLAN_SOURCE,origin:'Planejamento real',account:'acc_c6',accountId:'acc_c6',dest:INV,destAccountId:INV,transfer:true,kind:'transfer',excludeFromExpense:true});changed=true}
