@@ -2214,8 +2214,8 @@ function renderQuickFinancialCards(){
  const creditCards=(db.cards||[]).filter(c=>['Crédito','Múltiplo'].includes(c.type||'Crédito'));
  const cardSpend=creditCards.reduce((s,c)=>s+invoiceAmount(c.id,key),0);
  const caju=(db.cards||[]).find(c=>['benefício','beneficio','benefit'].includes(String(c.type||'').toLowerCase())&&String(c.name||'').toLowerCase().includes('caju'));
- const cajuAvail=caju?(key==='2026-09'&&db.meta?.cajuStatementVersion?Number(db.meta.cajuStatementAvailable??cajuBalanceAt(caju.id,key)):cajuBalanceAt(caju.id,key)):0,cajuLimit=caju?cajuCapacityAt(caju.id,key):0;
- const cajuUsed=(key==='2026-09'&&db.meta?.cajuStatementVersion)?Number(db.meta.cajuStatementSpent||0):(db.transactions||[]).filter(t=>caju&&(t.cardId===caju.id||t.card===caju.id)&&String(t.date||'').slice(0,7)===key&&t.status!=='planned'&&Number(t.value)<0&&!t.excludeFromBalance).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0),cajuPct=cajuLimit?Math.max(0,Math.min(100,cajuAvail/cajuLimit*100)):0;
+ const cajuSnap=caju?cajuSnapshot(caju.id,key):{available:0,credit:0,spent:0},cajuAvail=cajuSnap.available,cajuLimit=cajuSnap.credit;
+ const cajuUsed=cajuSnap.spent,cajuPct=cajuLimit?Math.max(0,Math.min(100,cajuAvail/cajuLimit*100)):0;
  box.innerHTML=`
   <div class="card kpi quick-fin-card clickable-card" data-card-nav="cards" tabindex="0">
     <div class="label">GASTOS COM CARTÃO</div><div class="value">${brl(cardSpend)}</div>
@@ -2536,7 +2536,7 @@ function ensureCajuMonthly(){
  db.meta.cajuCurrentReportedBalance=1235.78;db.meta.cajuCurrentReportedDate='2026-10-02';
  db.meta.cajuRule='saldo_anterior_mais_recarga_do_mes_menos_gastos_do_mes';
  db.meta.cajuStatementAvailable=303.02;
- db.meta.cajuStatementVersion='2026-10-02-extrato-completo-r1023';
+ db.meta.cajuStatementVersion='2026-10-02-extrato-completo-r1024';
  db.automationState.monthlyIncome={...(db.automationState.monthlyIncome||{}),enabled:true,start:'2026-10-01',caju:1500,octoberCaju:1572.40,cajuAccumulative:false};
  save();
 }
