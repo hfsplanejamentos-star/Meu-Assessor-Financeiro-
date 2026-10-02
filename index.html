@@ -2536,7 +2536,7 @@ function ensureCajuMonthly(){
  db.meta.cajuCurrentReportedBalance=1235.78;db.meta.cajuCurrentReportedDate='2026-10-02';
  db.meta.cajuRule='saldo_anterior_mais_recarga_do_mes_menos_gastos_do_mes';
  db.meta.cajuStatementAvailable=303.02;
- db.meta.cajuStatementVersion='2026-10-02-extrato-completo-r1019';
+ db.meta.cajuStatementVersion='2026-10-02-extrato-completo-r1020';
  db.automationState.monthlyIncome={...(db.automationState.monthlyIncome||{}),enabled:true,start:'2026-10-01',caju:1500,octoberCaju:1572.40,cajuAccumulative:false};
  save();
 }
@@ -2560,7 +2560,7 @@ function cajuSnapshot(cardId,key){
  const calculated=Math.round((credit-spent+refunds)*100)/100;
  const reported=(key==='2026-10'&&Number.isFinite(Number(db.meta?.cajuCurrentReportedBalance)))?Number(db.meta.cajuCurrentReportedBalance):null;
  const available=reported!==null?reported:calculated;
- return {available,spent:Math.round(spent*100)/100,credit,recharge,previous,refunds,calculated,reported,source:reported!==null?'saldo-real-informado':'saldo-anterior+recarga-mes'};
+ const reconciliation=reported!==null?Math.round((reported-calculated)*100)/100:0; return {available,spent:Math.round(spent*100)/100,credit,recharge,previous,refunds,calculated,reported,reconciliation,source:reported!==null?'saldo-real-informado':'saldo-anterior+recarga-mes'};
 }
 function cajuBalanceAt(cardId,key){return cajuSnapshot(cardId,key).available}
 function cajuCapacityAt(cardId,key){return cajuSnapshot(cardId,key).credit}
@@ -3062,7 +3062,7 @@ function bindDetailClicks(){
    if(type==='transaction'){const t=db.transactions.find(x=>String(x.id)===String(id));if(t)openEditTransaction(t.id)}
    if(type==='recurring'){const r=db.recurring.find(x=>String(x.id)===String(id));if(r)openRecurringEdit(r.id)}
    if(type==='account'){const a=db.accounts.find(x=>String(x.id)===String(id));if(a)openDetail(a.name,[['Tipo',a.type],['Saldo',brl(a.balance)],['Banco',a.institution||a.name],['Agência',a.agency||'—'],['Conta/final',a.accountNo||'—']],[{label:'Editar',primary:true,onClick:()=>openBankEdit(a.id)}])}
-   if(type==='card'){const c=db.cards.find(x=>String(x.id)===String(id));if(c){const key=scopeMonth('cards'),benefit=['benefício','beneficio','benefit'].includes(String(c.type||'').toLowerCase());if(benefit){const s=cajuSnapshot(c.id,key);openDetail(c.name,[['Tipo','Benefício'],['Saldo anterior + recarga',brl(s.credit)],['Gasto no mês',brl(s.spent)],['Disponível',brl(s.available)],['Saldo disponível',s.credit?(s.available/s.credit*100).toFixed(1)+'%':'0.0%']],[{label:'Ver movimentações',primary:true,onClick:()=>{document.getElementById('detailDrawer')?.classList.remove('open');renderCajuDetails()}}])}else{const inv=invoiceAmount(c.id,key),limit=cardLimitAt(c,key);openDetail(c.name,[['Tipo',c.type||'Crédito'],['Limite',brl(limit)],['Fatura atual',brl(inv)],['Disponível',brl(Math.max(limit-inv,0))],['Fechamento','Dia '+(c.closing||'—')],['Vencimento','Dia '+c.due],['Final',c.last4||'—']],[{label:'Editar',primary:true,onClick:()=>openCardEdit(c.id)}])}}}
+   if(type==='card'){const c=db.cards.find(x=>String(x.id)===String(id));if(c){const key=scopeMonth('cards'),benefit=['benefício','beneficio','benefit'].includes(String(c.type||'').toLowerCase());if(benefit){const s=cajuSnapshot(c.id,key);openDetail(c.name,[['Tipo','Benefício'],['Saldo anterior + recarga',brl(s.credit)],['Gasto no mês',brl(s.spent)],['Saldo calculado',brl(s.calculated??s.available)],['Saldo real informado',brl(s.reported??s.available)],['Diferença a conciliar',brl(s.reconciliation||0)],['Disponível',brl(s.available)],['Saldo disponível',s.credit?(s.available/s.credit*100).toFixed(1)+'%':'0.0%']],[{label:'Ver movimentações',primary:true,onClick:()=>{document.getElementById('detailDrawer')?.classList.remove('open');renderCajuDetails()}}])}else{const inv=invoiceAmount(c.id,key),limit=cardLimitAt(c,key);openDetail(c.name,[['Tipo',c.type||'Crédito'],['Limite',brl(limit)],['Fatura atual',brl(inv)],['Disponível',brl(Math.max(limit-inv,0))],['Fechamento','Dia '+(c.closing||'—')],['Vencimento','Dia '+c.due],['Final',c.last4||'—']],[{label:'Editar',primary:true,onClick:()=>openCardEdit(c.id)}])}}}
    if(type==='category')openCategoryDetail(id);
   }
  })
