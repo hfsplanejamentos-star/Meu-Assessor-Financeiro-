@@ -2585,6 +2585,7 @@ document.addEventListener('finance-data-changed',()=>setTimeout(enforceCleanRecu
 setTimeout(enforceCleanRecurringOnly,1200);
 
 function cajuSnapshot(cardId,key){
+ if(key==='2026-09')return {available:0,spent:0,credit:0,recharge:0,previous:0,refunds:0,calculated:0,reported:null,reconciliation:0,unregisteredExpense:0,unregisteredCredit:0,source:'setembro-zerado'};
  if(db.meta?.cleanResetVersion==='2026-10-02-clean-recurring-v2')return {available:0,spent:0,credit:0,recharge:0,previous:0,refunds:0,calculated:0,reported:null,reconciliation:0,unregisteredExpense:0,unregisteredCredit:0,source:'reset'};
  const isCaju=t=>t.benefit===true||String(t.cardId||t.card||'')===String(cardId)||/caju/i.test([t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' '));
  const raw=(db.transactions||[]).filter(t=>isCaju(t)&&t.status!=='planned'&&t.status!=='ignored'&&!t.excludeFromBalance);
