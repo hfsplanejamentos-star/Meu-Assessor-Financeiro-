@@ -1,4 +1,4 @@
-/* R271 — layout completo do dashboard e cálculo mensal do Caju.
+/* R272 — layout completo do dashboard e cálculo mensal do Caju.
    Mantém os dados-base intactos; a auditoria abaixo é somente leitura. */
 (()=>{'use strict';
 const round=v=>Math.round((Number(v)||0)*100)/100;
@@ -21,11 +21,11 @@ function monthlySnapshot(cardId,key){
  if(cardId!==id)return originalSnapshot?originalSnapshot(cardId,key):{available:0,spent:0,credit:0,source:'missing'};
  if(key<'2026-10')return originalSnapshot?originalSnapshot(cardId,key):{available:0,spent:0,credit:0,source:'statement'};
  const opening=money(db?.meta?.cajuStatementAvailable??db?.meta?.cajuLatestReportedBalance??db?.cards?.find(c=>c.id===id)?.balance??0);
- let available=opening,credit=money(db?.meta?.cajuStatementCredit||1006.89),selectedTopup=0,selectedSpend=0;
+ let available=opening,credit=opening,selectedTopup=0,selectedSpend=0;
  const [y,m]=key.split('-').map(Number),[fy,fm]=[2026,10];
  for(let yy=fy,mm=fm;yy<y||(yy===y&&mm<=m);){
    const mk=yy+'-'+String(mm).padStart(2,'0'),add=topupFor(mk),spent=monthSpend(mk);
-   available=money(available+add-spent);credit=money(credit+add);
+   credit=money(available+add);available=money(credit-spent);
    if(mk===key){selectedTopup=add;selectedSpend=spent}
    mm++;if(mm===13){mm=1;yy++}
  }
@@ -33,7 +33,7 @@ function monthlySnapshot(cardId,key){
 }
 const originalSnapshot=typeof window.cajuSnapshot==='function'?window.cajuSnapshot:null;
 window.cajuSnapshot=monthlySnapshot;
-window.FinanceCajuMonthly={snapshot:monthlySnapshot,topupFor,monthSpend,version:'R271'};
+window.FinanceCajuMonthly={snapshot:monthlySnapshot,topupFor,monthSpend,version:'R272'};
 function ensureStyle(){
  if(document.getElementById('r271DashboardStyle'))return;
  const style=document.createElement('style');style.id='r271DashboardStyle';
@@ -109,6 +109,7 @@ function audit(){
  const top=topupFor('2026-10'),snap=monthlySnapshot(id,'2026-10'),opening=money(db?.meta?.cajuStatementAvailable??db?.meta?.cajuLatestReportedBalance??db?.cards?.find(c=>c.id===id)?.balance??0),spend=monthSpend('2026-10'),expected=money(opening+top-spend);
  add('Recarga Caju de outubro = R$ 1.572,40',Math.abs(top-1572.40)<0.005,{topup:top});
  add('Saldo Caju segue fechamento anterior + recarga − gastos',Math.abs(snap.available-expected)<0.005,{opening,topup:top,spent:spend,expected,actual:snap.available});
+  add('Saldo anterior + recarga sem acumular recargas antigas',Math.abs(snap.credit-money(opening+top))<0.005,{opening,topup:top,expected:money(opening+top),actual:snap.credit});
  try{const can=window.FinanceCanonical;if(can?.summary){for(const mk of ['2026-09','2026-10','2026-11','2026-12']){const s=can.summary(mk);add('Resumo '+mk+' finito',[s.realizedIncome,s.realizedExpense,s.plannedIncome,s.plannedExpense,s.investment].every(Number.isFinite),s)}}}catch(e){add('Resumo financeiro executável',false,String(e))}
  try{const rows=window.FinanceCanonical?.projection?.('2026-10',12)||[];add('Projeção financeira de 12 meses válida',rows.length===12&&rows.every(x=>[x.income,x.expense,x.patrimony,x.liquid,x.invest].every(Number.isFinite)),{rows:rows.length})}catch(e){add('Projeção financeira executável',false,String(e))}
  const uniqueIds=new Set((db?.transactions||[]).map(t=>String(t.id)));
@@ -123,13 +124,13 @@ function audit(){
  const salary=(db?.transactions||[]).find(t=>String(t.id)==='auto_salary_2026-10')||(db?.transactions||[]).find(t=>/sal[aá]rio/i.test(String(t.desc||t.description||''))&&String(t.date||'').slice(0,7)==='2026-10'&&isPlanned(t.status));
  add('Salário previsto no último dia útil de outubro',!salary||!planned(salary.status)||String(salary.date||'').slice(0,10)==='2026-10-30',{date:salary?.date,id:salary?.id});
  
- const result={version:'R271',ok:tests.every(t=>t.ok),passed:tests.filter(t=>t.ok).length,total:tests.length,failed:tests.filter(t=>!t.ok),tests,at:new Date().toISOString()};
+ const result={version:'R272',ok:tests.every(t=>t.ok),passed:tests.filter(t=>t.ok).length,total:tests.length,failed:tests.filter(t=>!t.ok),tests,at:new Date().toISOString()};
  window.__ASSESSOR_R271_AUDIT__=result;
  try{localStorage.setItem('assessor_r271_audit',JSON.stringify(result))}catch(_){}
  const runtime=window.FinanceRuntimeGuard;
  if(runtime?.audit&&!runtime.audit.__r271Wrapped){
   const prior=runtime.audit.bind(runtime);
-  const wrapped=()=>{const base=prior();let output;try{output={...base,tests:[...(base.tests||[]),...tests],failed:[...(base.failed||[]),...tests.filter(x=>!x.ok)],version:'R271'};output.ok=output.failed.length===0;output.passed=output.tests.filter(x=>x.ok).length;output.total=output.tests.length;window.__ASSESSOR_R268_AUDIT__=output;localStorage.setItem('assessor_r268_audit',JSON.stringify(output))}catch(_){output=base}return output};
+  const wrapped=()=>{const base=prior();let output;try{output={...base,tests:[...(base.tests||[]),...tests],failed:[...(base.failed||[]),...tests.filter(x=>!x.ok)],version:'R272'};output.ok=output.failed.length===0;output.passed=output.tests.filter(x=>x.ok).length;output.total=output.tests.length;window.__ASSESSOR_R268_AUDIT__=output;localStorage.setItem('assessor_r268_audit',JSON.stringify(output))}catch(_){output=base}return output};
   wrapped.__r271Wrapped=true;runtime.audit=wrapped;
  }
  return result;
