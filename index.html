@@ -2470,75 +2470,92 @@ function renderInvoiceManagement(){
  acc.balance=909.86;acc.statementBalanceDate='2026-09-18';acc.statementVerified=true;
  db.migrations[migrationId]=true;save();
 })();
-/* Caju acumulativo + efetivação mensal automática a partir de 01/10/2026 */
-function ensureMonthlyIncomeAutomation(){
- db.automationState=db.automationState||{};db.transactions=db.transactions||[];db.cards=db.cards||[];
+/* Caju — extrato real + regra mensal de saldo (R10.16)
+   Regra canônica: limite do mês = saldo anterior + recarga atribuída ao mês.
+   Recargas de meses anteriores NÃO são acumuladas novamente. */
+function ensureCajuMonthly(){
+ db.cards=db.cards||[];db.transactions=db.transactions||[];db.meta=db.meta||{};db.automationState=db.automationState||{};
  let caju=db.cards.find(c=>String(c.id)==='card_caju_alimentacao'||String(c.name||'').toLowerCase().includes('caju'));
- if(!caju){caju={id:'card_caju_alimentacao',name:'Caju Alimentação',type:'Benefício',limit:1500,balance:0};db.cards.push(caju)}
- caju.type='Benefício';caju.limit=1500;caju.monthlyCredit=1500;caju.accumulative=true;caju.creditStart='2026-10-01';
- /* Setembro/2026: razão Caju confirmado. Fonte única para lista, detalhes e saldos. */
- db.transactions=db.transactions.filter(t=>!(String(t.cardId||t.card||'')===caju.id&&String(t.date||'').slice(0,7)==='2026-09'&&Number(t.value)===0));
- const canonicalSepCajuIds=new Set([
-  'caju_2026_09_17_credit','caju_2026_09_17_padaria_14','caju_2026_09_17_marilza_2999','caju_2026_09_18_padaria_3090','caju_2026_09_18_kaique_4905','caju_2026_09_19_restaurante_7800','caju_2026_09_20_luana_3189','caju_2026_09_21_netos_2494','caju_2026_09_21_super_market_24689','caju_2026_09_22_dafoca_4400','caju_2026_09_23_julia_2941','caju_2026_09_23_padaria_3140','caju_2026_09_23_dom_bar_5590','caju_2026_09_24_boteco_3750'
- ]);
- const canonicalSepSig=new Set(['2026-09-17|1006.89','2026-09-17|-14.00','2026-09-17|-29.99','2026-09-18|-30.90','2026-09-18|-49.05','2026-09-19|-78.00','2026-09-20|-31.89','2026-09-21|-24.94','2026-09-21|-246.89','2026-09-22|-44.00','2026-09-23|-29.41','2026-09-23|-31.40','2026-09-23|-55.90','2026-09-24|-37.50']);
- db.transactions=db.transactions.filter(t=>{if(String(t.date||'').slice(0,7)!=='2026-09')return true;const isCaju=String(t.cardId||t.card||'')===caju.id||t.benefit===true||/caju/i.test([t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' '));if(!isCaju)return true;if(canonicalSepCajuIds.has(String(t.id)))return true;const sig=String(t.date||'').slice(0,10)+'|'+Number(t.value||0).toFixed(2);return !canonicalSepSig.has(sig)});
- /* R238: o extrato Caju confirmado de 17–24/09 é a fonte canônica; remove resíduos antigos antes de recriá-lo. */
- db.transactions=db.transactions.filter(t=>{const d=String(t.date||'').slice(0,10),isCaju=(t.benefit===true||String(t.cardId||t.card||'')===String(caju.id)||/caju/i.test(String(t.origin||t.source||'')));return !(isCaju&&d>='2026-09-17'&&d<='2026-09-24'&&String(t.id||'')!=='caju_2026_09_17_credit'&&!canonicalSepCajuIds.has(String(t.id||'')))});
- const hist=[
-  ['caju_2026_09_17_credit','2026-09-17','Caju Benefícios',1006.89,'Crédito benefício'],
-  ['caju_2026_09_17_padaria_14','2026-09-17','PADARIA E CONFEITARIA',-14.00,'Padaria'],
+ if(!caju){caju={id:'card_caju_alimentacao',name:'Caju Alimentação',type:'Benefício',limit:0,balance:0};db.cards.push(caju)}
+ caju.type='Benefício';caju.excludeFromPatrimony=true;caju.accumulative=false;
+
+ const ids=[
+  'caju_2026_09_17_credit','caju_2026_09_17_marilza_2999','caju_2026_09_17_padaria_14','caju_2026_09_17_padaria_100',
+  'caju_2026_09_18_kaique_4905','caju_2026_09_18_padaria_3090','caju_2026_09_19_restaurante_7800','caju_2026_09_20_luana_3189',
+  'caju_2026_09_21_netos_2494','caju_2026_09_21_super_market_24689','caju_2026_09_22_dafoca_4400',
+  'caju_2026_09_23_julia_2941','caju_2026_09_23_padaria_3140','caju_2026_09_23_dom_bar_5590','caju_2026_09_24_boteco_3750',
+  'caju_2026_09_27_padaria_19600','caju_2026_09_28_mari_4419','caju_2026_09_28_credit_oct',
+  'caju_2026_09_29_homer_1250','caju_2026_09_29_pura_1200','caju_2026_09_29_padaria_3640','caju_2026_09_29_dafoca_3575',
+  'caju_2026_09_30_refund_netos_5390','caju_2026_09_30_super_market_9661','caju_2026_09_30_candido_5148','caju_2026_09_30_pura_11770',
+  'caju_2026_10_01_vitor_3601'
+ ];
+ const idset=new Set(ids);
+ db.transactions=db.transactions.filter(t=>{
+   const isCaju=t.benefit===true||String(t.cardId||t.card||'')===String(caju.id)||/caju/i.test([t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' '));
+   const d=String(t.date||'').slice(0,10);
+   if(!isCaju||d<'2026-09-17'||d>'2026-10-01')return true;
+   return idset.has(String(t.id||''));
+ });
+ const base={card:caju.id,cardId:caju.id,origin:'Extrato Caju confirmado',source:'Extrato Caju confirmado',status:'realized',benefit:true,excludeFromExpense:true,statementVerified:true,cat:'Alimentação'};
+ const rows=[
+  ['caju_2026_09_17_credit','2026-09-17','Caju Benefícios',1006.89,'Crédito benefício','2026-09'],
   ['caju_2026_09_17_marilza_2999','2026-09-17','IFD*60.939.734 MARI...',-29.99,'Delivery'],
-  ['caju_2026_09_18_padaria_3090','2026-09-18','PADARIA E CONFEITARIA',-30.90,'Padaria'],
+  ['caju_2026_09_17_padaria_14','2026-09-17','PADARIA E CONFEITARIA',-14.00,'Padaria'],
+  ['caju_2026_09_17_padaria_100','2026-09-17','PADARIA E CONFEITARIA',-1.00,'Padaria'],
   ['caju_2026_09_18_kaique_4905','2026-09-18','IFD*64802138 KAIQUE...',-49.05,'Delivery'],
+  ['caju_2026_09_18_padaria_3090','2026-09-18','PADARIA E CONFEITARIA',-30.90,'Padaria'],
   ['caju_2026_09_19_restaurante_7800','2026-09-19','Restaurante MACAE BR',-78.00,'Restaurante'],
   ['caju_2026_09_20_luana_3189','2026-09-20','IFD*56162560 LUANA...',-31.89,'Delivery'],
   ['caju_2026_09_21_netos_2494','2026-09-21','IFD*NETOS DELIVERY',-24.94,'Cerveja'],
   ['caju_2026_09_21_super_market_24689','2026-09-21','SUPER MARKET CAX...',-246.89,'Supermercado'],
   ['caju_2026_09_22_dafoca_4400','2026-09-22','DAFOCA BAR RIO DE J...',-44.00,'Restaurante'],
-  ['caju_2026_09_23_julia_2941','2026-09-23','IFD*51.419.326 JULIA',-29.41,'Delivery'],
+  ['caju_2026_09_23_julia_2941','2026-09-23','IFD*51.419.326 JULIA...',-29.41,'Delivery'],
   ['caju_2026_09_23_padaria_3140','2026-09-23','PADARIA E CONFEITARIA',-31.40,'Padaria'],
   ['caju_2026_09_23_dom_bar_5590','2026-09-23','DOM BAR E RESTAURANTE',-55.90,'Restaurante'],
-  ['caju_2026_09_24_boteco_3750','2026-09-24','Boteco Itaipava Rio',-37.50,'Restaurante']
+  ['caju_2026_09_24_boteco_3750','2026-09-24','BOTECO ITAIPAVA RIO...',-37.50,'Restaurante'],
+  ['caju_2026_09_27_padaria_19600','2026-09-27','PADARIA E CONFEITARIA',-196.00,'Padaria'],
+  ['caju_2026_09_28_mari_4419','2026-09-28','IFD*40.953.426 MARI...',-44.19,'Delivery'],
+  ['caju_2026_09_28_credit_oct','2026-09-28','Caju Benefícios',1572.40,'Crédito benefício','2026-10'],
+  ['caju_2026_09_29_homer_1250','2026-09-29','HOMER BEER DUQUE...',-12.50,'Cerveja'],
+  ['caju_2026_09_29_pura_1200','2026-09-29','PURA GENTILEZA DU...',-12.00,'Alimentação'],
+  ['caju_2026_09_29_padaria_3640','2026-09-29','PADARIA E CONFEITARIA',-36.40,'Padaria'],
+  ['caju_2026_09_29_dafoca_3575','2026-09-29','DAFOCA BAR RIO DE J...',-35.75,'Restaurante'],
+  ['caju_2026_09_30_refund_netos_5390','2026-09-30','IFD*NETOS DELIVERY — Reembolso',53.90,'Reembolso'],
+  ['caju_2026_09_30_super_market_9661','2026-09-30','SUPER MARKET CAXI...',-96.61,'Supermercado'],
+  ['caju_2026_09_30_candido_5148','2026-09-30','CANDIDO REIS DA FO...',-51.48,'Alimentação'],
+  ['caju_2026_09_30_pura_11770','2026-09-30','PURA GENTILEZA DU...',-117.70,'Alimentação'],
+  ['caju_2026_10_01_vitor_3601','2026-10-01','IFD*66804762 VITOR...',-36.01,'Delivery']
  ];
- hist.forEach(([id,date,desc,value,sub])=>{
-  const exists=db.transactions.some(t=>String(t.id)===id||(
-   String(t.date||'').slice(0,10)===date&&Math.abs(Number(t.value||0)-value)<0.005&&
-   (String(t.cardId||t.card||'')===caju.id||/caju/i.test(String(t.origin||t.source||'')))
-  ));
-  if(!exists)db.transactions.push({id,date,desc,value,cat:'Alimentação',sub,card:caju.id,cardId:caju.id,origin:'Extrato Caju confirmado',status:'realized',benefit:true,excludeFromExpense:true});
+ rows.forEach(([id,date,desc,value,sub,accountingMonth])=>{
+   let t=db.transactions.find(x=>String(x.id)===id);
+   const data={...base,id,date,desc,description:desc,value,sub};
+   if(accountingMonth)data.accountingMonth=accountingMonth;
+   if(!t)db.transactions.push(data);else Object.assign(t,data);
  });
- const now=new Date(),start=new Date(2026,9,1);
- if(now>=start){for(let d=new Date(start);d<=now;d=new Date(d.getFullYear(),d.getMonth()+1,1)){const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),date=key+'-01';
-   const last=new Date(d.getFullYear(),d.getMonth()+1,0);while(last.getDay()===0||last.getDay()===6)last.setDate(last.getDate()-1);
-   const salaryDate=last.getFullYear()+'-'+String(last.getMonth()+1).padStart(2,'0')+'-'+String(last.getDate()).padStart(2,'0');
-   const salaryId='auto_salary_'+key,cajuId='auto_caju_'+key;
-   let salary=db.transactions.find(t=>String(t.id)===salaryId);
-   if(!salary){
-     salary=db.transactions.find(t=>String(t.date||'').slice(0,7)===key&&t.status==='planned'&&Number(t.value)>0&&/sal[aá]rio/i.test(String(t.desc||'')));
-     if(!salary){salary={id:salaryId,date:salaryDate,desc:'Salário previsto',value:6500,cat:'Receitas',sub:'Salário',origin:'Automação mensal prevista',status:'planned'};db.transactions.push(salary)}
-   }
-   if(salary.status==='planned'&&String(salary.date||'').slice(0,10)!==salaryDate){salary.date=salaryDate;salary.origin='Automação mensal prevista'}
-   const cajuAmount=key==='2026-10'?1572.40:1500;
-   let cajuCredit=db.transactions.find(t=>String(t.id)===cajuId);
-   if(!cajuCredit)db.transactions.push({id:cajuId,date,desc:'Crédito Caju Alimentação previsto',value:cajuAmount,cat:'Alimentação',sub:'Crédito benefício',card:caju.id,cardId:caju.id,origin:'Automação mensal prevista',status:'planned',benefit:true,excludeFromExpense:true});
-   else if(cajuCredit.status==='planned'&&Number(cajuCredit.value)!==cajuAmount)cajuCredit.value=cajuAmount;
- }}
- const movements=db.transactions.filter(t=>(t.cardId===caju.id||t.card===caju.id)&&t.status!=='planned').sort((a,b)=>String(a.date).localeCompare(String(b.date)));
- caju.balance=movements.reduce((s,t)=>s+Number(t.value||0),0);caju.availableLimit=caju.balance;
- db.automationState.monthlyIncome={enabled:true,start:'2026-10-01',salary:6500,salaryTiming:'last-business-day',caju:1500,octoberCaju:1572.40,cajuAccumulative:true};
+ db.meta.cajuRechargeByMonth={'2026-09':1006.89,'2026-10':1572.40};
+ db.meta.cajuRule='saldo_anterior_mais_recarga_do_mes_menos_gastos_do_mes';
+ db.meta.cajuStatementVersion='2026-10-02-extrato-completo-r1016';
+ db.automationState.monthlyIncome={...(db.automationState.monthlyIncome||{}),enabled:true,start:'2026-10-01',caju:1500,octoberCaju:1572.40,cajuAccumulative:false};
  save();
 }
+ensureCajuMonthly();
+
 function cajuSnapshot(cardId,key){
- const baseCredit=Number(db.meta?.cajuStatementCredit||1006.89),baseAvailable=Number(db.meta?.cajuStatementAvailable||303.02),baseSpent=Number(db.meta?.cajuStatementSpent||703.87);
- if(key==='2026-09')return {available:baseAvailable,spent:baseSpent,credit:baseCredit,source:'statement'};
- if(key>'2026-09'){
-  const [y,m]=key.split('-').map(Number),months=(y-2026)*12+(m-10)+1,monthlyCredit=Math.max(0,months)*1500;
-  const spentAfterSep=(db.transactions||[]).filter(t=>(t.cardId===cardId||t.card===cardId)&&String(t.date||'').slice(0,7)>='2026-10'&&String(t.date||'').slice(0,7)<=key&&t.status!=='planned'&&t.status!=='ignored'&&Number(t.value)<0&&!t.excludeFromBalance).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);
-  const spentMonth=(db.transactions||[]).filter(t=>(t.cardId===cardId||t.card===cardId)&&String(t.date||'').slice(0,7)===key&&t.status!=='planned'&&t.status!=='ignored'&&Number(t.value)<0&&!t.excludeFromBalance).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);
-  return {available:Math.round((baseAvailable+monthlyCredit-spentAfterSep)*100)/100,spent:Math.round(spentMonth*100)/100,credit:Math.round((baseCredit+monthlyCredit)*100)/100,source:'cumulative-rule'};
+ const isCaju=t=>t.benefit===true||String(t.cardId||t.card||'')===String(cardId)||/caju/i.test([t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' '));
+ const all=(db.transactions||[]).filter(t=>isCaju(t)&&t.status!=='planned'&&t.status!=='ignored'&&!t.excludeFromBalance);
+ const recharge=Number(db.meta?.cajuRechargeByMonth?.[key]||((key>'2026-10')?1500:0));
+ const spent=all.filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)<0).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);
+ const refunds=all.filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)>0&&!/crédito benefício|caju benefícios/i.test(String(t.sub||t.desc||''))).reduce((s,t)=>s+Number(t.value||0),0);
+ let previous=0;
+ if(key==='2026-09')previous=0;
+ else {
+   const assignedCredit=all.filter(t=>String(t.accountingMonth||'')===key&&Number(t.value)>0).reduce((s,t)=>s+Number(t.value||0),0);
+   const physicalBefore=all.filter(t=>String(t.date||'').slice(0,10)<key+'-01').reduce((s,t)=>s+Number(t.value||0),0);
+   previous=Math.round((physicalBefore-assignedCredit)*100)/100;
  }
- return {available:0,spent:0,credit:0,source:'ledger'};
+ const credit=Math.round((previous+recharge)*100)/100;
+ const available=Math.round((credit-spent+refunds)*100)/100;
+ return {available,spent:Math.round(spent*100)/100,credit,recharge,previous,refunds,source:'saldo-anterior+recarga-mes'};
 }
 function cajuBalanceAt(cardId,key){return cajuSnapshot(cardId,key).available}
 function cajuCapacityAt(cardId,key){return cajuSnapshot(cardId,key).credit}
