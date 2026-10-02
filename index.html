@@ -2474,6 +2474,20 @@ function renderInvoiceManagement(){
    Regra canônica: limite do mês = saldo anterior + recarga atribuída ao mês.
    Recargas de meses anteriores NÃO são acumuladas novamente. */
 function ensureCajuMonthly(){
+ const RESET_VERSION='2026-10-02-clean-recurring-v1';
+ if(db.meta?.cleanResetVersion!==RESET_VERSION){
+   db.transactions=[];
+   db.investments=[];
+   db.invoices=[];
+   db.auditLog=[];
+   (db.accounts||[]).forEach(a=>{a.balance=0;a.openingBalance=0});
+   (db.cards||[]).forEach(x=>{x.balance=0;x.availableLimit=0});
+   db.meta=db.meta||{};db.meta.cleanResetVersion=RESET_VERSION;db.meta.financialPatchVersion=RESET_VERSION;
+   try{save()}catch(_){}
+   if(window.FinanceCloud?.configured?.())setTimeout(()=>window.FinanceCloud.pushLocalControlled?.(),500);
+   return;
+ }
+ if(db.meta?.cleanResetVersion===RESET_VERSION)return;
  const PATCH_VERSION='2026-10-02-r1027';
  if(db.meta?.financialPatchVersion===PATCH_VERSION)return;
  db.cards=db.cards||[];db.transactions=db.transactions||[];db.meta=db.meta||{};db.automationState=db.automationState||{};
