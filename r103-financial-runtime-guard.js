@@ -42,6 +42,27 @@
   const android=tx.filter(t=>t.androidNotificationId),androidIds=android.map(t=>String(t.androidNotificationId));
   add('Android sem duplicidade por notificationId',new Set(androidIds).size===androidIds.length,{unique:new Set(androidIds).size,total:androidIds.length});
   add('Android importado realizado',android.every(t=>isReal(t.status)),android.filter(t=>!isReal(t.status)).map(t=>[t.id,t.status]));
+  /* Extrato Caju confirmado nas imagens 17/09–01/10. Somente linhas novas/ausentes.
+     O reembolso é entrada; a recarga de 28/09 continua competência 2026-10. */
+  const cajuRows=[
+   ['caju_20260917_padaria_1','2026-09-17','PADARIA E CONFEITARIA',-1.00,'Alimentação'],
+   ['caju_20260930_reembolso_netos','2026-09-30','IFD NETOS DELIVERY · Reembolso',53.90,'Reembolso'],
+   ['caju_20260930_supermarket_9661','2026-09-30','SUPER MARKET CAXIAS',-96.61,'Mercado'],
+   ['caju_20260930_candido_5148','2026-09-30','CANDIDO REIS DA FO...',-51.48,'Alimentação'],
+   ['caju_20261001_ifd_vitor_3601','2026-10-01','IFD VITOR',-36.01,'Delivery']
+  ];
+  const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/gi,'').toLowerCase();
+  cajuRows.forEach(([id,date,desc,value,sub])=>{
+   const duplicate=(db.transactions||[]).some(t=>String(t.id)===id||(String(t.date||'').slice(0,10)===date&&Math.abs(n(t.value)-value)<.005&&norm(t.desc||t.description).includes(norm(desc).slice(0,8))));
+   if(!duplicate){db.transactions.push({id,date,desc,value,cat:value>0?'Reembolso':'Alimentação',sub,status:'realized',card:'card_caju_alimentacao',cardId:'card_caju_alimentacao',benefit:true,excludeFromExpense:true,statementVerified:true,origin:'Extrato Caju confirmado'});changed=true}
+  });
+  /* O snapshot R$ 1.419,88 é de 30/09. A despesa confirmada de 01/10 reduz o disponível atual. */
+  if(cj&&db.meta.cajuStatementVersion==='2026-09-30-final'){
+   const octReal=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)==='2026-10'&&n(t.value)<0&&(t.card==='card_caju_alimentacao'||t.cardId==='card_caju_alimentacao')&&isReal(t.status));
+   const octRefund=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)==='2026-10'&&n(t.value)>0&&(t.card==='card_caju_alimentacao'||t.cardId==='card_caju_alimentacao')&&isReal(t.status)&&!/recarga|beneficios/i.test(String(t.desc||'')));
+   const current=round(1419.88-octReal.reduce((s,t)=>s+Math.abs(n(t.value)),0)+octRefund.reduce((s,t)=>s+n(t.value),0));
+   cj.balance=current;cj.availableLimit=current;db.meta.cajuCurrentAvailable=current;db.meta.cajuCurrentBalanceThrough='2026-10-01';changed=true;
+  }
   const top=db.automationState?.cajuMonthlyTopups?.['2026-10'];
   add('Recarga Caju outubro',Math.abs(n(top)-1572.40)<.01,top);
   try{const can=window.FinanceCanonical;if(can?.summary){['2026-09','2026-10','2026-11','2026-12'].forEach(m=>{const s=can.summary(m);add('Resumo canônico '+m,[s.realizedIncome,s.realizedExpense,s.plannedIncome,s.plannedExpense,s.investment].every(Number.isFinite),s)})}}catch(e){add('Motor canônico executável',false,String(e))}
