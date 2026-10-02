@@ -2534,7 +2534,7 @@ function ensureCajuMonthly(){
  });
  db.meta.cajuRechargeByMonth={'2026-09':1006.89,'2026-10':1572.40};
  db.meta.cajuRule='saldo_anterior_mais_recarga_do_mes_menos_gastos_do_mes';
- db.meta.cajuStatementVersion='2026-10-02-extrato-completo-r1017';
+ db.meta.cajuStatementVersion='2026-10-02-extrato-completo-r1018';
  db.automationState.monthlyIncome={...(db.automationState.monthlyIncome||{}),enabled:true,start:'2026-10-01',caju:1500,octoberCaju:1572.40,cajuAccumulative:false};
  save();
 }
@@ -2543,17 +2543,19 @@ ensureCajuMonthly();
 function cajuSnapshot(cardId,key){
  const isCaju=t=>t.benefit===true||String(t.cardId||t.card||'')===String(cardId)||/caju/i.test([t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' '));
  const raw=(db.transactions||[]).filter(t=>isCaju(t)&&t.status!=='planned'&&t.status!=='ignored'&&!t.excludeFromBalance);
- /* R10.17: deduplicação semântica do Caju. Cloud/Android pode devolver o mesmo lançamento com outro ID. */
- const seen=new Set(),all=raw.filter(t=>{const sig=[String(t.accountingMonth||t.date||'').slice(0,10),Number(t.value||0).toFixed(2),String(t.desc||t.description||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()].join('|');if(seen.has(sig))return false;seen.add(sig);return true});
+ const seen=new Set(),all=raw.filter(t=>{const sig=[String(t.date||'').slice(0,10),Number(t.value||0).toFixed(2),String(t.desc||t.description||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()].join('|');if(seen.has(sig))return false;seen.add(sig);return true});
  const recharge=Number(db.meta?.cajuRechargeByMonth?.[key]||((key>'2026-10')?1500:0));
  const spent=all.filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)<0).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);
  const refunds=all.filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)>0&&!/crédito benefício|caju benefícios/i.test(String(t.sub||t.desc||''))).reduce((s,t)=>s+Number(t.value||0),0);
+ /* Saldo anterior é sempre o fechamento do mês anterior; crédito fisicamente recebido para o mês seguinte não altera o fechamento do mês corrente. */
  let previous=0;
- if(key==='2026-09')previous=0;
- else {
-   const assignedCredit=all.filter(t=>String(t.accountingMonth||'')===key&&Number(t.value)>0).reduce((s,t)=>s+Number(t.value||0),0);
-   const physicalBefore=all.filter(t=>String(t.date||'').slice(0,10)<key+'-01').reduce((s,t)=>s+Number(t.value||0),0);
-   previous=Math.round((physicalBefore-assignedCredit)*100)/100;
+ if(key>'2026-09'){
+   const [yy,mm]=key.split('-').map(Number),pd=new Date(yy,mm-2,1),prevKey=pd.getFullYear()+'-'+String(pd.getMonth()+1).padStart(2,'0');
+   if(prevKey==='2026-09'){
+     const sepSpent=all.filter(t=>String(t.date||'').slice(0,7)==='2026-09'&&Number(t.value)<0).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);
+     const sepRefund=all.filter(t=>String(t.date||'').slice(0,7)==='2026-09'&&Number(t.value)>0&&!/crédito benefício|caju benefícios/i.test(String(t.sub||t.desc||''))).reduce((s,t)=>s+Number(t.value||0),0);
+     previous=Math.round((1006.89-sepSpent+sepRefund)*100)/100;
+   }else previous=cajuSnapshot(cardId,prevKey).available;
  }
  const credit=Math.round((previous+recharge)*100)/100;
  const available=Math.round((credit-spent+refunds)*100)/100;
