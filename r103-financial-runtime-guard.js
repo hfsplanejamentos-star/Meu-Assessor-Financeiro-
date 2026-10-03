@@ -39,16 +39,20 @@
    db.meta.cajuStatementSupplementVersion=supplementVersion;changed=true;
   }
   const rollforwardVersion='2026-10-03-r277';
-  if(cj&&db.meta.cajuOctoberRollforwardVersion!==rollforwardVersion){
-   /* R276 canceled every realized October expense. Restore only IDs recorded by that migration. */
-   const previousClear=(db.audit||[]).find(a=>a.action==='caju_month_cleared'&&String(a.id||'').startsWith('2026-10:'));
-   const restored=[];
-   String(previousClear?.id||'').slice('2026-10:'.length).split(',').filter(Boolean).forEach(id=>{
-    const t=db.transactions.find(x=>String(x.id)===id);
-    if(t&&['cancelled','canceled'].includes(String(t.status||'').toLowerCase())){
-     t.status='realized';delete t.cancelledAt;restored.push(id);
-    }
-   });
+  if(cj){
+   if(db.meta.cajuOctoberRollforwardVersion!==rollforwardVersion){
+    /* R276 canceled every realized October expense. Restore only IDs recorded by that migration. */
+    const previousClear=(db.audit||[]).find(a=>a.action==='caju_month_cleared'&&String(a.id||'').startsWith('2026-10:'));
+    const restored=[];
+    String(previousClear?.id||'').slice('2026-10:'.length).split(',').filter(Boolean).forEach(id=>{
+     const t=db.transactions.find(x=>String(x.id)===id);
+     if(t&&['cancelled','canceled'].includes(String(t.status||'').toLowerCase())){
+      t.status='realized';delete t.cancelledAt;restored.push(id);
+     }
+    });
+    db.meta.cajuOctoberRollforwardVersion=rollforwardVersion;changed=true;
+    if(restored.length){db.audit=Array.isArray(db.audit)?db.audit:[];db.audit.push({action:'caju_month_restored',id:'2026-10:'+restored.join(','),at:new Date().toISOString(),note:'Lançamentos restaurados após reversão do cancelamento amplo R276.'})}
+   }
    const topup=Number(db.automationState?.cajuMonthlyTopups?.['2026-10']??db.meta.cajuOctoberCredit??1572.40);
    const opening=Number(db.meta.cajuStatementAvailable??db.meta.cajuLatestReportedBalance??cj.balance??0);
    const octRows=db.transactions.filter(t=>(t.card==='card_caju_alimentacao'||t.cardId==='card_caju_alimentacao'||t.benefit===true)&&String(t.date||'').slice(0,7)==='2026-10'&&isReal(t.status));
@@ -56,9 +60,10 @@
    const refunds=octRows.filter(t=>n(t.value)>0&&!/recarga|beneficios/i.test(String(t.desc||t.description||''))).reduce((s,t)=>s+n(t.value),0);
    const current=round(opening+topup-spent+refunds);
    cj.balance=current;cj.availableLimit=current;db.meta.cajuCurrentAvailable=current;db.meta.cajuCurrentBalanceThrough='2026-10-31';
-   db.meta.cajuOctoberRollforwardVersion=rollforwardVersion;
-   if(restored.length){db.audit=Array.isArray(db.audit)?db.audit:[];db.audit.push({action:'caju_month_restored',id:'2026-10:'+restored.join(','),at:new Date().toISOString(),note:'Lançamentos restaurados após reversão do cancelamento amplo R276.'})}
-   changed=true;
+   if(round(cj.balance)!==current||round(cj.availableLimit)!==current||round(db.meta.cajuCurrentAvailable)!==current){
+    cj.balance=current;cj.availableLimit=current;db.meta.cajuCurrentAvailable=current;changed=true;
+   }
+   if(db.meta.cajuCurrentBalanceThrough!=='2026-10-31'){db.meta.cajuCurrentBalanceThrough='2026-10-31';changed=true}
   }
   if(changed){try{localStorage.setItem('assessor_v180_simulacao_ficticia',JSON.stringify(db))}catch(_){}}
   return changed;
