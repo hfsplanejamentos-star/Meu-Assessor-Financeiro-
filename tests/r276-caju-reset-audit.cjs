@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
 const db = {
- meta:{cajuStatementAvailable:1419.88,cajuStatementCredit:1006.89,cajuStatementVersion:'2026-09-30-final',cajuStatementSupplementVersion:'2026-10-03-r277'},
+ meta:{cajuStatementAvailable:1419.88,cajuStatementCredit:1006.89,cajuStatementVersion:'2026-09-30-final',cajuStatementSupplementVersion:'2026-10-03-r277',cajuCurrentReportedBalance:0,cajuReportedBalanceRestoreVersion:'2026-10-02-r278'},
  cards:[{id:'card_caju_alimentacao',balance:1419.88,availableLimit:1419.88}],accounts:[],
  automationState:{cajuMonthlyTopups:{'2026-10':1572.40}},
  transactions:[
@@ -41,4 +41,4 @@ assert.equal(db.transactions.length,count,'migration does not repeat');
 db.transactions.push({id:'oct-later',date:'2026-10-03',desc:'Compra Caju',value:-4,status:'realized',cardId:'card_caju_alimentacao',benefit:true,excludeFromExpense:true});
 context.window.FinanceRuntimeGuard.establish();
 assert.equal(db.cards[0].balance,1231.78,'new realized expenses after the reported balance date update the saved Caju balance');
-console.log('R278 Caju balance reconciliation and read-only audit regression passed');
+console.log('R279 Caju balance reconciliation and read-only audit regression passed');
