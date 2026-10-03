@@ -31,4 +31,7 @@ assert.equal(db.cards[0].balance,balance,'audit does not overwrite balances');
 assert.equal(result.tests.find(t=>t.name==='Caju saldo finito e consistente').ok,true);
 context.window.FinanceRuntimeGuard.establish();
 assert.equal(db.transactions.length,count,'migration does not repeat');
+db.transactions.push({id:'oct-later',date:'2026-10-03',desc:'Compra Caju',value:-4,status:'realized',cardId:'card_caju_alimentacao',benefit:true,excludeFromExpense:true});
+context.window.FinanceRuntimeGuard.establish();
+assert.equal(db.cards[0].balance,2932.27,'new realized October expenses update the saved Caju balance');
 console.log('R277 Caju roll-forward and read-only audit regression passed');
