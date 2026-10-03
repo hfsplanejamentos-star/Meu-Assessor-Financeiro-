@@ -21,6 +21,10 @@
   }
   db.automationState=db.automationState||{};db.automationState.cajuMonthlyTopups=db.automationState.cajuMonthlyTopups||{};
   if(Number(db.automationState.cajuMonthlyTopups['2026-10'])!==1572.40){db.automationState.cajuMonthlyTopups['2026-10']=1572.40;changed=true}
+  if(db.meta.cajuReportedBalanceRestoreVersion!=='2026-10-02-r278'){
+   if(db.meta.cajuCurrentReportedBalance==null){db.meta.cajuCurrentReportedBalance=1235.78;db.meta.cajuCurrentReportedDate='2026-10-02'}
+   db.meta.cajuReportedBalanceRestoreVersion='2026-10-02-r278';changed=true;
+  }
   const oct=(db.transactions||[]).find(t=>String(t.id)==='caju_20260928_credit_157240'||(String(t.date||'').slice(0,10)==='2026-09-28'&&Math.abs(n(t.value)-1572.40)<.01&&/caju/i.test([t.origin,t.source,t.desc].join(' '))));
   if(oct){if(oct.competenceMonth!=='2026-10'||oct.creditForMonth!=='2026-10'){oct.competenceMonth='2026-10';oct.creditForMonth='2026-10';oct.excludeFromExpense=true;oct.statementVerified=true;changed=true}}
   const supplementVersion='2026-10-03-r277';
@@ -38,9 +42,16 @@
    });
    db.meta.cajuStatementSupplementVersion=supplementVersion;changed=true;
   }
-  const rollforwardVersion='2026-10-03-r277';
+  const rollforwardVersion='2026-10-03-r278';
   if(cj){
    if(db.meta.cajuOctoberRollforwardVersion!==rollforwardVersion){
+    /* R277 may have undone a cancellation explicitly requested by the user. Put those rows back. */
+    const priorRestore=(db.audit||[]).find(a=>a.action==='caju_month_restored'&&String(a.id||'').startsWith('2026-10:'));
+    String(priorRestore?.id||'').slice('2026-10:'.length).split(',').filter(Boolean).forEach(id=>{
+     const t=db.transactions.find(x=>String(x.id)===id);
+     const userClear=(db.audit||[]).find(a=>a.action==='caju_month_cleared'&&String(a.id||'').startsWith('2026-10:')&&String(a.id||'').slice('2026-10:'.length).split(',').includes(id)&&/a pedido do usuário/i.test(String(a.note||'')));
+     if(t&&userClear&&['realized','real','posted','confirmed'].includes(String(t.status||'').toLowerCase())){t.status='cancelled';t.cancelledAt=userClear.at||new Date().toISOString()}
+    });
     /* R276 canceled every realized October expense. Restore only IDs recorded by that migration. */
     const previousClear=(db.audit||[]).find(a=>a.action==='caju_month_cleared'&&String(a.id||'').startsWith('2026-10:')&&/migração aplicada uma única vez/i.test(String(a.note||'')));
     const restored=[];
