@@ -37,7 +37,7 @@ function monthlySnapshot(cardId,key){
 }
 const originalSnapshot=typeof window.cajuSnapshot==='function'?window.cajuSnapshot:null;
 window.cajuSnapshot=monthlySnapshot;
-window.FinanceCajuMonthly={snapshot:monthlySnapshot,topupFor,monthSpend,version:'R272'};
+window.FinanceCajuMonthly={snapshot:monthlySnapshot,topupFor,monthSpend,version:'R278'};
 function ensureStyle(){
  if(document.getElementById('r271DashboardStyle'))return;
  const style=document.createElement('style');style.id='r271DashboardStyle';
