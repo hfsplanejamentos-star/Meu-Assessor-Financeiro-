@@ -21,9 +21,12 @@
   }
   db.automationState=db.automationState||{};db.automationState.cajuMonthlyTopups=db.automationState.cajuMonthlyTopups||{};
   if(Number(db.automationState.cajuMonthlyTopups['2026-10'])!==1572.40){db.automationState.cajuMonthlyTopups['2026-10']=1572.40;changed=true}
-  if(db.meta.cajuReportedBalanceRestoreVersion!=='2026-10-02-r278'){
-   if(db.meta.cajuCurrentReportedBalance==null){db.meta.cajuCurrentReportedBalance=1235.78;db.meta.cajuCurrentReportedDate='2026-10-02'}
-   db.meta.cajuReportedBalanceRestoreVersion='2026-10-02-r278';changed=true;
+  if(db.meta.cajuReportedBalanceRestoreVersion!=='2026-10-03-r279'||!(Number(db.meta.cajuCurrentReportedBalance)>0)){
+   /* A cleared zero is not a reported balance; preserve the user's last confirmed amount. */
+   if(!(Number(db.meta.cajuCurrentReportedBalance)>0)){
+    db.meta.cajuCurrentReportedBalance=1235.78;db.meta.cajuCurrentReportedDate='2026-10-02';changed=true;
+   }
+   db.meta.cajuReportedBalanceRestoreVersion='2026-10-03-r279';changed=true;
   }
   const oct=(db.transactions||[]).find(t=>String(t.id)==='caju_20260928_credit_157240'||(String(t.date||'').slice(0,10)==='2026-09-28'&&Math.abs(n(t.value)-1572.40)<.01&&/caju/i.test([t.origin,t.source,t.desc].join(' '))));
   if(oct){if(oct.competenceMonth!=='2026-10'||oct.creditForMonth!=='2026-10'){oct.competenceMonth='2026-10';oct.creditForMonth='2026-10';oct.excludeFromExpense=true;oct.statementVerified=true;changed=true}}
@@ -42,7 +45,7 @@
    });
    db.meta.cajuStatementSupplementVersion=supplementVersion;changed=true;
   }
-  const rollforwardVersion='2026-10-03-r278';
+  const rollforwardVersion='2026-10-03-r279';
   if(cj){
    if(db.meta.cajuOctoberRollforwardVersion!==rollforwardVersion){
     /* R277 may have undone a cancellation explicitly requested by the user. Put those rows back. */
