@@ -8,7 +8,7 @@
  const expenseRows=m=>{
   const current=new Date().toISOString().slice(0,7),rows=[],direct=[];
   txRows().forEach(t=>{if(monthOf(t)!==m||Number(t.value)>=0||t.transfer||t.transferId||t.excludeFromExpense||t.invoicePayment||t.cardPayment||t.kind==='invoice_payment'||t.kind==='transfer'||norm(t.status)==='cancelled')return;
-   const planned=['planned','planejada','planejado','prevista','previsto'].includes(norm(t.status));if(m<current&&planned)return;
+   const planned=['planned','planejada','planejado','prevista','previsto','pending','forecast'].includes(norm(t.status));if(m<current&&planned)return;
    const row={kind:'transaction',cat:t.cat||'Outros',sub:t.sub||t.subcategory||t.desc||t.description||'Sem subcategoria',value:Math.abs(Number(t.value)||0),id:t.id,recurringId:t.recurringId||null,desc:t.desc||t.description||'',status:t.status};direct.push(t);rows.push(row)
   });
   if(m>=current)recRows().filter(r=>r.active!==false&&(!ym(r.startDate)||m>=ym(r.startDate))&&(!ym(r.endDate)||m<=ym(r.endDate))).forEach(r=>{
@@ -67,7 +67,7 @@
   rows.forEach(row=>{
    const recurring=row.kind==='recurring'?recRows().find(x=>String(x.id)===String(row.id)):null;
    const tx=row.kind==='transaction'?txRows().find(x=>String(x.id)===String(row.id)):null;
-   const isPlanned=!!recurring||!!tx&&['planned','planejada','planejado','prevista','previsto'].includes(norm(tx.status));
+   const isPlanned=!!recurring||!!tx&&['planned','planejada','planejado','prevista','previsto','pending','forecast'].includes(norm(tx.status));
    const desc=row.desc||row.sub||recurring?.desc||tx?.desc||'Despesa';
    const state=isPlanned?'Prevista':'Realizada';
    html+=`<div class="item category-realize-row"><div class="ico">${typeof iconFor==='function'?iconFor(row.cat,row.sub):'•'}</div><div><b>${desc}</b><small>${row.sub||row.cat||'Despesa'} · ${state}</small></div><div class="amount down">${typeof brl==='function'?brl(-amount(row)):amount(row).toFixed(2)}${isPlanned?`<button type="button" class="secondary" data-realize-category="${String(row.id).replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" data-row-kind="${recurring?'recurring':'transaction'}">Efetivar</button>`:''}</div></div>`;
@@ -77,7 +77,7 @@
  function openPlannedDetail(){
   const m=selectedMonth(),all=(window.FinanceDataModel?.expenseRows?.(m)||expenseRows(m)),rows=all.filter(row=>{
    if(row.kind==='recurring')return true;
-   const t=txRows().find(x=>String(x.id)===String(row.id));return !!t&&['planned','planejada','planejado','prevista','previsto'].includes(norm(t.status));
+   const t=txRows().find(x=>String(x.id)===String(row.id));return !!t&&['planned','planejada','planejado','prevista','previsto','pending','forecast'].includes(norm(t.status));
   });
   let modal=document.getElementById('plannedExpenseDetailModal');
   if(!modal){modal=document.createElement('div');modal.id='plannedExpenseDetailModal';modal.className='modal';modal.innerHTML='<div class="modal-card"><div class="modal-head"><h3 id="plannedExpenseDetailTitle"></h3><button type="button" class="close" aria-label="Fechar">×</button></div><div id="plannedExpenseDetailBody"></div></div>';document.body.appendChild(modal);modal.querySelector('.close').onclick=()=>modal.classList.remove('open');modal.onclick=e=>{if(e.target===modal)modal.classList.remove('open')}}
