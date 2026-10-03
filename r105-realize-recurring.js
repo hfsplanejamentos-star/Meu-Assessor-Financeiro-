@@ -89,8 +89,16 @@
   });
   modal.querySelector('#plannedExpenseDetailTitle').textContent='Despesas previstas · '+m;body.innerHTML=html;modal.classList.add('open');
  }
+ function bindPlannedCards(){
+  document.querySelectorAll('#kpis [data-kpi-id="expense_planned"],#cardKpis [data-kpi-id="expense_planned"]').forEach(card=>{
+   card.style.pointerEvents='auto';card.style.cursor='pointer';card.tabIndex=0;card.setAttribute('role','button');
+   card.onclick=e=>{e.preventDefault();e.stopPropagation();openPlannedDetail()};
+   card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();card.click()}};
+  });
+ }
  function bind(){
   addRowButtons();
+  bindPlannedCards();
   if(window.FinanceIntegrity)window.FinanceIntegrity.openCategory=openCategory;
   window.openCategoryDetail=openCategory;
   document.addEventListener('click',e=>{
@@ -104,7 +112,7 @@
   },true);
   const form=document.getElementById('entryForm');if(form&&form.onsubmit&&!form.dataset.recurringWrapped){const original=form.onsubmit;form.onsubmit=function(e){const context=window.__ASSESSOR_REALIZING_RECURRING__,before=new Set(txRows().map(t=>String(t.id)));const result=original.call(this,e);if(context){const created=txRows().find(t=>!before.has(String(t.id)));if(created){created.recurringId=context.id;created.recurrenceMonth=context.month;try{save()}catch(_){}try{window.refreshFinancialUI?.(context.month);window.FinanceCloud?.detectLocalChange?.()}catch(_){}}window.__ASSESSOR_REALIZING_RECURRING__=null;document.getElementById('recurringRealizeNotice')?.remove();const title=document.getElementById('modalTitle');if(title)title.textContent='Novo lançamento'}return result};form.dataset.recurringWrapped='1'}
  }
- const mo=new MutationObserver(addRowButtons);mo.observe(document.body,{childList:true,subtree:true});
+ const mo=new MutationObserver(()=>{addRowButtons();bindPlannedCards()});mo.observe(document.body,{childList:true,subtree:true});
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
  window.RecurringRealizer={open:(id,month=selectedMonth())=>{const r=recRows().find(x=>String(x.id)===String(id));if(r)prepareEntry(r,month)},openCategory};
 })();
