@@ -1,4 +1,4 @@
-/* R268 — trava canônica e autoteste financeiro em tempo de execução.
+/* R276 — reset mensal Caju idempotente e auditoria somente leitura.
    Objetivo: impedir migrações históricas de reescrever saldos já conciliados. */
 (()=>{'use strict';
  const LOCK='R268',n=v=>Number(v)||0,ym=v=>String(v||'').slice(0,7),round=v=>Math.round(n(v)*100)/100;
@@ -23,6 +23,41 @@
   if(Number(db.automationState.cajuMonthlyTopups['2026-10'])!==1572.40){db.automationState.cajuMonthlyTopups['2026-10']=1572.40;changed=true}
   const oct=(db.transactions||[]).find(t=>String(t.id)==='caju_20260928_credit_157240'||(String(t.date||'').slice(0,10)==='2026-09-28'&&Math.abs(n(t.value)-1572.40)<.01&&/caju/i.test([t.origin,t.source,t.desc].join(' '))));
   if(oct){if(oct.competenceMonth!=='2026-10'||oct.creditForMonth!=='2026-10'){oct.competenceMonth='2026-10';oct.creditForMonth='2026-10';oct.excludeFromExpense=true;oct.statementVerified=true;changed=true}}
+  const supplementVersion='2026-10-02-r276';
+  if(cj&&db.meta.cajuStatementSupplementVersion!==supplementVersion){
+   const rows=[
+    ['caju_20260917_padaria_1','2026-09-17','PADARIA E CONFEITARIA',-1.00,'Alimentação'],
+    ['caju_20260930_reembolso_netos','2026-09-30','IFD NETOS DELIVERY · Reembolso',53.90,'Reembolso'],
+    ['caju_20260930_supermarket_9661','2026-09-30','SUPER MARKET CAXIAS',-96.61,'Mercado'],
+    ['caju_20260930_candido_5148','2026-09-30','CANDIDO REIS DA FO...',-51.48,'Alimentação']
+   ];
+   const norm=s=>String(s||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-z0-9]/gi,'').toLowerCase();
+   rows.forEach(([id,date,desc,value,sub])=>{
+    const duplicate=db.transactions.some(t=>String(t.id)===id||(String(t.date||'').slice(0,10)===date&&Math.abs(n(t.value)-value)<.005&&norm(t.desc||t.description).includes(norm(desc).slice(0,8))));
+    if(!duplicate)db.transactions.push({id,date,desc,description:desc,value,cat:value>0?'Reembolso':'Alimentação',sub,status:'realized',card:'card_caju_alimentacao',cardId:'card_caju_alimentacao',benefit:true,excludeFromExpense:true,excludeFromPatrimony:true,statementVerified:true,origin:'Extrato Caju confirmado'});
+   });
+   db.meta.cajuStatementSupplementVersion=supplementVersion;changed=true;
+  }
+  if(cj&&db.meta.cajuOctoberClearVersion!==supplementVersion){
+   const canceled=[];
+   db.transactions.forEach(t=>{
+    const isCaju=t.card==='card_caju_alimentacao'||t.cardId==='card_caju_alimentacao'||t.benefit===true;
+    const status=String(t.status||'').toLowerCase();
+    const recurring=t.recurring===true||!!t.recurringId||!!t.recurrenceId;
+    if(isCaju&&String(t.date||'').slice(0,7)==='2026-10'&&n(t.value)<0&&!isPlanned(status)&&!['ignored','cancelled','canceled'].includes(status)&&!recurring){
+     t.status='cancelled';t.cancelledAt=new Date().toISOString();canceled.push(String(t.id));
+    }
+   });
+   if(canceled.length){db.audit=Array.isArray(db.audit)?db.audit:[];db.audit.push({action:'caju_month_cleared',id:'2026-10:'+canceled.join(','),at:new Date().toISOString(),note:'Gastos Caju de outubro cancelados após restauração histórica; migração aplicada uma única vez.'})}
+   const topup=Number(db.automationState?.cajuMonthlyTopups?.['2026-10']??db.meta.cajuOctoberCredit??1572.40);
+   const opening=Number(db.meta.cajuStatementAvailable??db.meta.cajuLatestReportedBalance??cj.balance??0);
+   const octRows=db.transactions.filter(t=>(t.card==='card_caju_alimentacao'||t.cardId==='card_caju_alimentacao'||t.benefit===true)&&String(t.date||'').slice(0,7)==='2026-10'&&isReal(t.status));
+   const spent=octRows.filter(t=>n(t.value)<0&&!isPlanned(t.status)&&!['ignored','cancelled','canceled'].includes(String(t.status||'').toLowerCase())&&!t.excludeFromBalance).reduce((s,t)=>s+Math.abs(n(t.value)),0);
+   const refunds=octRows.filter(t=>n(t.value)>0&&!/recarga|beneficios/i.test(String(t.desc||t.description||''))).reduce((s,t)=>s+n(t.value),0);
+   const current=round(opening+topup-spent+refunds);
+   cj.balance=current;cj.availableLimit=current;db.meta.cajuCurrentAvailable=current;db.meta.cajuCurrentBalanceThrough='2026-10-31';
+   db.meta.cajuOctoberClearVersion=supplementVersion;changed=true;
+  }
   if(changed){try{localStorage.setItem('assessor_v180_simulacao_ficticia',JSON.stringify(db))}catch(_){}}
   return changed;
  }
@@ -36,34 +71,13 @@
   add('Cartões com saldo finito',cards.every(c=>Number.isFinite(Number(c.balance??c.availableLimit??0))),cards.map(c=>[c.id,c.balance,c.availableLimit]));
   const c6=accounts.find(a=>a.id==='acc_c6'),cj=cards.find(c=>c.id==='card_caju_alimentacao');
   add('C6 snapshot coerente',!c6||db.meta?.c6StatementVersion!=='2026-09-30-final'||(round(c6.balance)===round(db.meta.c6StatementBalance)&&String(c6.balanceDate)>='2026-09-30'),{balance:c6?.balance,meta:db.meta?.c6StatementBalance,date:c6?.balanceDate});
-  add('Caju snapshot coerente',!cj||db.meta?.cajuStatementVersion!=='2026-09-30-final'||(round(cj.balance)===round(cj.availableLimit)&&round(cj.balance)===round(db.meta.cajuStatementAvailable)),{balance:cj?.balance,available:cj?.availableLimit,meta:db.meta?.cajuStatementAvailable});
+  add('Caju saldo finito e consistente',!cj||(Number.isFinite(Number(cj.balance))&&round(cj.balance)===round(cj.availableLimit)),{balance:cj?.balance,availableLimit:cj?.availableLimit});
   add('Caju fora despesa geral',tx.filter(t=>t.card==='card_caju_alimentacao'||t.cardId==='card_caju_alimentacao'||t.benefit===true).every(t=>t.excludeFromExpense===true||n(t.value)>=0),true);
   add('Transferências fora despesa',tx.filter(t=>t.transfer||t.transferId||t.kind==='transfer').every(t=>t.excludeFromExpense===true||excluded(t)),true);
   const android=tx.filter(t=>t.androidNotificationId),androidIds=android.map(t=>String(t.androidNotificationId));
   add('Android sem duplicidade por notificationId',new Set(androidIds).size===androidIds.length,{unique:new Set(androidIds).size,total:androidIds.length});
   add('Android importado realizado',android.every(t=>isReal(t.status)),android.filter(t=>!isReal(t.status)).map(t=>[t.id,t.status]));
-  /* Extrato Caju confirmado nas imagens 17/09–01/10. Somente linhas novas/ausentes.
-     O reembolso é entrada; a recarga de 28/09 continua competência 2026-10. */
-  const cajuRows=[
-   ['caju_20260917_padaria_1','2026-09-17','PADARIA E CONFEITARIA',-1.00,'Alimentação'],
-   ['caju_20260930_reembolso_netos','2026-09-30','IFD NETOS DELIVERY · Reembolso',53.90,'Reembolso'],
-   ['caju_20260930_supermarket_9661','2026-09-30','SUPER MARKET CAXIAS',-96.61,'Mercado'],
-   ['caju_20260930_candido_5148','2026-09-30','CANDIDO REIS DA FO...',-51.48,'Alimentação'],
-   ['caju_20261001_ifd_vitor_3601','2026-10-01','IFD VITOR',-36.01,'Delivery']
-  ];
-  const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/gi,'').toLowerCase();
-  cajuRows.forEach(([id,date,desc,value,sub])=>{
-   const duplicate=(db.transactions||[]).some(t=>String(t.id)===id||(String(t.date||'').slice(0,10)===date&&Math.abs(n(t.value)-value)<.005&&norm(t.desc||t.description).includes(norm(desc).slice(0,8))));
-   if(!duplicate){db.transactions.push({id,date,desc,value,cat:value>0?'Reembolso':'Alimentação',sub,status:'realized',card:'card_caju_alimentacao',cardId:'card_caju_alimentacao',benefit:true,excludeFromExpense:true,statementVerified:true,origin:'Extrato Caju confirmado'});changed=true}
-  });
-  /* O snapshot R$ 1.419,88 é de 30/09. A despesa confirmada de 01/10 reduz o disponível atual. */
-  if(cj&&db.meta.cajuStatementVersion==='2026-09-30-final'){
-   const octReal=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)==='2026-10'&&n(t.value)<0&&(t.card==='card_caju_alimentacao'||t.cardId==='card_caju_alimentacao')&&isReal(t.status));
-   const octRefund=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,7)==='2026-10'&&n(t.value)>0&&(t.card==='card_caju_alimentacao'||t.cardId==='card_caju_alimentacao')&&isReal(t.status)&&!/recarga|beneficios/i.test(String(t.desc||'')));
-   const current=round(1419.88-octReal.reduce((s,t)=>s+Math.abs(n(t.value)),0)+octRefund.reduce((s,t)=>s+n(t.value),0));
-   cj.balance=current;cj.availableLimit=current;db.meta.cajuCurrentAvailable=current;db.meta.cajuCurrentBalanceThrough='2026-10-01';changed=true;
-  }
-  const top=db.automationState?.cajuMonthlyTopups?.['2026-10'];
+    const top=db.automationState?.cajuMonthlyTopups?.['2026-10'];
   add('Recarga Caju outubro',Math.abs(n(top)-1572.40)<.01,top);
   try{const can=window.FinanceCanonical;if(can?.summary){['2026-09','2026-10','2026-11','2026-12'].forEach(m=>{const s=can.summary(m);add('Resumo canônico '+m,[s.realizedIncome,s.realizedExpense,s.plannedIncome,s.plannedExpense,s.investment].every(Number.isFinite),s)})}}catch(e){add('Motor canônico executável',false,String(e))}
   try{const p=window.FinanceCanonical?.projection?.('2026-10',12)||[];add('Projeção 12 meses',p.length===12&&p.every(r=>[r.income,r.expense,r.patrimony,r.liquid,r.invest].every(Number.isFinite)),p)}catch(e){add('Projeção executável',false,String(e))}
