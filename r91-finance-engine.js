@@ -2,7 +2,7 @@
 (()=>{'use strict';
 const PLAN_SOURCE='user-approved-investment-3000',INV='acc_invest_plan';
 const n=v=>Number(v)||0,abs=v=>Math.abs(n(v)),keyOf=v=>String(v||'').slice(0,7);
-const planned=s=>['planned','planejada','planejado','prevista','previsto'].includes(String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase());
+const planned=s=>['planned','planejada','planejado','prevista','previsto','pending','forecast'].includes(String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase());
 const real=s=>{const v=String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();return !v||['realized','real','realizada','realizado','posted','confirmada','confirmado','paid','received','pago','recebido'].includes(v)};
 const isTransfer=t=>!!(t?.transfer||t?.transferId)||t?.kind==='transfer';
 const isInvoicePayment=t=>!!(t?.invoicePayment||t?.cardPayment)||t?.kind==='invoice_payment';
