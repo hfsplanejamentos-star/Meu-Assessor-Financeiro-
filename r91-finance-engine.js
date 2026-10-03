@@ -11,7 +11,7 @@ function recurrenceName(x){return String(x?.name||x?.desc||x?.description||'').n
 function recurringAlreadyPosted(r,rows,candidates=[r]){const id=String(r.id||''),name=recurrenceName(r),value=abs(r.value),sameNameCount=candidates.filter(x=>recurrenceName(x)===name).length;return rows.some(t=>(id&&String(t.recurringId||'')===id)||(name&&recurrenceName(t)===name&&(sameNameCount===1||Math.abs(abs(t.value)-value)<.02)))}
 function expenseMonthOf(t){return (t.card||t.cardId)?(t.invoiceMonth||keyOf(t.date)):keyOf(t.date)}
 function expenseRows(key){
- const current=keyOf(new Date()),direct=(db.transactions||[]).filter(t=>expenseMonthOf(t)===key&&n(t.value)<0&&!isTransfer(t)&&!t.excludeFromExpense&&!isInvoicePayment(t)&&String(t.status||'').toLowerCase()!=='cancelled'&&(key>=current||real(t.status)));
+ const current=typeof monthKey==='function'&&typeof today!=='undefined'?monthKey(today):keyOf(new Date().toISOString()),direct=(db.transactions||[]).filter(t=>expenseMonthOf(t)===key&&n(t.value)<0&&!isTransfer(t)&&!t.excludeFromExpense&&!isInvoicePayment(t)&&String(t.status||'').toLowerCase()!=='cancelled'&&(key>=current||real(t.status)));
  const rows=direct.map(t=>({kind:'transaction',id:t.id,recurringId:t.recurringId||null,cat:t.cat||'Outros',sub:t.sub||t.subcategory||t.desc||t.description||'',desc:t.desc||t.description||'',value:abs(t.value),status:t.status||'realized',date:t.date}));
  if(key>=current){const recurrences=recurringFor(key);recurrences.forEach(r=>{if(!recurringAlreadyPosted(r,direct,recurrences))rows.push({kind:'recurring',id:r.id,cat:r.cat||'Outros',sub:r.sub||r.desc||'Recorrente',desc:r.desc||r.name||r.description||'Despesa recorrente',value:abs(r.value),status:'planned',due:r.due})})}
  return rows;
