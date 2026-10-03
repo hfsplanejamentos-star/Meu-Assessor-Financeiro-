@@ -8,19 +8,23 @@ const isTransfer=t=>!!(t?.transfer||t?.transferId)||t?.kind==='transfer';
 const isInvoicePayment=t=>!!(t?.invoicePayment||t?.cardPayment)||t?.kind==='invoice_payment';
 function recurringFor(key){return (db.recurring||[]).filter(r=>{const st=keyOf(r.startDate),en=keyOf(r.endDate);return r.active!==false&&(!st||key>=st)&&(!en||key<=en)})}
 function recurrenceName(x){return String(x?.name||x?.desc||x?.description||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\b(previsto|prevista|automacao mensal|automacao)\b/g,'').replace(/\b(do|da|de|mensal)\b/g,'').replace(/[^a-z0-9]+/g,' ').trim()}
-function recurringAlreadyPosted(r,rows){const id=String(r.id||''),name=recurrenceName(r),value=abs(r.value);return rows.some(t=>(id&&String(t.recurringId||'')===id)||(name&&recurrenceName(t)===name&&Math.abs(abs(t.value)-value)<.02))}
+function recurringAlreadyPosted(r,rows,candidates=[r]){const id=String(r.id||''),name=recurrenceName(r),value=abs(r.value),sameNameCount=candidates.filter(x=>recurrenceName(x)===name).length;return rows.some(t=>(id&&String(t.recurringId||'')===id)||(name&&recurrenceName(t)===name&&(sameNameCount===1||Math.abs(abs(t.value)-value)<.02)))}
+function expenseMonthOf(t){return (t.card||t.cardId)?(t.invoiceMonth||keyOf(t.date)):keyOf(t.date)}
+function expenseRows(key){
+ const current=keyOf(new Date()),direct=(db.transactions||[]).filter(t=>expenseMonthOf(t)===key&&n(t.value)<0&&!isTransfer(t)&&!t.excludeFromExpense&&!isInvoicePayment(t)&&String(t.status||'').toLowerCase()!=='cancelled'&&(key>=current||real(t.status)));
+ const rows=direct.map(t=>({kind:'transaction',id:t.id,recurringId:t.recurringId||null,cat:t.cat||'Outros',sub:t.sub||t.subcategory||t.desc||t.description||'',desc:t.desc||t.description||'',value:abs(t.value),status:t.status||'realized',date:t.date}));
+ if(key>=current){const recurrences=recurringFor(key);recurrences.forEach(r=>{if(!recurringAlreadyPosted(r,direct,recurrences))rows.push({kind:'recurring',id:r.id,cat:r.cat||'Outros',sub:r.sub||r.desc||'Recorrente',desc:r.desc||r.name||r.description||'Despesa recorrente',value:abs(r.value),status:'planned',due:r.due})})}
+ return rows;
+}
 function summary(key){
  const tx=(db.transactions||[]).filter(t=>keyOf(t.date)===key);
  const op=tx.filter(t=>!isTransfer(t)&&!t.excludeFromExpense&&!isInvoicePayment(t));
  const realizedIncome=op.filter(t=>real(t.status)&&n(t.value)>0).reduce((s,t)=>s+n(t.value),0);
- const realizedExpense=op.filter(t=>real(t.status)&&n(t.value)<0).reduce((s,t)=>s+abs(t.value),0);
  const plannedIncomeRows=op.filter(t=>planned(t.status)&&n(t.value)>0);
- const plannedExpenseRows=op.filter(t=>planned(t.status)&&n(t.value)<0);
  const recurringRows=recurringFor(key);
- const recurringIncome=recurringRows.filter(r=>n(r.value)>0&&!recurringAlreadyPosted(r,plannedIncomeRows)).reduce((s,r)=>s+n(r.value),0);
- const recurringExpense=recurringRows.filter(r=>n(r.value)<0&&!recurringAlreadyPosted(r,plannedExpenseRows)).reduce((s,r)=>s+abs(r.value),0);
+ const recurringIncome=recurringRows.filter(r=>n(r.value)>0&&!recurringAlreadyPosted(r,plannedIncomeRows,recurringRows)).reduce((s,r)=>s+n(r.value),0);
+ const expenseItems=expenseRows(key),realizedExpense=expenseItems.filter(x=>x.kind==='transaction'&&real(x.status)).reduce((s,x)=>s+x.value,0),recurringExpense=expenseItems.filter(x=>x.kind==='recurring').reduce((s,x)=>s+x.value,0),directPlannedExpense=expenseItems.filter(x=>x.kind==='transaction'&&planned(x.status)).reduce((s,x)=>s+x.value,0);
  const plannedIncome=plannedIncomeRows.reduce((s,t)=>s+n(t.value),0)+recurringIncome;
- const directPlannedExpense=plannedExpenseRows.reduce((s,t)=>s+abs(t.value),0);
  const investment=(db.transactions||[]).filter(t=>keyOf(t.date)===key&&isTransfer(t)&&(t.dest===INV||t.destAccountId===INV)&&planned(t.status)).reduce((s,t)=>s+abs(t.value),0);
  return {key,realizedIncome,realizedExpense,plannedIncome,plannedExpense:directPlannedExpense+recurringExpense,recurringIncome,recurringExpense,investment};
 }
@@ -42,9 +46,9 @@ function accumulatedRealized(key){
   const effective=op.filter(t=>real(t.status)||planned(t.status)),incomeRows=effective.filter(t=>n(t.value)>0),expenseRows=effective.filter(t=>n(t.value)<0);
   income+=incomeRows.reduce((s,t)=>s+n(t.value),0);expense+=expenseRows.reduce((s,t)=>s+abs(t.value),0);
   investment+=tx.filter(t=>isTransfer(t)&&real(t.status)&&n(t.value)>0&&(t.dest===INV||t.destAccountId===INV||/invest/.test(accountType(t.dest||t.destAccountId||t.account||t.accountId)))).reduce((s,t)=>s+n(t.value),0);
-  recurringFor(mk).forEach(r=>{
-   if(n(r.value)>0&&!recurringAlreadyPosted(r,incomeRows))income+=n(r.value);
-   if(n(r.value)<0&&!recurringAlreadyPosted(r,expenseRows))expense+=abs(r.value);
+  const recurringRows=recurringFor(mk);recurringRows.forEach(r=>{
+   if(n(r.value)>0&&!recurringAlreadyPosted(r,incomeRows,recurringRows))income+=n(r.value);
+   if(n(r.value)<0&&!recurringAlreadyPosted(r,expenseRows,recurringRows))expense+=abs(r.value);
   });
  });
  return {income,expense,investment,balance:liveBalance+income-expense-investment};
@@ -87,8 +91,7 @@ function audit(){
 function renderCanonicalExpenseChart(){
  const key=(typeof scopeMonth==='function'?scopeMonth('category'):(typeof activeMonth!=='undefined'?activeMonth:'2026-09'));
  const current=typeof monthKey==='function'?monthKey(today):new Date().toISOString().slice(0,7),cats={};
- let rows=[];
- try{if(window.FinanceDataModel&&typeof window.FinanceDataModel.expenseRows==='function')rows=window.FinanceDataModel.expenseRows(key)||[]}catch(_){}
+ let rows=expenseRows(key);
  if(rows.length){
    rows.forEach(t=>{const name=t.cat||t.category||'Outros',value=Math.abs(n(t.value??t.amount));if(value)cats[name]=(cats[name]||0)+value});
  }else{
@@ -218,7 +221,7 @@ function renderMobileFinSummary(){
 }
 function install(){
  ensurePlan();
- window.FinanceCanonical={summary,projection,recurringFor,currentBalances,accumulatedRealized,ensurePlan,normalizeCore,audit,bind,canonicalRenderKpis,renderCanonicalExpenseChart,renderMobileFinSummary,refreshCanonicalMonth};window.renderKpis=canonicalRenderKpis;
+ window.FinanceCanonical={summary,projection,recurringFor,expenseRows,currentBalances,accumulatedRealized,ensurePlan,normalizeCore,audit,bind,canonicalRenderKpis,renderCanonicalExpenseChart,renderMobileFinSummary,refreshCanonicalMonth};window.FinanceDataModel=Object.assign(window.FinanceDataModel||{},{expenseRows,summary});window.renderKpis=canonicalRenderKpis;
  if(typeof window.renderCharts==='function'&&!window.renderCharts.__canonicalExpenseWrapped){
    const baseRenderCharts=window.renderCharts;
    const wrappedRenderCharts=function(...args){const out=baseRenderCharts.apply(this,args);try{renderCanonicalExpenseChart()}catch(_){}return out};
