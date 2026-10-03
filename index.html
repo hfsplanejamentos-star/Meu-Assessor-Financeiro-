@@ -1827,7 +1827,7 @@ document.addEventListener('touchstart',e=>{
 },{passive:true});
 
 function monthOfTx(t){return (t?.card||t?.cardId)?(t.invoiceMonth||String(t.date||'').slice(0,7)):String(t.date||'').slice(0,7)}
-function transactionsForMonth(key=activeMonth){if((key==='2026-09'||key==='2026-10')&&db.meta?.cleanResetVersion==='2026-10-02-clean-recurring-v2')return [];return (db.transactions||[]).filter(t=>monthOfTx(t)===key)}
+function transactionsForMonth(key=activeMonth){return (db.transactions||[]).filter(t=>monthOfTx(t)===key)}
 
 const STORAGE='assessor_v180_simulacao_ficticia';
 const seed={
@@ -2470,152 +2470,27 @@ function renderInvoiceManagement(){
  acc.balance=909.86;acc.statementBalanceDate='2026-09-18';acc.statementVerified=true;
  db.migrations[migrationId]=true;save();
 })();
-/* Caju — extrato real + regra mensal de saldo (R10.16)
-   Regra canônica: limite do mês = saldo anterior + recarga atribuída ao mês.
-   Recargas de meses anteriores NÃO são acumuladas novamente. */
-function ensureCajuMonthly(){
- const RESET_VERSION='2026-10-02-clean-recurring-v2';
- if(db.meta?.cleanResetVersion!==RESET_VERSION){
-   db.transactions=[];
-   db.investments=[];
-   db.invoices=[];
-   db.auditLog=[];
-   (db.accounts||[]).forEach(a=>{a.balance=0;a.openingBalance=0});
-   (db.cards||[]).forEach(x=>{x.balance=0;x.availableLimit=0});
-   db.meta=db.meta||{};db.meta.cleanResetVersion=RESET_VERSION;db.meta.financialPatchVersion=RESET_VERSION;
-   try{save()}catch(_){}
-   if(window.FinanceCloud?.configured?.())setTimeout(()=>window.FinanceCloud.pushLocalControlled?.(),500);
-   return;
- }
- if(db.meta?.cleanResetVersion===RESET_VERSION)return;
- const PATCH_VERSION='2026-10-02-r1027';
- if(db.meta?.financialPatchVersion===PATCH_VERSION)return;
- db.cards=db.cards||[];db.transactions=db.transactions||[];db.meta=db.meta||{};db.automationState=db.automationState||{};
- let caju=db.cards.find(c=>String(c.id)==='card_caju_alimentacao'||String(c.name||'').toLowerCase().includes('caju'));
- if(!caju){caju={id:'card_caju_alimentacao',name:'Caju Alimentação',type:'Benefício',limit:0,balance:0};db.cards.push(caju)}
- caju.type='Benefício';caju.excludeFromPatrimony=true;caju.accumulative=false;
-
- const ids=[
-  'caju_2026_09_17_credit','caju_2026_09_17_marilza_2999','caju_2026_09_17_padaria_14','caju_2026_09_17_padaria_100',
-  'caju_2026_09_18_kaique_4905','caju_2026_09_18_padaria_3090','caju_2026_09_19_restaurante_7800','caju_2026_09_20_luana_3189',
-  'caju_2026_09_21_netos_2494','caju_2026_09_21_super_market_24689','caju_2026_09_22_dafoca_4400',
-  'caju_2026_09_23_julia_2941','caju_2026_09_23_padaria_3140','caju_2026_09_23_dom_bar_5590','caju_2026_09_24_boteco_3750',
-  'caju_2026_09_27_padaria_19600','caju_2026_09_28_mari_4419','caju_2026_09_28_credit_oct',
-  'caju_2026_09_29_homer_1250','caju_2026_09_29_pura_1200','caju_2026_09_29_padaria_3640','caju_2026_09_29_dafoca_3575',
-  'caju_2026_09_30_refund_netos_5390','caju_2026_09_30_super_market_9661','caju_2026_09_30_candido_5148','caju_2026_09_30_pura_11770',
-  'caju_2026_10_01_vitor_3601'
- ];
- const idset=new Set(ids);
- db.transactions=db.transactions.filter(t=>{
-   const isCaju=t.benefit===true||String(t.cardId||t.card||'')===String(caju.id)||/caju/i.test([t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' '));
-   const d=String(t.date||'').slice(0,10);
-   if(!isCaju||d<'2026-09-17'||d>'2026-10-01')return true;
-   return idset.has(String(t.id||''));
- });
- const base={card:caju.id,cardId:caju.id,origin:'Extrato Caju confirmado',source:'Extrato Caju confirmado',status:'realized',benefit:true,excludeFromExpense:true,statementVerified:true,cat:'Alimentação'};
- const rows=[
-  ['caju_2026_09_17_credit','2026-09-17','Caju Benefícios',1006.89,'Crédito benefício','2026-09'],
-  ['caju_2026_09_17_marilza_2999','2026-09-17','IFD*60.939.734 MARI...',-29.99,'Delivery'],
-  ['caju_2026_09_17_padaria_14','2026-09-17','PADARIA E CONFEITARIA',-14.00,'Padaria'],
-  ['caju_2026_09_17_padaria_100','2026-09-17','PADARIA E CONFEITARIA',-1.00,'Padaria'],
-  ['caju_2026_09_18_kaique_4905','2026-09-18','IFD*64802138 KAIQUE...',-49.05,'Delivery'],
-  ['caju_2026_09_18_padaria_3090','2026-09-18','PADARIA E CONFEITARIA',-30.90,'Padaria'],
-  ['caju_2026_09_19_restaurante_7800','2026-09-19','Restaurante MACAE BR',-78.00,'Restaurante'],
-  ['caju_2026_09_20_luana_3189','2026-09-20','IFD*56162560 LUANA...',-31.89,'Delivery'],
-  ['caju_2026_09_21_netos_2494','2026-09-21','IFD*NETOS DELIVERY',-24.94,'Cerveja'],
-  ['caju_2026_09_21_super_market_24689','2026-09-21','SUPER MARKET CAX...',-246.89,'Supermercado'],
-  ['caju_2026_09_22_dafoca_4400','2026-09-22','DAFOCA BAR RIO DE J...',-44.00,'Restaurante'],
-  ['caju_2026_09_23_julia_2941','2026-09-23','IFD*51.419.326 JULIA...',-29.41,'Delivery'],
-  ['caju_2026_09_23_padaria_3140','2026-09-23','PADARIA E CONFEITARIA',-31.40,'Padaria'],
-  ['caju_2026_09_23_dom_bar_5590','2026-09-23','DOM BAR E RESTAURANTE',-55.90,'Restaurante'],
-  ['caju_2026_09_24_boteco_3750','2026-09-24','BOTECO ITAIPAVA RIO...',-37.50,'Restaurante'],
-  ['caju_2026_09_27_padaria_19600','2026-09-27','PADARIA E CONFEITARIA',-196.00,'Padaria'],
-  ['caju_2026_09_28_mari_4419','2026-09-28','IFD*40.953.426 MARI...',-44.19,'Delivery'],
-  ['caju_2026_09_28_credit_oct','2026-09-28','Caju Benefícios',1572.40,'Crédito benefício','2026-10'],
-  ['caju_2026_09_29_homer_1250','2026-09-29','HOMER BEER DUQUE...',-12.50,'Cerveja'],
-  ['caju_2026_09_29_pura_1200','2026-09-29','PURA GENTILEZA DU...',-12.00,'Alimentação'],
-  ['caju_2026_09_29_padaria_3640','2026-09-29','PADARIA E CONFEITARIA',-36.40,'Padaria'],
-  ['caju_2026_09_29_dafoca_3575','2026-09-29','DAFOCA BAR RIO DE J...',-35.75,'Restaurante'],
-  ['caju_2026_09_30_refund_netos_5390','2026-09-30','IFD*NETOS DELIVERY — Reembolso',53.90,'Reembolso'],
-  ['caju_2026_09_30_super_market_9661','2026-09-30','SUPER MARKET CAXI...',-96.61,'Supermercado'],
-  ['caju_2026_09_30_candido_5148','2026-09-30','CANDIDO REIS DA FO...',-51.48,'Alimentação'],
-  ['caju_2026_09_30_pura_11770','2026-09-30','PURA GENTILEZA DU...',-117.70,'Alimentação'],
-  ['caju_2026_10_01_vitor_3601','2026-10-01','IFD*66804762 VITOR...',-36.01,'Delivery']
- ];
- rows.forEach(([id,date,desc,value,sub,accountingMonth])=>{
-   let t=db.transactions.find(x=>String(x.id)===id);
-   const data={...base,id,date,desc,description:desc,value,sub};
-   if(accountingMonth)data.accountingMonth=accountingMonth;
-   if(!t)db.transactions.push(data);else Object.assign(t,data);
- });
- db.meta.cajuRechargeByMonth={'2026-09':1006.89,'2026-10':1572.40};
- db.meta.cajuCurrentReportedBalance=1235.78;db.meta.cajuCurrentReportedDate='2026-10-02';
- db.meta.cajuRule='saldo_anterior_mais_recarga_do_mes_menos_gastos_do_mes';
- db.meta.cajuStatementAvailable=303.02;
- db.meta.cajuStatementVersion='2026-10-02-extrato-completo-r1027';
- db.automationState.monthlyIncome={...(db.automationState.monthlyIncome||{}),enabled:true,start:'2026-10-01',caju:1500,octoberCaju:1572.40,cajuAccumulative:false};
- /* C6 30/09/2026: crédito de R$ 7.059,85 confirmado como salário. */
- const c6SalaryDate='2026-09-30',c6SalaryValue=7059.85;
- const c6SalaryMatches=(db.transactions||[]).filter(t=>String(t.date||'').slice(0,10)===c6SalaryDate&&Math.abs(Number(t.value||0)-c6SalaryValue)<0.01);
- if(c6SalaryMatches.length){
-   c6SalaryMatches.forEach((t,i)=>{if(i===0){t.desc='Salário';t.cat='Receita';t.category='Receita';t.sub='Salário';t.status='realized';t.excludeFromExpense=false}else t.status='ignored'});
- }else{
-   db.transactions.push({id:'c6_salario_20260930',date:c6SalaryDate,desc:'Salário',value:c6SalaryValue,cat:'Receita',category:'Receita',sub:'Salário',account:'c6',origin:'Extrato C6',status:'realized'});
- }
- db.meta.c6Salary20260930=c6SalaryValue;
- db.meta.financialPatchVersion=PATCH_VERSION;
-
- save();
-}
-ensureCajuMonthly();
-function enforceCleanRecurringOnly(){
- const V='2026-10-02-clean-recurring-v2';db.meta=db.meta||{};
- if(db.meta.cleanResetVersion!==V)return false;
- let changed=(db.transactions||[]).length||(db.investments||[]).length||(db.invoices||[]).length;
- db.transactions=[];db.investments=[];db.invoices=[];db.auditLog=[];
- (db.accounts||[]).forEach(a=>{if(Number(a.balance)||Number(a.openingBalance)){changed=true}a.balance=0;a.openingBalance=0});
- (db.cards||[]).forEach(x=>{if(Number(x.balance)||Number(x.availableLimit)){changed=true}x.balance=0;x.availableLimit=0});
- delete db.meta.cajuRechargeByMonth;delete db.meta.cajuCurrentReportedBalance;delete db.meta.cajuCurrentReportedDate;delete db.meta.cajuStatementAvailable;delete db.meta.c6Salary20260930;
- if(changed){try{save()}catch(_){localStorage.setItem(KEY,JSON.stringify(db))}try{renderAll()}catch(_){}}
- return !!changed;
-}
+/* Caju lê a base existente sem reimportar, zerar ou alterar lançamentos. */
+function ensureCajuMonthly(){return false}
+function enforceCleanRecurringOnly(){return false}
 window.enforceCleanRecurringOnly=enforceCleanRecurringOnly;
-document.addEventListener('finance-cloud-status',e=>{if(/Sincronizado|Conectado|carregada/i.test(String(e.detail?.text||'')))setTimeout(enforceCleanRecurringOnly,50)});
-document.addEventListener('finance-data-changed',()=>setTimeout(enforceCleanRecurringOnly,50));
-setTimeout(enforceCleanRecurringOnly,1200);
-
 function cajuSnapshot(cardId,key){
- if(key==='2026-09'||key==='2026-10')return {available:0,spent:0,credit:0,recharge:0,previous:0,refunds:0,calculated:0,reported:null,reconciliation:0,unregisteredExpense:0,unregisteredCredit:0,source:'caju-zerado-set-out'};
- if(key==='2026-09'||key==='2026-10')return {available:0,spent:0,credit:0,recharge:0,previous:0,refunds:0,calculated:0,reported:null,reconciliation:0,unregisteredExpense:0,unregisteredCredit:0,source:'reset-forcado-set-out'};
- if(db.meta?.cleanResetVersion==='2026-10-02-clean-recurring-v2')return {available:0,spent:0,credit:0,recharge:0,previous:0,refunds:0,calculated:0,reported:null,reconciliation:0,unregisteredExpense:0,unregisteredCredit:0,source:'reset-total'};
- if(key==='2026-09')return {available:0,spent:0,credit:0,recharge:0,previous:0,refunds:0,calculated:0,reported:null,reconciliation:0,unregisteredExpense:0,unregisteredCredit:0,source:'setembro-zerado'};
  const isCaju=t=>t.benefit===true||String(t.cardId||t.card||'')===String(cardId)||/caju/i.test([t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' '));
- const raw=(db.transactions||[]).filter(t=>isCaju(t)&&t.status!=='planned'&&t.status!=='ignored'&&!t.excludeFromBalance);
+ const raw=(db.transactions||[]).filter(t=>isCaju(t)&&!['planned','planejada','planejado','prevista','previsto','ignored','cancelled','canceled'].includes(String(t.status||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLowerCase())&&!t.excludeFromBalance);
  const seen=new Set(),all=raw.filter(t=>{const sig=[String(t.date||'').slice(0,10),Number(t.value||0).toFixed(2),String(t.desc||t.description||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()].join('|');if(seen.has(sig))return false;seen.add(sig);return true});
- const recharge=Number(db.meta?.cajuRechargeByMonth?.[key]||((key>'2026-10')?1500:0));
- const spent=all.filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)<0).reduce((s,t)=>s+Math.abs(Number(t.value)||0),0);
- const refunds=all.filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)>0&&!/crédito benefício|caju benefícios/i.test(String(t.sub||t.desc||''))).reduce((s,t)=>s+Number(t.value||0),0);
- /* Saldo anterior é sempre o fechamento do mês anterior; crédito fisicamente recebido para o mês seguinte não altera o fechamento do mês corrente. */
+ const configured=db.automationState?.cajuMonthlyTopups?.[key]??db.meta?.cajuRechargeByMonth?.[key];
+ const recharge=Number(configured??(key==='2026-09'?1006.89:key==='2026-10'?(db.meta?.cajuOctoberCredit??1572.40):key>'2026-10'?1500:0));
+ const spent=all.filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)<0).reduce((sum,t)=>sum+Math.abs(Number(t.value)||0),0);
+ const refunds=all.filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)>0&&!/crédito benefício|caju benefícios/i.test(String(t.sub||t.desc||''))).reduce((sum,t)=>sum+Number(t.value||0),0);
  let previous=0;
- if(key>'2026-09'){
-   const [yy,mm]=key.split('-').map(Number),pd=new Date(yy,mm-2,1),prevKey=pd.getFullYear()+'-'+String(pd.getMonth()+1).padStart(2,'0');
-   if(prevKey==='2026-09')previous=303.02;
-   else previous=cajuSnapshot(cardId,prevKey).available;
- }
- const credit=Math.round((previous+recharge)*100)/100;
- const calculated=Math.round((credit-spent+refunds)*100)/100;
- const reported=(key==='2026-10'&&Number.isFinite(Number(db.meta?.cajuCurrentReportedBalance)))?Number(db.meta.cajuCurrentReportedBalance):null;
- const reportedDate=String(db.meta?.cajuCurrentReportedDate||'');
- const afterReported=reported!==null?all.filter(t=>String(t.date||'').slice(0,7)===key&&String(t.date||'')>reportedDate):[];
- const deltaAfterReported=afterReported.reduce((s,t)=>s+Number(t.value||0),0);
- const available=reported!==null?Math.round((reported+deltaAfterReported)*100)/100:calculated;
- const reconciliation=reported!==null?Math.round((reported-calculated)*100)/100:0; const unregisteredExpense=reconciliation<0?Math.abs(reconciliation):0,unregisteredCredit=reconciliation>0?reconciliation:0; return {available,spent:Math.round(spent*100)/100,credit,recharge,previous,refunds,calculated,reported,reconciliation,unregisteredExpense,unregisteredCredit,source:reported!==null?'saldo-real-informado':'saldo-anterior+recarga-mes'};
+ if(key==='2026-10')previous=Number(db.meta?.cajuStatementAvailable??db.meta?.cajuLatestReportedBalance??1419.88);
+ else if(key>'2026-10'){const [yy,mm]=key.split('-').map(Number),date=new Date(yy,mm-2,1),prevKey=date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0');previous=cajuSnapshot(cardId,prevKey).available}
+ const credit=Math.round((previous+recharge)*100)/100,calculated=Math.round((credit-spent+refunds)*100)/100;
+ return {available:calculated,spent:Math.round(spent*100)/100,credit,recharge,previous,refunds,calculated,reported:null,reconciliation:0,unregisteredExpense:0,unregisteredCredit:0,source:'saldo-anterior+recarga-mes'};
 }
 function cajuBalanceAt(cardId,key){return cajuSnapshot(cardId,key).available}
 function cajuCapacityAt(cardId,key){return cajuSnapshot(cardId,key).credit}
 function cajuTxRows(key,negativeOnly=false){
- if(key==='2026-09'||key==='2026-10')return [];
- if(key==='2026-09'||key==='2026-10')return [];
  const card=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||/caju/i.test(String(c.name||'')));if(!card)return[];
  const seen=new Set();
  return (db.transactions||[]).filter(t=>{const ids=[t.cardId,t.card,t.account,t.accountId].map(String),txt=[t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' ').toLowerCase();return String(t.date||'').slice(0,7)===key&&t.status!=='planned'&&t.status!=='ignored'&&!t.excludeFromBalance&&(!negativeOnly||Number(t.value)<0)&&(ids.includes(String(card.id))||t.benefit===true||/caju/.test(txt))}).filter(t=>{const sig=[String(t.date||'').slice(0,10),Number(t.value||0).toFixed(2),String(t.desc||t.description||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()].join('|');if(seen.has(sig))return false;seen.add(sig);return true});
@@ -3010,7 +2885,7 @@ document.getElementById('mobileRefreshBtn')?.addEventListener('click',mobileRefr
 })();
 function renderAll(){
  const steps=[
-  ['income',()=>ensureMonthlyIncomeAutomation()],['filters',()=>fillMonthFilters()],['kpis',()=>renderKpis()],['quick',()=>renderQuickFinancialCards()],['layout',()=>applyHomeLayout()],['kpi-nav',()=>bindKpiNavigation()],['lists',()=>renderLists()],['commitments',()=>renderCommitments()],['calendar',()=>renderCalendar()],['mobile-insights',()=>renderMobileDayAndDistribution()],['investment',()=>renderInvestment()],['cards',()=>renderCardDashboard()],['invoices',()=>renderInvoiceManagement()],['audit',()=>renderAudit()],['alerts',()=>renderAlerts()],['goals',()=>renderBudgetsGoals()],['android',()=>renderAndroidInbox()],['bridge',()=>updateAndroidBridgeStatus()],['details',()=>{bindDetailClicks();bindDesktopPanelPopups()}],['hover',()=>bindValueHover()],['reconciliation',()=>renderReconciliation()]
+  ['income',()=>{if(typeof ensureMonthlyIncomeAutomation==='function')ensureMonthlyIncomeAutomation()}],['filters',()=>fillMonthFilters()],['kpis',()=>renderKpis()],['quick',()=>renderQuickFinancialCards()],['layout',()=>applyHomeLayout()],['kpi-nav',()=>bindKpiNavigation()],['lists',()=>renderLists()],['commitments',()=>renderCommitments()],['calendar',()=>renderCalendar()],['mobile-insights',()=>renderMobileDayAndDistribution()],['investment',()=>renderInvestment()],['cards',()=>renderCardDashboard()],['invoices',()=>renderInvoiceManagement()],['audit',()=>renderAudit()],['alerts',()=>renderAlerts()],['goals',()=>renderBudgetsGoals()],['android',()=>renderAndroidInbox()],['bridge',()=>updateAndroidBridgeStatus()],['details',()=>{bindDetailClicks();bindDesktopPanelPopups()}],['hover',()=>bindValueHover()],['reconciliation',()=>renderReconciliation()]
  ];
  const errors=[];for(const [name,fn] of steps){try{fn()}catch(e){errors.push(name);console.error('[renderAll:'+name+']',e)}}
  requestAnimationFrame(()=>{for(const [name,fn] of [['charts',()=>{renderCharts();renderHomeCajuExpenses()}],['card-trend',()=>renderCardTrend()],['hover-raf',()=>bindValueHover()]])try{fn()}catch(e){errors.push(name);console.error('[renderAll:'+name+']',e)}});
@@ -3769,9 +3644,9 @@ document.addEventListener('click',function(e){
 <script src="r99-sep25-transactions.js?v=20260925-r208"></script>
 <script src="r100-desktop-stability.js?v=20260925-r200"></script>
 <script src="r101-sep28-balances.js?v=20260929-r256"></script>
-<script src="r103-financial-runtime-guard.js?v=20261002-r276"></script>
+<script src="r103-financial-runtime-guard.js?v=20261003-r277"></script>
 <script src="r102-live-refresh.js?v=20261001-r269"></script>
-<script src="r104-dashboard-repair.js?v=20261002-r276"></script>
+<script src="r104-dashboard-repair.js?v=20261003-r277"></script>
 <datalist id="categorySuggestions"></datalist><datalist id="subcategorySuggestions"></datalist>
 <script id="r235-ai-float">
 (()=>{const $=id=>document.getElementById(id),btn=$('aiFloatBtn'),panel=$('aiFloatPanel'),input=$('aiQuickInput');if(!btn||!panel||!input)return;
