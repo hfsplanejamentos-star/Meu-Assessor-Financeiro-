@@ -2486,7 +2486,10 @@ function cajuSnapshot(cardId,key){
  if(key==='2026-10')previous=Number(db.meta?.cajuStatementAvailable??db.meta?.cajuLatestReportedBalance??1419.88);
  else if(key>'2026-10'){const [yy,mm]=key.split('-').map(Number),date=new Date(yy,mm-2,1),prevKey=date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0');previous=cajuSnapshot(cardId,prevKey).available}
  const credit=Math.round((previous+recharge)*100)/100,calculated=Math.round((credit-spent+refunds)*100)/100;
- return {available:calculated,spent:Math.round(spent*100)/100,credit,recharge,previous,refunds,calculated,reported:null,reconciliation:0,unregisteredExpense:0,unregisteredCredit:0,source:'saldo-anterior+recarga-mes'};
+ const rawReported=key==='2026-10'?db.meta?.cajuCurrentReportedBalance:null,reported=rawReported==null||!Number.isFinite(Number(rawReported))?null:Number(rawReported),reportDate=String(db.meta?.cajuCurrentReportedDate||'');
+ const after=reported!==null&&reportDate?all.filter(t=>String(t.date||'').slice(0,7)===key&&String(t.date||'').slice(0,10)>reportDate).reduce((sum,t)=>sum+Number(t.value||0),0):0;
+ const available=reported!==null?Math.round((reported+after)*100)/100:calculated,reconciliation=reported!==null?Math.round((reported-calculated)*100)/100:0;
+ return {available,spent:Math.round(spent*100)/100,credit,recharge,previous,refunds,calculated,reported,reconciliation,unregisteredExpense:Math.max(0,-reconciliation),unregisteredCredit:Math.max(0,reconciliation),source:reported!==null?'saldo-real-informado':'saldo-anterior+recarga-mes'};
 }
 function cajuBalanceAt(cardId,key){return cajuSnapshot(cardId,key).available}
 function cajuCapacityAt(cardId,key){return cajuSnapshot(cardId,key).credit}
@@ -3644,9 +3647,9 @@ document.addEventListener('click',function(e){
 <script src="r99-sep25-transactions.js?v=20260925-r208"></script>
 <script src="r100-desktop-stability.js?v=20260925-r200"></script>
 <script src="r101-sep28-balances.js?v=20260929-r256"></script>
-<script src="r103-financial-runtime-guard.js?v=20261003-r277"></script>
+<script src="r103-financial-runtime-guard.js?v=20261003-r278"></script>
 <script src="r102-live-refresh.js?v=20261001-r269"></script>
-<script src="r104-dashboard-repair.js?v=20261003-r277"></script>
+<script src="r104-dashboard-repair.js?v=20261003-r278"></script>
 <datalist id="categorySuggestions"></datalist><datalist id="subcategorySuggestions"></datalist>
 <script id="r235-ai-float">
 (()=>{const $=id=>document.getElementById(id),btn=$('aiFloatBtn'),panel=$('aiFloatPanel'),input=$('aiQuickInput');if(!btn||!panel||!input)return;
