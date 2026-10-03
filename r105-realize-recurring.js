@@ -5,6 +5,17 @@
  const selectedMonth=()=>document.querySelector('[data-month-scope="category"]')?.value||window.activeMonth||localStorage.getItem('assessor_active_month')||new Date().toISOString().slice(0,7);
  const monthOf=t=>(t.card||t.cardId)?(t.invoiceMonth||ym(t.date)):ym(t.date);
  const txRows=()=>typeof db!=='undefined'?(db.transactions||[]):[],recRows=()=>typeof db!=='undefined'?(db.recurring||[]):[];
+ const expenseRows=m=>{
+  const current=new Date().toISOString().slice(0,7),rows=[],direct=[];
+  txRows().forEach(t=>{if(monthOf(t)!==m||Number(t.value)>=0||t.transfer||t.transferId||t.excludeFromExpense||t.invoicePayment||t.cardPayment||t.kind==='invoice_payment'||t.kind==='transfer'||norm(t.status)==='cancelled')return;
+   const planned=['planned','planejada','planejado','prevista','previsto'].includes(norm(t.status));if(m<current&&planned)return;
+   const row={kind:'transaction',cat:t.cat||'Outros',sub:t.sub||t.subcategory||t.desc||t.description||'Sem subcategoria',value:Math.abs(Number(t.value)||0),id:t.id,recurringId:t.recurringId||null,desc:t.desc||t.description||'',status:t.status};direct.push(t);rows.push(row)
+  });
+  if(m>=current)recRows().filter(r=>r.active!==false&&(!ym(r.startDate)||m>=ym(r.startDate))&&(!ym(r.endDate)||m<=ym(r.endDate))).forEach(r=>{
+   const name=norm(r.name||r.desc||r.description),value=amount(r),duplicate=direct.some(t=>(r.id&&String(t.recurringId||'')===String(r.id))||(name&&norm(t.desc||t.description)===name&&Math.abs(Math.abs(Number(t.value)||0)-value)<.02));
+   if(!duplicate)rows.push({kind:'recurring',cat:r.cat||'Outros',sub:r.sub||r.subcategory||r.desc||r.description||'Recorrente',value,id:r.id,desc:r.desc||r.name||r.description||''})
+  });return rows;
+ };
  const findOccurrence=(r,m)=>txRows().find(t=>monthOf(t)===m&&(
    (String(t.recurringId||'')===String(r.id))||
    (!t.recurringId&&norm(t.desc||t.description)===norm(r.desc||r.name||r.description)&&Math.abs(amount(t)-amount(r))<.02)
@@ -49,7 +60,7 @@
   modal.querySelector('.close').onclick=()=>modal.classList.remove('open');modal.onclick=e=>{if(e.target===modal)modal.classList.remove('open')};return modal;
  }
  function openCategory(name){
-  const m=selectedMonth(),rows=(window.FinanceDataModel?.expenseRows?.(m)||[]).filter(x=>x.cat===name);
+  const m=selectedMonth(),rows=(window.FinanceDataModel?.expenseRows?.(m)||expenseRows(m)).filter(x=>x.cat===name);
   const body=ensureCategoryModal().querySelector('#categoryDetailBody');
   const total=rows.reduce((s,x)=>s+amount(x),0);let html='<div class="detail-row"><span>Mês · '+m+'</span><b>Total previsto/real · '+(typeof brl==='function'?brl(total):total.toFixed(2))+'</b></div>';
   if(!rows.length)html+='<div class="notice">Nenhuma despesa nesta categoria.</div>';
@@ -68,6 +79,8 @@
   if(window.FinanceIntegrity)window.FinanceIntegrity.openCategory=openCategory;
   window.openCategoryDetail=openCategory;
   document.addEventListener('click',e=>{
+   const legend=e.target.closest('[data-canonical-category]');if(legend){e.preventDefault();e.stopImmediatePropagation();openCategory(legend.dataset.canonicalCategory);return}
+   const canvas=e.target.closest('#categoryChart');if(canvas&&typeof chartHit==='function'){const hit=chartHit(canvas,e);if(hit?.detail?.type==='category'){e.preventDefault();e.stopImmediatePropagation();openCategory(hit.detail.name);return}}
    const rowBtn=e.target.closest('[data-realize-recurring],[data-realize-current-recurring]');
    if(rowBtn){e.preventDefault();e.stopPropagation();const r=recRows().find(x=>String(x.id)===String(rowBtn.dataset.realizeRecurring||document.getElementById('recEditId')?.value));if(r)prepareEntry(r,selectedMonth());return}
    const catBtn=e.target.closest('[data-realize-category]');if(catBtn){e.preventDefault();e.stopPropagation();const id=catBtn.dataset.realizeCategory,m=selectedMonth();document.getElementById('categoryDetailModal')?.classList.remove('open');if(catBtn.dataset.rowKind==='recurring'){const r=recRows().find(x=>String(x.id)===String(id));if(r)prepareEntry(r,m)}else{const t=txRows().find(x=>String(x.id)===String(id));if(t&&typeof window.openEditTransaction==='function'){window.openEditTransaction(t.id);const status=document.getElementById('editStatus');if(status)status.value='realized'}}}
