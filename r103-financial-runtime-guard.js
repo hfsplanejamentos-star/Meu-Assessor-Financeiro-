@@ -42,7 +42,7 @@
   if(cj){
    if(db.meta.cajuOctoberRollforwardVersion!==rollforwardVersion){
     /* R276 canceled every realized October expense. Restore only IDs recorded by that migration. */
-    const previousClear=(db.audit||[]).find(a=>a.action==='caju_month_cleared'&&String(a.id||'').startsWith('2026-10:'));
+    const previousClear=(db.audit||[]).find(a=>a.action==='caju_month_cleared'&&String(a.id||'').startsWith('2026-10:')&&/migração aplicada uma única vez/i.test(String(a.note||'')));
     const restored=[];
     String(previousClear?.id||'').slice('2026-10:'.length).split(',').filter(Boolean).forEach(id=>{
      const t=db.transactions.find(x=>String(x.id)===id);
@@ -58,10 +58,13 @@
    const octRows=db.transactions.filter(t=>(t.card==='card_caju_alimentacao'||t.cardId==='card_caju_alimentacao'||t.benefit===true)&&String(t.date||'').slice(0,7)==='2026-10'&&isReal(t.status));
    const spent=octRows.filter(t=>n(t.value)<0&&!['ignored','cancelled','canceled'].includes(String(t.status||'').toLowerCase())&&!t.excludeFromBalance).reduce((s,t)=>s+Math.abs(n(t.value)),0);
    const refunds=octRows.filter(t=>n(t.value)>0&&!/recarga|beneficios/i.test(String(t.desc||t.description||''))).reduce((s,t)=>s+n(t.value),0);
-   const current=round(opening+topup-spent+refunds);
+   const reported=Number(db.meta.cajuCurrentReportedBalance),reportedDate=String(db.meta.cajuCurrentReportedDate||'');
+   const afterReported=Number.isFinite(reported)&&reportedDate?octRows.filter(t=>String(t.date||'').slice(0,10)>reportedDate):[];
+   const deltaAfterReported=afterReported.reduce((sum,t)=>sum+n(t.value),0);
+   const current=Number.isFinite(reported)?round(reported+deltaAfterReported):round(opening+topup-spent+refunds);
    cj.balance=current;cj.availableLimit=current;db.meta.cajuCurrentAvailable=current;db.meta.cajuCurrentBalanceThrough='2026-10-31';
    if(round(cj.balance)!==current||round(cj.availableLimit)!==current||round(db.meta.cajuCurrentAvailable)!==current){
-    cj.balance=current;cj.availableLimit=current;db.meta.cajuCurrentAvailable=current;changed=true;
+   cj.balance=current;cj.availableLimit=current;db.meta.cajuCurrentAvailable=current;changed=true;
    }
    if(db.meta.cajuCurrentBalanceThrough!=='2026-10-31'){db.meta.cajuCurrentBalanceThrough='2026-10-31';changed=true}
   }
