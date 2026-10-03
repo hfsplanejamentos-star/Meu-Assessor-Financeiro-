@@ -26,6 +26,10 @@ function monthlySnapshot(cardId,key){
  for(let yy=fy,mm=fm;yy<y||(yy===y&&mm<=m);){
    const mk=yy+'-'+String(mm).padStart(2,'0'),add=topupFor(mk),spent=monthSpend(mk);
    credit=money(available+add);available=money(credit-spent);
+   if(mk==='2026-10'&&db?.meta?.cajuCurrentReportedBalance!=null&&Number.isFinite(Number(db.meta.cajuCurrentReportedBalance))){
+    const reportedDate=String(db.meta.cajuCurrentReportedDate||''),after=reportedDate?(db?.transactions||[]).filter(t=>(t.cardId===id||t.card===id||t.benefit===true)&&monthOf(t)==='2026-10'&&String(t.date||'').slice(0,10)>reportedDate&&!['ignored','cancelled','canceled'].includes(String(t.status||'').toLowerCase())&&!planned(t.status)&&!t.excludeFromBalance):[];
+    available=money(Number(db.meta.cajuCurrentReportedBalance)+after.reduce((sum,t)=>sum+Number(t.value||0),0));
+   }
    if(mk===key){selectedTopup=add;selectedSpend=spent}
    mm++;if(mm===13){mm=1;yy++}
  }
