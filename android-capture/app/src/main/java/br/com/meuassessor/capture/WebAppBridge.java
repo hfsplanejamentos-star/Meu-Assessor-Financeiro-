@@ -16,6 +16,11 @@ final class WebAppBridge {
     }
 
     @JavascriptInterface
+    public void reloadDashboard() {
+        activity.reloadDashboard();
+    }
+
+    @JavascriptInterface
     public void exportBackup(String json, String filename) {
         activity.exportBackup(json, filename);
     }

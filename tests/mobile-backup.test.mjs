@@ -36,7 +36,7 @@ const sandbox={
 };
 vm.createContext(sandbox);
 vm.runInContext(names.map(n=>'const '+n+'='+initializers.get(n)+';').join('\n')+
- ['validISO','validateLedger','validateOpenings','validatePreference','completeBackupCategories','backupState','saveSafetyBackup','previewBackup','applyBackup']
+ ['validISO','validateLedger','validateOpenings','validatePreference','completeBackupCategories','backupState','saveSafetyBackup','previewBackup','reloadDashboardView','applyBackup']
  .map(n=>functions.get(n)).join('\n'),sandbox);
 const run=s=>vm.runInContext(s,sandbox);
 const plain=x=>JSON.parse(JSON.stringify(x));
@@ -118,3 +118,14 @@ assert.deepEqual(JSON.parse(state.get('assessor_invest_goals_v53')),sandbox.INVE
 sandbox.input=JSON.parse(state.get('assessor_pre_import_v82'));
 assert.doesNotThrow(()=>run('previewBackup(input)'),'Safety backup must remain importable');
 console.log('Backup migration: raw legacy markers, financial validation, exact preservation, safety restore and atomic rollback passed.');
+
+const reloadsBeforeNative=reloadCount;
+let nativeReloads=0;
+sandbox.window.AndroidBridge={reloadDashboard:()=>nativeReloads++};
+sandbox.input=backup;
+run('previewBackup(input);applyBackup()');
+assert.equal(nativeReloads,1,'Import must reopen the installed Android dashboard via its bridge');
+assert.equal(reloadCount,reloadsBeforeNative,'Native import must not navigate to the remote history URL');
+assert.deepEqual(JSON.parse(state.get('assessor_tx_v43')),backup.ledger);
+delete sandbox.window.AndroidBridge;
+console.log('Android bridge reload preserves imported storage and bypasses remote history.');

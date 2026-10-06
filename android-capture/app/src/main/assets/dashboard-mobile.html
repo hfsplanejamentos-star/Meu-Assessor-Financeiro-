@@ -2107,6 +2107,11 @@ function previewBackup(data){BACKUP_PENDING=null;const isLegacy=Array.isArray(da
  if(resolved.missing.length)throw Error('Categorias não encontradas: '+resolved.missing.join(', ')+'. Exporte novamente na versão de origem com essas categorias cadastradas.');
  if(!isLegacy||resolved.recovered.length)storage[CATSTORE]=JSON.stringify(resolved.categories);
  BACKUP_PENDING={ledger,storage};modal('Conferir importação',`<p>${ledger.length} lançamentos validados.</p><p class="m">${isLegacy?'Base legada: mantém suas preferências atuais.':'Backup completo: também substitui as preferências incluídas.'} Confira a origem do arquivo e seus totais após importar.</p>${resolved.recovered.length?'<p>Categorias padrão recuperadas: '+resolved.recovered.map(k=>escapeHTML(resolved.categories[k].name)).join(', ')+'.</p>':''}<button class="bt p" onclick="applyBackup()">Importar dados validados</button><button class="bt" onclick="BACKUP_PENDING=null;closeModal()">Cancelar</button>`);return BACKUP_PENDING;}
+function reloadDashboardView(){
+ const native=window.AndroidBridge||window.AndroidApp;
+ if(native&&typeof native.reloadDashboard==='function')native.reloadDashboard();
+ else location.reload();
+}
 function applyBackup(){
  if(!BACKUP_PENDING)return;
  const pending=BACKUP_PENDING,before={};
@@ -2117,7 +2122,7 @@ function applyBackup(){
   saveSafetyBackup();written.add('assessor_pre_import_v82');
   for(const[k,v]of Object.entries(pending.storage))if(!['assessor_tx','assessor_tx_v43','assessor_pre_import_v82'].includes(k))write(k,v);
   write(LEDGER_KEY,JSON.stringify(pending.ledger));write('assessor_tx',JSON.stringify(pending.ledger));
-  PERSIST_BLOCKED=false;location.reload();BACKUP_PENDING=null;
+  PERSIST_BLOCKED=false;reloadDashboardView();BACKUP_PENDING=null;
  }catch(e){
   for(const k of written)try{if(Object.hasOwn(before,k))localStorage.setItem(k,before[k]);else localStorage.removeItem(k);}catch(_){}
   PERSIST_BLOCKED=blockedBefore;BACKUP_PENDING=null;

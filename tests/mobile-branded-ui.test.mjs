@@ -42,6 +42,9 @@ try{
  delete staleCategories.trab; // Reproduce already-exported backups without Trabalho.
  exported.storage.assessor_categories_v25=JSON.stringify(staleCategories);
  const migrationContext=await browser.newContext({viewport:{width:393,height:852},timezoneId:'America/Sao_Paulo'});
+ await migrationContext.addInitScript(()=>{
+  window.AndroidBridge={reloadDashboard(){sessionStorage.setItem('nativeReloadRequested','yes');location.reload();}};
+ });
  const migrationPage=await migrationContext.newPage();
  migrationPage.on('pageerror',e=>errors.push(e.message));
  migrationPage.on('dialog',d=>d.dismiss());
@@ -63,6 +66,7 @@ try{
  assert.equal(imported.blocked,false);
  assert.equal(imported.hide,true);
  assert.equal(imported.raw,'atual-ui-2');
+ assert.equal(await migrationPage.evaluate(()=>sessionStorage.getItem('nativeReloadRequested')),'yes');
  for(const [key,value]of Object.entries(exported.storage))if(key!=='assessor_categories_v25')assert.equal(imported.backup.storage[key],value,'Reload changed imported preference: '+key);
  assert.equal(imported.cats.trab.name,'Trabalho');
  for(const [key,value]of Object.entries(staleCategories))assert.deepEqual(imported.cats[key],value,'Changed existing category: '+key);
@@ -147,9 +151,15 @@ try{
  if(!process.env.MOBILE_HTML){
   const native=fs.readFileSync('android-capture/app/src/main/java/br/com/meuassessor/capture/MainActivity.java','utf8');
   assert(!/INTRO_DURATION|ObjectAnimator|\.animate\(/.test(native),'Startup still contains intro animation');
+  assert(!native.includes('new URL(')&&!native.includes('HttpURLConnection'),'Document loader still fetches the predecessor');
+  assert(!native.includes('webView.restoreState('),'Startup still restores a remote predecessor history entry');
+  assert(native.includes('DashboardAssetSource.open(url, true, getAssets()::open)'),'Reload interception must serve the installed document');
+  const bridge=fs.readFileSync('android-capture/app/src/main/java/br/com/meuassessor/capture/WebAppBridge.java','utf8');
+  assert(bridge.includes('public void reloadDashboard()'),'Native reload bridge is missing');
+
   const layout=fs.readFileSync('android-capture/app/src/main/res/layout/activity_main_loading.xml','utf8');
   assert(!layout.includes('ProgressBar'),'Startup should show static image only');
  }
- fs.writeFileSync(path.join(output,'verification.json'),JSON.stringify({target,screens:report,checks:['engine','themes','navigation','bell','duplicate-review','privacy','configuration','ledger-preserved','static-startup','backup-file-import-reload'],errors},null,2));
+ fs.writeFileSync(path.join(output,'verification.json'),JSON.stringify({target,screens:report,checks:['engine','themes','navigation','bell','duplicate-review','privacy','configuration','ledger-preserved','static-startup','backup-file-import-reload','native-reload-bridge'],errors},null,2));
  console.log('Passed: '+report.length+' mobile layouts, engine consistency, header actions, duplicate review, privacy and static startup.');
 }catch(error){await page.screenshot({path:path.join(output,'Failure.png'),fullPage:true});fs.writeFileSync(path.join(output,'failure.txt'),error.stack+'\n'+errors.join('\n'));throw error;}finally{await browser.close();await new Promise(r=>server.close(r));}

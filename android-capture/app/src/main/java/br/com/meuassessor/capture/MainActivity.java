@@ -28,11 +28,8 @@ import java.util.ArrayList;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
-import java.util.zip.GZIPInputStream;
 
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.text.TextRecognition;
@@ -44,9 +41,9 @@ public final class MainActivity extends Activity {
     private static final int REQUEST_BACKUP = 703;
     private String pendingBackup;
     private static final String APP_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.4.4";
+            DashboardAssetSource.BASE_URL + "?android=" + BuildConfig.VERSION_NAME;
     private static final String APP_BASE_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/";
+            DashboardAssetSource.BASE_URL;
 
     private WebView webView;
     private View loadingScreen;
@@ -65,10 +62,10 @@ public final class MainActivity extends Activity {
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
                 .getString("web_cache_version", "");
-        if (!"1.3.11".equals(nativeVersion)) {
+        if (!BuildConfig.VERSION_NAME.equals(nativeVersion)) {
             webView.clearCache(true);
             getSharedPreferences("native_runtime", MODE_PRIVATE).edit()
-                    .putString("web_cache_version", "1.3.11").apply();
+                    .putString("web_cache_version", BuildConfig.VERSION_NAME).apply();
         }
         setContentView(R.layout.activity_main_loading);
         FrameLayout root = findViewById(R.id.main_root);
@@ -107,7 +104,8 @@ public final class MainActivity extends Activity {
         if (pendingState == null) {
             if (webView.getUrl() == null) loadDashboardHtml();
         } else {
-            if (webView.restoreState(pendingState) == null) loadDashboardHtml();
+            // Never restore a remote predecessor document from WebView history.
+            loadDashboardHtml();
             String savedImageUri = pendingState.getString("captured_image_uri");
             if (savedImageUri != null) capturedImageUri = Uri.parse(savedImageUri);
             pendingState = null;
@@ -125,10 +123,15 @@ public final class MainActivity extends Activity {
         // Enable its own update feed when the successor release is published.
     }
 
+    void reloadDashboard() {
+        runOnUiThread(() -> {
+            if (authenticated && !isFinishing()) loadDashboardHtml();
+        });
+    }
+
     private void loadDashboardHtml() {
         Executors.newSingleThreadExecutor().execute(() -> {
-            // Staged local bundle retains the existing HTTPS storage origin.
-            try (InputStream asset = getAssets().open("dashboard-mobile.html")) {
+            try (InputStream asset = DashboardAssetSource.open(APP_URL, true, getAssets()::open)) {
                 StringBuilder localHtml = new StringBuilder();
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(asset, StandardCharsets.UTF_8))) {
                     String line;
@@ -136,37 +139,12 @@ public final class MainActivity extends Activity {
                 }
                 String bundled = localHtml.toString();
                 runOnUiThread(() -> webView.loadDataWithBaseURL(APP_BASE_URL, bundled, "text/html", "UTF-8", APP_URL));
-                return;
             } catch (java.io.IOException missingBundle) {
-                // Existing releases keep their remote dashboard when no bundle is staged.
-            }
-            HttpURLConnection connection = null;
-            try {
-                connection = (HttpURLConnection) new URL(
-                        APP_URL + "&t=" + System.currentTimeMillis()).openConnection();
-                connection.setConnectTimeout(12000);
-                connection.setReadTimeout(25000);
-                connection.setRequestProperty("Accept", "text/html,application/xhtml+xml");
-                connection.setRequestProperty("Accept-Encoding", "identity");
-                connection.setRequestProperty("Cache-Control", "no-cache");
-                if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) throw new Exception();
-                InputStream stream = connection.getInputStream();
-                if ("gzip".equalsIgnoreCase(connection.getContentEncoding())) {
-                    stream = new GZIPInputStream(stream);
-                }
-                StringBuilder html = new StringBuilder();
-                try (BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) html.append(line).append('\n');
-                }
-                String document = html.toString();
-                runOnUiThread(() -> webView.loadDataWithBaseURL(
-                        APP_BASE_URL, document, "text/html", "UTF-8", APP_URL));
-            } catch (Exception ignored) {
-                runOnUiThread(() -> webView.loadUrl(APP_URL));
-            } finally {
-                if (connection != null) connection.disconnect();
+                runOnUiThread(() -> {
+                    dashboardLoadFailed = true;
+                    loadingScreen.setVisibility(View.VISIBLE);
+                    findViewById(R.id.loading_error).setVisibility(View.VISIBLE);
+                });
             }
         });
     }
@@ -254,6 +232,9 @@ public final class MainActivity extends Activity {
             public void onPageFinished(WebView view, String url) {
                 if (!authenticated || dashboardLoadFailed || url == null
                         || !url.startsWith(APP_BASE_URL)) return;
+                view.evaluateJavascript(
+                        "if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.filter(r=>r.scope.startsWith('"
+                        + APP_BASE_URL + "')).map(r=>r.unregister()))).catch(()=>{});}", null);
                 // Keep the static artwork until document initialization completes.
                 view.evaluateJavascript("document.readyState", ready -> {
                     if (!"\"complete\"".equals(ready)) return;
@@ -279,34 +260,26 @@ public final class MainActivity extends Activity {
             @Override
             public WebResourceResponse shouldInterceptRequest(
                     WebView view, WebResourceRequest request) {
-                Uri uri = request.getUrl();
-                String host = uri.getHost() == null ? "" : uri.getHost();
-                String path = uri.getPath() == null ? "" : uri.getPath();
-                if (!request.isForMainFrame()
-                        || !"hfsplanejamentos-star.github.io".equalsIgnoreCase(host)
-                        || !(path.equals("/Meu-Assessor-Financeiro-/")
-                        || path.equals("/Meu-Assessor-Financeiro-/index.html"))) return null;
+                String url = request.getUrl().toString();
+                if (!request.isForMainFrame() || !DashboardAssetSource.isDashboardUrl(url)) return null;
                 try {
-                    HttpURLConnection connection = (HttpURLConnection)
-                            new URL(uri.toString()).openConnection();
-                    connection.setConnectTimeout(12000);
-                    connection.setReadTimeout(20000);
-                    connection.setRequestProperty("Accept", "text/html,application/xhtml+xml");
-                    connection.setRequestProperty("Accept-Encoding", "identity");
-                    connection.setRequestProperty("Cache-Control", "no-cache");
-                    connection.connect();
-                    if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) return null;
-                    return new WebResourceResponse("text/html", "UTF-8", connection.getInputStream());
-                } catch (Exception ignored) {
-                    return null;
+                    InputStream asset = DashboardAssetSource.open(url, true, getAssets()::open);
+                    return new WebResourceResponse("text/html", "UTF-8", asset);
+                } catch (java.io.IOException missingBundle) {
+                    // Fail locally instead of silently opening the predecessor.
+                    byte[] message = "Não foi possível carregar o painel instalado. Reabra o app.".getBytes(StandardCharsets.UTF_8);
+                    return new WebResourceResponse("text/plain", "UTF-8", 503, "Dashboard unavailable",
+                            java.util.Collections.emptyMap(), new java.io.ByteArrayInputStream(message));
                 }
             }
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
-                String host = uri.getHost() == null ? "" : uri.getHost();
-                if ("hfsplanejamentos-star.github.io".equalsIgnoreCase(host)) return false;
+                if (DashboardAssetSource.isDashboardUrl(uri.toString())) {
+                    loadDashboardHtml();
+                    return true;
+                }
                 startActivity(new Intent(Intent.ACTION_VIEW, uri));
                 return true;
             }
