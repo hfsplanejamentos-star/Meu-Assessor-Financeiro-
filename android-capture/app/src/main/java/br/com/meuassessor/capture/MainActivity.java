@@ -44,11 +44,13 @@ public final class MainActivity extends Activity {
     private static final int REQUEST_BACKUP = 703;
     private String pendingBackup;
     private static final String APP_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.4.2";
+            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.4.3";
     private static final String APP_BASE_URL =
             "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/";
 
     private WebView webView;
+    private View loadingScreen;
+    private boolean dashboardLoadFailed;
     private ValueCallback<Uri[]> fileCallback;
     private Uri capturedImageUri;
     private Bundle pendingState;
@@ -68,12 +70,19 @@ public final class MainActivity extends Activity {
             getSharedPreferences("native_runtime", MODE_PRIVATE).edit()
                     .putString("web_cache_version", "1.3.11").apply();
         }
-        FrameLayout root = new FrameLayout(this);
-        root.setBackgroundColor(Color.parseColor("#020A14"));
-        root.addView(webView, new FrameLayout.LayoutParams(
+        setContentView(R.layout.activity_main_loading);
+        FrameLayout root = findViewById(R.id.main_root);
+        loadingScreen = findViewById(R.id.loading_screen);
+        root.addView(webView, 0, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
-        setContentView(root);
+        getWindow().setStatusBarColor(Color.BLACK);
+        getWindow().setNavigationBarColor(Color.BLACK);
+        findViewById(R.id.loading_error).setOnClickListener(view -> {
+            findViewById(R.id.loading_error).setVisibility(View.GONE);
+            findViewById(R.id.loading_progress).setVisibility(View.VISIBLE);
+            loadDashboardHtml();
+        });
         webView.setVisibility(View.INVISIBLE);
         pendingState = state;
 
@@ -99,7 +108,7 @@ public final class MainActivity extends Activity {
         if (pendingState == null) {
             if (webView.getUrl() == null) loadDashboardHtml();
         } else {
-            webView.restoreState(pendingState);
+            if (webView.restoreState(pendingState) == null) loadDashboardHtml();
             String savedImageUri = pendingState.getString("captured_image_uri");
             if (savedImageUri != null) capturedImageUri = Uri.parse(savedImageUri);
             pendingState = null;
@@ -235,6 +244,43 @@ public final class MainActivity extends Activity {
         value.addJavascriptInterface(bridge, "AndroidApp");
         value.setWebViewClient(new WebViewClient() {
             @Override
+            public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                dashboardLoadFailed = false;
+                if (loadingScreen != null && loadingScreen.getVisibility() == View.VISIBLE) {
+                    findViewById(R.id.loading_error).setVisibility(View.GONE);
+                    findViewById(R.id.loading_progress).setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                if (!authenticated || dashboardLoadFailed || url == null
+                        || !url.startsWith(APP_BASE_URL)) return;
+                // Finish the document's initial scripts, then allow a painted frame
+                // before revealing the dashboard. No fixed splash timeout.
+                view.evaluateJavascript("document.readyState", ready -> {
+                    if (!"\"complete\"".equals(ready)) return;
+                    view.postOnAnimation(() -> view.postOnAnimation(() -> {
+                        if (isFinishing() || dashboardLoadFailed || !authenticated) return;
+                        loadingScreen.setVisibility(View.GONE);
+                        getWindow().setStatusBarColor(Color.parseColor("#061421"));
+                        getWindow().setNavigationBarColor(Color.parseColor("#061421"));
+                    }));
+                });
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request,
+                    android.webkit.WebResourceError error) {
+                if (!request.isForMainFrame()) return;
+                dashboardLoadFailed = true;
+                if (loadingScreen != null && loadingScreen.getVisibility() == View.VISIBLE) {
+                    findViewById(R.id.loading_progress).setVisibility(View.GONE);
+                    findViewById(R.id.loading_error).setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
             public WebResourceResponse shouldInterceptRequest(
                     WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
@@ -369,6 +415,10 @@ public final class MainActivity extends Activity {
     }
 
     private void handleBackNavigation() {
+        if (!authenticated || (loadingScreen != null && loadingScreen.getVisibility() == View.VISIBLE)) {
+            finish();
+            return;
+        }
         webView.evaluateJavascript(
                 "(function(){try{return !!(window.handleAndroidBack&&window.handleAndroidBack())}catch(e){return false}})()",
                 handled -> {

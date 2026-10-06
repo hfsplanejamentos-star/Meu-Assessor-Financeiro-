@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+ android:id="@+id/main_root" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#000000">
+ <FrameLayout android:id="@+id/loading_screen" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#000000" android:clickable="true">
+  <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/snake_splash_art" android:scaleType="centerCrop" android:contentDescription="Snake Finance — Assessor Financeiro IA"/>
+  <ProgressBar android:id="@+id/loading_progress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="96dp" android:layout_height="3dp" android:layout_gravity="bottom|center_horizontal" android:layout_marginBottom="36dp" android:indeterminate="true" android:indeterminateTint="#E8BD62" android:background="#352916" android:contentDescription="Carregando informações"/>
+  <TextView android:id="@+id/loading_error" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="bottom|center_horizontal" android:layout_margin="32dp" android:padding="16dp" android:gravity="center" android:textColor="#F6E4BA" android:textSize="16sp" android:visibility="gone" android:text="Não foi possível carregar. Toque para tentar novamente."/>
+ </FrameLayout>
+</FrameLayout>

@@ -79,3 +79,10 @@ Versão: 1.4.1, versionCode 22. A 1.4.0 não deve ser usada para tentar substitu
 ## Android 1.4.2 — imagem aprovada do ícone
 
 Substitui a letra S genérica pela imagem original fornecida pelo proprietário: S em fita dourada, barras e wordmark Snake Finance. O PNG é copiado byte a byte para drawable-nodpi/snake_logo_approved.png, sem geração ou recriação. O recurso do launcher centraliza a imagem inteira, respeita sua proporção e inclui margem para o recorte adaptativo do Android. Mantém o pacote separado br.com.snakefinance.mobile e a migração por backup v2.
+
+
+## Android 1.4.3 — abertura enquanto o painel carrega
+
+Usa uma arte de abertura adaptada da referência aprovada: fundo preto, marca dourada e ondas inferiores, sem a moldura e os controles da captura. A arte foi preparada com edição de imagem e é distinta do PNG original do ícone, que permanece intacto. A sobreposição nativa é visível antes da autenticação e durante a carga do painel; o WebView carrega por trás. Depois de onPageFinished, scripts iniciais concluídos e dois frames nativos, revela o painel sem temporizador fixo. Em erro de navegação principal, mantém a abertura e oferece nova tentativa. Estado restaurado inválido volta ao bundle local.
+
+Versão 1.4.3, versionCode 24, mesmo pacote separado e assinatura da 1.4.2. Nenhuma alteração de motor financeiro ou dados. Exibição, biometria e transição ainda exigem conferência no aparelho.
