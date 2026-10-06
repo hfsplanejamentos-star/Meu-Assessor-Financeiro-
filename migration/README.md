@@ -74,3 +74,8 @@ Após o Android recusar a atualização por conflito de pacote, o sucessor passa
 O armazenamento de cada aplicativo é separado. Exporte o backup v2 pelo HTML atualizado e importe no Snake Finance. Será necessário habilitar o acesso às notificações para o novo app. O feed de atualização do predecessor não é mais consultado pelo sucessor; uma URL própria deverá ser configurada depois da publicação.
 
 Versão: 1.4.1, versionCode 22. A 1.4.0 não deve ser usada para tentar substituir novamente o app instalado. O objetivo desta candidata é validar instalação em paralelo, importação de dados e captura no dispositivo.
+
+
+## Android 1.4.2 — imagem aprovada do ícone
+
+Substitui a letra S genérica pela imagem original fornecida pelo proprietário: S em fita dourada, barras e wordmark Snake Finance. O PNG é copiado byte a byte para drawable-nodpi/snake_logo_approved.png, sem geração ou recriação. O recurso do launcher centraliza a imagem inteira, respeita sua proporção e inclui margem para o recorte adaptativo do Android. Mantém o pacote separado br.com.snakefinance.mobile e a migração por backup v2.

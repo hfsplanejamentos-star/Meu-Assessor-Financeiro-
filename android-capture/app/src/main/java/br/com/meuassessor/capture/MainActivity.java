@@ -44,7 +44,7 @@ public final class MainActivity extends Activity {
     private static final int REQUEST_BACKUP = 703;
     private String pendingBackup;
     private static final String APP_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.4.1";
+            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.4.2";
     private static final String APP_BASE_URL =
             "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/";
 
