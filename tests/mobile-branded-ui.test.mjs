@@ -91,6 +91,13 @@ try{
     assert(geometry.doc<=width+1,'Horizontal overflow: '+JSON.stringify({width,theme,tab,geometry}));
     assert(geometry.audit,'Engine audit failed after navigation');
     for(const control of geometry.controls){assert(control.left>=-1&&control.right<=width+1&&control.top>=-1&&control.bottom<=121,'Clipped header control: '+JSON.stringify(control));}
+    const footer=await page.evaluate(()=>{
+     const r=document.getElementById('nav').getBoundingClientRect(),plus=document.getElementById('fabAdd').getBoundingClientRect();
+     return {left:r.left,right:r.right,bottom:r.bottom,height:r.height,screen:innerHeight,center:r.left+r.width/2,plusCenter:plus.left+plus.width/2};
+    });
+    assert(Math.abs(footer.bottom-footer.screen)<1,'Footer is floating above screen bottom: '+JSON.stringify(footer));
+    assert.equal(footer.height,66,'Footer should be compact');
+    assert(Math.abs(footer.center-footer.plusCenter)<1,'Add button must remain centered');
     assert.equal(await page.evaluate(()=>JSON.stringify(L)),baseline.ledger,'Navigation or theme changed ledger');
     report.push({width,theme,tab,horizontalOverflow:false,engine:true});
    }
@@ -139,6 +146,9 @@ try{
   await page.waitForFunction(()=>Math.abs(window.scrollY)<1);
   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
   await page.locator('.appHd').screenshot({path:path.join(output,'Cabecalho_'+theme+'.png')});
+  await page.screenshot({path:path.join(output,'Painel_Rodape_'+theme+'.png')});
+  await page.locator('#nav').screenshot({path:path.join(output,'Rodape_'+theme+'.png')});
+
  }
  await page.getByRole('button',{name:'Tema dourado',exact:true}).click();
  await page.locator('#advisorBell').click();
@@ -160,6 +170,6 @@ try{
   const layout=fs.readFileSync('android-capture/app/src/main/res/layout/activity_main_loading.xml','utf8');
   assert(!layout.includes('ProgressBar'),'Startup should show static image only');
  }
- fs.writeFileSync(path.join(output,'verification.json'),JSON.stringify({target,screens:report,checks:['engine','themes','navigation','bell','duplicate-review','privacy','configuration','ledger-preserved','static-startup','backup-file-import-reload','native-reload-bridge'],errors},null,2));
+ fs.writeFileSync(path.join(output,'verification.json'),JSON.stringify({target,screens:report,checks:['engine','themes','navigation','bell','duplicate-review','privacy','configuration','ledger-preserved','static-startup','backup-file-import-reload','native-reload-bridge','footer-bottom-and-center'],errors},null,2));
  console.log('Passed: '+report.length+' mobile layouts, engine consistency, header actions, duplicate review, privacy and static startup.');
 }catch(error){await page.screenshot({path:path.join(output,'Failure.png'),fullPage:true});fs.writeFileSync(path.join(output,'failure.txt'),error.stack+'\n'+errors.join('\n'));throw error;}finally{await browser.close();await new Promise(r=>server.close(r));}
