@@ -32,6 +32,15 @@ async function ownerHash(req: Request) {
   return key.length < 32 || key.length > 256 ? null : await sha256(`meu-assessor:v1:${key}`);
 }
 
+// Only configured capability keys may access provider-backed integrations.
+function integrationKeys(){return [process.env.SERVICE_OWNER_SYNC_KEY,process.env.WHATSAPP_OWNER_SYNC_KEY].filter((key):key is string=>typeof key==='string' && key.length>=32 && key.length<=256);}
+async function integrationOwnerHash(req:Request){
+  const hash=await ownerHash(req);if(!hash)return null;
+  const allowed=await Promise.all(integrationKeys().map(key=>sha256(`meu-assessor:v1:${key}`)));
+  return allowed.includes(hash)?hash:null;
+}
+function integrationAuthError(headers:Record<string,string>){return integrationKeys().length?json({ok:false,error:"invalid_sync_key"},401,headers):json({ok:false,error:"service_not_configured"},503,headers);}
+
 type IncomingEvent = { eventId: string; sourcePackage: string; title: string; text: string; amountCents?: number; direction: Direction; postedAt: number };
 function parseEvents(body: unknown): { deviceId: string; appVersion?: string; events: IncomingEvent[] } | null {
   if (!body || typeof body !== "object") return null;
@@ -97,8 +106,8 @@ http.route({ path: "/finance/state", method: "POST", handler: httpAction(async (
 http.route({ path: "/notifications/ingest", method: "OPTIONS", handler: httpAction(async (_ctx, req) => new Response(null, { status: 204, headers: secureCors(req) })) });
 http.route({ path: "/notifications/ingest", method: "POST", handler: httpAction(async (ctx, req) => {
   const headers = secureCors(req);
-  const hash = await ownerHash(req);
-  if (!hash) return json({ ok: false, error: "invalid_sync_key" }, 401, headers);
+  const hash = await integrationOwnerHash(req);
+  if (!hash) return integrationAuthError(headers);
   if (Number(req.headers.get("Content-Length") || 0) > 128_000) return json({ ok: false, error: "payload_too_large" }, 413, headers);
   const now = Date.now();
   const rate = await ctx.runMutation(internal.notificationEvents.consumeRateLimit, { ownerHash: hash, now });
@@ -121,8 +130,8 @@ http.route({ path: "/notifications/ingest", method: "POST", handler: httpAction(
 http.route({ path: "/notifications/changes", method: "OPTIONS", handler: httpAction(async (_ctx, req) => new Response(null, { status: 204, headers: secureCors(req) })) });
 http.route({ path: "/notifications/changes", method: "GET", handler: httpAction(async (ctx, req) => {
   const headers = secureCors(req);
-  const hash = await ownerHash(req);
-  if (!hash) return json({ ok: false, error: "invalid_sync_key" }, 401, headers);
+  const hash = await integrationOwnerHash(req);
+  if (!hash) return integrationAuthError(headers);
   const url = new URL(req.url);
   const since = Math.max(0, Number(url.searchParams.get("since") || 0) || 0);
   const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit") || 50) || 50));
@@ -133,8 +142,8 @@ http.route({ path: "/notifications/changes", method: "GET", handler: httpAction(
 http.route({ path: "/ai/finance", method: "OPTIONS", handler: httpAction(async (_ctx, req) => new Response(null, { status: 204, headers: secureCors(req) })) });
 http.route({ path: "/ai/finance", method: "POST", handler: httpAction(async (ctx, req) => {
   const headers = secureCors(req);
-  const hash = await ownerHash(req);
-  if (!hash) return json({ ok: false, error: "invalid_sync_key" }, 401, headers);
+  const hash = await integrationOwnerHash(req);
+  if (!hash) return integrationAuthError(headers);
   const now = Date.now();
   const rate = await ctx.runMutation(internal.notificationEvents.consumeRateLimit, { ownerHash: hash, now });
   if (!rate.allowed) return json({ ok: false, error: "rate_limited", retryAfterMs: rate.retryAfterMs }, 429, headers);
@@ -181,23 +190,23 @@ http.route({path:"/whatsapp/webhook",method:"POST",handler:httpAction(async(ctx,
 })});
 http.route({path:"/whatsapp/messages",method:"OPTIONS",handler:httpAction(async(_ctx,req)=>new Response(null,{status:204,headers:secureCors(req)}))});
 http.route({path:"/whatsapp/messages",method:"GET",handler:httpAction(async(ctx,req)=>{
-  const headers=secureCors(req),hash=await ownerHash(req);
-  if(!hash)return json({ok:false,error:"invalid_sync_key"},401,headers);
+  const headers=secureCors(req),hash=await integrationOwnerHash(req);
+  if(!hash)return integrationAuthError(headers);
   return json({ok:true,messages:await ctx.runQuery(internal.whatsappInbox.pending,{ownerHash:hash})},200,headers);
 })});
 
 http.route({path:"/integrations/status",method:"OPTIONS",handler:httpAction(async(_ctx,req)=>new Response(null,{status:204,headers:secureCors(req)}))});
 http.route({path:"/integrations/status",method:"GET",handler:httpAction(async(_ctx,req)=>{
-  const headers=secureCors(req),hash=await ownerHash(req);
-  if(!hash)return json({ok:false,error:"invalid_sync_key"},401,headers);
+  const headers=secureCors(req),hash=await integrationOwnerHash(req);
+  if(!hash)return integrationAuthError(headers);
   const ownerKey=process.env.WHATSAPP_OWNER_SYNC_KEY||"";
   const whatsapp=!!(process.env.WHATSAPP_APP_SECRET && process.env.WHATSAPP_VERIFY_TOKEN && process.env.WHATSAPP_OWNER_PHONE && process.env.WHATSAPP_PHONE_NUMBER_ID && ownerKey.length>=32 && ownerKey.length<=256 && hash===await sha256(`meu-assessor:v1:${ownerKey}`));
   return json({ok:true,whatsapp,ai:!!process.env.OPENAI_API_KEY},200,headers);
 })});
 http.route({path:"/whatsapp/resolve",method:"OPTIONS",handler:httpAction(async(_ctx,req)=>new Response(null,{status:204,headers:secureCors(req)}))});
 http.route({path:"/whatsapp/resolve",method:"POST",handler:httpAction(async(ctx,req)=>{
-  const headers=secureCors(req),hash=await ownerHash(req);
-  if(!hash)return json({ok:false,error:"invalid_sync_key"},401,headers);
+  const headers=secureCors(req),hash=await integrationOwnerHash(req);
+  if(!hash)return integrationAuthError(headers);
   let body:any;
   try{const raw=await req.text();if(new TextEncoder().encode(raw).length>16_000)return json({ok:false,error:"payload_too_large"},413,headers);body=JSON.parse(raw);}catch{return json({ok:false,error:"invalid_json"},400,headers);}
   if(!Array.isArray(body?.messageIds) || !body.messageIds.length || body.messageIds.length>50 || body.messageIds.some((id:unknown)=>typeof id!=="string" || !id || id.length>256) || !["recorded","discarded"].includes(body?.status))return json({ok:false,error:"invalid_payload"},400,headers);

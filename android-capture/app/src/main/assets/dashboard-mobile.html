@@ -2235,7 +2235,7 @@ html[data-tema] #app{padding-bottom:120px!important}
     }
     if(generation!==connectionGeneration)throw Error('A conexão mudou. Atualize a lista antes de continuar.');
     let body;try{body=JSON.parse(response.body);}catch{throw Error('Resposta inválida do serviço.');}
-    if(response.status<200||response.status>=300||body.ok===false){const messages={ai_not_configured:'A IA ainda precisa ser ativada no serviço.',invalid_sync_key:'A chave de acesso não é válida.',whatsapp_not_configured:'O WhatsApp ainda precisa ser ativado no serviço.',message_not_found:'A mensagem não foi encontrada. Atualize a lista.',rate_limited:'Aguarde um momento antes de tentar novamente.'};throw Error(messages[body.error]||'Não foi possível conectar ao serviço. Tente novamente.');}
+    if(response.status<200||response.status>=300||body.ok===false){const messages={service_not_configured:'O serviço ainda precisa de uma chave de acesso configurada no servidor.',ai_not_configured:'A IA ainda precisa ser ativada no serviço.',invalid_sync_key:'A chave de acesso não é válida.',whatsapp_not_configured:'O WhatsApp ainda precisa ser ativado no serviço.',message_not_found:'A mensagem não foi encontrada. Atualize a lista.',rate_limited:'Aguarde um momento antes de tentar novamente.'};throw Error(messages[body.error]||'Não foi possível conectar ao serviço. Tente novamente.');}
     return body;
   }
   window.handleAndroidBack=function(){

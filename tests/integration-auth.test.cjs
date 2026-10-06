@@ -1,0 +1,21 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),ts=require('typescript'),{webcrypto}=require('node:crypto');
+const routes=[],env={};
+const code=ts.transpileModule(fs.readFileSync('convex/http.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+const imports={'convex/server':{httpRouter:()=>({route:r=>routes.push(r)})},'./_generated/server':{httpAction:f=>f},'./_generated/api':{internal:{}},'./notificationClassifier':{},'./whatsappPayload':{}};
+vm.runInNewContext(code,{exports:{},require:name=>imports[name],process:{env},crypto:webcrypto,Request,Response,URL,TextEncoder,AbortSignal,fetch:()=>{throw Error('External provider must not be called in this test');}});
+const status=routes.find(r=>r.path==='/integrations/status'&&r.method==='GET').handler;
+const ai=routes.find(r=>r.path==='/ai/finance'&&r.method==='POST').handler;
+const request=key=>new Request('https://test.convex.site/integrations/status',{headers:{'X-Sync-Key':key}});
+(async()=>{
+ const correct='configured-owner-key-with-at-least-32-characters',wrong='random-valid-length-key-that-must-be-rejected';
+ assert.equal((await status({},request(correct))).status,503,'Unconfigured service must not pretend to authenticate arbitrary keys');
+ env.SERVICE_OWNER_SYNC_KEY=correct;
+ assert.equal((await status({},request(wrong))).status,401,'Length alone must not authenticate');
+ assert.equal((await status({},request('short'))).status,401);
+ assert.equal((await ai({},new Request('https://test.convex.site/ai/finance',{method:'POST',headers:{'X-Sync-Key':wrong},body:'{"text":"hello"}'}))).status,401,'Unauthorized requests must stop before rate limiting/provider');
+ let response=await status({},request(correct));assert.equal(response.status,200);let body=await response.json();assert.equal(body.ai,false);assert.equal(body.whatsapp,false);
+ Object.assign(env,{WHATSAPP_OWNER_SYNC_KEY:correct,WHATSAPP_APP_SECRET:'test-secret',WHATSAPP_VERIFY_TOKEN:'test-token',WHATSAPP_OWNER_PHONE:'5511999999999',WHATSAPP_PHONE_NUMBER_ID:'test-id',OPENAI_API_KEY:'mock-never-used'});
+ body=await (await status({},request(correct))).json();assert.equal(body.whatsapp,true);assert.equal(body.ai,true);
+ env.SERVICE_OWNER_SYNC_KEY='different-owner-key-with-at-least-32-characters';body=await (await status({},request(env.SERVICE_OWNER_SYNC_KEY))).json();assert.equal(body.whatsapp,false,'Another configured key must not claim the WhatsApp owner inbox');
+ console.log('PASS integration configured-key authentication, unconfigured states and owner capabilities');
+})().catch(error=>{console.error(error);process.exitCode=1;});

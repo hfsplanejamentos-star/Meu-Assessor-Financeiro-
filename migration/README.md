@@ -34,6 +34,7 @@ O HTML contém dados financeiros e está excluído do git. Nunca faça commit ou
 
 Definir as variáveis no ambiente Convex, sem colocá-las no HTML:
 
+- `SERVICE_OWNER_SYNC_KEY`: chave de acesso de 32 a 256 caracteres; use a mesma chave do proprietário do WhatsApp. As integrações rejeitam chaves não configuradas, mesmo que tenham comprimento válido. Se omitida, usam `WHATSAPP_OWNER_SYNC_KEY`.
 - `OPENAI_API_KEY`; opcional `OPENAI_FINANCE_MODEL` e `OPENAI_CLASSIFICATION_MODEL`.
 - `WHATSAPP_VERIFY_TOKEN`: token de verificação escolhido para o webhook.
 - `WHATSAPP_APP_SECRET`: segredo do aplicativo Meta usado na assinatura.

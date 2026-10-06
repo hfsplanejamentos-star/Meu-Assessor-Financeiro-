@@ -11,6 +11,7 @@ on:
       - 'tests/mobile-backup.test.mjs'
       - 'tests/mobile-capture.test.mjs'
       - 'tests/whatsapp-inbox.test.cjs'
+      - 'tests/integration-auth.test.cjs'
       - 'package*.json'
       - '.github/workflows/migration-checks.yml'
 permissions:
