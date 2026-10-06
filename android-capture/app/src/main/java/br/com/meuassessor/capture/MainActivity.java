@@ -44,7 +44,7 @@ public final class MainActivity extends Activity {
     private static final int REQUEST_BACKUP = 703;
     private String pendingBackup;
     private static final String APP_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.4.0";
+            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.4.1";
     private static final String APP_BASE_URL =
             "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/";
 
@@ -113,7 +113,8 @@ public final class MainActivity extends Activity {
         requestNativePermissions();
         if(!queueReceiverRegistered){android.content.IntentFilter queueFilter=new android.content.IntentFilter("br.com.meuassessor.capture.QUEUE_CHANGED");
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.TIRAMISU) registerReceiver(queueReceiver,queueFilter,RECEIVER_NOT_EXPORTED); else registerReceiver(queueReceiver,queueFilter);queueReceiverRegistered=true;}
-        UpdateChecker.check(this);
+        // Separate successor app: predecessor update metadata does not apply.
+        // Enable its own update feed when the successor release is published.
     }
 
     private void loadDashboardHtml() {

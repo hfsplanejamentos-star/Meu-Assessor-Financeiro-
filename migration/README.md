@@ -65,3 +65,12 @@ Antes de instalar, abra o HTML atualizado no celular e use Configurações → B
 O Android agora salva o backup usando o seletor de arquivos do sistema. A importação de JSON não abre câmera nem dispara OCR. O botão Voltar primeiro fecha o formulário/menu aberto e depois retorna à visão Geral. O fluxo de receita/despesa inclui o recolhimento automático do botão + após salvar.
 
 A atualização sobre o app instalado depende da mesma assinatura. Um APK debug não substitui um app release assinado. O teste final de instalação, importação, biometria e captura continua sendo feito no aparelho; compile/CI não comprovam esses comportamentos no dispositivo.
+
+
+## Android 1.4.1 — instalação em paralelo
+
+Após o Android recusar a atualização por conflito de pacote, o sucessor passa a usar applicationId `br.com.snakefinance.mobile` e nome Snake Finance. A causa exata do conflito no aparelho não foi identificada; não se afirma que uma assinatura específica estava errada. O novo pacote instala separadamente do Meu Assessor antigo, preservando o predecessor como backup. Namespace Java e dados nativos ficam válidos dentro do novo applicationId.
+
+O armazenamento de cada aplicativo é separado. Exporte o backup v2 pelo HTML atualizado e importe no Snake Finance. Será necessário habilitar o acesso às notificações para o novo app. O feed de atualização do predecessor não é mais consultado pelo sucessor; uma URL própria deverá ser configurada depois da publicação.
+
+Versão: 1.4.1, versionCode 22. A 1.4.0 não deve ser usada para tentar substituir novamente o app instalado. O objetivo desta candidata é validar instalação em paralelo, importação de dados e captura no dispositivo.
