@@ -9,7 +9,7 @@ const output=process.env.UI_OUTPUT||'validation/mobile-ui';
 fs.mkdirSync(output,{recursive:true});
 const fixture=[
  {id:101,d:'2026-10-06',t:'d',s:'r',a:'c6',v:3650,n:'Compra A',c:'mer'},
- {id:102,d:'2026-10-06',t:'d',s:'r',a:'c6',v:3650,n:'Compra B',c:'mer'},
+ {id:102,d:'2026-10-06',t:'d',s:'r',a:'c6',v:3650,n:'Compra B',c:'trab',sub:'Combustível'},
  {id:103,d:'2026-10-06',t:'d',s:'r',a:'caju',v:1200,n:'Alimentação',c:'ali'}
 ];
 const server=http.createServer((req,res)=>{res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(html);});
@@ -23,6 +23,7 @@ await page.clock.setFixedTime(new Date('2026-10-06T12:00:00-03:00'));
 await page.addInitScript(({fixture})=>{
  localStorage.setItem('assessor_openings_v83',JSON.stringify({c6:100000,caju:150000,cajuFunds:150000}));
  localStorage.setItem('assessor_tx_v43',JSON.stringify(fixture));
+ localStorage.setItem('assessor_categories_v25',JSON.stringify({out:{name:'Outros',subs:[]},mer:{name:'Mercado',subs:[]},ali:{name:'Alimentação',subs:[]},personal:{name:'Personalizada',subs:['Minha subcategoria']}}));
  localStorage.setItem('tema','ciano');
 },{fixture});
 const report=[];
@@ -36,6 +37,10 @@ try{
  assert.equal(baseline.audit.saldoCaju,148800);
  // Migrate an exported backup into a clean install through the real file input.
  const exported=await page.evaluate(()=>{localStorage.setItem('assessor_runtime_version','atual-ui-2');ST.hide=true;return backupState();});
+ assert.equal(JSON.parse(exported.storage.assessor_categories_v25).trab.name,'Trabalho','Export must include categories used by migrated ledger');
+ const staleCategories=JSON.parse(exported.storage.assessor_categories_v25);
+ delete staleCategories.trab; // Reproduce already-exported backups without Trabalho.
+ exported.storage.assessor_categories_v25=JSON.stringify(staleCategories);
  const migrationContext=await browser.newContext({viewport:{width:393,height:852},timezoneId:'America/Sao_Paulo'});
  const migrationPage=await migrationContext.newPage();
  migrationPage.on('pageerror',e=>errors.push(e.message));
@@ -46,18 +51,24 @@ try{
  assert.equal(await migrationPage.evaluate(()=>L.length),0);
  await migrationPage.locator('input[type="file"]').setInputFiles({name:'backup.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(exported))});
  await migrationPage.getByRole('button',{name:'Importar dados validados',exact:true}).waitFor();
+ assert((await migrationPage.locator('#md').innerText()).includes('Categorias padrão recuperadas: Trabalho'));
  await Promise.all([
   migrationPage.waitForEvent('load'),
   migrationPage.getByRole('button',{name:'Importar dados validados',exact:true}).click()
  ]);
  await migrationPage.waitForSelector('#fixedTopShell .headerBrand');
- const imported=await migrationPage.evaluate(()=>({ledger:JSON.stringify(L),audit:auditEngine(),blocked:PERSIST_BLOCKED,hide:ST.hide,raw:localStorage.getItem('assessor_runtime_version'),backup:backupState()}));
+ const imported=await migrationPage.evaluate(()=>({ledger:JSON.stringify(L),audit:auditEngine(),blocked:PERSIST_BLOCKED,hide:ST.hide,raw:localStorage.getItem('assessor_runtime_version'),cats:CATDB,backup:backupState()}));
  assert.equal(imported.ledger,baseline.ledger);
  assert.deepEqual(imported.audit,baseline.audit);
  assert.equal(imported.blocked,false);
  assert.equal(imported.hide,true);
  assert.equal(imported.raw,'atual-ui-2');
- for(const [key,value]of Object.entries(exported.storage))assert.equal(imported.backup.storage[key],value,'Reload changed imported preference: '+key);
+ for(const [key,value]of Object.entries(exported.storage))if(key!=='assessor_categories_v25')assert.equal(imported.backup.storage[key],value,'Reload changed imported preference: '+key);
+ assert.equal(imported.cats.trab.name,'Trabalho');
+ for(const [key,value]of Object.entries(staleCategories))assert.deepEqual(imported.cats[key],value,'Changed existing category: '+key);
+ await migrationPage.evaluate(()=>{openLanc(102);});
+ assert.equal(await migrationPage.locator('#lx_c').inputValue(),'trab','Recovered category must be editable');
+ assert.equal(await migrationPage.locator('#lx_sub').inputValue(),'Combustível');
  await migrationContext.close();
  await page.evaluate(()=>{ST.hide=false;draw();});
  const themes={ciano:'Tema dourado',limao:'Tema limão',claro:'Tema claro'};

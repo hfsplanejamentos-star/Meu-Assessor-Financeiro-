@@ -19,8 +19,8 @@ android {
         applicationId = "br.com.snakefinance.mobile"
         minSdk = 26
         targetSdk = 35
-        versionCode = 26
-        versionName = "1.4.5"
+        versionCode = 27
+        versionName = "1.4.6"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

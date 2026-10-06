@@ -11,7 +11,7 @@ for(const match of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)){
   if(node.type==='VariableDeclaration')for(const d of node.declarations)if(d.id.type==='Identifier'&&d.init)initializers.set(d.id.name,source.slice(d.init.start,d.init.end));
  }
 }
-const names=['OPENING_KEY','GOAL_STORE','CATSTORE','CAJU_CFG_KEY','ALERT_KEY','NOTICE_KEY','OVERVIEW_KEY','LEDGER_KEY','LAYOUT_V82','LAYOUT_KEY','ALERT_DEFS'];
+const names=['OPENING_KEY','GOAL_STORE','CATSTORE','CAJU_CFG_KEY','ALERT_KEY','NOTICE_KEY','OVERVIEW_KEY','LEDGER_KEY','LAYOUT_V82','LAYOUT_KEY','ALERT_DEFS','CATDB_DEFAULT'];
 const state=new Map(),dialogs=[],alerts=[];
 let failureKey=null,reloadCount=0;
 const sandbox={
@@ -21,7 +21,7 @@ const sandbox={
   setItem(k,v){if(k===failureKey){failureKey=null;throw Error('simulated storage failure')}state.set(k,String(v))},
   removeItem:k=>state.delete(k)
  },
- modal:(...args)=>dialogs.push(args),alert:x=>alerts.push(x),
+ modal:(...args)=>dialogs.push(args),alert:x=>alerts.push(x),escapeHTML:x=>String(x),
  location:{reload:()=>reloadCount++},
  AC:{c6:{},caju:{},carbon:{},xp:{}},
  CAT:{mer:['Mercado']},CATDB:{out:{name:'Outros',subs:[]},mer:{name:'Mercado',subs:[]}},
@@ -36,7 +36,7 @@ const sandbox={
 };
 vm.createContext(sandbox);
 vm.runInContext(names.map(n=>'const '+n+'='+initializers.get(n)+';').join('\n')+
- ['validISO','validateLedger','validateOpenings','validatePreference','backupState','saveSafetyBackup','previewBackup','applyBackup']
+ ['validISO','validateLedger','validateOpenings','validatePreference','completeBackupCategories','backupState','saveSafetyBackup','previewBackup','applyBackup']
  .map(n=>functions.get(n)).join('\n'),sandbox);
 const run=s=>vm.runInContext(s,sandbox);
 const plain=x=>JSON.parse(JSON.stringify(x));
@@ -66,6 +66,36 @@ assert.throws(()=>run('previewBackup(input)'),/Saldos iniciais inválidos/);
 sandbox.input={...backup,storage:{...backup.storage}};
 delete sandbox.input.storage.assessor_openings_v83;
 assert.throws(()=>run('previewBackup(input)'),/faltam saldos/);
+// Legacy catalog can omit Trabalho and other built-in categories still used by transactions.
+const legacy=plain(backup);
+legacy.ledger=[{...backup.ledger[0],c:'trab',sub:'Combustível'},{...backup.ledger[0],id:102,c:'est'},{...backup.ledger[0],id:103,c:'trab',sub:'Viagem profissional'}];
+const custom={name:'Minha categoria',subs:['Minha subcategoria']};
+legacy.storage.assessor_categories_v25=JSON.stringify({out:{name:'Outros',subs:[]},mer:{name:'Mercado personalizado',subs:['Feira']},custom});
+sandbox.input=legacy;
+const prepared=plain(run('previewBackup(input)'));
+const restored=JSON.parse(prepared.storage.assessor_categories_v25);
+assert.deepEqual(prepared.ledger,legacy.ledger,'Recovery must not reclassify, drop or alter transactions');
+assert.equal(restored.trab.name,'Trabalho');
+assert.equal(restored.est.name,'Estacionamento');
+assert(restored.trab.subs.includes('Viagem profissional'),'Recover subcategories from all matching transactions');
+assert.equal(restored.mer.name,'Mercado personalizado');
+assert.deepEqual(restored.custom,custom);
+assert(!restored.ali,'Unused deleted categories must not be resurrected');
+assert.equal(legacy.storage.assessor_categories_v25,JSON.stringify({out:{name:'Outros',subs:[]},mer:{name:'Mercado personalizado',subs:['Feira']},custom}),'Preview must not mutate source backup');
+assert(dialogs.at(-1)[1].includes('Categorias padrão recuperadas: Trabalho, Estacionamento'));
+sandbox.input={...legacy,ledger:[{...legacy.ledger[0],c:'unknown1'},{...legacy.ledger[1],c:'unknown2'}]};
+assert.throws(()=>run('previewBackup(input)'),/unknown1, unknown2/,'All unknown categories should be reported together');
+assert.equal(sandbox.BACKUP_PENDING,null);
+sandbox.input={...legacy,ledger:plain(run('Object.keys(CATDB_DEFAULT)')).map((c,i)=>({...backup.ledger[0],id:200+i,c})),storage:{...legacy.storage,assessor_categories_v25:JSON.stringify({out:{name:'Outros',subs:[]}})}};
+const allBuiltins=plain(run('previewBackup(input)'));
+assert.deepEqual(allBuiltins.ledger,sandbox.input.ledger);
+for(const entry of allBuiltins.ledger)assert(JSON.parse(allBuiltins.storage.assessor_categories_v25)[entry.c],'Did not recover built-in category: '+entry.c);
+const ledgerBefore=sandbox.L;
+sandbox.L=legacy.ledger;
+const fixedExport=plain(run('backupState()'));
+assert.equal(JSON.parse(fixedExport.storage.assessor_categories_v25).trab.name,'Trabalho');
+assert.deepEqual(fixedExport.ledger,legacy.ledger);
+sandbox.L=ledgerBefore;
 sandbox.input=backup;
 run('previewBackup(input)');
 const beforeFailure=new Map(state);
