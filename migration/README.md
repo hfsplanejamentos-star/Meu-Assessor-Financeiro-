@@ -86,3 +86,10 @@ Substitui a letra S genérica pela imagem original fornecida pelo proprietário:
 Usa uma arte de abertura adaptada da referência aprovada: fundo preto, marca dourada e ondas inferiores, sem a moldura e os controles da captura. A arte foi preparada com edição de imagem e é distinta do PNG original do ícone, que permanece intacto. A sobreposição nativa é visível antes da autenticação e durante a carga do painel; o WebView carrega por trás. Depois de onPageFinished, scripts iniciais concluídos e dois frames nativos, revela o painel após uma apresentação de 3 segundos com fade e leve zoom; se a carga demorar mais, aguarda o documento estar pronto. Em erro de navegação principal, mantém a abertura e oferece nova tentativa. Estado restaurado inválido volta ao bundle local.
 
 Versão 1.4.3, versionCode 24, mesmo pacote separado e assinatura da 1.4.2. Nenhuma alteração de motor financeiro ou dados. Exibição, biometria e transição ainda exigem conferência no aparelho.
+
+
+## Android 1.4.4 — visual aprovado e abertura estática
+
+Aplica o cabeçalho aprovado com a marca em fita, menu e sino, preservando seletores dourado/limão/claro e a engrenagem. O menu navega pelas abas; o sino abre Avisos e indica regras ativas. Os avisos dentro do app usam o card da referência, com os valores calculados, privacidade e revisão de lançamentos preservadas. O menu do aviso abre a configuração da regra. Não implementa disparo externo de notificações do assessor nesta revisão.
+
+A abertura exibe somente a arte estática enquanto o documento carrega. Remove animação, barra e espera mínima de três segundos, conforme nova orientação. Mantém biometria e tentativa novamente em falha de navegação. Versão 1.4.4, versionCode 25, mesmo pacote separado. O CI confere 84 combinações de largura/tema/aba, auditoria financeira, navegação, cliques, privacidade e manutenção da base, com dados sintéticos. Capturas de visual não contêm a base pessoal.

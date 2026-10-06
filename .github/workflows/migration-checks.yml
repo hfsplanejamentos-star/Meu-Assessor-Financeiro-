@@ -7,6 +7,7 @@ on:
       - 'migration/**'
       - 'scripts/stage-mobile-v82.mjs'
       - 'tests/whatsapp-migration.test.mjs'
+      - 'tests/mobile-branded-ui.test.mjs'
       - 'package*.json'
       - '.github/workflows/migration-checks.yml'
 permissions:
@@ -24,6 +25,14 @@ jobs:
       - run: npm run typecheck
       - run: npm run test:backend
       - run: npm run test:migration
+      - run: npx playwright install --with-deps chromium-headless-shell
+      - run: npm run test:mobile-ui
+      - name: Upload verified mobile screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: Snake-Finance-1.4.4-verified-visuals
+          path: validation/mobile-ui
+          retention-days: 14
   android:
     runs-on: ubuntu-latest
     defaults:
@@ -59,7 +68,7 @@ jobs:
       - name: Upload candidate APKs
         uses: actions/upload-artifact@v4
         with:
-          name: Snake-Finance-Android-1.4.3-candidate
+          name: Snake-Finance-Android-1.4.4-candidate
           path: |
             android-capture/app/build/outputs/apk/debug/app-debug.apk
             android-capture/app/build/outputs/apk/release/app-release.apk
