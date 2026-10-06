@@ -25,8 +25,9 @@ jobs:
       - run: npm run typecheck
       - run: npm run test:backend
       - run: npm run test:migration
-      - run: npx playwright install --with-deps chromium-headless-shell
       - run: npm run test:mobile-ui
+        env:
+          UI_BROWSER_CHANNEL: chrome
       - name: Upload verified mobile screenshots
         if: always()
         uses: actions/upload-artifact@v4

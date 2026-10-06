@@ -14,7 +14,7 @@ const fixture=[
 ];
 const server=http.createServer((req,res)=>{res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(html);});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
-const browser=await chromium.launch({headless:true});
+const browser=await chromium.launch({headless:true,...(process.env.UI_BROWSER_CHANNEL?{channel:process.env.UI_BROWSER_CHANNEL}:{})});
 const context=await browser.newContext({viewport:{width:393,height:852},timezoneId:'America/Sao_Paulo'});
 const page=await context.newPage(),errors=[];
 page.on('pageerror',e=>errors.push(e.message));
@@ -60,6 +60,9 @@ try{
  await page.evaluate(()=>goTab('ger'));
  await page.getByRole('button',{name:'Menu de navegação',exact:true}).click();
  assert.equal(await page.locator('#headerMenuButton').getAttribute('aria-expanded'),'true');
+ assert.equal(await page.evaluate(()=>window.handleAndroidBack()),true);
+ assert.equal(await page.locator('#headerMenuButton').getAttribute('aria-expanded'),'false');
+ await page.getByRole('button',{name:'Menu de navegação',exact:true}).click();
  await page.locator('[data-header-tab="ag"]').click();
  assert.equal(await page.evaluate(()=>TAB),'ag');
  assert.equal(await page.locator('#headerMenuButton').getAttribute('aria-expanded'),'false');

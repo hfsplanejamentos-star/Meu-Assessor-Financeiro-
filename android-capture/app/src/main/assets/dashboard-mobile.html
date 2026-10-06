@@ -2224,5 +2224,6 @@ const v84PreviousDraw=draw;draw=function(){v84PreviousDraw();updateAdvisorBell()
 const v84PreviousSettings=toggleSettings;toggleSettings=function(){closeHeaderNav();v84PreviousSettings();};
 document.addEventListener('click',event=>{if(!event.target.closest('#headerNav,#headerMenuButton'))closeHeaderNav();});
 document.addEventListener('keydown',event=>{if(event.key==='Escape')closeHeaderNav();});
+const v84PreviousAndroidBack=window.handleAndroidBack;window.handleAndroidBack=function(){if(document.getElementById('headerNav')?.classList.contains('on')){closeHeaderNav();return true;}return typeof v84PreviousAndroidBack==='function'?v84PreviousAndroidBack():false;};
 updateAdvisorBell();
 </script></body></html>
