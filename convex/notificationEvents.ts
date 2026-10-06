@@ -129,3 +129,16 @@ export const listChanges = internalQuery({
     }));
   },
 });
+
+
+export const findPotentialDuplicates = internalQuery({
+  args: { ownerHash: v.string(), amountCents: v.number(), from: v.number(), to: v.number() },
+  handler: async (ctx, args) => {
+    const rows = await ctx.db.query("notificationEvents")
+      .withIndex("by_owner_and_received_at", q => q.eq("ownerHash", args.ownerHash))
+      .collect();
+    return rows
+      .filter(r => r.amountCents === args.amountCents && r.postedAt >= args.from && r.postedAt <= args.to)
+      .map(r => ({ eventId: r.eventId, sourcePackage: r.sourcePackage, title: r.title, text: r.text, amountCents: r.amountCents, direction: r.direction, postedAt: r.postedAt }));
+  },
+});
