@@ -49,7 +49,7 @@ try{
     });
     assert(geometry.doc<=width+1,'Horizontal overflow: '+JSON.stringify({width,theme,tab,geometry}));
     assert(geometry.audit,'Engine audit failed after navigation');
-    for(const control of geometry.controls){assert(control.left>=-1&&control.right<=width+1,'Clipped header control: '+JSON.stringify(control));}
+    for(const control of geometry.controls){assert(control.left>=-1&&control.right<=width+1&&control.top>=-1&&control.bottom<=121,'Clipped header control: '+JSON.stringify(control));}
     assert.equal(await page.evaluate(()=>JSON.stringify(L)),baseline.ledger,'Navigation or theme changed ledger');
     report.push({width,theme,tab,horizontalOverflow:false,engine:true});
    }
@@ -94,6 +94,9 @@ try{
  await page.evaluate(()=>{closeModal();document.getElementById('catManage').classList.remove('on');document.getElementById('settingsPop').classList.remove('on');goTab('ger');});
  for(const [theme,label] of Object.entries(themes)){
   await page.getByRole('button',{name:label,exact:true}).click();
+  await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+  await page.waitForFunction(()=>Math.abs(window.scrollY)<1);
+  await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
   await page.locator('.appHd').screenshot({path:path.join(output,'Cabecalho_'+theme+'.png')});
  }
  await page.getByRole('button',{name:'Tema dourado',exact:true}).click();
