@@ -2,6 +2,18 @@
 
 A base financeira v82 foi validada pelo proprietário. Esta branch inicia a adaptação do Android existente e dos serviços Convex existentes. Não substitui a versão publicada automaticamente.
 
+## Android 1.4.10 — áudio do WhatsApp para rascunho
+
+O webhook agora aceita áudio do proprietário configurado e agenda a transcrição depois de guardar o ID da mensagem. A resposta ao webhook não aguarda o serviço externo. Consulta de pendências inclui estados Transcrevendo, Falha e Transcrito, sem expor tokens, IDs de mídia ou URLs temporárias.
+
+O servidor busca uma URL nova da mídia Meta em cada tentativa, restringe o host HTTPS, não segue redirecionamentos e limita o arquivo a 10 MB. Confere tamanho/checksum e envia multipart com filename/extensão, idioma português e modelo de transcrição configurável. Não guarda o arquivo de áudio na base; mantém somente a transcrição para revisão. Formatos preparados: OGG/Opus, MP3, M4A/MP4, WAV, WebM e FLAC. AAC/AMR pedem reenvio em formato compatível.
+
+Jobs usam lease e token de tentativa, recuperação de interrupção e até três tentativas automáticas para falha temporária. Repetição do webhook não inicia outra transcrição. Limpar/dispensar um áudio impede que um resultado tardio o recrie. Uma falha definitiva permite tentar novamente, limitada pela autenticação/rate limit.
+
+Na aba WhatsApp, a lista atualiza ao entrar e a cada 15 segundos enquanto visível e sem formulário aberto. Abrir um áudio transcrito chama o intérprete financeiro com as categorias reais do app. A tela mostra transcrição, valor, data, conta, categoria e subcategoria sugeridos. É possível corrigir/cancelar; salvar usa a mesma gravação durável e idempotente da 1.4.9. Falha de IA mantém a transcrição e permite revisão manual. Não há push do WhatsApp com o app fechado nem resposta enviada ao remetente nesta etapa.
+
+Ativação real ainda depende de deployment e credenciais. Além das variáveis abaixo, definir `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_GRAPH_VERSION` (versão suportada da Graph API, no formato vN.N) e opcional `OPENAI_TRANSCRIPTION_MODEL` (padrão gpt-4o-mini-transcribe). Instalar a 1.4.10 antes de ativar áudio. O indicador de Áudio confirma configuração, não substitui um teste real de recebimento.
+
 ## Android 1.4.9 — captura, limpeza e revisão
 
 - Mantém o rodapé compacto aprovado, encostado na área útil inferior, o pacote `br.com.snakefinance.mobile`, a assinatura e as imagens aprovadas.

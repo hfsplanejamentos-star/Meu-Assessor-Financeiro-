@@ -6,7 +6,7 @@
     "test:backend": "node --experimental-strip-types tests/backend-classification.test.mjs && node tests/backend-security-audit.cjs",
     "convex:dev": "convex dev",
     "convex:deploy": "convex deploy",
-    "test:migration": "node --experimental-strip-types tests/whatsapp-migration.test.mjs && node tests/whatsapp-inbox.test.cjs && node tests/integration-auth.test.cjs",
+    "test:migration": "node --experimental-strip-types tests/whatsapp-migration.test.mjs && node tests/whatsapp-inbox.test.cjs && node tests/integration-auth.test.cjs && node --experimental-strip-types tests/whatsapp-audio-media.test.mjs && node tests/whatsapp-audio-jobs.test.cjs",
     "stage:mobile": "node scripts/stage-mobile-v82.mjs",
     "test:mobile-ui": "node tests/mobile-branded-ui.test.mjs",
     "test:mobile-backup": "node tests/mobile-backup.test.mjs",

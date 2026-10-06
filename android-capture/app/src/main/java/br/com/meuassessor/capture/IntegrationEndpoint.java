@@ -10,6 +10,6 @@ final class IntegrationEndpoint {
         } catch (Exception error) { return null; }
     }
     static boolean allows(String path, String method) {
-        return ("GET".equals(method) && ("/integrations/status".equals(path) || "/whatsapp/messages".equals(path))) || ("POST".equals(method) && ("/whatsapp/resolve".equals(path) || "/ai/finance".equals(path)));
+        return ("GET".equals(method) && ("/integrations/status".equals(path) || "/whatsapp/messages".equals(path))) || ("POST".equals(method) && (("/whatsapp/resolve".equals(path) || "/whatsapp/retry".equals(path)) || "/ai/finance".equals(path)));
     }
 }

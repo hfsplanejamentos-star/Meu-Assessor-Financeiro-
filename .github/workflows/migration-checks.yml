@@ -11,6 +11,8 @@ on:
       - 'tests/mobile-backup.test.mjs'
       - 'tests/mobile-capture.test.mjs'
       - 'tests/whatsapp-inbox.test.cjs'
+      - 'tests/whatsapp-audio-media.test.mjs'
+      - 'tests/whatsapp-audio-jobs.test.cjs'
       - 'tests/integration-auth.test.cjs'
       - 'package*.json'
       - '.github/workflows/migration-checks.yml'
@@ -40,7 +42,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Snake-Finance-1.4.9-verified-visuals
+          name: Snake-Finance-1.4.10-verified-visuals
           path: validation/mobile-ui
           retention-days: 14
   android:
@@ -78,7 +80,7 @@ jobs:
       - name: Upload candidate APKs
         uses: actions/upload-artifact@v4
         with:
-          name: Snake-Finance-Android-1.4.9-candidate
+          name: Snake-Finance-Android-1.4.10-candidate
           path: |
             android-capture/app/build/outputs/apk/debug/app-debug.apk
             android-capture/app/build/outputs/apk/release/app-release.apk

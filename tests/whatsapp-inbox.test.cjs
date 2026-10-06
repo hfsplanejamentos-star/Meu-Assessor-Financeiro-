@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),ts=require('typescript');
 const source=ts.transpileModule(fs.readFileSync('convex/whatsappInbox.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
-const sandbox={exports:{},require:name=>name==='./_generated/server'?{internalQuery:x=>x,internalMutation:x=>x}:require(name)};vm.runInNewContext(source,sandbox);
+const sandbox={exports:{},require:name=>name==='./_generated/api'?{internal:{}}:name==='./_generated/server'?{internalQuery:x=>x,internalMutation:x=>x}:require(name)};vm.runInNewContext(source,sandbox);
 const ops=sandbox.exports,rows=[];
 const ctx={db:{query:()=>({withIndex(name,fn){const constraints=[];const q={eq:(key,value)=>{constraints.push([key,value]);return q;}};fn(q);const result=rows.filter(r=>constraints.every(([k,v])=>r[k]===v));return {unique:async()=>result[0]||null,order:()=>({take:async n=>result.sort((a,b)=>a.receivedAt-b.receivedAt).slice(0,n)})};}}),insert:async(table,data)=>{rows.push({...data,_id:String(rows.length+1)});},patch:async(id,patch)=>{Object.assign(rows.find(r=>r._id===id),patch);}}};
 (async()=>{

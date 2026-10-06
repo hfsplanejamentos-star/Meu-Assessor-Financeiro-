@@ -1,4 +1,5 @@
 import { internalMutation, internalQuery } from './_generated/server';
+import { internal } from './_generated/api';
 import { v } from 'convex/values';
 const message = v.object({messageId:v.string(),from:v.string(),text:v.string(),postedAt:v.number()});
 export const ingest = internalMutation({
@@ -17,10 +18,10 @@ export const ingest = internalMutation({
 });
 export const pending = internalQuery({
   args:{ownerHash:v.string()},
-  returns:v.array(message),
+  returns:v.array(v.object({messageId:v.string(),from:v.string(),text:v.string(),postedAt:v.number(),kind:v.optional(v.literal('audio')),status:v.union(v.literal('pending'),v.literal('processing'),v.literal('failed')),transcriptionError:v.optional(v.string())})),
   handler:async(ctx,args)=>{
-    const rows=await ctx.db.query('whatsappInbox').withIndex('by_owner_status_received',q=>q.eq('ownerHash',args.ownerHash).eq('status','pending')).order('asc').take(50);
-    return rows.map(({messageId,from,text,postedAt})=>({messageId,from,text,postedAt}));
+    const batches=await Promise.all((['pending','processing','failed'] as const).map(status=>ctx.db.query('whatsappInbox').withIndex('by_owner_status_received',q=>q.eq('ownerHash',args.ownerHash).eq('status',status)).order('asc').take(50)));
+    return batches.flat().sort((a,b)=>a.receivedAt-b.receivedAt).slice(0,50).map(({messageId,from,text,postedAt,kind,status,transcriptionError})=>({messageId,from,text,postedAt,status:status as 'pending'|'processing'|'failed',...(kind?{kind}:{}),...(transcriptionError?{transcriptionError}:{})}));
   }
 });
 
@@ -34,9 +35,20 @@ export const resolve = internalMutation({
     for(const id of new Set(args.messageIds)){
       const row=await ctx.db.query('whatsappInbox').withIndex('by_owner_message',q=>q.eq('ownerHash',args.ownerHash).eq('messageId',id)).unique();
       if(!row)throw new Error('Message not found');
-      if(row.status!=='pending'){alreadyResolved++;continue;}
+      if(['recorded','discarded'].includes(row.status)){alreadyResolved++;continue;}
+      if(args.status==='recorded'&&row.status!=='pending')throw new Error('Message not ready');
       await ctx.db.patch(row._id,{status:args.status,resolvedAt:args.resolvedAt});resolved++;
     }
     return {resolved,alreadyResolved};
+  }
+});
+
+export const retryAudio = internalMutation({
+  args:{ownerHash:v.string(),messageId:v.string()},returns:v.boolean(),
+  handler:async(ctx,args)=>{
+    const row=await ctx.db.query('whatsappInbox').withIndex('by_owner_message',q=>q.eq('ownerHash',args.ownerHash).eq('messageId',args.messageId)).unique();
+    if(!row||row.kind!=='audio'||row.status!=='failed')return false;
+    await ctx.db.patch(row._id,{status:'processing',attempts:0,leaseUntil:0,transcriptionError:undefined});
+    await ctx.scheduler.runAfter(0,internal.whatsappAudio.transcribe,{inboxId:row._id});return true;
   }
 });

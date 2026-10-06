@@ -9,6 +9,7 @@ public class IntegrationEndpointTest {
  @Test public void limitedReadAndReviewEndpoints(){
   assertTrue(IntegrationEndpoint.allows("/whatsapp/messages","GET"));
   assertTrue(IntegrationEndpoint.allows("/whatsapp/resolve","POST"));
+  assertTrue(IntegrationEndpoint.allows("/whatsapp/retry","POST"));
   assertTrue(IntegrationEndpoint.allows("/ai/finance","POST"));
   assertFalse(IntegrationEndpoint.allows("/finance/state","POST"));
   assertFalse(IntegrationEndpoint.allows("//evil.example","GET"));

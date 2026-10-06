@@ -4,8 +4,10 @@ import { v } from "convex/values";
 export default defineSchema({
   whatsappInbox: defineTable({
     ownerHash:v.string(), messageId:v.string(), from:v.string(), text:v.string(),
-    postedAt:v.number(), receivedAt:v.number(), status:v.union(v.literal("pending"),v.literal("recorded"),v.literal("discarded")),
+    postedAt:v.number(), receivedAt:v.number(), status:v.union(v.literal("pending"),v.literal("recorded"),v.literal("discarded"),v.literal("processing"),v.literal("failed")),
     resolvedAt:v.optional(v.number()),
+    kind:v.optional(v.literal("audio")),mediaId:v.optional(v.string()),mimeType:v.optional(v.string()),sha256:v.optional(v.string()),
+    attempts:v.optional(v.number()),leaseUntil:v.optional(v.number()),transcriptionError:v.optional(v.string()),
   }).index("by_owner_message",["ownerHash","messageId"])
     .index("by_owner_status_received",["ownerHash","status","receivedAt"]),
   financeState: defineTable({
