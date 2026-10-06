@@ -44,51 +44,35 @@ final class EncryptedQueueStore {
         synchronized (LOCK) {
             try {
                 JSONArray queue = read();
-
                 for (int i = 0; i < queue.length(); i++) {
-                    if (event.id.equals(
-                            queue.getJSONObject(i).optString("id"))) {
-                        return false;
-                    }
-        }
-
-            if (queue.length() >= MAX_ITEMS) return false;
-            queue.put(event.toJson());
-
-            write(queue);
-
-            return true;
-
-        } catch (Exception error) {
-            return false;
-        }
+                    if (event.id.equals(queue.getJSONObject(i).optString("id"))) return false;
+                }
+                if (queue.length() >= MAX_ITEMS) return false;
+                queue.put(event.toJson());
+                write(queue);
+                return true;
+            } catch (Exception error) {
+                return false;
             }
+        }
     }
 
     int size() {
         synchronized (LOCK) {
-            try {
-                return read().length();
-            } catch (Exception ignored) {
-                return 0;
-            }
+            try { return read().length(); }
+            catch (Exception ignored) { return 0; }
         }
     }
 
     String snapshotJson() {
         synchronized (LOCK) {
-            try {
-                return read().toString();
-            } catch (Exception ignored) {
-                return "[]";
-            }
+            try { return read().toString(); }
+            catch (Exception ignored) { return "[]"; }
         }
     }
 
     void clear() {
-        synchronized (LOCK) {
-            file.delete();
-        }
+        synchronized (LOCK) { file.delete(); }
     }
 
     boolean acknowledge(String idsJson) {
@@ -101,16 +85,16 @@ final class EncryptedQueueStore {
                     Object id = ids.get(i);
                     if (!(id instanceof String) || ((String) id).isEmpty() || ((String) id).length() > 256) return false;
                     selected.add((String) id);
+                }
+                JSONArray queue = read(), remaining = new JSONArray();
+                for (int i = 0; i < queue.length(); i++) {
+                    JSONObject event = queue.getJSONObject(i);
+                    if (!selected.contains(event.getString("id"))) remaining.put(event);
+                }
+                write(remaining);
+                return true;
+            } catch (Exception error) { return false; }
         }
-            JSONArray queue = read(), remaining = new JSONArray();
-            for (int i = 0; i < queue.length(); i++) {
-                JSONObject event = queue.getJSONObject(i);
-                if (!selected.contains(event.getString("id"))) remaining.put(event);
-            }
-            write(remaining);
-            return true;
-        } catch (Exception error) { return false; }
-            }
     }
 
     private JSONArray read() throws Exception {
@@ -119,17 +103,12 @@ final class EncryptedQueueStore {
             return new JSONArray();
         }
 
-        FileInputStream input = file.openRead();
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-
-        byte[] buffer = new byte[4096];
-        int length;
-
-        while ((length = input.read(buffer)) != -1) {
-            output.write(buffer, 0, length);
+        try (FileInputStream input = file.openRead()) {
+            byte[] buffer = new byte[4096];
+            int length;
+            while ((length = input.read(buffer)) != -1) output.write(buffer, 0, length);
         }
-
-        input.close();
 
         String wrapper =
                 new String(
