@@ -78,7 +78,7 @@
   window.captureOpen=async function(index){
     if(busy)return;const event=reviewItems[index];if(!event)return;
     if(event.kind==='audio'&&event.status!=='pending'){alert('Aguarde a transcrição ou tente novamente antes de registrar.');return;}
-    if(!ST.msg){alert('Ative Registrar despesas por mensagem em Avisos para abrir rascunhos.');return;}
+    if(event.source!=='bank'&&!ST.msg){alert('Ative Registrar despesas por mensagem em Avisos para abrir rascunhos.');return;}
     if(recorded(event)){if(confirm('Este evento já está registrado. Concluir a revisão sem criar outro lançamento?'))await complete([event],'recorded');return;}
     draft={event,data:localDraft(event)};
     if(event.kind==='audio'){

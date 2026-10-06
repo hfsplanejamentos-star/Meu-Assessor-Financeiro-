@@ -33,8 +33,8 @@ const count=()=>page.evaluate(()=>({ledger:L.length,queue:testQueue.length,stora
 const open=async()=>{await page.evaluate(()=>reviewNativeNotifications());await page.getByRole('button',{name:'Revisar e registrar',exact:true}).first().click();};
 try{
  await page.goto('http://127.0.0.1:'+server.address().port,{waitUntil:'load'});
- await page.evaluate(()=>{closeDay();ST.hide=false;ST.msg=true;});
- await open();assert.equal(await page.locator('#capture-amount').inputValue(),'25,90');assert.equal(await page.locator('#capture-account').inputValue(),'c6');
+ await page.evaluate(()=>{closeDay();ST.hide=false;ST.msg=false;});
+ await open();assert.equal(await page.locator('#capture-save').isVisible(),true,'Bank save is available with message registration disabled');assert.equal(await page.locator('#capture-amount').inputValue(),'25,90');assert.equal(await page.locator('#capture-account').inputValue(),'c6');
  await page.getByRole('button',{name:'Cancelar e manter pendente'}).click();assert.deepEqual(await count(),{ledger:0,queue:1,storage:0});
  await open();
  await page.evaluate(()=>{window.originalSetItem=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(k==='assessor_tx_v43')throw Error('quota');return originalSetItem.call(this,k,v);};});
@@ -53,6 +53,7 @@ try{
  // Unrecognized bank + ambiguous type must require explicit account and direction.
  await page.evaluate(()=>{testQueue=[{id:'unknown',sourcePackage:'br.com.xp.carteira',title:'Movimentação',text:'R$ 10,00',amountCents:1000,direction:'unknown',postedAt:1791298800000}];});await open();assert.equal(await page.locator('#capture-account').inputValue(),'');assert.equal(await page.locator('#capture-type').inputValue(),'');await page.getByRole('button',{name:'Salvar lançamento',exact:true}).click();assert.equal((await count()).ledger,2);await page.evaluate(()=>closeDay());
  // Connect a mocked service, then review and save a WhatsApp text with source provenance.
+ await page.evaluate(()=>{ST.msg=true;});
  await page.evaluate(()=>captureSettings());await page.locator('#capture-url').fill('https://test-service.convex.site');await page.locator('#capture-key').fill('test-owner-key-with-at-least-32-characters');await page.getByRole('button',{name:'Conectar e verificar'}).click();await page.waitForFunction(()=>document.getElementById('capture-status').textContent.includes('Serviço conectado'));
  await page.evaluate(()=>{closeDay();testWa=[{messageId:'wamid.test',text:'Gastei R$ 12,34 no Caju',from:'5511999999999',postedAt:1791298800000}];AS='wa';goTab('as');});await page.getByRole('button',{name:'Atualizar',exact:true}).click();await page.waitForFunction(()=>document.getElementById('v').textContent.includes('12,34'));
  await page.getByRole('button',{name:'Revisar e registrar',exact:true}).click();assert.equal(await page.locator('#capture-amount').inputValue(),'12,34');assert.equal(await page.locator('#capture-account').inputValue(),'caju');
