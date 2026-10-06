@@ -51,6 +51,8 @@ public final class MainActivity extends Activity {
     private WebView webView;
     private View loadingScreen;
     private boolean dashboardLoadFailed;
+    private long introStartedAt;
+    private static final long INTRO_DURATION_MS = 3000;
     private ValueCallback<Uri[]> fileCallback;
     private Uri capturedImageUri;
     private Bundle pendingState;
@@ -76,6 +78,19 @@ public final class MainActivity extends Activity {
         root.addView(webView, 0, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
+        introStartedAt = android.os.SystemClock.uptimeMillis();
+        View artwork = findViewById(R.id.loading_art);
+        artwork.setAlpha(0f);
+        artwork.setScaleX(1.04f);
+        artwork.setScaleY(1.04f);
+        artwork.animate().alpha(1f).setDuration(900).start();
+        android.animation.ObjectAnimator.ofFloat(artwork, View.SCALE_X, 1.04f, 1f)
+                .setDuration(INTRO_DURATION_MS).start();
+        android.animation.ObjectAnimator.ofFloat(artwork, View.SCALE_Y, 1.04f, 1f)
+                .setDuration(INTRO_DURATION_MS).start();
+        View progress = findViewById(R.id.loading_progress);
+        progress.setAlpha(0f);
+        progress.animate().alpha(1f).setStartDelay(900).setDuration(450).start();
         getWindow().setStatusBarColor(Color.BLACK);
         getWindow().setNavigationBarColor(Color.BLACK);
         findViewById(R.id.loading_error).setOnClickListener(view -> {
@@ -256,16 +271,20 @@ public final class MainActivity extends Activity {
             public void onPageFinished(WebView view, String url) {
                 if (!authenticated || dashboardLoadFailed || url == null
                         || !url.startsWith(APP_BASE_URL)) return;
-                // Finish the document's initial scripts, then allow a painted frame
-                // before revealing the dashboard. No fixed splash timeout.
+                // Reveal only after both the short intro and initial document load.
+                // A slower load keeps the animated progress on screen.
                 view.evaluateJavascript("document.readyState", ready -> {
                     if (!"\"complete\"".equals(ready)) return;
-                    view.postOnAnimation(() -> view.postOnAnimation(() -> {
+                    long remaining = Math.max(0, INTRO_DURATION_MS
+                            - (android.os.SystemClock.uptimeMillis() - introStartedAt));
+                    view.postDelayed(() -> view.postOnAnimation(() -> view.postOnAnimation(() -> {
                         if (isFinishing() || dashboardLoadFailed || !authenticated) return;
-                        loadingScreen.setVisibility(View.GONE);
-                        getWindow().setStatusBarColor(Color.parseColor("#061421"));
-                        getWindow().setNavigationBarColor(Color.parseColor("#061421"));
-                    }));
+                        loadingScreen.animate().alpha(0f).setDuration(250).withEndAction(() -> {
+                            loadingScreen.setVisibility(View.GONE);
+                            getWindow().setStatusBarColor(Color.parseColor("#061421"));
+                            getWindow().setNavigationBarColor(Color.parseColor("#061421"));
+                        }).start();
+                    })), remaining);
                 });
             }
 
