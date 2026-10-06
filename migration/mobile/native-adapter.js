@@ -10,7 +10,7 @@
   const requests=new Map();
   const safe=x=>escapeHTML(String(x??''));
   const money=v=>Number.isSafeInteger(v)?brl(v):'Valor a confirmar';
-  const privacyText=t=>ST.hide?String(t).replace(/(?:R\$\s*)?\d[\d.]*,\d{2}/g,'R$ ••••'):t;
+  const privacyText=t=>ST.hide?'Conteúdo oculto. Abra o item para revisar.':t;
   function endpoint(value){try{const u=new URL(value);return u.protocol==='https:'&&/^[a-z0-9-]+\.convex\.site$/.test(u.hostname)&&!u.username&&!u.password&&(!u.port||u.port==='443')&&!u.search&&!u.hash&&['','/'].includes(u.pathname)?u.origin:null;}catch{return null;}}
   function loadConfig(){try{if(bridge?.getIntegrationConfig)config=JSON.parse(bridge.getIntegrationConfig());}catch{config={url:'',configured:false};}}
   loadConfig();
@@ -42,7 +42,7 @@
     if(native)try{const rows=JSON.parse(bridge.getPendingNotifications());pending=Array.isArray(rows)?rows.filter(e=>e&&typeof e.id==='string'&&e.id.length<=256).slice(0,500):[];}catch{connectionMessage='Não foi possível ler as notificações.';}
     let button=document.getElementById('native-review');
     if(native&&!button){button=document.createElement('button');button.id='native-review';button.className='bt';button.style.cssText='position:fixed;right:12px;bottom:105px;z-index:40;max-width:220px';button.onclick=window.reviewNativeNotifications;document.body.appendChild(button);}
-    if(button){button.textContent='Revisar notificações ('+pending.length+')';button.hidden=!pending.length;}
+    if(button){button.textContent='Revisar notificações ('+pending.length+')';button.hidden=!pending.length||TAB==='as'||!!MD;}
     window.dispatchEvent(new CustomEvent('assessor-native-pending',{detail:{count:pending.length}}));
   };
   function rows(source){return source==='bank'?pending:waItems;}
@@ -51,7 +51,7 @@
   function normalized(source){return rows(source).map(e=>source==='bank'?{...e,source}:{id:e.messageId,title:e.kind==='audio'?'Áudio do WhatsApp':'Mensagem do WhatsApp',text:e.text,postedAt:e.postedAt,source,connection:e.connection,kind:e.kind,status:e.status||'pending',transcriptionError:e.transcriptionError});}
   function body(source){
     reviewItems=normalized(source);
-    return `<p class="m">Revise valor, conta e categoria antes de salvar. Limpar não exclui lançamentos.</p><div class="sp" style="gap:8px;margin:12px 0"><button class="bt" onclick="captureRefresh('${source}')">Atualizar</button><button class="bt" ${!reviewItems.length?'disabled':''} onclick="captureClear('${source}')">Limpar pendentes</button></div>${reviewItems.map((e,i)=>`<div class="c" style="margin:10px 0;padding:14px"><p><b>${safe(e.title||'Notificação bancária')}</b></p><p class="m" style="overflow-wrap:anywhere">${safe(privacyText(e.text||(e.status==='processing'?'Transcrevendo áudio…':e.kind==='audio'?'Não foi possível transcrever.':' ')))}</p><p style="font-size:1.25em;margin:8px 0"><b>${safe(ST.hide?'R$ ••••':money(e.amountCents))}</b></p><p class="m">${safe(new Date(e.postedAt).toLocaleDateString('pt-BR'))}${recorded(e)?' · Já registrado':e.kind==='audio'?' · '+(e.status==='processing'?'Transcrevendo':e.status==='failed'?'Transcrição pendente':'Transcrito'):''}</p>${e.kind==='audio'&&e.status==='failed'?'<p class="m">'+safe(audioError(e.transcriptionError))+'</p>':''}<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">${e.status==='processing'?'<button class="bt" disabled>Transcrevendo…</button>':e.status==='failed'?`<button class="bt" onclick="captureRetryAudio(${i})">Tentar transcrição novamente</button>`:`<button class="bt p" onclick="captureOpen(${i})">${recorded(e)?'Concluir revisão':'Revisar e registrar'}</button>`}<button class="bt" onclick="captureDiscard(${i})">Dispensar</button></div></div>`).join('')||'<p>Nenhuma notificação pendente.</p>'}`;
+    return `<p class="m">Revise valor, conta e categoria antes de salvar. Limpar não exclui lançamentos.</p><div class="sp" style="gap:8px;margin:12px 0"><button class="bt" onclick="captureRefresh('${source}')">Atualizar</button><button class="bt" ${!reviewItems.length?'disabled':''} onclick="captureClear('${source}')">Limpar pendentes</button></div>${reviewItems.map((e,i)=>`<div class="c" style="margin:10px 0;padding:14px"><p><b>${safe(ST.hide?(e.kind==='audio'?'Áudio do WhatsApp':e.source==='bank'?'Notificação bancária':'Mensagem do WhatsApp'):(e.title||'Notificação bancária'))}</b></p><p class="m" style="overflow-wrap:anywhere">${safe(privacyText(e.text||(e.status==='processing'?'Transcrevendo áudio…':e.kind==='audio'?'Não foi possível transcrever.':' ')))}</p><p style="font-size:1.25em;margin:8px 0"><b>${safe(ST.hide?'R$ ••••':money(e.amountCents))}</b></p><p class="m">${safe(new Date(e.postedAt).toLocaleDateString('pt-BR'))}${recorded(e)?' · Já registrado':e.kind==='audio'?' · '+(e.status==='processing'?'Transcrevendo':e.status==='failed'?'Transcrição pendente':'Transcrito'):''}</p>${e.kind==='audio'&&e.status==='failed'?'<p class="m">'+safe(audioError(e.transcriptionError))+'</p>':''}<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">${e.status==='processing'?'<button class="bt" disabled>Transcrevendo…</button>':e.status==='failed'?`<button class="bt" onclick="captureRetryAudio(${i})">Tentar transcrição novamente</button>`:`<button class="bt p" onclick="captureOpen(${i})">${recorded(e)?'Concluir revisão':'Revisar e registrar'}</button>`}<button class="bt" onclick="captureDiscard(${i})">Dispensar</button></div></div>`).join('')||'<p>Nenhuma notificação pendente.</p>'}`;
   }
   window.reviewNativeNotifications=function(){window.meuAssessorAndroidAutoSync();activeSource='bank';modal('Notificações bancárias',body('bank'));MD='capture-inbox';};
   window.captureRefresh=async function(source,silent=false){if(loading)return;loading=true;if(source==='whatsapp')lastWaFetch=Date.now();try{if(source==='bank')window.meuAssessorAndroidAutoSync();else{const result=await api('/whatsapp/messages');waItems=Array.isArray(result.messages)?result.messages.filter(m=>typeof m.messageId==='string'&&typeof m.text==='string'&&Number.isFinite(m.postedAt)).slice(0,50).map(m=>({...m,connection:connectionGeneration})):[];}if(source==='bank'){window.reviewNativeNotifications();}else{AS='wa';draw();}}catch(error){if(silent){connectionMessage=error.message;if(TAB==='as'&&AS==='wa'&&!MD)draw();}else alert(error.message);}finally{loading=false;}};
@@ -153,6 +153,7 @@
   };
   // TABS stores the initial function reference; redirect the Assessor tab once.
   const assessorTab=TABS.find(t=>t[0]==='as');if(assessorTab)assessorTab[3]=()=>vAs();
+  const previousCaptureDraw=draw;draw=function(){const result=previousCaptureDraw();const button=document.getElementById('native-review');if(button)button.hidden=!pending.length||TAB==='as'||!!MD;return result;};
   setInterval(()=>{if(config.configured&&TAB==='as'&&AS==='wa'&&!MD&&!busy&&!loading&&!document.hidden)window.captureRefresh('whatsapp',true);},15000);
   window.meuAssessorAndroidAutoSync();
 })();

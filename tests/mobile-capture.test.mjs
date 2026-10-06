@@ -6,7 +6,7 @@ const html=fs.readFileSync('android-capture/app/src/main/assets/dashboard-mobile
 const server=http.createServer((req,res)=>{res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(html);});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const browser=await chromium.launch({headless:true,...(process.env.UI_BROWSER_CHANNEL?{channel:process.env.UI_BROWSER_CHANNEL}:{})});
-const page=await browser.newPage({viewport:{width:393,height:852},timezoneId:'America/Sao_Paulo'}),errors=[];
+const page=await browser.newPage({viewport:{width:393,height:852},timezoneId:'America/Sao_Paulo',locale:'pt-BR'}),errors=[];
 page.on('pageerror',e=>errors.push(e.message));
 await page.addInitScript(()=>{
  localStorage.setItem('assessor_openings_v83',JSON.stringify({c6:100000,caju:150000,cajuFunds:150000}));
@@ -64,6 +64,7 @@ try{
  await page.evaluate(()=>{testWa=[{messageId:'wamid.voice',kind:'audio',status:'processing',text:'',from:'5511999999999',postedAt:1791298800000}];AS='wa';goTab('as');});await page.getByRole('button',{name:'Atualizar',exact:true}).click();await page.waitForSelector('button:has-text("Transcrevendo…")');assert.equal(await page.getByRole('button',{name:'Transcrevendo…',exact:true}).isDisabled(),true);await page.evaluate(()=>captureOpen(0));assert.equal((await count()).ledger,4);
  await page.evaluate(()=>{testWa[0].status='failed';testWa[0].transcriptionError='audio_not_configured';});await page.getByRole('button',{name:'Atualizar',exact:true}).click();await page.getByRole('button',{name:'Tentar transcrição novamente'}).click();await page.waitForFunction(()=>testWa[0].status==='processing');
  await page.evaluate(()=>{testWa[0]={...testWa[0],status:'pending',text:'Gastei dezoito reais e noventa centavos com cerveja no C6.'};testAiResponse={intent:'transaction',draft:{value:-18.90,date:'2026-10-06',desc:'Cerveja',cat:'Cerveja',sub:'',account:'c6',status:'draft'}};setT('ciano');});await page.getByRole('button',{name:'Atualizar',exact:true}).click();await page.waitForFunction(()=>document.getElementById('v').textContent.includes('Transcrito'));
+ await page.evaluate(()=>{ST.hide=true;draw();});assert(!(await page.locator('#v').innerText()).includes('dezoito reais'));await page.evaluate(()=>{ST.hide=false;draw();});assert.equal(await page.locator('#native-review').isVisible(),false,'Bank shortcut must not cover the WhatsApp actions');
  fs.mkdirSync('validation/mobile-ui',{recursive:true});await page.screenshot({path:'validation/mobile-ui/WhatsApp_Audio_Recebido.png'});
  await page.getByRole('button',{name:'Revisar e registrar',exact:true}).click();await page.waitForSelector('#capture-name');assert.equal(await page.locator('#capture-amount').inputValue(),'18,90');assert.equal(await page.locator('#capture-account').inputValue(),'c6');assert.equal(await page.locator('#capture-category').inputValue(),'cer');assert((await page.locator('#md').innerText()).includes('dezoito reais'));assert.equal((await count()).ledger,4,'Transcription/AI must not write the ledger');
  await page.getByRole('button',{name:'Cancelar e manter pendente'}).click();assert.equal(await page.evaluate(()=>testWa.length),1);assert.equal((await count()).ledger,4);
