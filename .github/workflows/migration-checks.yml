@@ -9,6 +9,8 @@ on:
       - 'tests/whatsapp-migration.test.mjs'
       - 'tests/mobile-branded-ui.test.mjs'
       - 'tests/mobile-backup.test.mjs'
+      - 'tests/mobile-capture.test.mjs'
+      - 'tests/whatsapp-inbox.test.cjs'
       - 'package*.json'
       - '.github/workflows/migration-checks.yml'
 permissions:
@@ -30,11 +32,14 @@ jobs:
       - run: npm run test:mobile-ui
         env:
           UI_BROWSER_CHANNEL: chrome
+      - run: npm run test:mobile-capture
+        env:
+          UI_BROWSER_CHANNEL: chrome
       - name: Upload verified mobile screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Snake-Finance-1.4.8-verified-visuals
+          name: Snake-Finance-1.4.9-verified-visuals
           path: validation/mobile-ui
           retention-days: 14
   android:
@@ -72,7 +77,7 @@ jobs:
       - name: Upload candidate APKs
         uses: actions/upload-artifact@v4
         with:
-          name: Snake-Finance-Android-1.4.8-candidate
+          name: Snake-Finance-Android-1.4.9-candidate
           path: |
             android-capture/app/build/outputs/apk/debug/app-debug.apk
             android-capture/app/build/outputs/apk/release/app-release.apk

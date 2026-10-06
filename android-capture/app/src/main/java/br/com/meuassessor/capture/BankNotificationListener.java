@@ -29,7 +29,7 @@ public final class BankNotificationListener extends NotificationListenerService 
     }
     @Override public void onNotificationPosted(StatusBarNotification status) {
         if(status==null)return;
-        String pkg=status.getPackageName(); rememberPackage(pkg);
+        String pkg=status.getPackageName(); if(getPackageName().equals(pkg))return; rememberPackage(pkg);
         Notification n=status.getNotification();
         String title="",body="";
         if(n!=null){
@@ -57,6 +57,7 @@ public final class BankNotificationListener extends NotificationListenerService 
         }
         boolean added=new EncryptedQueueStore(this).add(event);
         saveDiagnostic(pkg,true,true,added?"Capturada e adicionada à fila":"Reconhecida, mas duplicada/erro de fila",title,body,event.amountCents,event.reportedBalanceCents,event.direction);
+        if(added)CaptureNotice.update(this);
         if(added)sendBroadcast(new android.content.Intent("br.com.meuassessor.capture.QUEUE_CHANGED").setPackage(getPackageName()));
     }
     private static String first(Bundle e,String...keys){for(String k:keys){String v=text(e.getCharSequence(k));if(!v.isEmpty())return v;}return "";}

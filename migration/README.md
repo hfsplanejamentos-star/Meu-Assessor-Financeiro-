@@ -2,14 +2,17 @@
 
 A base financeira v82 foi validada pelo proprietário. Esta branch inicia a adaptação do Android existente e dos serviços Convex existentes. Não substitui a versão publicada automaticamente.
 
-## Implementado nesta etapa
+## Android 1.4.9 — captura, limpeza e revisão
 
-- Empacotamento local do HTML validado com checksum SHA-256. O Android prioriza esse pacote, mantendo a origem HTTPS anterior para o armazenamento WebView. Sem pacote, preserva o carregamento anterior.
-- Interface de revisão das notificações capturadas: título, texto, valor e confirmação individual. A opção de ocultar valores é respeitada. Novas notificações não são removidas ao revisar uma anterior. Não cria lançamentos automaticamente.
-- Fila Android com trava compartilhada entre instâncias, gravação atômica e confirmação por IDs. Ao atingir 500 itens, recusa novos itens em vez de apagar pendências antigas.
-- WhatsApp Cloud API: validação inicial do webhook, assinatura HMAC do corpo original, restrição ao remetente e número empresarial configurados. Somente texto nesta etapa; áudio, foto e respostas estão pendentes.
-- Caixa de entrada Convex separada do livro financeiro; repetição do mesmo messageId é ignorada por proprietário. Consulta autenticada `/whatsapp/messages`, limitada a 50 pendências. Ainda não há tela de confirmação de mensagens nem conclusão dessas pendências.
-- IA existente: `store:false` nas duas chamadas OpenAI, modelo financeiro configurável, limites do pedido, erro para JSON inválido e timeout de rede. Chaves permanecem no servidor.
+- Mantém o rodapé compacto aprovado, encostado na área útil inferior, o pacote `br.com.snakefinance.mobile`, a assinatura e as imagens aprovadas.
+- Avisos do assessor: limpar os avisos exibidos hoje sem alterar os lançamentos. A assinatura exata da condição é ocultada até amanhã ou até mudar; a opção Mostrar avisos limpos restaura a lista.
+- Notificações bancárias: revisão com Limpar pendentes, dispensar individualmente e formulário preenchido. Conta ou direção desconhecida exige escolha explícita. Cancelar mantém a pendência. A limpeza confirma somente os IDs vistos e preserva novos eventos.
+- A gravação financeira precede a confirmação da fila. `captureId` acompanha o backup e evita gravar novamente o mesmo evento se a conclusão falhar. Similaridade de valor/data/conta pede confirmação; não apaga transações legítimas. Falha na gravação principal reverte a memória e mantém o aviso.
+- Android publica um aviso genérico de captura com a marca aprovada, sem valores na tela bloqueada. Tocar abre a revisão depois do desbloqueio e carregamento. Requer permissão de notificações; negar não impede a fila local.
+- WhatsApp: mensagens de texto recebidas pelo webhook são consultadas na aba WhatsApp e revisadas antes de salvar. `/whatsapp/resolve` conclui somente os IDs do proprietário; os IDs resolvidos são mantidos para impedir recriação por repetição do webhook. Limite de 50 pendências por consulta. Áudio, fotos e envio de respostas não estão implementados nesta etapa.
+- IA: consultas enviam resumo do mês em centavos e categorias; interpretação abre um rascunho validado. Nenhuma saída da IA grava diretamente. Categoria ou subcategoria desconhecida exige revisão. As chaves OpenAI permanecem no servidor, com `store:false`.
+- Configurações → Captura, WhatsApp e IA: endereço HTTPS `*.convex.site`, chave de acesso e verificação de capacidades. Android protege a chave com AES-GCM/Keystore e faz chamadas a uma lista restrita de endpoints, sem devolver a chave ao HTML. No navegador a chave dura somente a sessão. Troca de conexão invalida resultados em andamento e a lista antiga.
+- O código está preparado; ativação real de WhatsApp e IA exige publicar o backend no deployment correto e configurar as credenciais abaixo. Não foi comprovado recebimento real ou chamada real de IA sem essa configuração.
 
 ## Empacotar privadamente
 
@@ -19,11 +22,13 @@ npm run stage:mobile -- /caminho/absoluto/Snake_Finance_Mobile_v82_Candidata_Aud
 npm run typecheck
 npm run test:backend
 npm run test:migration
+npm run test:mobile-backup
+npm run test:mobile-capture
 cd android-capture
 gradle testDebugUnitTest assembleDebug
 ```
 
-O HTML contém dados financeiros e está excluído do git. Nunca faça commit ou upload público do pacote, backup, manifest de dados ou APK que o inclua. O CI do repositório público, sem esse pacote, continua produzindo o app com o painel anterior. O pacote distribuível sem dados iniciais já foi preparado na etapa Android 1.4.0 abaixo.
+O HTML contém dados financeiros e está excluído do git. Nunca faça commit ou upload público do pacote, backup, manifest de dados ou APK que o inclua. O CI utiliza o painel atual distribuível, sem lançamentos pessoais. O pacote distribuível sem dados iniciais já foi preparado na etapa Android 1.4.0 abaixo.
 
 ## Configuração do servidor
 

@@ -52,6 +52,7 @@ public final class MainActivity extends Activity {
     private Uri capturedImageUri;
     private Bundle pendingState;
     private boolean authenticated;
+    private boolean pendingCaptureReview;
     private boolean authenticationInProgress;
     private boolean queueReceiverRegistered;
     private final android.content.BroadcastReceiver queueReceiver = new android.content.BroadcastReceiver(){ @Override public void onReceive(android.content.Context context, android.content.Intent intent){ if(webView!=null) webView.post(() -> webView.evaluateJavascript("window.meuAssessorAndroidAutoSync&&window.meuAssessorAndroidAutoSync()", null)); }};
@@ -59,6 +60,7 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        pendingCaptureReview=getIntent().getBooleanExtra(CaptureNotice.EXTRA_REVIEW,false);
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
                 .getString("web_cache_version", "");
@@ -241,6 +243,7 @@ public final class MainActivity extends Activity {
                     view.postOnAnimation(() -> view.postOnAnimation(() -> {
                         if (isFinishing() || dashboardLoadFailed || !authenticated) return;
                         loadingScreen.setVisibility(View.GONE);
+                        openPendingCaptureReview();
                         getWindow().setStatusBarColor(Color.parseColor("#061421"));
                         getWindow().setNavigationBarColor(Color.parseColor("#061421"));
                     }));
@@ -493,4 +496,18 @@ public final class MainActivity extends Activity {
                         text64 + "'))),status:decodeURIComponent(escape(atob('" + status64 + "')))}}));",
                 null));
     }
+    void dispatchIntegrationResult(String json){
+        runOnUiThread(()->{if(webView!=null)webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('snake-integration-result',{detail:JSON.parse("+org.json.JSONObject.quote(json)+")}));",null);});
+    }
+
+    @Override protected void onNewIntent(Intent intent){
+        super.onNewIntent(intent);setIntent(intent);
+        if(intent.getBooleanExtra(CaptureNotice.EXTRA_REVIEW,false)){pendingCaptureReview=true;openPendingCaptureReview();}
+    }
+    private void openPendingCaptureReview(){
+        if(pendingCaptureReview && authenticated && webView!=null && loadingScreen!=null && loadingScreen.getVisibility()==View.GONE){
+            pendingCaptureReview=false;webView.evaluateJavascript("window.reviewNativeNotifications&&window.reviewNativeNotifications()",null);
+        }
+    }
+
 }

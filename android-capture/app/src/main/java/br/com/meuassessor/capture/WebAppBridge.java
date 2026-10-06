@@ -43,7 +43,9 @@ final class WebAppBridge {
     /** Acknowledge only reviewed events; keep newly arrived notifications. */
     @JavascriptInterface
     public boolean acknowledgeNotifications(String idsJson) {
-        return new EncryptedQueueStore(activity).acknowledge(idsJson);
+        boolean saved=new EncryptedQueueStore(activity).acknowledge(idsJson);
+        if(saved)CaptureNotice.update(activity);
+        return saved;
     }
 
     @JavascriptInterface
@@ -138,4 +140,36 @@ final class WebAppBridge {
             }
         });
     }
+    @JavascriptInterface
+    public String getIntegrationConfig(){return new IntegrationStore(activity).publicConfig();}
+    @JavascriptInterface
+    public boolean saveIntegrationConfig(String url,String key){return new IntegrationStore(activity).save(url,key);}
+    @JavascriptInterface
+    public boolean clearIntegrationConfig(){return new IntegrationStore(activity).clear();}
+
+    private static final java.util.concurrent.ThreadPoolExecutor REQUESTS = new java.util.concurrent.ThreadPoolExecutor(2,2,30,java.util.concurrent.TimeUnit.SECONDS,new java.util.concurrent.ArrayBlockingQueue<>(8));
+    @JavascriptInterface
+    public void integrationRequest(String requestId,String path,String method,String body){
+        if(requestId==null || !requestId.matches("[a-zA-Z0-9_-]{1,80}"))return;
+        if(!IntegrationEndpoint.allows(path,method) || body==null || body.getBytes(java.nio.charset.StandardCharsets.UTF_8).length>32000){reply(requestId,400,"{\"error\":\"invalid_request\"}");return;}
+        try{REQUESTS.execute(()->{
+            java.net.HttpURLConnection connection=null;
+            try{
+                JSONObject cfg=new IntegrationStore(activity).read();String endpoint=IntegrationEndpoint.normalize(cfg.optString("url"));String key=cfg.optString("key");
+                if(endpoint==null || key.length()<32){reply(requestId,503,"{\"error\":\"not_connected\"}");return;}
+                connection=(java.net.HttpURLConnection)new java.net.URL(endpoint+path).openConnection();
+                connection.setInstanceFollowRedirects(false);connection.setConnectTimeout(10000);connection.setReadTimeout(35000);connection.setRequestMethod(method);
+                connection.setRequestProperty("X-Sync-Key",key);connection.setRequestProperty("Accept","application/json");
+                if("POST".equals(method)){connection.setDoOutput(true);connection.setRequestProperty("Content-Type","application/json");try(java.io.OutputStream out=connection.getOutputStream()){out.write(body.getBytes(java.nio.charset.StandardCharsets.UTF_8));}}
+                int status=connection.getResponseCode();java.io.InputStream stream=status>=400?connection.getErrorStream():connection.getInputStream();
+                java.io.ByteArrayOutputStream output=new java.io.ByteArrayOutputStream();
+                if(stream!=null)try(java.io.InputStream input=stream){byte[] buffer=new byte[4096];int count;while((count=input.read(buffer))!=-1){if(output.size()+count>256000)throw new java.io.IOException("Response too large");output.write(buffer,0,count);}}
+                reply(requestId,status,output.toString(java.nio.charset.StandardCharsets.UTF_8.name()));
+            }catch(Exception error){reply(requestId,502,"{\"error\":\"connection_failed\"}");}finally{if(connection!=null)connection.disconnect();}
+        });}catch(java.util.concurrent.RejectedExecutionException busy){reply(requestId,429,"{\"error\":\"rate_limited\"}");}
+    }
+    private void reply(String id,int status,String body){
+        try{JSONObject result=new JSONObject().put("id",id).put("status",status).put("body",body);activity.dispatchIntegrationResult(result.toString());}catch(Exception ignored){}
+    }
+
 }

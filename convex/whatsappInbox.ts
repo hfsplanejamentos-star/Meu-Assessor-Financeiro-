@@ -23,3 +23,20 @@ export const pending = internalQuery({
     return rows.map(({messageId,from,text,postedAt})=>({messageId,from,text,postedAt}));
   }
 });
+
+/** Keep resolved IDs so a retried webhook cannot recreate a reviewed message. */
+export const resolve = internalMutation({
+  args:{ownerHash:v.string(),messageIds:v.array(v.string()),status:v.union(v.literal('recorded'),v.literal('discarded')),resolvedAt:v.number()},
+  returns:v.object({resolved:v.number(),alreadyResolved:v.number()}),
+  handler:async(ctx,args)=>{
+    if(!args.messageIds.length || args.messageIds.length>50 || args.messageIds.some(id=>!id || id.length>256))throw new Error('Invalid message IDs');
+    let resolved=0,alreadyResolved=0;
+    for(const id of new Set(args.messageIds)){
+      const row=await ctx.db.query('whatsappInbox').withIndex('by_owner_message',q=>q.eq('ownerHash',args.ownerHash).eq('messageId',id)).unique();
+      if(!row)throw new Error('Message not found');
+      if(row.status!=='pending'){alreadyResolved++;continue;}
+      await ctx.db.patch(row._id,{status:args.status,resolvedAt:args.resolvedAt});resolved++;
+    }
+    return {resolved,alreadyResolved};
+  }
+});
