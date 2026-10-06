@@ -1,0 +1,16 @@
+import {readFile,mkdir,writeFile} from 'node:fs/promises';
+import {resolve,dirname} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),input=process.argv[2];
+if(!input)throw new Error('Usage: node scripts/stage-mobile-v82.mjs /absolute/path/validated-mobile.html');
+const html=await readFile(resolve(input),'utf8');
+if(!html.includes('function auditEngine(')||!html.includes('function deleteGoal('))throw new Error('Expected audited v82 mobile dashboard with goal deletion.');
+const bridge=await readFile(resolve(root,'migration/mobile/native-adapter.js'),'utf8');
+if(html.includes('id="migration-native-v82"'))throw new Error('Dashboard already staged. Supply the original validated HTML.');
+const output=html.replace(/<\/body>/i,`<script id="migration-native-v82">${bridge}</script>\n</body>`);
+if(output===html)throw new Error('Missing body end tag');
+const dir=resolve(root,'android-capture/app/src/main/assets');await mkdir(dir,{recursive:true});
+await writeFile(resolve(dir,'mobile-v82.html'),output);
+await writeFile(resolve(dir,'mobile-v82.manifest.json'),JSON.stringify({version:82,sha256:createHash('sha256').update(output).digest('hex'),stagedAt:new Date().toISOString()},null,2));
+console.log('Private mobile bundle staged locally. Not tracked by git.');

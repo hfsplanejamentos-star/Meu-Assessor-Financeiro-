@@ -30,6 +30,12 @@ final class WebAppBridge {
         return new EncryptedQueueStore(activity).snapshotJson();
     }
 
+    /** Acknowledge only reviewed events; keep newly arrived notifications. */
+    @JavascriptInterface
+    public boolean acknowledgeNotifications(String idsJson) {
+        return new EncryptedQueueStore(activity).acknowledge(idsJson);
+    }
+
     @JavascriptInterface
     public void markNotificationsConsumed() {
         new EncryptedQueueStore(activity).clear();

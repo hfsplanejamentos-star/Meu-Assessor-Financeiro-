@@ -3,6 +3,8 @@ import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { classifyByRules, redactForAi, type Classification, type Direction } from "./notificationClassifier";
 
+import { validSignature, parseWhatsApp } from "./whatsappPayload";
+
 const http = httpRouter();
 const legacyCors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type, X-Sync-Key", "Access-Control-Allow-Methods": "GET, POST, OPTIONS" };
 const allowedPackages = new Set([
@@ -62,7 +64,7 @@ async function classifyWithAi(events: IncomingEvent[]): Promise<Map<string, Clas
   const input = unresolved.slice(0, 25).map((event) => ({ id: event.eventId, direction: event.direction, amountCents: event.amountCents ?? null, title: redactForAi(event.title), text: redactForAi(event.text) }));
   const prompt = ["Classifique notificações financeiras brasileiras.", "Não execute transações. Responda somente JSON válido no formato {\"items\":[{\"id\":string,\"category\":string,\"subcategory\":string,\"confidence\":number}]}", `Categorias permitidas: ${Array.from(allowedCategories).join(", ")}.`, "Use confiança entre 0 e 1. Se houver dúvida, use Outros e confiança abaixo de 0.7.", JSON.stringify(input)].join("\n");
   try {
-    const response = await fetch("https://api.openai.com/v1/responses", { method: "POST", headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" }, body: JSON.stringify({ model: process.env.OPENAI_CLASSIFICATION_MODEL || "gpt-5-mini", input: prompt }) });
+    const response = await fetch("https://api.openai.com/v1/responses", { method: "POST", headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" }, body: JSON.stringify({ model: process.env.OPENAI_CLASSIFICATION_MODEL || "gpt-5-mini", store: false, input: prompt }) });
     if (!response.ok) return result;
     const data = await response.json() as any;
     const providerText = data?.output_text || data?.output?.flatMap((item: any) => item.content || []).map((item: any) => item.text || item.value || "").join("") || "";
@@ -136,17 +138,51 @@ http.route({ path: "/ai/finance", method: "POST", handler: httpAction(async (ctx
   const now = Date.now();
   const rate = await ctx.runMutation(internal.notificationEvents.consumeRateLimit, { ownerHash: hash, now });
   if (!rate.allowed) return json({ ok: false, error: "rate_limited", retryAfterMs: rate.retryAfterMs }, 429, headers);
-  const body = await req.json();
-  const text = String(body?.text || "").trim();
+  let body: any;
+  try {
+    const raw = await req.text();
+    if (new TextEncoder().encode(raw).length > 32_000) return json({ok:false,error:"payload_too_large"},413,headers);
+    body = JSON.parse(raw);
+  } catch { return json({ok:false,error:"invalid_json"},400,headers); }
+  const text = typeof body?.text === "string" ? body.text.trim() : "";
+  if (text.length > 4000) return json({ok:false,error:"text_too_long"},400,headers);
   if (!text) return json({ ok: false, error: "missing_text" }, 400, headers);
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return json({ ok: false, error: "ai_not_configured" }, 503, headers);
   const prompt = ["Você é o motor de interpretação do Meu Assessor Financeiro.", "Responda SOMENTE JSON válido.", "Nunca execute transações. Apenas interprete ou responda.", "Para lançamento: {intent:'transaction',draft:{date:'YYYY-MM-DD',value:number,cat:string,sub:string,desc:string,status:'draft'}}.", "Despesa deve ter value negativo; receita positivo.", "Para pergunta: {intent:'answer',answer:string}.", "Contexto financeiro:", JSON.stringify(body?.context || {}), "Usuário:", text].join("\n");
-  const response = await fetch("https://api.openai.com/v1/responses", { method: "POST", headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" }, body: JSON.stringify({ model: "gpt-5-mini", input: prompt }) });
+  let response: Response;
+  try {
+    response = await fetch("https://api.openai.com/v1/responses", { method: "POST", signal: AbortSignal.timeout(25_000), headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" }, body: JSON.stringify({ model: process.env.OPENAI_FINANCE_MODEL || "gpt-5-mini", store: false, input: prompt }) });
+  } catch { return json({ok:false,error:"provider_unavailable"},502,headers); }
   if (!response.ok) return json({ ok: false, error: "provider_error", status: response.status }, 502, headers);
   const data: any = await response.json();
   const output = String(data?.output_text || data?.output?.flatMap((item: any) => item.content || []).map((item: any) => item.text || "").join("") || "").trim();
   try { return json(JSON.parse(output), 200, headers); } catch { return json({ intent: "answer", answer: output }, 200, headers); }
 }) });
 
+http.route({path:"/whatsapp/webhook",method:"GET",handler:httpAction(async (_ctx,req)=>{
+  const url=new URL(req.url), token=process.env.WHATSAPP_VERIFY_TOKEN;
+  if(token && url.searchParams.get("hub.mode")==="subscribe" && url.searchParams.get("hub.verify_token")===token)
+    return new Response(url.searchParams.get("hub.challenge")||"",{status:200});
+  return new Response("Forbidden",{status:403});
+})});
+http.route({path:"/whatsapp/webhook",method:"POST",handler:httpAction(async(ctx,req)=>{
+  const secret=process.env.WHATSAPP_APP_SECRET, phone=process.env.WHATSAPP_OWNER_PHONE,
+    phoneId=process.env.WHATSAPP_PHONE_NUMBER_ID, ownerKey=process.env.WHATSAPP_OWNER_SYNC_KEY;
+  if(!secret || !phone || !phoneId || !ownerKey || ownerKey.length<32 || ownerKey.length>256)
+    return json({ok:false,error:"whatsapp_not_configured"},503,{});
+  const raw=await req.text();
+  if(new TextEncoder().encode(raw).length>128_000)return json({ok:false,error:"payload_too_large"},413,{});
+  if(!await validSignature(raw,req.headers.get("x-hub-signature-256")||"",secret))return json({ok:false,error:"invalid_signature"},401,{});
+  let payload:unknown;try{payload=JSON.parse(raw);}catch{return json({ok:false,error:"invalid_json"},400,{});}
+  const messages=parseWhatsApp(payload,phone,phoneId);
+  if(messages.length)await ctx.runMutation(internal.whatsappInbox.ingest,{ownerHash:await sha256(`meu-assessor:v1:${ownerKey}`),messages,receivedAt:Date.now()});
+  return json({ok:true},200,{});
+})});
+http.route({path:"/whatsapp/messages",method:"OPTIONS",handler:httpAction(async(_ctx,req)=>new Response(null,{status:204,headers:secureCors(req)}))});
+http.route({path:"/whatsapp/messages",method:"GET",handler:httpAction(async(ctx,req)=>{
+  const headers=secureCors(req),hash=await ownerHash(req);
+  if(!hash)return json({ok:false,error:"invalid_sync_key"},401,headers);
+  return json({ok:true,messages:await ctx.runQuery(internal.whatsappInbox.pending,{ownerHash:hash})},200,headers);
+})});
 export default http;

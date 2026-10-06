@@ -116,6 +116,19 @@ public final class MainActivity extends Activity {
 
     private void loadDashboardHtml() {
         Executors.newSingleThreadExecutor().execute(() -> {
+            // Staged local bundle retains the existing HTTPS storage origin.
+            try (InputStream asset = getAssets().open("mobile-v82.html")) {
+                StringBuilder localHtml = new StringBuilder();
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(asset, StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) localHtml.append(line).append('\n');
+                }
+                String bundled = localHtml.toString();
+                runOnUiThread(() -> webView.loadDataWithBaseURL(APP_BASE_URL, bundled, "text/html", "UTF-8", APP_URL));
+                return;
+            } catch (java.io.IOException missingBundle) {
+                // Existing releases keep their remote dashboard when no bundle is staged.
+            }
             HttpURLConnection connection = null;
             try {
                 connection = (HttpURLConnection) new URL(

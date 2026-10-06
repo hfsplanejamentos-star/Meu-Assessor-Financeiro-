@@ -2,6 +2,11 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  whatsappInbox: defineTable({
+    ownerHash:v.string(), messageId:v.string(), from:v.string(), text:v.string(),
+    postedAt:v.number(), receivedAt:v.number(), status:v.literal("pending"),
+  }).index("by_owner_message",["ownerHash","messageId"])
+    .index("by_owner_status_received",["ownerHash","status","receivedAt"]),
   financeState: defineTable({
     ownerKey: v.string(),
     payload: v.any(),

@@ -1,6 +1,9 @@
 package br.com.meuassessor.capture;
 
 import android.content.Context;
+import android.util.AtomicFile;
+import java.util.HashSet;
+import java.util.Set;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 
@@ -30,28 +33,27 @@ final class EncryptedQueueStore {
 
     private static final int MAX_ITEMS = 500;
 
-    private final File file;
+    private static final Object LOCK = new Object();
+    private final AtomicFile file;
 
     EncryptedQueueStore(Context context) {
-        file = new File(context.getFilesDir(), FILE);
+        file = new AtomicFile(new File(context.getFilesDir(), FILE));
     }
 
-    synchronized boolean add(CapturedNotification event) {
-        try {
-            JSONArray queue = read();
+    boolean add(CapturedNotification event) {
+        synchronized (LOCK) {
+            try {
+                JSONArray queue = read();
 
-            for (int i = 0; i < queue.length(); i++) {
-                if (event.id.equals(
-                        queue.getJSONObject(i).optString("id"))) {
-                    return false;
-                }
-            }
+                for (int i = 0; i < queue.length(); i++) {
+                    if (event.id.equals(
+                            queue.getJSONObject(i).optString("id"))) {
+                        return false;
+                    }
+        }
 
+            if (queue.length() >= MAX_ITEMS) return false;
             queue.put(event.toJson());
-
-            while (queue.length() > MAX_ITEMS) {
-                queue.remove(0);
-            }
 
             write(queue);
 
@@ -60,35 +62,64 @@ final class EncryptedQueueStore {
         } catch (Exception error) {
             return false;
         }
+            }
     }
 
-    synchronized int size() {
-        try {
-            return read().length();
-        } catch (Exception ignored) {
-            return 0;
+    int size() {
+        synchronized (LOCK) {
+            try {
+                return read().length();
+            } catch (Exception ignored) {
+                return 0;
+            }
         }
     }
 
-    synchronized String snapshotJson() {
-        try {
-            return read().toString();
-        } catch (Exception ignored) {
-            return "[]";
+    String snapshotJson() {
+        synchronized (LOCK) {
+            try {
+                return read().toString();
+            } catch (Exception ignored) {
+                return "[]";
+            }
         }
     }
 
-    synchronized void clear() {
-        if (file.exists()) file.delete();
+    void clear() {
+        synchronized (LOCK) {
+            file.delete();
+        }
+    }
+
+    boolean acknowledge(String idsJson) {
+        synchronized (LOCK) {
+            try {
+                JSONArray ids = new JSONArray(idsJson);
+                if (ids.length() == 0 || ids.length() > MAX_ITEMS) return false;
+                Set<String> selected = new HashSet<>();
+                for (int i = 0; i < ids.length(); i++) {
+                    Object id = ids.get(i);
+                    if (!(id instanceof String) || ((String) id).isEmpty() || ((String) id).length() > 256) return false;
+                    selected.add((String) id);
+        }
+            JSONArray queue = read(), remaining = new JSONArray();
+            for (int i = 0; i < queue.length(); i++) {
+                JSONObject event = queue.getJSONObject(i);
+                if (!selected.contains(event.getString("id"))) remaining.put(event);
+            }
+            write(remaining);
+            return true;
+        } catch (Exception error) { return false; }
+            }
     }
 
     private JSONArray read() throws Exception {
 
-        if (!file.exists()) {
+        if (!file.getBaseFile().exists() && !new File(file.getBaseFile().getPath() + ".bak").exists()) {
             return new JSONArray();
         }
 
-        FileInputStream input = new FileInputStream(file);
+        FileInputStream input = file.openRead();
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
         byte[] buffer = new byte[4096];
@@ -175,12 +206,15 @@ final class EncryptedQueueStore {
                 wrapper.toString()
                         .getBytes(StandardCharsets.UTF_8);
 
-        FileOutputStream output =
-                new FileOutputStream(file);
-
-        output.write(data);
-        output.flush();
-        output.close();
+        FileOutputStream output = null;
+        try {
+            output = file.startWrite();
+            output.write(data);
+            file.finishWrite(output);
+        } catch (Exception error) {
+            if (output != null) file.failWrite(output);
+            throw error;
+        }
     }
 
     private SecretKey key() throws Exception {
