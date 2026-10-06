@@ -2210,6 +2210,7 @@ html[data-tema] #app{padding-bottom:120px!important}
 <script id="migration-native-v82">/* Capture inbox: explicit review, durable ledger first, source-scoped acknowledgement. */
 (function () {
   'use strict';
+  const captureStyle=document.createElement('style');captureStyle.textContent='#capture-question{box-sizing:border-box;width:100%;min-height:90px;resize:vertical;border:1px solid var(--br);background:var(--bg);color:var(--tx);border-radius:12px;padding:10px 12px;font:inherit;outline:none}#capture-question:focus{border-color:var(--a)}#capture-save:disabled{opacity:.55}';document.head.appendChild(captureStyle);
   const bridge=window.AndroidBridge||window.AndroidApp;
   const native=!!bridge&&typeof bridge.getPendingNotifications==='function';
   let pending=[],reviewItems=[],waItems=[],activeSource='bank',draft=null,busy=false,loading=false,requestNumber=0,connectionGeneration=0;
