@@ -41,8 +41,10 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 public final class MainActivity extends Activity {
     static final int REQUEST_VOICE = 701;
     private static final int REQUEST_FILE = 702;
+    private static final int REQUEST_BACKUP = 703;
+    private String pendingBackup;
     private static final String APP_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.3.11";
+            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.4.0";
     private static final String APP_BASE_URL =
             "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/";
 
@@ -117,7 +119,7 @@ public final class MainActivity extends Activity {
     private void loadDashboardHtml() {
         Executors.newSingleThreadExecutor().execute(() -> {
             // Staged local bundle retains the existing HTTPS storage origin.
-            try (InputStream asset = getAssets().open("mobile-v82.html")) {
+            try (InputStream asset = getAssets().open("dashboard-mobile.html")) {
                 StringBuilder localHtml = new StringBuilder();
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(asset, StandardCharsets.UTF_8))) {
                     String line;
@@ -156,6 +158,27 @@ public final class MainActivity extends Activity {
                 runOnUiThread(() -> webView.loadUrl(APP_URL));
             } finally {
                 if (connection != null) connection.disconnect();
+            }
+        });
+    }
+
+    void exportBackup(String json, String filename) {
+        if (json == null || json.getBytes(StandardCharsets.UTF_8).length > 20 * 1024 * 1024) return;
+        try {
+            org.json.JSONObject backup = new org.json.JSONObject(json);
+            if (!"snake-finance-backup".equals(backup.optString("schema"))) return;
+        } catch (Exception invalid) { return; }
+        runOnUiThread(() -> {
+            if (pendingBackup != null) return;
+            pendingBackup = json;
+            Intent save = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            save.addCategory(Intent.CATEGORY_OPENABLE);
+            save.setType("application/json");
+            save.putExtra(Intent.EXTRA_TITLE, filename != null && filename.matches("[A-Za-z0-9_.-]+") ? filename : "Snake_Finance_Backup.json");
+            try { startActivityForResult(save, REQUEST_BACKUP); }
+            catch (Exception error) {
+                pendingBackup = null;
+                android.widget.Toast.makeText(this, "Não foi possível abrir o local para salvar o backup.", android.widget.Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -271,6 +294,15 @@ public final class MainActivity extends Activity {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = callback;
 
+                String[] accepted = params.getAcceptTypes();
+                boolean jsonOnly = accepted != null && java.util.Arrays.stream(accepted).anyMatch(t -> t != null && (t.contains("json") || t.equals(".json")));
+                if (jsonOnly) {
+                    Intent backup = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    backup.addCategory(Intent.CATEGORY_OPENABLE);
+                    backup.setType("application/json");
+                    try { startActivityForResult(backup, REQUEST_FILE); return true; }
+                    catch (Exception unavailable) { fileCallback = null; return false; }
+                }
                 Intent files = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 files.addCategory(Intent.CATEGORY_OPENABLE);
                 files.setType("*/*");
@@ -353,6 +385,23 @@ public final class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_BACKUP) {
+            String payload = pendingBackup;
+            pendingBackup = null;
+            if (resultCode != RESULT_OK || data == null || data.getData() == null || payload == null) return;
+            Uri destination = data.getData();
+            Executors.newSingleThreadExecutor().execute(() -> {
+                boolean success = false;
+                try (java.io.OutputStream output = getContentResolver().openOutputStream(destination, "wt")) {
+                    if (output == null) throw new java.io.IOException("No output stream");
+                    output.write(payload.getBytes(StandardCharsets.UTF_8));
+                    success = true;
+                } catch (Exception error) { /* Report failure without exposing financial data. */ }
+                final boolean saved = success;
+                runOnUiThread(() -> android.widget.Toast.makeText(this, saved ? "Backup salvo." : "Não foi possível salvar o backup. Tente novamente.", android.widget.Toast.LENGTH_LONG).show());
+            });
+            return;
+        }
         if (requestCode == AppLock.REQUEST_DEVICE_CREDENTIAL) {
             if (resultCode == RESULT_OK) unlockApplication();
             else cancelAuthentication();
@@ -371,7 +420,8 @@ public final class MainActivity extends Activity {
                 getContentResolver().delete(capturedImageUri, null, null);
             }
             if (result != null && result.length > 0 && result[0] != null) {
-                recognizeImageText(result[0]);
+                String mime = getContentResolver().getType(result[0]);
+                if (mime != null && mime.startsWith("image/")) recognizeImageText(result[0]);
             }
             if (fileCallback != null) fileCallback.onReceiveValue(result);
             fileCallback = null;

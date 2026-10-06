@@ -3,6 +3,17 @@
   'use strict';
   const bridge = window.AndroidBridge || window.AndroidApp;
   if (!bridge || typeof bridge.getPendingNotifications !== 'function') return;
+  window.handleAndroidBack=function(){
+    if(typeof MD !== 'undefined' && MD){closeDay();return true;}
+    const quick=document.getElementById('v64QuickMenu');
+    if(quick?.classList.contains('open')){v65CloseQuick();return true;}
+    const more=document.getElementById('moreMenu');
+    if(more?.classList.contains('on')){closeMore();return true;}
+    const settings=document.getElementById('settingsPop');
+    if(settings?.classList.contains('on')){settings.classList.remove('on');return true;}
+    if(typeof TAB !== 'undefined' && TAB!=='ger'){TAB='ger';draw();return true;}
+    return false;
+  };
   let pending = [], reviewItems = [];
   window.meuAssessorAndroidAutoSync = function () {
     try {

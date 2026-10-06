@@ -23,7 +23,7 @@ cd android-capture
 gradle testDebugUnitTest assembleDebug
 ```
 
-O HTML contém dados financeiros e está excluído do git. Nunca faça commit ou upload público do pacote, backup, manifest de dados ou APK que o inclua. O CI do repositório público, sem esse pacote, continua produzindo o app com o painel anterior. Para um APK distribuível, a próxima etapa deve separar os dados iniciais do HTML e importá-los do backup privado.
+O HTML contém dados financeiros e está excluído do git. Nunca faça commit ou upload público do pacote, backup, manifest de dados ou APK que o inclua. O CI do repositório público, sem esse pacote, continua produzindo o app com o painel anterior. O pacote distribuível sem dados iniciais já foi preparado na etapa Android 1.4.0 abaixo.
 
 ## Configuração do servidor
 
@@ -43,11 +43,11 @@ Registrar na Meta `https://<deployment>.convex.site/whatsapp/webhook`. É necess
 
 TypeScript, classificação existente, verificações estáticas de segurança e testes de assinatura/isolamento do WhatsApp passaram. Testes do HTML confirmaram exclusão/cancelamento de metas, persistência, tela vazia e ausência de alterações financeiras. O adaptador foi exercitado com uma ponte Android simulada, incluindo chegada de outra notificação durante a revisão.
 
-O APK não foi compilado aqui: este ambiente não tem SDK Android nem Gradle. A captura nativa, criptografia/AtomicFile, biometria e migração entre versões ainda exigem compilação e teste em aparelho. O backend não foi implantado e não houve teste com mensagens reais ou chamadas pagas de IA.
+A compilação inicial do Android passou no CI. Este ambiente local não tem SDK Android nem Gradle. A captura nativa, criptografia/AtomicFile, biometria e migração entre versões ainda exigem compilação e teste em aparelho. O backend não foi implantado e não houve teste com mensagens reais ou chamadas pagas de IA.
 
 ## Próxima etapa antes de substituir o aplicativo
 
-1. Separar os dados privados do pacote e migrar/importar backup completo, conferindo saldos e metas no Android.
+1. Importar o backup completo v2 e conferir saldos e metas no Android.
 2. Compilar APK com a mesma identificação e assinatura do instalado; testar atualização sem desinstalar e validar recuperação do backup.
 3. Conectar credenciais Convex/Meta/OpenAI e validar primeiro com número de teste.
 4. Criar revisão/efetivação de mensagens recebidas, com deduplicação pelo ID da origem e confirmação antes de lançar.
@@ -55,3 +55,13 @@ O APK não foi compilado aqui: este ambiente não tem SDK Android nem Gradle. A 
 6. Implementar avisos locais agendados/push, permissão no Android e preferências por regra. A captura de notificações bancárias já existe; os lembretes emitidos pelo assessor são trabalho distinto e ainda estão pendentes.
 
 Referências primárias: [Android WebView](https://developer.android.com/develop/ui/views/layout/webapps/load-local-content), [OpenAI Responses](https://developers.openai.com/api/docs/guides/migrate-to-responses), [Meta Cloud API](https://www.postman.com/meta/whatsapp-business-platform/documentation/wlk6lh4/whatsapp-cloud-api).
+
+## Android 1.4.0 — pacote candidato
+
+O APK agora inclui `dashboard-mobile.html`, sem lançamentos, saldos iniciais, orçamentos ou metas pessoais no código. Mantém o applicationId e eleva versionCode para 21. O CI cria artefatos de teste; se os segredos de assinatura já estiverem configurados, também cria a versão release assinada, sem publicar uma release nem atualizar o app anterior automaticamente.
+
+Antes de instalar, abra o HTML atualizado no celular e use Configurações → Backup e importação → Exportar backup completo. O formato v2 inclui saldos iniciais e as configurações efetivamente usadas, mesmo quando nunca foram alteradas. No APK, importe esse JSON e confira os saldos e metas. Backups antigos sem saldos iniciais são recusados no pacote distribuível para evitar uma migração financeira incompleta.
+
+O Android agora salva o backup usando o seletor de arquivos do sistema. A importação de JSON não abre câmera nem dispara OCR. O botão Voltar primeiro fecha o formulário/menu aberto e depois retorna à visão Geral. O fluxo de receita/despesa inclui o recolhimento automático do botão + após salvar.
+
+A atualização sobre o app instalado depende da mesma assinatura. Um APK debug não substitui um app release assinado. O teste final de instalação, importação, biometria e captura continua sendo feito no aparelho; compile/CI não comprovam esses comportamentos no dispositivo.

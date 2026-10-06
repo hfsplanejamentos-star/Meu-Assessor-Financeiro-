@@ -16,6 +16,11 @@ final class WebAppBridge {
     }
 
     @JavascriptInterface
+    public void exportBackup(String json, String filename) {
+        activity.exportBackup(json, filename);
+    }
+
+    @JavascriptInterface
     public int notificationCount() {
         return new EncryptedQueueStore(activity).size();
     }

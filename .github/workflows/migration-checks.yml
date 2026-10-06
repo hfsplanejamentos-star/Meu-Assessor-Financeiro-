@@ -39,3 +39,29 @@ jobs:
         with:
           gradle-version: '8.10.2'
       - run: gradle testDebugUnitTest assembleDebug --stacktrace
+      - name: Build signed candidate when release signing is configured
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_FILE: /tmp/meu-assessor-candidate.p12
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ] || [ -z "$ANDROID_KEYSTORE_PASSWORD" ] || [ -z "$ANDROID_KEY_ALIAS" ] || [ -z "$ANDROID_KEY_PASSWORD" ]; then
+            echo "Release signing unavailable; debug candidate only."
+            exit 0
+          fi
+          umask 077
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_FILE"
+          trap 'rm -f "$ANDROID_KEYSTORE_FILE"' EXIT
+          gradle assembleRelease --stacktrace
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose app/build/outputs/apk/release/app-release.apk
+      - name: Upload candidate APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: Snake-Finance-Android-1.4.0-candidate
+          path: |
+            android-capture/app/build/outputs/apk/debug/app-debug.apk
+            android-capture/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
