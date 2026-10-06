@@ -87,8 +87,8 @@ try{
  assert(await page.locator('#settingsPop').evaluate(e=>e.classList.contains('on')));
  assert.equal(await page.locator('#settingsPop').getByText('Personalizar Visão Geral').count(),1);
  await page.locator('#settingsPop').getByText('Categorias e subcategorias').click();
- assert(await page.locator('#md').evaluate(e=>e.classList.contains('on')));
- await page.evaluate(()=>{closeModal();document.getElementById('settingsPop').classList.remove('on');goTab('ger');});
+ assert(await page.locator('#catManage').evaluate(e=>e.classList.contains('on')));
+ await page.evaluate(()=>{closeModal();document.getElementById('catManage').classList.remove('on');document.getElementById('settingsPop').classList.remove('on');goTab('ger');});
  for(const [theme,label] of Object.entries(themes)){
   await page.getByRole('button',{name:label,exact:true}).click();
   await page.locator('.appHd').screenshot({path:path.join(output,'Cabecalho_'+theme+'.png')});
@@ -109,4 +109,4 @@ try{
  }
  fs.writeFileSync(path.join(output,'verification.json'),JSON.stringify({target,screens:report,checks:['engine','themes','navigation','bell','duplicate-review','privacy','configuration','ledger-preserved','static-startup'],errors},null,2));
  console.log('Passed: '+report.length+' mobile layouts, engine consistency, header actions, duplicate review, privacy and static startup.');
-}finally{await browser.close();await new Promise(r=>server.close(r));}
+}catch(error){await page.screenshot({path:path.join(output,'Failure.png'),fullPage:true});fs.writeFileSync(path.join(output,'failure.txt'),error.stack+'\n'+errors.join('\n'));throw error;}finally{await browser.close();await new Promise(r=>server.close(r));}

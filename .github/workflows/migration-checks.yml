@@ -28,6 +28,7 @@ jobs:
       - run: npx playwright install --with-deps chromium-headless-shell
       - run: npm run test:mobile-ui
       - name: Upload verified mobile screenshots
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: Snake-Finance-1.4.4-verified-visuals
