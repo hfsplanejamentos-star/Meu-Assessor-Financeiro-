@@ -8,7 +8,8 @@
     "convex:deploy": "convex deploy",
     "test:migration": "node --experimental-strip-types tests/whatsapp-migration.test.mjs",
     "stage:mobile": "node scripts/stage-mobile-v82.mjs",
-    "test:mobile-ui": "node tests/mobile-branded-ui.test.mjs"
+    "test:mobile-ui": "node tests/mobile-branded-ui.test.mjs",
+    "test:mobile-backup": "node tests/mobile-backup.test.mjs"
   },
   "dependencies": {
     "convex": "^1.27.0"

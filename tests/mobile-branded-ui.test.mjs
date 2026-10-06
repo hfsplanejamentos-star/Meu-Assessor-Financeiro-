@@ -34,6 +34,32 @@ try{
  assert.equal(baseline.audit.ok,true,JSON.stringify(baseline.audit));
  assert.equal(baseline.audit.saldoC6,92700);
  assert.equal(baseline.audit.saldoCaju,148800);
+ // Migrate an exported backup into a clean install through the real file input.
+ const exported=await page.evaluate(()=>{localStorage.setItem('assessor_runtime_version','atual-ui-2');ST.hide=true;return backupState();});
+ const migrationContext=await browser.newContext({viewport:{width:393,height:852},timezoneId:'America/Sao_Paulo'});
+ const migrationPage=await migrationContext.newPage();
+ migrationPage.on('pageerror',e=>errors.push(e.message));
+ migrationPage.on('dialog',d=>d.dismiss());
+ await migrationPage.clock.setFixedTime(new Date('2026-10-06T12:00:00-03:00'));
+ await migrationPage.goto('http://127.0.0.1:'+server.address().port,{waitUntil:'load'});
+ await migrationPage.waitForSelector('input[type="file"]');
+ assert.equal(await migrationPage.evaluate(()=>L.length),0);
+ await migrationPage.locator('input[type="file"]').setInputFiles({name:'backup.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(exported))});
+ await migrationPage.getByRole('button',{name:'Importar dados validados',exact:true}).waitFor();
+ await Promise.all([
+  migrationPage.waitForEvent('load'),
+  migrationPage.getByRole('button',{name:'Importar dados validados',exact:true}).click()
+ ]);
+ await migrationPage.waitForSelector('#fixedTopShell .headerBrand');
+ const imported=await migrationPage.evaluate(()=>({ledger:JSON.stringify(L),audit:auditEngine(),blocked:PERSIST_BLOCKED,hide:ST.hide,raw:localStorage.getItem('assessor_runtime_version'),backup:backupState()}));
+ assert.equal(imported.ledger,baseline.ledger);
+ assert.deepEqual(imported.audit,baseline.audit);
+ assert.equal(imported.blocked,false);
+ assert.equal(imported.hide,true);
+ assert.equal(imported.raw,'atual-ui-2');
+ for(const [key,value]of Object.entries(exported.storage))assert.equal(imported.backup.storage[key],value,'Reload changed imported preference: '+key);
+ await migrationContext.close();
+ await page.evaluate(()=>{ST.hide=false;draw();});
  const themes={ciano:'Tema dourado',limao:'Tema limão',claro:'Tema claro'};
  for(const width of [320,360,393,440]){
   await page.setViewportSize({width,height:852});
@@ -113,6 +139,6 @@ try{
   const layout=fs.readFileSync('android-capture/app/src/main/res/layout/activity_main_loading.xml','utf8');
   assert(!layout.includes('ProgressBar'),'Startup should show static image only');
  }
- fs.writeFileSync(path.join(output,'verification.json'),JSON.stringify({target,screens:report,checks:['engine','themes','navigation','bell','duplicate-review','privacy','configuration','ledger-preserved','static-startup'],errors},null,2));
+ fs.writeFileSync(path.join(output,'verification.json'),JSON.stringify({target,screens:report,checks:['engine','themes','navigation','bell','duplicate-review','privacy','configuration','ledger-preserved','static-startup','backup-file-import-reload'],errors},null,2));
  console.log('Passed: '+report.length+' mobile layouts, engine consistency, header actions, duplicate review, privacy and static startup.');
 }catch(error){await page.screenshot({path:path.join(output,'Failure.png'),fullPage:true});fs.writeFileSync(path.join(output,'failure.txt'),error.stack+'\n'+errors.join('\n'));throw error;}finally{await browser.close();await new Promise(r=>server.close(r));}
