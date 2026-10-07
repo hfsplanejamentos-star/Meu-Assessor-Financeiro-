@@ -48,7 +48,7 @@ public final class MainActivity extends Activity {
     static final int REQUEST_VOICE = 701;
     private static final int REQUEST_FILE = 702;
     private static final String APP_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.3.11";
+            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/snake-finance-mobile.html?android=1.4.12";
     private static final String APP_BASE_URL =
             "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/";
     private static final String OTA_CACHE_FILE = "snake_dashboard_last_good.html";
@@ -122,12 +122,13 @@ public final class MainActivity extends Activity {
         UpdateChecker.check(this);
     }
 
-    private static final String CACHE_FILE = "snake_finance_dashboard.html";
-    private static final String CACHE_BACKUP_FILE = "snake_finance_dashboard.backup.html";
+    private static final String CACHE_FILE = "snake_finance_dashboard_1_4_12.html";
+    private static final String CACHE_BACKUP_FILE = "snake_finance_dashboard_1_4_12.backup.html";
 
     private boolean validDashboard(String html) {
         if (html == null || html.length() < 50000) return false;
-        return html.contains("SNAKE FINANCE")
+        return html.contains("Snake Finance Mobile — V84 · Visual aprovado")
+                && html.contains("SNAKE FINANCE")
                 && html.contains("window.SNAKE_DISTRIBUTABLE")
                 && html.contains("</html>");
     }
