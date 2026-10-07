@@ -30,6 +30,16 @@ export default defineSchema({
     .index("by_owner_and_event_id", ["ownerHash", "eventId"])
     .index("by_owner_and_fingerprint", ["ownerHash", "fingerprint"])
     .index("by_owner_and_received_at", ["ownerHash", "receivedAt"]),
+  assessorDrafts: defineTable({
+    ownerHash: v.string(), draftId: v.string(), sourceType: v.string(), sourceId: v.optional(v.string()),
+    amountCents: v.number(), direction: v.union(v.literal("expense"), v.literal("income")),
+    account: v.string(), transactionType: v.optional(v.string()), counterparty: v.optional(v.string()),
+    category: v.string(), subcategory: v.optional(v.string()), description: v.string(), date: v.string(),
+    status: v.union(v.literal("pending"), v.literal("confirmed"), v.literal("rejected")),
+    createdAt: v.number(), updatedAt: v.number(),
+  }).index("by_owner_draft", ["ownerHash", "draftId"])
+    .index("by_owner_status", ["ownerHash", "status"])
+    .index("by_owner_source", ["ownerHash", "sourceType", "sourceId"]),
   incomePayerRules: defineTable({
     ownerHash: v.string(),
     payerKey: v.string(),
