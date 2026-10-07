@@ -2316,8 +2316,11 @@ html[data-tema] #app{padding-bottom:120px!important}
     if(busy||!draft)return;const event=draft.event,d=readDraft();
     if(!['r','d'].includes(d.type)||!d.name||!Number.isSafeInteger(d.amount)||d.amount<=0||!validISO(d.day)||!AC[d.account]||(d.type==='r'&&d.account==='carbon')||(d.type==='d'&&!CATDB[d.category])){alert('Confirme tipo, descrição, valor, data, conta e categoria.');return;}
     if(event.source==='whatsapp'&&event.connection!==connectionGeneration){alert('A conexão mudou. Atualize a lista antes de continuar.');return;}
+    // Mesmo valor não significa duplicidade: Pix, débito e compras distintas podem coincidir.
+    // Bloqueio automático só pelo identificador imutável da captura; coincidências financeiras viram aviso de revisão.
     const duplicate=L.filter(x=>x.d===d.day&&x.a===d.account&&x.v===d.amount&&x.t===d.type);
-    if(!recorded(event)&&duplicate.length&&!confirm(`Já existe ${duplicate.length} lançamento com o mesmo valor, data e conta. Registrar mesmo assim?`))return;
+    const exactCapture=recorded(event);
+    if(!exactCapture&&duplicate.length){const sameText=duplicate.some(x=>String(x.n||'').trim().toLowerCase()===d.name.trim().toLowerCase());if(sameText&&!confirm(`Existe um lançamento muito semelhante (mesma data, conta, valor e descrição). Registrar mesmo assim?`))return;}
     busy=true;const button=document.getElementById('capture-save');if(button)button.disabled=true;
     try{
       if(!recorded(event)){
