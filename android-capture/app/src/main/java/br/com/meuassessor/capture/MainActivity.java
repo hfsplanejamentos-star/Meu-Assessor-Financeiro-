@@ -48,7 +48,7 @@ public final class MainActivity extends Activity {
     static final int REQUEST_VOICE = 701;
     private static final int REQUEST_FILE = 702;
     private static final String APP_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/snake-finance-mobile.html?android=1.5.0";
+            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/snake-finance-mobile.html?android=1.5.1";
     private static final String APP_BASE_URL =
             "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/";
     private static final String OTA_CACHE_FILE = "snake_dashboard_last_good.html";
@@ -69,10 +69,10 @@ public final class MainActivity extends Activity {
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
                 .getString("web_cache_version", "");
-        if (!"1.5.0".equals(nativeVersion)) {
+        if (!"1.5.1".equals(nativeVersion)) {
             webView.clearCache(true);
             getSharedPreferences("native_runtime", MODE_PRIVATE).edit()
-                    .putString("web_cache_version", "1.5.0").apply();
+                    .putString("web_cache_version", "1.5.1").apply();
         }
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.parseColor("#020A14"));
@@ -122,8 +122,8 @@ public final class MainActivity extends Activity {
         UpdateChecker.check(this);
     }
 
-    private static final String CACHE_FILE = "snake_finance_dashboard_1_5_0.html";
-    private static final String CACHE_BACKUP_FILE = "snake_finance_dashboard_1_5_0.backup.html";
+    private static final String CACHE_FILE = "snake_finance_dashboard_1_5_1.html";
+    private static final String CACHE_BACKUP_FILE = "snake_finance_dashboard_1_5_1.backup.html";
 
     private boolean validDashboard(String html) {
         if (html == null || html.length() < 50000) return false;
