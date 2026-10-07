@@ -90,6 +90,25 @@ final class EncryptedQueueStore {
                 .trim();
     }
 
+    synchronized boolean acknowledge(String[] ids) {
+        try {
+            if (ids == null || ids.length == 0) return true;
+            java.util.HashSet<String> wanted = new java.util.HashSet<>();
+            for (String id : ids) if (id != null && !id.trim().isEmpty()) wanted.add(id);
+            if (wanted.isEmpty()) return true;
+            JSONArray queue = read();
+            JSONArray kept = new JSONArray();
+            for (int i = 0; i < queue.length(); i++) {
+                JSONObject item = queue.getJSONObject(i);
+                if (!wanted.contains(item.optString("id"))) kept.put(item);
+            }
+            write(kept);
+            return true;
+        } catch (Exception error) {
+            return false;
+        }
+    }
+
     synchronized int size() {
         try {
             return read().length();
