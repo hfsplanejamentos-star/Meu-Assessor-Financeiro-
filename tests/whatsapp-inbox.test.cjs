@@ -1,0 +1,21 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),ts=require('typescript');
+const source=ts.transpileModule(fs.readFileSync('convex/whatsappInbox.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+const sandbox={exports:{},require:name=>name==='./_generated/api'?{internal:{}}:name==='./_generated/server'?{internalQuery:x=>x,internalMutation:x=>x}:require(name)};vm.runInNewContext(source,sandbox);
+const ops=sandbox.exports,rows=[];
+const ctx={db:{query:()=>({withIndex(name,fn){const constraints=[];const q={eq:(key,value)=>{constraints.push([key,value]);return q;}};fn(q);const result=rows.filter(r=>constraints.every(([k,v])=>r[k]===v));return {unique:async()=>result[0]||null,order:()=>({take:async n=>result.sort((a,b)=>a.receivedAt-b.receivedAt).slice(0,n)})};}}),insert:async(table,data)=>{rows.push({...data,_id:String(rows.length+1)});},patch:async(id,patch)=>{Object.assign(rows.find(r=>r._id===id),patch);}}};
+(async()=>{
+ const message={messageId:'wamid.1',from:'5511999999999',text:'Gastei R$ 25,90',postedAt:1791280800000};
+ await ops.ingest.handler(ctx,{ownerHash:'ownerA',messages:[message],receivedAt:1});
+ await ops.ingest.handler(ctx,{ownerHash:'ownerB',messages:[message],receivedAt:2});
+ assert.equal((await ops.pending.handler(ctx,{ownerHash:'ownerA'})).length,1);
+ await ops.resolve.handler(ctx,{ownerHash:'ownerA',messageIds:['wamid.1','wamid.1'],status:'recorded',resolvedAt:3});
+ assert.equal((await ops.pending.handler(ctx,{ownerHash:'ownerA'})).length,0);
+ assert.equal((await ops.pending.handler(ctx,{ownerHash:'ownerB'})).length,1,'Must not acknowledge another owner');
+ assert.equal((await ops.resolve.handler(ctx,{ownerHash:'ownerA',messageIds:['wamid.1'],status:'discarded',resolvedAt:4})).alreadyResolved,1);
+ assert.equal(rows.find(r=>r.ownerHash==='ownerA').status,'recorded','Resolution retries must preserve original outcome');
+ const replay=await ops.ingest.handler(ctx,{ownerHash:'ownerA',messages:[message],receivedAt:5});assert.equal(replay.duplicates,1);assert.equal(rows.length,2);
+ await assert.rejects(ops.resolve.handler(ctx,{ownerHash:'ownerA',messageIds:[],status:'discarded',resolvedAt:6}));
+ await assert.rejects(ops.resolve.handler(ctx,{ownerHash:'ownerA',messageIds:Array(51).fill('x'),status:'discarded',resolvedAt:6}));
+ await assert.rejects(ops.resolve.handler(ctx,{ownerHash:'ownerC',messageIds:['wamid.1'],status:'discarded',resolvedAt:6}));
+ console.log('PASS WhatsApp owner isolation, review resolution, idempotency, webhook replay and bounds');
+})().catch(error=>{console.error(error);process.exitCode=1;});

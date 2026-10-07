@@ -1,7 +1,24 @@
 {
   "name": "meu-assessor-financeiro",
   "private": true,
-  "scripts": { "typecheck": "tsc --noEmit", "test:backend": "node --experimental-strip-types tests/backend-classification.test.mjs && node tests/backend-security-audit.cjs", "convex:dev": "convex dev", "convex:deploy": "convex deploy" },
-  "dependencies": { "convex": "^1.27.0" },
-  "devDependencies": { "@types/node": "^22.10.2", "typescript": "^5.7.3" }
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test:backend": "node --experimental-strip-types tests/backend-classification.test.mjs && node tests/backend-security-audit.cjs",
+    "convex:dev": "convex dev",
+    "convex:deploy": "convex deploy",
+    "test:migration": "node --experimental-strip-types tests/whatsapp-migration.test.mjs && node tests/whatsapp-inbox.test.cjs && node tests/integration-auth.test.cjs && node --experimental-strip-types tests/whatsapp-audio-media.test.mjs && node tests/whatsapp-audio-jobs.test.cjs",
+    "stage:mobile": "node scripts/stage-mobile-v82.mjs",
+    "test:mobile-ui": "node tests/mobile-branded-ui.test.mjs",
+    "test:mobile-backup": "node tests/mobile-backup.test.mjs",
+    "test:mobile-capture": "node tests/mobile-capture.test.mjs"
+  },
+  "dependencies": {
+    "convex": "^1.27.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "acorn": "^8.19.0",
+    "playwright": "^1.62.1",
+    "typescript": "^5.7.3"
+  }
 }

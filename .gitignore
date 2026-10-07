@@ -3,3 +3,6 @@ node_modules/
 .env.*.local
 android-capture/.gradle/
 android-capture/**/build/
+# Private financial dashboard: local packaging only.
+android-capture/app/src/main/assets/mobile-v82.html
+android-capture/app/src/main/assets/mobile-v82.manifest.json

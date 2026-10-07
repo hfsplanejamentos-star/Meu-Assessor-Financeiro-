@@ -16,11 +16,11 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "br.com.meuassessor.financeiroia"
+        applicationId = "br.com.snakefinance.mobile"
         minSdk = 26
         targetSdk = 35
-        versionCode = 20
-        versionName = "1.3.11"
+        versionCode = 32
+        versionName = "1.4.11"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

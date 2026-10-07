@@ -28,11 +28,8 @@ import java.util.ArrayList;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
-import java.util.zip.GZIPInputStream;
 
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.text.TextRecognition;
@@ -41,16 +38,21 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 public final class MainActivity extends Activity {
     static final int REQUEST_VOICE = 701;
     private static final int REQUEST_FILE = 702;
+    private static final int REQUEST_BACKUP = 703;
+    private String pendingBackup;
     private static final String APP_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.3.11";
+            DashboardAssetSource.BASE_URL + "?android=" + BuildConfig.VERSION_NAME;
     private static final String APP_BASE_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/";
+            DashboardAssetSource.BASE_URL;
 
     private WebView webView;
+    private View loadingScreen;
+    private boolean dashboardLoadFailed;
     private ValueCallback<Uri[]> fileCallback;
     private Uri capturedImageUri;
     private Bundle pendingState;
     private boolean authenticated;
+    private boolean pendingCaptureReview;
     private boolean authenticationInProgress;
     private boolean queueReceiverRegistered;
     private final android.content.BroadcastReceiver queueReceiver = new android.content.BroadcastReceiver(){ @Override public void onReceive(android.content.Context context, android.content.Intent intent){ if(webView!=null) webView.post(() -> webView.evaluateJavascript("window.meuAssessorAndroidAutoSync&&window.meuAssessorAndroidAutoSync()", null)); }};
@@ -58,20 +60,27 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        pendingCaptureReview=getIntent().getBooleanExtra(CaptureNotice.EXTRA_REVIEW,false);
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
                 .getString("web_cache_version", "");
-        if (!"1.3.11".equals(nativeVersion)) {
+        if (!BuildConfig.VERSION_NAME.equals(nativeVersion)) {
             webView.clearCache(true);
             getSharedPreferences("native_runtime", MODE_PRIVATE).edit()
-                    .putString("web_cache_version", "1.3.11").apply();
+                    .putString("web_cache_version", BuildConfig.VERSION_NAME).apply();
         }
-        FrameLayout root = new FrameLayout(this);
-        root.setBackgroundColor(Color.parseColor("#020A14"));
-        root.addView(webView, new FrameLayout.LayoutParams(
+        setContentView(R.layout.activity_main_loading);
+        FrameLayout root = findViewById(R.id.main_root);
+        loadingScreen = findViewById(R.id.loading_screen);
+        root.addView(webView, 0, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
-        setContentView(root);
+        getWindow().setStatusBarColor(Color.BLACK);
+        getWindow().setNavigationBarColor(Color.BLACK);
+        findViewById(R.id.loading_error).setOnClickListener(view -> {
+            findViewById(R.id.loading_error).setVisibility(View.GONE);
+            loadDashboardHtml();
+        });
         webView.setVisibility(View.INVISIBLE);
         pendingState = state;
 
@@ -97,7 +106,8 @@ public final class MainActivity extends Activity {
         if (pendingState == null) {
             if (webView.getUrl() == null) loadDashboardHtml();
         } else {
-            webView.restoreState(pendingState);
+            // Never restore a remote predecessor document from WebView history.
+            loadDashboardHtml();
             String savedImageUri = pendingState.getString("captured_image_uri");
             if (savedImageUri != null) capturedImageUri = Uri.parse(savedImageUri);
             pendingState = null;
@@ -111,38 +121,53 @@ public final class MainActivity extends Activity {
         requestNativePermissions();
         if(!queueReceiverRegistered){android.content.IntentFilter queueFilter=new android.content.IntentFilter("br.com.meuassessor.capture.QUEUE_CHANGED");
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.TIRAMISU) registerReceiver(queueReceiver,queueFilter,RECEIVER_NOT_EXPORTED); else registerReceiver(queueReceiver,queueFilter);queueReceiverRegistered=true;}
-        UpdateChecker.check(this);
+        // Separate successor app: predecessor update metadata does not apply.
+        // Enable its own update feed when the successor release is published.
+    }
+
+    void reloadDashboard() {
+        runOnUiThread(() -> {
+            if (authenticated && !isFinishing()) loadDashboardHtml();
+        });
     }
 
     private void loadDashboardHtml() {
         Executors.newSingleThreadExecutor().execute(() -> {
-            HttpURLConnection connection = null;
-            try {
-                connection = (HttpURLConnection) new URL(
-                        APP_URL + "&t=" + System.currentTimeMillis()).openConnection();
-                connection.setConnectTimeout(12000);
-                connection.setReadTimeout(25000);
-                connection.setRequestProperty("Accept", "text/html,application/xhtml+xml");
-                connection.setRequestProperty("Accept-Encoding", "identity");
-                connection.setRequestProperty("Cache-Control", "no-cache");
-                if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) throw new Exception();
-                InputStream stream = connection.getInputStream();
-                if ("gzip".equalsIgnoreCase(connection.getContentEncoding())) {
-                    stream = new GZIPInputStream(stream);
-                }
-                StringBuilder html = new StringBuilder();
-                try (BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+            try (InputStream asset = DashboardAssetSource.open(APP_URL, true, getAssets()::open)) {
+                StringBuilder localHtml = new StringBuilder();
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(asset, StandardCharsets.UTF_8))) {
                     String line;
-                    while ((line = reader.readLine()) != null) html.append(line).append('\n');
+                    while ((line = reader.readLine()) != null) localHtml.append(line).append('\n');
                 }
-                String document = html.toString();
-                runOnUiThread(() -> webView.loadDataWithBaseURL(
-                        APP_BASE_URL, document, "text/html", "UTF-8", APP_URL));
-            } catch (Exception ignored) {
-                runOnUiThread(() -> webView.loadUrl(APP_URL));
-            } finally {
-                if (connection != null) connection.disconnect();
+                String bundled = localHtml.toString();
+                runOnUiThread(() -> webView.loadDataWithBaseURL(APP_BASE_URL, bundled, "text/html", "UTF-8", APP_URL));
+            } catch (java.io.IOException missingBundle) {
+                runOnUiThread(() -> {
+                    dashboardLoadFailed = true;
+                    loadingScreen.setVisibility(View.VISIBLE);
+                    findViewById(R.id.loading_error).setVisibility(View.VISIBLE);
+                });
+            }
+        });
+    }
+
+    void exportBackup(String json, String filename) {
+        if (json == null || json.getBytes(StandardCharsets.UTF_8).length > 20 * 1024 * 1024) return;
+        try {
+            org.json.JSONObject backup = new org.json.JSONObject(json);
+            if (!"snake-finance-backup".equals(backup.optString("schema"))) return;
+        } catch (Exception invalid) { return; }
+        runOnUiThread(() -> {
+            if (pendingBackup != null) return;
+            pendingBackup = json;
+            Intent save = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            save.addCategory(Intent.CATEGORY_OPENABLE);
+            save.setType("application/json");
+            save.putExtra(Intent.EXTRA_TITLE, filename != null && filename.matches("[A-Za-z0-9_.-]+") ? filename : "Snake_Finance_Backup.json");
+            try { startActivityForResult(save, REQUEST_BACKUP); }
+            catch (Exception error) {
+                pendingBackup = null;
+                android.widget.Toast.makeText(this, "Não foi possível abrir o local para salvar o backup.", android.widget.Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -198,36 +223,66 @@ public final class MainActivity extends Activity {
         value.addJavascriptInterface(bridge, "AndroidApp");
         value.setWebViewClient(new WebViewClient() {
             @Override
+            public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                dashboardLoadFailed = false;
+                if (loadingScreen != null && loadingScreen.getVisibility() == View.VISIBLE) {
+                    findViewById(R.id.loading_error).setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                if (!authenticated || dashboardLoadFailed || url == null
+                        || !url.startsWith(APP_BASE_URL)) return;
+                view.evaluateJavascript(
+                        "if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.filter(r=>r.scope.startsWith('"
+                        + APP_BASE_URL + "')).map(r=>r.unregister()))).catch(()=>{});}", null);
+                // Keep the static artwork until document initialization completes.
+                view.evaluateJavascript("document.readyState", ready -> {
+                    if (!"\"complete\"".equals(ready)) return;
+                    view.postOnAnimation(() -> view.postOnAnimation(() -> {
+                        if (isFinishing() || dashboardLoadFailed || !authenticated) return;
+                        loadingScreen.setVisibility(View.GONE);
+                        openPendingCaptureReview();
+                        getWindow().setStatusBarColor(Color.parseColor("#061421"));
+                        getWindow().setNavigationBarColor(Color.parseColor("#061421"));
+                    }));
+                });
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request,
+                    android.webkit.WebResourceError error) {
+                if (!request.isForMainFrame()) return;
+                dashboardLoadFailed = true;
+                if (loadingScreen != null && loadingScreen.getVisibility() == View.VISIBLE) {
+                    findViewById(R.id.loading_error).setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
             public WebResourceResponse shouldInterceptRequest(
                     WebView view, WebResourceRequest request) {
-                Uri uri = request.getUrl();
-                String host = uri.getHost() == null ? "" : uri.getHost();
-                String path = uri.getPath() == null ? "" : uri.getPath();
-                if (!request.isForMainFrame()
-                        || !"hfsplanejamentos-star.github.io".equalsIgnoreCase(host)
-                        || !(path.equals("/Meu-Assessor-Financeiro-/")
-                        || path.equals("/Meu-Assessor-Financeiro-/index.html"))) return null;
+                String url = request.getUrl().toString();
+                if (!request.isForMainFrame() || !DashboardAssetSource.isDashboardUrl(url)) return null;
                 try {
-                    HttpURLConnection connection = (HttpURLConnection)
-                            new URL(uri.toString()).openConnection();
-                    connection.setConnectTimeout(12000);
-                    connection.setReadTimeout(20000);
-                    connection.setRequestProperty("Accept", "text/html,application/xhtml+xml");
-                    connection.setRequestProperty("Accept-Encoding", "identity");
-                    connection.setRequestProperty("Cache-Control", "no-cache");
-                    connection.connect();
-                    if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) return null;
-                    return new WebResourceResponse("text/html", "UTF-8", connection.getInputStream());
-                } catch (Exception ignored) {
-                    return null;
+                    InputStream asset = DashboardAssetSource.open(url, true, getAssets()::open);
+                    return new WebResourceResponse("text/html", "UTF-8", asset);
+                } catch (java.io.IOException missingBundle) {
+                    // Fail locally instead of silently opening the predecessor.
+                    byte[] message = "Não foi possível carregar o painel instalado. Reabra o app.".getBytes(StandardCharsets.UTF_8);
+                    return new WebResourceResponse("text/plain", "UTF-8", 503, "Dashboard unavailable",
+                            java.util.Collections.emptyMap(), new java.io.ByteArrayInputStream(message));
                 }
             }
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
-                String host = uri.getHost() == null ? "" : uri.getHost();
-                if ("hfsplanejamentos-star.github.io".equalsIgnoreCase(host)) return false;
+                if (DashboardAssetSource.isDashboardUrl(uri.toString())) {
+                    loadDashboardHtml();
+                    return true;
+                }
                 startActivity(new Intent(Intent.ACTION_VIEW, uri));
                 return true;
             }
@@ -258,6 +313,15 @@ public final class MainActivity extends Activity {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = callback;
 
+                String[] accepted = params.getAcceptTypes();
+                boolean jsonOnly = accepted != null && java.util.Arrays.stream(accepted).anyMatch(t -> t != null && (t.contains("json") || t.equals(".json")));
+                if (jsonOnly) {
+                    Intent backup = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    backup.addCategory(Intent.CATEGORY_OPENABLE);
+                    backup.setType("application/json");
+                    try { startActivityForResult(backup, REQUEST_FILE); return true; }
+                    catch (Exception unavailable) { fileCallback = null; return false; }
+                }
                 Intent files = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 files.addCategory(Intent.CATEGORY_OPENABLE);
                 files.setType("*/*");
@@ -323,6 +387,10 @@ public final class MainActivity extends Activity {
     }
 
     private void handleBackNavigation() {
+        if (!authenticated || (loadingScreen != null && loadingScreen.getVisibility() == View.VISIBLE)) {
+            finish();
+            return;
+        }
         webView.evaluateJavascript(
                 "(function(){try{return !!(window.handleAndroidBack&&window.handleAndroidBack())}catch(e){return false}})()",
                 handled -> {
@@ -340,6 +408,23 @@ public final class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_BACKUP) {
+            String payload = pendingBackup;
+            pendingBackup = null;
+            if (resultCode != RESULT_OK || data == null || data.getData() == null || payload == null) return;
+            Uri destination = data.getData();
+            Executors.newSingleThreadExecutor().execute(() -> {
+                boolean success = false;
+                try (java.io.OutputStream output = getContentResolver().openOutputStream(destination, "wt")) {
+                    if (output == null) throw new java.io.IOException("No output stream");
+                    output.write(payload.getBytes(StandardCharsets.UTF_8));
+                    success = true;
+                } catch (Exception error) { /* Report failure without exposing financial data. */ }
+                final boolean saved = success;
+                runOnUiThread(() -> android.widget.Toast.makeText(this, saved ? "Backup salvo." : "Não foi possível salvar o backup. Tente novamente.", android.widget.Toast.LENGTH_LONG).show());
+            });
+            return;
+        }
         if (requestCode == AppLock.REQUEST_DEVICE_CREDENTIAL) {
             if (resultCode == RESULT_OK) unlockApplication();
             else cancelAuthentication();
@@ -358,7 +443,8 @@ public final class MainActivity extends Activity {
                 getContentResolver().delete(capturedImageUri, null, null);
             }
             if (result != null && result.length > 0 && result[0] != null) {
-                recognizeImageText(result[0]);
+                String mime = getContentResolver().getType(result[0]);
+                if (mime != null && mime.startsWith("image/")) recognizeImageText(result[0]);
             }
             if (fileCallback != null) fileCallback.onReceiveValue(result);
             fileCallback = null;
@@ -410,4 +496,18 @@ public final class MainActivity extends Activity {
                         text64 + "'))),status:decodeURIComponent(escape(atob('" + status64 + "')))}}));",
                 null));
     }
+    void dispatchIntegrationResult(String json){
+        runOnUiThread(()->{if(webView!=null)webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('snake-integration-result',{detail:JSON.parse("+org.json.JSONObject.quote(json)+")}));",null);});
+    }
+
+    @Override protected void onNewIntent(Intent intent){
+        super.onNewIntent(intent);setIntent(intent);
+        if(intent.getBooleanExtra(CaptureNotice.EXTRA_REVIEW,false)){pendingCaptureReview=true;openPendingCaptureReview();}
+    }
+    private void openPendingCaptureReview(){
+        if(pendingCaptureReview && authenticated && webView!=null && loadingScreen!=null && loadingScreen.getVisibility()==View.GONE){
+            pendingCaptureReview=false;webView.evaluateJavascript("window.reviewNativeNotifications&&window.reviewNativeNotifications()",null);
+        }
+    }
+
 }

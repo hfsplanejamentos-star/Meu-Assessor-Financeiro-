@@ -1,0 +1,88 @@
+name: Check mobile migration
+on:
+  pull_request:
+    paths:
+      - 'android-capture/**'
+      - 'convex/**'
+      - 'migration/**'
+      - 'scripts/stage-mobile-v82.mjs'
+      - 'tests/whatsapp-migration.test.mjs'
+      - 'tests/mobile-branded-ui.test.mjs'
+      - 'tests/mobile-backup.test.mjs'
+      - 'tests/mobile-capture.test.mjs'
+      - 'tests/whatsapp-inbox.test.cjs'
+      - 'tests/whatsapp-audio-media.test.mjs'
+      - 'tests/whatsapp-audio-jobs.test.cjs'
+      - 'tests/integration-auth.test.cjs'
+      - 'package*.json'
+      - '.github/workflows/migration-checks.yml'
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test:backend
+      - run: npm run test:migration
+      - run: npm run test:mobile-backup
+      - run: npm run test:mobile-ui
+        env:
+          UI_BROWSER_CHANNEL: chrome
+      - run: npm run test:mobile-capture
+        env:
+          UI_BROWSER_CHANNEL: chrome
+      - name: Upload verified mobile screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Snake-Finance-1.4.11-verified-visuals
+          path: validation/mobile-ui
+          retention-days: 14
+  android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android-capture
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - run: gradle testDebugUnitTest assembleDebug --stacktrace
+      - name: Build signed candidate when release signing is configured
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_FILE: /tmp/meu-assessor-candidate.p12
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ] || [ -z "$ANDROID_KEYSTORE_PASSWORD" ] || [ -z "$ANDROID_KEY_ALIAS" ] || [ -z "$ANDROID_KEY_PASSWORD" ]; then
+            echo "Release signing unavailable; debug candidate only."
+            exit 0
+          fi
+          umask 077
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_FILE"
+          trap 'rm -f "$ANDROID_KEYSTORE_FILE"' EXIT
+          gradle assembleRelease --stacktrace
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose app/build/outputs/apk/release/app-release.apk
+      - name: Upload candidate APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: Snake-Finance-Android-1.4.11-candidate
+          path: |
+            android-capture/app/build/outputs/apk/debug/app-debug.apk
+            android-capture/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
