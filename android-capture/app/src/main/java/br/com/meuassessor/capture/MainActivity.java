@@ -31,6 +31,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -119,11 +122,65 @@ public final class MainActivity extends Activity {
         UpdateChecker.check(this);
     }
 
+    private static final String CACHE_FILE = "snake_finance_dashboard.html";
+    private static final String CACHE_BACKUP_FILE = "snake_finance_dashboard.backup.html";
+
+    private boolean validDashboard(String html) {
+        if (html == null || html.length() < 50000) return false;
+        return html.contains("SNAKE FINANCE")
+                && html.contains("window.SNAKE_DISTRIBUTABLE")
+                && html.contains("</html>");
+    }
+
+    private String readCachedDashboard() {
+        File file = new File(getFilesDir(), CACHE_FILE);
+        if (!file.exists()) return null;
+        try (FileInputStream input = new FileInputStream(file)) {
+            byte[] bytes = new byte[(int) file.length()];
+            int offset = 0;
+            while (offset < bytes.length) {
+                int read = input.read(bytes, offset, bytes.length - offset);
+                if (read < 0) break;
+                offset += read;
+            }
+            String html = new String(bytes, 0, offset, StandardCharsets.UTF_8);
+            return validDashboard(html) ? html : null;
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private void saveDashboardAtomically(String html) throws Exception {
+        File current = new File(getFilesDir(), CACHE_FILE);
+        File backup = new File(getFilesDir(), CACHE_BACKUP_FILE);
+        File temp = new File(getFilesDir(), CACHE_FILE + ".tmp");
+        try (FileOutputStream output = new FileOutputStream(temp, false)) {
+            output.write(html.getBytes(StandardCharsets.UTF_8));
+            output.flush();
+            output.getFD().sync();
+        }
+        if (!validDashboard(html)) throw new IllegalStateException("dashboard inválido");
+        if (current.exists()) {
+            if (backup.exists()) backup.delete();
+            current.renameTo(backup);
+        }
+        if (!temp.renameTo(current)) throw new IllegalStateException("falha ao ativar dashboard");
+    }
+
+    private void showDashboard(String html) {
+        if (!validDashboard(html)) {
+            webView.loadUrl(APP_URL);
+            return;
+        }
+        webView.loadDataWithBaseURL(APP_BASE_URL, html, "text/html", "UTF-8", APP_URL);
+    }
+
     private void loadDashboardHtml() {
+        final String cached = readCachedDashboard();
+        if (cached != null) runOnUiThread(() -> showDashboard(cached));
+
         Executors.newSingleThreadExecutor().execute(() -> {
             HttpURLConnection connection = null;
-            File candidate = new File(getFilesDir(), OTA_TEMP_FILE);
-            File lastGood = new File(getFilesDir(), OTA_CACHE_FILE);
             try {
                 connection = (HttpURLConnection) new URL(
                         APP_URL + "&t=" + System.currentTimeMillis()).openConnection();
@@ -135,61 +192,39 @@ public final class MainActivity extends Activity {
                 if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) throw new Exception("HTTP");
                 InputStream stream = connection.getInputStream();
                 if ("gzip".equalsIgnoreCase(connection.getContentEncoding())) stream = new GZIPInputStream(stream);
-                try (FileOutputStream out = new FileOutputStream(candidate)) {
-                    byte[] buffer = new byte[8192]; int read;
-                    while ((read = stream.read(buffer)) != -1) out.write(buffer, 0, read);
+                StringBuilder html = new StringBuilder();
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) html.append(line).append('\n');
                 }
-                String document = readUtf8(candidate);
-                if (!isValidDashboard(document)) throw new Exception("Dashboard validation failed");
-                if (lastGood.exists() && !lastGood.delete()) throw new Exception("Could not rotate cache");
-                if (!candidate.renameTo(lastGood)) {
-                    try (FileInputStream in = new FileInputStream(candidate);
-                         FileOutputStream out = new FileOutputStream(lastGood)) {
-                        byte[] buffer = new byte[8192]; int read;
-                        while ((read = in.read(buffer)) != -1) out.write(buffer, 0, read);
-                    }
-                    candidate.delete();
+                String document = html.toString();
+                if (!validDashboard(document)) throw new Exception("dashboard remoto inválido");
+                saveDashboardAtomically(document);
+                if (cached == null || !document.equals(cached)) {
+                    runOnUiThread(() -> showDashboard(document));
                 }
-                runOnUiThread(() -> loadDashboardDocument(document));
             } catch (Exception ignored) {
-                candidate.delete();
-                try {
-                    if (lastGood.exists()) {
-                        String fallback = readUtf8(lastGood);
-                        if (isValidDashboard(fallback)) {
-                            runOnUiThread(() -> loadDashboardDocument(fallback));
-                            return;
+                if (cached == null) {
+                    File backup = new File(getFilesDir(), CACHE_BACKUP_FILE);
+                    try (FileInputStream input = backup.exists() ? new FileInputStream(backup) : null) {
+                        if (input != null) {
+                            byte[] bytes = new byte[(int) backup.length()];
+                            int offset = 0, read;
+                            while (offset < bytes.length && (read = input.read(bytes, offset, bytes.length - offset)) >= 0) offset += read;
+                            String fallback = new String(bytes, 0, offset, StandardCharsets.UTF_8);
+                            if (validDashboard(fallback)) {
+                                runOnUiThread(() -> showDashboard(fallback));
+                                return;
+                            }
                         }
-                    }
-                } catch (Exception ignoredCache) {}
-                runOnUiThread(() -> webView.loadUrl(APP_URL));
+                    } catch (Exception ignoredBackup) {}
+                    runOnUiThread(() -> webView.loadUrl(APP_URL));
+                }
             } finally {
                 if (connection != null) connection.disconnect();
             }
         });
-    }
-
-    private String readUtf8(File file) throws Exception {
-        StringBuilder html = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-                new FileInputStream(file), StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) html.append(line).append('\n');
-        }
-        return html.toString();
-    }
-
-    private boolean isValidDashboard(String document) {
-        if (document == null || document.length() < 100000) return false;
-        String lower = document.toLowerCase(java.util.Locale.ROOT);
-        return lower.contains("<!doctype html")
-                && lower.contains("snake finance")
-                && lower.contains("assessor financeiro ia")
-                && lower.contains("</html>");
-    }
-
-    private void loadDashboardDocument(String document) {
-        webView.loadDataWithBaseURL(APP_BASE_URL, document, "text/html", "UTF-8", APP_URL);
     }
 
     private void requestNativePermissions() {
