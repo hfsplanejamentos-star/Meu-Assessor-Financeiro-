@@ -63,10 +63,9 @@ final class BankAllowlist {
             // Neon
             "br.com.neon",
 
-            // Google Play Store / Google Wallet.
-            // Conteúdo só passa se o parser reconhecer uma transação financeira.
-            "com.android.vending",
-            "com.google.android.apps.walletnfcrel"
+            // Google Wallet/Pay é intencionalmente excluído: capturamos apenas
+            // a notificação da instituição financeira autorizada.
+            "com.android.vending"
     ));
 
     static boolean contains(Context context, String packageName) {
