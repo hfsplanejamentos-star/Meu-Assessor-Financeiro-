@@ -85,7 +85,7 @@ public final class CaptureSettingsActivity extends Activity {
         root.setPadding(dp(24), dp(48), dp(24), dp(24));
         root.setBackgroundColor(Color.parseColor("#061421"));
 
-        TextView title = label("Meu Assessor · Captura Android", 24, Color.WHITE);
+        TextView title = label("Snake Finance · Captura Android", 24, Color.WHITE);
         status = label("", 20, Color.WHITE);
         queue = label("", 16, Color.parseColor("#B8C7DC"));
         diagnostic = label("", 15, Color.parseColor("#D8E4F2"));
