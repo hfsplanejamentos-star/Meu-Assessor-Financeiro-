@@ -1217,19 +1217,23 @@ const CATDB_DEFAULT={
 let CATDB=(()=>{try{const saved=JSON.parse(localStorage.getItem(CATSTORE)||'null');return saved&&typeof saved==='object'&&!Array.isArray(saved)?saved:JSON.parse(JSON.stringify(CATDB_DEFAULT))}catch(e){return JSON.parse(JSON.stringify(CATDB_DEFAULT))}})();
 function saveCatDB(){localStorage.setItem(CATSTORE,JSON.stringify(CATDB))}
 function migrateWorkCategory(){
- let changed=false;
+ let changed=false,catChanged=false;
+ const duplicateKeys=Object.keys(CATDB).filter(k=>k!=='trab'&&String(CATDB[k]?.name||CAT[k]?.[0]||'').trim().toLowerCase()==='trabalho');
  L.forEach(x=>{
    if(x.t!=='d')return;
    const oldCatName=(CATDB[x.c]?.name||CAT[x.c]?.[0]||'').trim().toLowerCase();
    if(x.c==='trab')return;
-   if(oldCatName==='trabalho'||x.ctx==='trabalho'||x.context==='trabalho'){
-     const prior=(CATDB[x.c]?.name||CAT[x.c]?.[0]||'').trim();
-     if(!x.sub && prior && prior.toLowerCase()!=='trabalho')x.sub=prior;
-     x.c='trab'; delete x.ctx; delete x.context; changed=true;
+   if(duplicateKeys.includes(x.c)||oldCatName==='trabalho'||x.ctx==='trabalho'||x.context==='trabalho'){
+     x.c='trab';
+     if(!x.sub&&/combust|abastec/i.test(String(x.n||x.desc||x.memo||'')))x.sub='Combustível';
+     delete x.ctx; delete x.context; changed=true;
    }
  });
+ duplicateKeys.forEach(k=>{delete CATDB[k];delete CAT[k];catChanged=true;});
+ CATDB.trab=CATDB.trab||JSON.parse(JSON.stringify(CATDB_DEFAULT.trab));
+ if(catChanged)saveCatDB();
  if(changed)persistLedger();
- return changed;
+ return changed||catChanged;
 }
 function catName(k){return CATDB[k]?.name||CAT[k]?.[0]||k}
 function subOptions(cat,sel=''){const a=CATDB[cat]?.subs||[];return [''].concat(a).map(v=>`<option value="${v}" ${v===sel?'selected':''}>${escapeHTML(v||'Sem subcategoria')}</option>`).join('')}
