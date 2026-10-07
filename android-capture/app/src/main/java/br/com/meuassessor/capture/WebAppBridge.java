@@ -31,6 +31,18 @@ final class WebAppBridge {
     }
 
     @JavascriptInterface
+    public boolean acknowledgeNotifications(String idsJson) {
+        try {
+            org.json.JSONArray values = new org.json.JSONArray(idsJson == null ? "[]" : idsJson);
+            String[] ids = new String[values.length()];
+            for (int i = 0; i < values.length(); i++) ids[i] = values.optString(i, "");
+            return new EncryptedQueueStore(activity).acknowledge(ids);
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    @JavascriptInterface
     public void markNotificationsConsumed() {
         new EncryptedQueueStore(activity).clear();
     }
