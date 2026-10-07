@@ -61,10 +61,10 @@ public final class MainActivity extends Activity {
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
                 .getString("web_cache_version", "");
-        if (!"1.3.11".equals(nativeVersion)) {
+        if (!"1.4.12".equals(nativeVersion)) {
             webView.clearCache(true);
             getSharedPreferences("native_runtime", MODE_PRIVATE).edit()
-                    .putString("web_cache_version", "1.3.11").apply();
+                    .putString("web_cache_version", "1.4.12").apply();
         }
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.parseColor("#020A14"));
