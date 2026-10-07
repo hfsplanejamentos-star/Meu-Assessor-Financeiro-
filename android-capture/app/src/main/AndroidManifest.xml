@@ -19,7 +19,7 @@
         android:enableOnBackInvokedCallback="true"
         android:icon="@drawable/ic_assessor_launcher"
         android:roundIcon="@drawable/ic_assessor_launcher"
-        android:label="Meu Assessor Financeiro IA"
+        android:label="Snake Finance"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="false">
@@ -42,7 +42,7 @@
         <service
             android:name=".BankNotificationListener"
             android:exported="true"
-            android:label="Captura bancária do Meu Assessor"
+            android:label="Captura bancária Snake Finance"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
