@@ -149,4 +149,31 @@ http.route({ path: "/ai/finance", method: "POST", handler: httpAction(async (ctx
   try { return json(JSON.parse(output), 200, headers); } catch { return json({ intent: "answer", answer: output }, 200, headers); }
 }) });
 
+
+for (const path of ["/assessor/drafts", "/assessor/decision"]) {
+  http.route({path,method:"OPTIONS",handler:httpAction(async(_ctx,req)=>new Response(null,{status:204,headers:secureCors(req)}))});
+}
+http.route({path:"/assessor/drafts",method:"GET",handler:httpAction(async(ctx,req)=>{
+ const headers=secureCors(req),hash=await ownerHash(req);
+ if(!hash)return json({ok:false,error:"invalid_sync_key"},401,headers);
+ const drafts=await ctx.runQuery(internal.assessorDrafts.listPending,{ownerHash:hash});
+ return json({ok:true,drafts},200,headers);
+})});
+http.route({path:"/assessor/drafts",method:"POST",handler:httpAction(async(ctx,req)=>{
+ const headers=secureCors(req),hash=await ownerHash(req);
+ if(!hash)return json({ok:false,error:"invalid_sync_key"},401,headers);
+ let body:any;try{body=await req.json()}catch{return json({ok:false,error:"invalid_json"},400,headers)}
+ if(!body||typeof body!=="object"||!["chat","notification","voice","image","pdf"].includes(body.sourceType)||!["expense","income"].includes(body.direction)||typeof body.draftId!=="string"||body.draftId.length<8||body.draftId.length>128||typeof body.amountCents!=="number"||!Number.isSafeInteger(body.amountCents)||body.amountCents<=0||typeof body.account!=="string"||typeof body.category!=="string"||typeof body.description!=="string"||typeof body.date!=="string")return json({ok:false,error:"invalid_draft"},400,headers);
+ const result=await ctx.runMutation(internal.assessorDrafts.prepare,{ownerHash:hash,draftId:body.draftId,sourceType:body.sourceType,sourceId:typeof body.sourceId==="string"?body.sourceId:undefined,amountCents:body.amountCents,direction:body.direction,account:body.account,transactionType:typeof body.transactionType==="string"?body.transactionType:undefined,counterparty:typeof body.counterparty==="string"?body.counterparty:undefined,category:body.category,subcategory:typeof body.subcategory==="string"?body.subcategory:undefined,description:body.description,date:body.date});
+ return json({ok:true,...result},200,headers);
+})});
+http.route({path:"/assessor/decision",method:"POST",handler:httpAction(async(ctx,req)=>{
+ const headers=secureCors(req),hash=await ownerHash(req);
+ if(!hash)return json({ok:false,error:"invalid_sync_key"},401,headers);
+ let body:any;try{body=await req.json()}catch{return json({ok:false,error:"invalid_json"},400,headers)}
+ if(typeof body?.draftId!=="string"||!["confirm","reject"].includes(body?.decision))return json({ok:false,error:"invalid_decision"},400,headers);
+ const result=await ctx.runMutation(internal.assessorDrafts.decide,{ownerHash:hash,draftId:body.draftId,decision:body.decision});
+ return json(result,result.ok?200:404,headers);
+})});
+
 export default http;
