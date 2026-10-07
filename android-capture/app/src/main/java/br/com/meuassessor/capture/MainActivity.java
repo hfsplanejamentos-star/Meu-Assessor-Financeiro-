@@ -88,18 +88,10 @@ public final class MainActivity extends Activity {
         splash.setBackgroundColor(Color.BLACK);
         ImageView splashLogo = new ImageView(this);
         splashLogo.setImageResource(br.com.meuassessor.capture.R.drawable.ic_assessor_launcher);
-        splashLogo.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        FrameLayout.LayoutParams logoParams = new FrameLayout.LayoutParams(dp(220), dp(220), Gravity.CENTER);
+        splashLogo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        splashLogo.setAdjustViewBounds(true);
+        FrameLayout.LayoutParams logoParams = new FrameLayout.LayoutParams(dp(320), dp(320), Gravity.CENTER);
         splash.addView(splashLogo, logoParams);
-        TextView splashName = new TextView(this);
-        splashName.setText("SNAKE FINANCE");
-        splashName.setTextColor(Color.parseColor("#D4AF37"));
-        splashName.setTextSize(18);
-        splashName.setGravity(Gravity.CENTER);
-        FrameLayout.LayoutParams nameParams = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(56), Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
-        nameParams.bottomMargin = dp(72);
-        splash.addView(splashName, nameParams);
         root.addView(splash, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
