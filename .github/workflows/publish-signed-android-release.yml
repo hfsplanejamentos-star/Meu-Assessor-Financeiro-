@@ -62,13 +62,13 @@ jobs:
           test -f "$APK"
           test -n "$APKSIGNER"
           "$APKSIGNER" verify --verbose --print-certs "$APK"
-          cp "$APK" "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.6.apk"
+          cp "$APK" "app/build/outputs/apk/release/Snake-Finance-v1.4.12.apk"
 
       - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: Meu-Assessor-Financeiro-IA-v1.3.6-SIGNED
-          path: android-capture/app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.6.apk
+          name: Snake-Finance-v1.4.12-SIGNED
+          path: android-capture/app/build/outputs/apk/release/Snake-Finance-v1.4.12.apk
           if-no-files-found: error
           retention-days: 90
 
@@ -76,9 +76,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete "v1.3.6" --yes --cleanup-tag 2>/dev/null || true
-          gh release create "v1.3.6" \
-            "app/build/outputs/apk/release/Meu-Assessor-Financeiro-IA-v1.3.6.apk" \
+          gh release delete "v1.4.12" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "v1.4.12" \
+            "app/build/outputs/apk/release/Snake-Finance-v1.4.12.apk" \
             --repo "${{ github.repository }}" \
-            --title "Meu Assessor Financeiro IA 1.3.6" \
-            --notes "Reconhece texto de prints e comprovantes e preenche valor, data, descrição e conta para conferência. Usa o modelo leve do Google Play Services, remove permissões desnecessárias e recolhe detalhes técnicos da captura."
+            --title "Snake Finance 1.4.12" \
+            --notes "Transição OTA do Snake Finance com Mobile V84 aprovado, cache/rollback e correções de captura Caju/Pix."
