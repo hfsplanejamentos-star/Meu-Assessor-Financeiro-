@@ -13,7 +13,7 @@ final class NotificationParser {
     private static final Pattern MONEY = Pattern.compile("(?i)(?:R\\$|BRL)?\\s*([0-9]{1,3}(?:\\.[0-9]{3})*,[0-9]{2}|[0-9]+,[0-9]{2})");
     private static final Pattern BALANCE = Pattern.compile("(?i)\\bsaldo(?:\\s+(?:em|dispon[ií]vel(?:\\s+em)?))?[^R$0-9]{0,60}(?:R\\$|BRL)?\\s*([0-9]{1,3}(?:\\.[0-9]{3})*,[0-9]{2}|[0-9]+,[0-9]{2})");
     private static final Pattern OUT = Pattern.compile("(?i)\\b(compra|comprou|pagamento|pagou|pix enviado|pix realizado|pix feito|enviou(?: um)? pix|d[eé]bito|debitado|sa[ií]da|transfer[eê]ncia enviada|transferiu|cart[aã]o|aprovad[ao]|gasto)\\b");
-    private static final Pattern IN = Pattern.compile("(?i)\\b(recebido|recebemos|recebeu(?: um)? pix|voc[eê] recebeu|pix recebido|pix de .* recebido|dep[oó]sito recebido|valor recebido|creditado|entrada|transfer[eê]ncia recebida|recebeu|cashback|estorno)\\b");
+    private static final Pattern IN = Pattern.compile("(?i)\\b(recebido|recebemos|recebeu(?: um)? pix|voc[eê] recebeu|pix recebido|pix de .{0,80}? recebido|dep[oó]sito recebido|valor recebido|creditado|entrada|transfer[eê]ncia recebida|recebeu|cashback|estorno)\\b");
     private static final Pattern FINANCIAL_CONTEXT = Pattern.compile("(?i)\\b(pix|compra|pagamento|cart[aã]o|d[eé]bito|cr[eé]dito|transfer[eê]ncia|saldo|conta|fatura|cashback|estorno)\\b");
 
     static CapturedNotification parse(String sourcePackage, String title, String text, long postedAt) {
@@ -23,9 +23,13 @@ final class NotificationParser {
         Long amount = extractTransactionAmountCents(combined);
         Long reportedBalance = extractReportedBalanceCents(combined);
         String direction;
-        // "CRÉDITO" em compra aprovada é a modalidade do cartão, não uma entrada.
-        if (Pattern.compile("(?i)\\b(compra|pagamento)\\b").matcher(combined).find()
-                && Pattern.compile("(?i)\\b(aprovad[ao]|cr[eé]dito|d[eé]bito)\\b").matcher(combined).find()) {
+        // Prioridade explícita: Pix/transferência recebida é entrada; "crédito" em compra é modalidade do cartão.
+        boolean explicitIncome = Pattern.compile("(?i)\\b(pix|transfer[eê]ncia|valor|dep[oó]sito)\\b.{0,90}\\b(recebid[oa]|recebeu|creditad[oa])\\b|\\b(recebid[oa]|recebeu|creditad[oa])\\b.{0,90}\\b(pix|transfer[eê]ncia|valor|dep[oó]sito)\\b").matcher(combined).find();
+        boolean approvedPurchase = Pattern.compile("(?i)\\b(compra|pagamento)\\b").matcher(combined).find()
+                && Pattern.compile("(?i)\\b(aprovad[ao]|cr[eé]dito|d[eé]bito)\\b").matcher(combined).find();
+        if (explicitIncome) {
+            direction = "income";
+        } else if (approvedPurchase) {
             direction = "expense";
         } else if (IN.matcher(combined).find()) {
             direction = "income";
