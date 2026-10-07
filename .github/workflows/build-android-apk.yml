@@ -3,7 +3,7 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, snake-finance-ota-1.4.12]
     paths:
       - "android-capture/**"
       - ".github/workflows/build-android-apk.yml"
