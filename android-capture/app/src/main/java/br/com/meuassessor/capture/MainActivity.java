@@ -9,6 +9,8 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.speech.RecognizerIntent;
 import android.view.View;
@@ -23,6 +25,9 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.view.Gravity;
 
 import java.util.ArrayList;
 import java.io.BufferedReader;
@@ -79,6 +84,25 @@ public final class MainActivity extends Activity {
         root.addView(webView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
+        FrameLayout splash = new FrameLayout(this);
+        splash.setBackgroundColor(Color.BLACK);
+        ImageView splashLogo = new ImageView(this);
+        splashLogo.setImageResource(br.com.meuassessor.capture.R.drawable.ic_assessor_launcher);
+        splashLogo.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        FrameLayout.LayoutParams logoParams = new FrameLayout.LayoutParams(dp(220), dp(220), Gravity.CENTER);
+        splash.addView(splashLogo, logoParams);
+        TextView splashName = new TextView(this);
+        splashName.setText("SNAKE FINANCE");
+        splashName.setTextColor(Color.parseColor("#D4AF37"));
+        splashName.setTextSize(18);
+        splashName.setGravity(Gravity.CENTER);
+        FrameLayout.LayoutParams nameParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(56), Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+        nameParams.bottomMargin = dp(72);
+        splash.addView(splashName, nameParams);
+        root.addView(splash, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
         setContentView(root);
         webView.setVisibility(View.INVISIBLE);
         pendingState = state;
@@ -87,7 +111,14 @@ public final class MainActivity extends Activity {
             getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
                     OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::handleBackNavigation);
         }
-        requestAuthentication();
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            root.removeView(splash);
+            requestAuthentication();
+        }, 3000L);
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
     private void requestAuthentication() {
