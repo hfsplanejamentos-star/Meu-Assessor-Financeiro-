@@ -29,7 +29,7 @@ final class AppLock {
             if (biometricAvailable) {
                 Executor executor = activity.getMainExecutor();
                 BiometricPrompt.Builder builder = new BiometricPrompt.Builder(activity)
-                        .setTitle("Meu Assessor Financeiro IA")
+                        .setTitle("Snake Finance")
                         .setSubtitle("Confirme sua identidade para acessar seus dados");
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
@@ -60,7 +60,7 @@ final class AppLock {
 
         if (keyguard != null && keyguard.isDeviceSecure()) {
             Intent credential = keyguard.createConfirmDeviceCredentialIntent(
-                    "Meu Assessor Financeiro IA",
+                    "Snake Finance",
                     "Confirme sua identidade para acessar seus dados");
             if (credential != null) {
                 activity.startActivityForResult(credential, REQUEST_DEVICE_CREDENTIAL);
