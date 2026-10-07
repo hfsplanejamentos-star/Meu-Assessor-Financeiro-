@@ -26,8 +26,14 @@ import android.widget.FrameLayout;
 
 import java.util.ArrayList;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -42,9 +48,11 @@ public final class MainActivity extends Activity {
     static final int REQUEST_VOICE = 701;
     private static final int REQUEST_FILE = 702;
     private static final String APP_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/?android=1.3.11";
+            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/snake-finance-mobile.html?android=1.4.12";
     private static final String APP_BASE_URL =
             "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/";
+    private static final String OTA_CACHE_FILE = "snake_dashboard_last_good.html";
+    private static final String OTA_TEMP_FILE = "snake_dashboard_candidate.html";
 
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
@@ -61,10 +69,10 @@ public final class MainActivity extends Activity {
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
                 .getString("web_cache_version", "");
-        if (!"1.3.11".equals(nativeVersion)) {
+        if (!"1.4.12".equals(nativeVersion)) {
             webView.clearCache(true);
             getSharedPreferences("native_runtime", MODE_PRIVATE).edit()
-                    .putString("web_cache_version", "1.3.11").apply();
+                    .putString("web_cache_version", "1.4.12").apply();
         }
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.parseColor("#020A14"));
@@ -114,7 +122,64 @@ public final class MainActivity extends Activity {
         UpdateChecker.check(this);
     }
 
+    private static final String CACHE_FILE = "snake_finance_dashboard_1_4_12.html";
+    private static final String CACHE_BACKUP_FILE = "snake_finance_dashboard_1_4_12.backup.html";
+
+    private boolean validDashboard(String html) {
+        if (html == null || html.length() < 50000) return false;
+        return html.contains("Snake Finance Mobile — V84 · Visual aprovado")
+                && html.contains("SNAKE FINANCE")
+                && html.contains("window.SNAKE_DISTRIBUTABLE")
+                && html.contains("</html>");
+    }
+
+    private String readCachedDashboard() {
+        File file = new File(getFilesDir(), CACHE_FILE);
+        if (!file.exists()) return null;
+        try (FileInputStream input = new FileInputStream(file)) {
+            byte[] bytes = new byte[(int) file.length()];
+            int offset = 0;
+            while (offset < bytes.length) {
+                int read = input.read(bytes, offset, bytes.length - offset);
+                if (read < 0) break;
+                offset += read;
+            }
+            String html = new String(bytes, 0, offset, StandardCharsets.UTF_8);
+            return validDashboard(html) ? html : null;
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private void saveDashboardAtomically(String html) throws Exception {
+        File current = new File(getFilesDir(), CACHE_FILE);
+        File backup = new File(getFilesDir(), CACHE_BACKUP_FILE);
+        File temp = new File(getFilesDir(), CACHE_FILE + ".tmp");
+        try (FileOutputStream output = new FileOutputStream(temp, false)) {
+            output.write(html.getBytes(StandardCharsets.UTF_8));
+            output.flush();
+            output.getFD().sync();
+        }
+        if (!validDashboard(html)) throw new IllegalStateException("dashboard inválido");
+        if (current.exists()) {
+            if (backup.exists()) backup.delete();
+            current.renameTo(backup);
+        }
+        if (!temp.renameTo(current)) throw new IllegalStateException("falha ao ativar dashboard");
+    }
+
+    private void showDashboard(String html) {
+        if (!validDashboard(html)) {
+            webView.loadUrl(APP_URL);
+            return;
+        }
+        webView.loadDataWithBaseURL(APP_BASE_URL, html, "text/html", "UTF-8", APP_URL);
+    }
+
     private void loadDashboardHtml() {
+        final String cached = readCachedDashboard();
+        if (cached != null) runOnUiThread(() -> showDashboard(cached));
+
         Executors.newSingleThreadExecutor().execute(() -> {
             HttpURLConnection connection = null;
             try {
@@ -125,11 +190,9 @@ public final class MainActivity extends Activity {
                 connection.setRequestProperty("Accept", "text/html,application/xhtml+xml");
                 connection.setRequestProperty("Accept-Encoding", "identity");
                 connection.setRequestProperty("Cache-Control", "no-cache");
-                if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) throw new Exception();
+                if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) throw new Exception("HTTP");
                 InputStream stream = connection.getInputStream();
-                if ("gzip".equalsIgnoreCase(connection.getContentEncoding())) {
-                    stream = new GZIPInputStream(stream);
-                }
+                if ("gzip".equalsIgnoreCase(connection.getContentEncoding())) stream = new GZIPInputStream(stream);
                 StringBuilder html = new StringBuilder();
                 try (BufferedReader reader = new BufferedReader(
                         new InputStreamReader(stream, StandardCharsets.UTF_8))) {
@@ -137,10 +200,28 @@ public final class MainActivity extends Activity {
                     while ((line = reader.readLine()) != null) html.append(line).append('\n');
                 }
                 String document = html.toString();
-                runOnUiThread(() -> webView.loadDataWithBaseURL(
-                        APP_BASE_URL, document, "text/html", "UTF-8", APP_URL));
+                if (!validDashboard(document)) throw new Exception("dashboard remoto inválido");
+                saveDashboardAtomically(document);
+                if (cached == null || !document.equals(cached)) {
+                    runOnUiThread(() -> showDashboard(document));
+                }
             } catch (Exception ignored) {
-                runOnUiThread(() -> webView.loadUrl(APP_URL));
+                if (cached == null) {
+                    File backup = new File(getFilesDir(), CACHE_BACKUP_FILE);
+                    try (FileInputStream input = backup.exists() ? new FileInputStream(backup) : null) {
+                        if (input != null) {
+                            byte[] bytes = new byte[(int) backup.length()];
+                            int offset = 0, read;
+                            while (offset < bytes.length && (read = input.read(bytes, offset, bytes.length - offset)) >= 0) offset += read;
+                            String fallback = new String(bytes, 0, offset, StandardCharsets.UTF_8);
+                            if (validDashboard(fallback)) {
+                                runOnUiThread(() -> showDashboard(fallback));
+                                return;
+                            }
+                        }
+                    } catch (Exception ignoredBackup) {}
+                    runOnUiThread(() -> webView.loadUrl(APP_URL));
+                }
             } finally {
                 if (connection != null) connection.disconnect();
             }

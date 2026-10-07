@@ -1,6 +1,6 @@
 {
-  "versionCode": 15,
-  "versionName": "1.3.6",
-  "downloadUrl": "https://github.com/hfsplanejamentos-star/Meu-Assessor-Financeiro-/releases/download/v1.3.6/Meu-Assessor-Financeiro-IA-v1.3.6.apk",
-  "notes": "Reconhecimento de texto em prints e comprovantes com preenchimento automático de valor, data, descrição e conta. Interface de captura mais limpa e APK otimizado."
+  "versionCode": 21,
+  "versionName": "1.4.12",
+  "downloadUrl": "https://github.com/hfsplanejamentos-star/Meu-Assessor-Financeiro-/releases/latest",
+  "notes": "Versão de transição do Snake Finance para atualizações de interface sem reinstalar o APK."
 }
