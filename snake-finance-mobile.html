@@ -1261,11 +1261,9 @@ function isWork(x){return x&&x.c==='trab';}
 function catMeta(k){const c=CAT[k];if(c)return {name:c[0],icon:c[1],color:(typeof V35_COLORS!=='undefined'&&V35_COLORS[k])||c[2]};const d=CATDB[k];return {name:d?.name||k||'Outros',icon:'list',color:'#94A3B8'};}
 
 function pct(a){const t=a.reduce((s,x)=>s+x,0)||1,e=a.map(x=>x*100/t),f=e.map(Math.floor),r=100-f.reduce((s,x)=>s+x,0);e.map((x,i)=>[x-Math.floor(x),i]).sort((a,b)=>b[0]-a[0]).slice(0,r).forEach(o=>f[o[1]]++);return f;}
-function D(){const o={},cut=YM+'-31',upto=L.filter(x=>typeof x.d==='string'&&x.d<=cut);
- const bals=a=>ACC[a]+upto.filter(x=>x.a==a&&x.s=='r'&&x.t=='r'&&x.bal!==false).reduce((s,x)=>s+x.v,0)-upto.filter(x=>x.a==a&&x.s=='r'&&x.t!='r'&&x.bal!==false).reduce((s,x)=>s+x.v,0);
+function D(){const o={},cut=YM+'-31';
  o.c6=accountBalance('c6',cut,false);
  const cajuFunds=cajuBalance(YM);
- const cajuSpent=smm(x=>x.a==='caju'&&x.s==='r'&&x.t==='d');
  o.cj=cajuFunds;
  o.tot=o.c6+o.cj;
  o.rec=smm(x=>x.s=='r'&&x.t=='r'&&x.a=='c6');o.des=smm(x=>x.s=='r'&&x.t=='d');o.pd=smm(x=>x.s=='p'&&x.t=='d');o.pt=smm(x=>x.s=='p'&&x.t=='t');o.pr=smm(x=>x.s=='p'&&x.t=='r');o.fim=projectedC6(YM);
