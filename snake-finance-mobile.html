@@ -1885,18 +1885,19 @@ const ORIGINAL_FUNDS=OPENING_CFG.cajuFunds;
 function validISO(d){if(typeof d!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(d))return false;const [y,m,n]=d.split('-').map(Number);const z=new Date(y,m-1,n,12);return z.getFullYear()===y&&z.getMonth()===m-1&&z.getDate()===n;}
 function moneyInput(s){s=String(s).trim();if(!s)return NaN;const pt=s.includes(',');if(!/^-?[\d.,]+$/.test(s))return NaN;return Math.round(Number(pt?s.replace(/\./g,'').replace(',','.'):s)*100);}
 function monthBefore(m){return addMonthsYM(m,-1)}
+function cajuCompetence(x){return typeof x?.comp==='string'&&/^\\d{4}-\\d{2}-\\d{2}$/.test(x.comp)?x.comp.slice(0,7):(x?.d||'').slice(0,7);}
 function cajuBalance(ym){
  const anchor='2026-10';let balance=0;
  if(ym<anchor&&!CAJU_CFG[ym])return 0;
  let start=ym<anchor?ym:anchor;
  for(let m=start;m<=ym;m=addMonthsYM(m,1)){
-  const cfg=CAJU_CFG[m],credits=L.filter(x=>x.a==='caju'&&x.t==='r'&&x.s==='r'&&(x.comp||x.d||'').startsWith(m)).reduce((q,x)=>q+x.v,0);
-  const spent=L.filter(x=>x.a==='caju'&&x.t==='d'&&x.s==='r'&&(x.comp||x.d||'').startsWith(m)).reduce((q,x)=>q+x.v,0);
-  const outgoing=L.filter(x=>x.a==='caju'&&x.t==='t'&&x.s==='r'&&(x.comp||x.d||'').startsWith(m)).reduce((q,x)=>q+x.v,0);
-  let opening=cfg&&Number.isInteger(cfg.opening)?cfg.opening:(m===anchor?ORIGINAL_FUNDS:balance);
-  // Regra Caju: saldo anterior + recarga do mês + transferências recebidas - despesas/transferências de saída.
-  // Créditos realizados substituem somente a recarga configurada do próprio mês; nunca acumulamos recargas antigas.
-  const incoming=L.filter(x=>x.to==='caju'&&x.a!=='caju'&&x.t==='t'&&x.s==='r'&&(x.comp||x.d||'').startsWith(m)).reduce((q,x)=>q+x.v,0);
+  const cfg=CAJU_CFG[m];
+  // A recarga pertence ao mês de competência, mesmo quando creditada fisicamente no fim do mês anterior.
+  const credits=L.filter(x=>x.a==='caju'&&x.t==='r'&&x.s==='r'&&cajuCompetence(x)===m).reduce((q,x)=>q+x.v,0);
+  const spent=L.filter(x=>x.a==='caju'&&x.t==='d'&&x.s==='r'&&cajuCompetence(x)===m).reduce((q,x)=>q+x.v,0);
+  const outgoing=L.filter(x=>x.a==='caju'&&x.t==='t'&&x.s==='r'&&cajuCompetence(x)===m).reduce((q,x)=>q+x.v,0);
+  const incoming=L.filter(x=>x.to==='caju'&&x.a!=='caju'&&x.t==='t'&&x.s==='r'&&cajuCompetence(x)===m).reduce((q,x)=>q+x.v,0);
+  const opening=cfg&&Number.isInteger(cfg.opening)?cfg.opening:(m===anchor?ORIGINAL_FUNDS:balance);
   const reload=credits>0?credits:(cfg&&Number.isInteger(cfg.reload)?cfg.reload:0);
   balance=opening+reload+incoming-spent-outgoing;
  }
@@ -2379,6 +2380,3 @@ function closeHeaderNav(){document.getElementById('headerNav')?.classList.remove
 function toggleHeaderNav(){v65CloseQuick();document.getElementById('settingsPop')?.classList.remove('on');closeMore();const menu=document.getElementById('headerNav'),opening=!menu.classList.contains('on');menu.innerHTML=TABS.map(x=>'<button type="button" data-header-tab="'+x[0]+'" onclick="closeHeaderNav();goTab(\''+x[0]+'\')">'+escapeHTML(x[1])+'</button>').join('');menu.classList.toggle('on',opening);document.getElementById('headerMenuButton').setAttribute('aria-expanded',String(opening));}
 function openAdvisorNotices(){closeHeaderNav();document.getElementById('settingsPop')?.classList.remove('on');AS='av';goTab('as');}
 function openNoticeOptions(key){openAdvisorNotices();requestAnimationFrame(()=>{const target=Array.from(document.querySelectorAll('[data-alert-toggle]')).find(el=>el.dataset.alertToggle===key);if(target)target.closest('.alertRule').scrollIntoView({block:'start',behavior:'smooth'});});}
-function updateAdvisorBell(){const n=financialAlerts(YM).length,dot=document.getElementById('advisorBellDot'),bell=document.getElementById('advisorBell');if(dot)dot.hidden=n===0;if(bell){bell.setAttribute('aria-label','Avisos do assessor: '+n+' alerta(s) ativo(s)');bell.title=n+' alerta(s) ativo(s)';}}
-const v84PreviousDraw=draw;draw=function(){v84PreviousDraw();updateAdvisorBell();};
-const v84PreviousSettings=toggleSettings;toggleSettings=function(){closeHeaderNav();v84PreviousSettings();};
