@@ -1891,11 +1891,14 @@ function cajuBalance(ym){
  let start=ym<anchor?ym:anchor;
  for(let m=start;m<=ym;m=addMonthsYM(m,1)){
   const cfg=CAJU_CFG[m],credits=L.filter(x=>x.a==='caju'&&x.t==='r'&&x.s==='r'&&(x.comp||x.d||'').startsWith(m)).reduce((q,x)=>q+x.v,0);
-  const spent=L.filter(x=>x.a==='caju'&&x.t!=='r'&&x.s==='r'&&(x.comp||x.d||'').startsWith(m)).reduce((q,x)=>q+x.v,0);
+  const spent=L.filter(x=>x.a==='caju'&&x.t==='d'&&x.s==='r'&&(x.comp||x.d||'').startsWith(m)).reduce((q,x)=>q+x.v,0);
+  const outgoing=L.filter(x=>x.a==='caju'&&x.t==='t'&&x.s==='r'&&(x.comp||x.d||'').startsWith(m)).reduce((q,x)=>q+x.v,0);
   let opening=cfg&&Number.isInteger(cfg.opening)?cfg.opening:(m===anchor?ORIGINAL_FUNDS:balance);
-  // Actual credits replace the default forecast; configured credit amounts are already represented in credits.
-  const incoming=L.filter(x=>x.to==='caju'&&x.a!=='caju'&&x.t==='t'&&x.s==='r'&&(x.comp||x.d||'').startsWith(m)).reduce((q,x)=>q+x.v,0);const reload=credits+(incoming||0)||(cfg?cfg.reload:0)||0;
-  balance=opening+reload-spent;
+  // Regra Caju: saldo anterior + recarga do mês + transferências recebidas - despesas/transferências de saída.
+  // Créditos realizados substituem somente a recarga configurada do próprio mês; nunca acumulamos recargas antigas.
+  const incoming=L.filter(x=>x.to==='caju'&&x.a!=='caju'&&x.t==='t'&&x.s==='r'&&(x.comp||x.d||'').startsWith(m)).reduce((q,x)=>q+x.v,0);
+  const reload=credits>0?credits:(cfg&&Number.isInteger(cfg.reload)?cfg.reload:0);
+  balance=opening+reload+incoming-spent-outgoing;
  }
  return balance;
 }
