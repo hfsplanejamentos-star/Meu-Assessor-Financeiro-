@@ -86,12 +86,42 @@ public final class MainActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT));
         FrameLayout splash = new FrameLayout(this);
         splash.setBackgroundColor(Color.BLACK);
-        ImageView splashLogo = new ImageView(this);
-        splashLogo.setImageResource(br.com.meuassessor.capture.R.drawable.ic_assessor_launcher);
-        splashLogo.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        splashLogo.setAdjustViewBounds(true);
-        FrameLayout.LayoutParams logoParams = new FrameLayout.LayoutParams(dp(320), dp(320), Gravity.CENTER);
-        splash.addView(splashLogo, logoParams);
+        // Full-screen black and gold Snake Finance opening (not the square launcher icon).
+        splash.addView(new View(this) {
+            final android.graphics.Paint paint = new android.graphics.Paint(3);
+            @Override protected void onDraw(android.graphics.Canvas canvas) {
+                super.onDraw(canvas);
+                float w=getWidth(),h=getHeight(),cx=w/2f;
+                paint.setStyle(android.graphics.Paint.Style.FILL);
+                paint.setColor(Color.BLACK); canvas.drawColor(Color.BLACK);
+                float scale=Math.min(w/390f,h/820f);
+                paint.setShader(new android.graphics.LinearGradient(0,h*.2f,w,h*.8f,
+                    new int[]{0xff805015,0xffffe59a,0xffc08a27},null,android.graphics.Shader.TileMode.CLAMP));
+                paint.setTypeface(android.graphics.Typeface.create("sans-serif-black",android.graphics.Typeface.BOLD));
+                paint.setTextAlign(android.graphics.Paint.Align.CENTER);
+                paint.setTextSize(180f*scale); canvas.drawText("S",cx,h*.43f,paint);
+                paint.setShader(null);
+                paint.setColor(0xffd8a33d);
+                for(int n=0;n<3;n++) canvas.drawRoundRect(cx+52*scale+n*17*scale,h*.36f-n*12*scale,
+                    cx+(62+n*17)*scale,h*.43f,3*scale,3*scale,paint);
+                paint.setTextSize(25f*scale);
+                paint.setTypeface(android.graphics.Typeface.create("sans-serif",android.graphics.Typeface.BOLD));
+                canvas.drawText("SNAKE FINANCE",cx,h*.54f,paint);
+                paint.setTextSize(12f*scale);
+                paint.setTypeface(android.graphics.Typeface.create("sans-serif",android.graphics.Typeface.NORMAL));
+                paint.setColor(0xffd6b978); canvas.drawText("ASSESSOR FINANCEIRO IA",cx,h*.575f,paint);
+                paint.setStyle(android.graphics.Paint.Style.STROKE);paint.setStrokeWidth(2*scale);
+                paint.setColor(0xff8e641f);
+                for(int j=0;j<4;j++){
+                    android.graphics.Path wave=new android.graphics.Path();
+                    float y=h*(.87f+j*.035f);
+                    wave.moveTo(0,y);
+                    wave.cubicTo(w*.28f,y-45*scale,w*.68f,y+32*scale,w,y-15*scale);
+                    canvas.drawPath(wave,paint);
+                }
+                paint.setStyle(android.graphics.Paint.Style.FILL);
+            }
+        },new FrameLayout.LayoutParams(-1,-1));
         root.addView(splash, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
