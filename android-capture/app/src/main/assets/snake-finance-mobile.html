@@ -1311,7 +1311,7 @@ function graf7(){
  const dots=a.map((z,i)=>`<circle cx="${xx(i)}" cy="${yy(smooth[i])}" r="3.7" fill="var(--card)" stroke="var(--a)" stroke-width="2.2" onclick="openDay('${z.d}')"/>`).join('');
  const values=a.map((z,i)=>z.v>0?`<text x="${xx(i)}" y="${Math.max(14,yy(smooth[i])-11)}" text-anchor="middle" font-size="9" font-weight="700" fill="var(--tx)">${brs(z.v)}</text>`:'').join('');
  const labels=a.map((z,i)=>`<text x="${xx(i)}" y="${H-8}" text-anchor="middle" font-size="10" fill="var(--mu)">${String(z.day).padStart(2,'0')}</text>`).join('');
- return `<div class="c"><div class="sp"><div><p class="h">Gastos por dia</p><p class="m">${YM===localToday().slice(0,7)?'7 dias anteriores + hoje + 5 seguintes':'Últimos 7 dias do mês selecionado'} · C6 + Caju + C6 Carbon</p></div><span class="m" style="color:var(--a)">Ver detalhes ›</span></div><svg viewBox="0 0 ${W} ${H}" style="width:100%"><defs><linearGradient id="v40fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--a)" stop-opacity=".32"/><stop offset="75%" stop-color="var(--a)" stop-opacity=".07"/><stop offset="100%" stop-color="var(--a)" stop-opacity="0"/></linearGradient></defs>${grid}<path d="${area}" fill="url(#v40fade)" stroke="none"/><path d="${p}" fill="none" stroke="var(--a)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>${dots}${values}${labels}</svg></div>`;
+ return `<div class="c"><div class="sp"><div><p class="h">Gastos por dia</p><p class="m">${YM===localToday().slice(0,7)?'Semana atual · segunda a domingo':'Semana final do mês · segunda a domingo'} · C6 + Caju + C6 Carbon</p></div><button class="bt" onclick="graphDetail('daily')" style="color:var(--a)">Ver detalhes ›</button></div><svg viewBox="0 0 ${W} ${H}" style="width:100%"><defs><linearGradient id="v40fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--a)" stop-opacity=".32"/><stop offset="75%" stop-color="var(--a)" stop-opacity=".07"/><stop offset="100%" stop-color="var(--a)" stop-opacity="0"/></linearGradient></defs>${grid}<path d="${area}" fill="url(#v40fade)" stroke="none"/><path d="${p}" fill="none" stroke="var(--a)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>${dots}${values}${labels}</svg></div>`;
 }
 function orcCard(){
  const t=cs('r'),ks=Object.keys(ORC).filter(k=>CAT[k]).sort((a,b)=>(t[b]/ORC[b])-(t[a]/ORC[a]));
@@ -1927,7 +1927,17 @@ function ensureRecurrences(ym){
  }
  if(changed){NID=nextId();persistLedger();}
 }
-function dailyWindow(){const [y,m]=YM.split('-').map(Number),now=APP_NOW,nd=new Date(y,m,0).getDate();const current=APP_TODAY.startsWith(YM);let end=new Date(y,m-1,current?Math.min(nd,now.getDate()+5):nd,12),start=new Date(y,m-1,current?Math.max(1,now.getDate()-7):Math.max(1,nd-6),12);let dates=[];for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1))dates.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);return dates;}
+function dailyWindow(){
+ const [y,m]=YM.split('-').map(Number);
+ const focus=APP_TODAY.startsWith(YM)?new Date(APP_TODAY+'T12:00:00'):new Date(y,m,0,12);
+ const monday=new Date(focus);
+ monday.setDate(focus.getDate()-(focus.getDay()+6)%7);
+ return Array.from({length:7},(_,i)=>{
+  const d=new Date(monday);
+  d.setDate(monday.getDate()+i);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+ });
+}
 function gastos7(){return dailyWindow().map(iso=>({iso,d:iso,v:L.filter(x=>x.t==='d'&&x.s==='r'&&x.d===iso).reduce((q,x)=>q+x.v,0)}));}
 function graphDetail(kind,key){let items,title='Despesas do mês';if(kind==='daily'){const dates=dailyWindow();items=L.filter(x=>x.t==='d'&&x.s==='r'&&dates.includes(x.d));title='Gastos por dia';}else if(kind==='caju'){items=expenseBase('').filter(x=>x.a==='caju');title='Despesas Caju';}else if(kind==='category'){items=expenseBase('').filter(x=>x.c===key);title=catName(key);}else items=expenseBase('');detailModal(title,items);}
 function openSliceEditable(kind,key,status){let a=expenseBase(status||'');if(kind==='cat')a=a.filter(x=>x.c===key);if(kind==='account')a=a.filter(x=>x.a===key);if(kind==='caju')a=a.filter(x=>x.a==='caju'&&(!key||x.c===key));detailModal('Detalhes · '+(key?catName(key):'Despesas'),a);}
@@ -2362,7 +2372,19 @@ html[data-tema] #app{padding-bottom:120px!important}
     if(document.getElementById('capture-status'))document.getElementById('capture-status').textContent=connectionMessage;
   }catch(error){status=null;connectionMessage=error.message;const el=document.getElementById('capture-status');if(el)el.textContent=connectionMessage;}finally{busy=false;}};
   window.captureDisconnect=function(){if(busy)return;if(!confirm('Desconectar WhatsApp e IA neste aparelho? Seus lançamentos serão mantidos.'))return;if(bridge?.clearIntegrationConfig&&!bridge.clearIntegrationConfig()){alert('Não foi possível desconectar.');return;}connectionGeneration++;sessionKey='';config={url:'',configured:false};waItems=[];status=null;connectionMessage='Serviço desconectado.';window.captureSettings();};
-  window.captureAsk=async function(){if(busy)return;const text=document.getElementById('capture-question')?.value.trim();if(!text||text.length>3500)return;busy=true;try{const result=await api('/ai/finance','POST',{text,context:aiContext()});if(result.intent==='transaction'){if(!ST.msg)throw Error('Ative Registrar despesas por mensagem em Avisos para abrir rascunhos.');const e={source:'manual',id:'ai_'+Date.now()+'_'+(++requestNumber),title:'Rascunho por IA',text,postedAt:Date.now()};draft={event:e,data:applyAi(result,localDraft(e))};showDraft();}else if(result.intent==='answer'&&typeof result.answer==='string'&&result.answer.length<=12000){answers.push({question:text,answer:result.answer});answers=answers.slice(-10);AS='chat';draw();}else throw Error('A IA retornou uma resposta inválida.');}catch(error){alert(error.message);}finally{busy=false;}};
+  function localFinancialAnswer(question){
+    const norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    const q=norm(question);
+    if(!/(quanto|gastei|gasto|despesa|total)/.test(q))return null;
+    const known=['estacionamento','combustivel','farmacia','cerveja','alimentacao','mercado','padaria','delivery','aluguel','pensao','lazer','transporte','ifood'];
+    const term=known.find(x=>q.includes(x));
+    if(!term)return null;
+    const match=term==='ifood'?'delivery':term;
+    const records=ML().filter(x=>x.s==='r'&&x.t==='d'&&norm([x.n,x.c,x.sub,x.desc].join(' ')).includes(match));
+    const total=records.reduce((sum,x)=>sum+x.v,0);
+    return 'Consulta local — '+monthName(YM)+': '+records.length+' lançamento(s) de '+term+', total '+brl(total)+'. Dados do livro financeiro do aplicativo. Confira a classificação dos lançamentos.';
+  }
+  window.captureAsk=async function(){if(busy)return;const text=document.getElementById('capture-question')?.value.trim();if(!text||text.length>3500)return;busy=true;try{if(!config.configured){const local=localFinancialAnswer(text);if(local){answers.push({question:text,answer:local});answers=answers.slice(-10);AS='chat';draw();return;}throw Error('Consulta com IA exige conectar o serviço em Configurações → Captura, WhatsApp e IA. Consultas locais por categoria estão disponíveis sem conexão.');}const result=await api('/ai/finance','POST',{text,context:aiContext()});if(result.intent==='transaction'){if(!ST.msg)throw Error('Ative Registrar despesas por mensagem em Avisos para abrir rascunhos.');const e={source:'manual',id:'ai_'+Date.now()+'_'+(++requestNumber),title:'Rascunho por IA',text,postedAt:Date.now()};draft={event:e,data:applyAi(result,localDraft(e))};showDraft();}else if(result.intent==='answer'&&typeof result.answer==='string'&&result.answer.length<=12000){answers.push({question:text,answer:result.answer});answers=answers.slice(-10);AS='chat';draw();}else throw Error('A IA retornou uma resposta inválida.');}catch(error){alert(error.message);}finally{busy=false;}};
   // Preserve all fixed-rule alerts; replace only the former demonstration tabs.
   const noticeDismissKey='assessor_notice_dismissals_v85';
   let dismissed=[];
