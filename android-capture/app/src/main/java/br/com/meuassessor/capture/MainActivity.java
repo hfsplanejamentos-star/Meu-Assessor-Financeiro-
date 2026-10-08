@@ -53,7 +53,7 @@ public final class MainActivity extends Activity {
     static final int REQUEST_VOICE = 701;
     private static final int REQUEST_FILE = 702;
     private static final String APP_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/snake-finance-mobile.html?android=1.5.3";
+            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/snake-finance-mobile.html?android=1.5.5";
     private static final String APP_BASE_URL =
             "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/";
     private static final String OTA_CACHE_FILE = "snake_dashboard_last_good.html";
@@ -242,16 +242,27 @@ public final class MainActivity extends Activity {
     }
 
     private void loadDashboardHtml() {
-        final String cached = readCachedDashboard();
-        if (cached != null) runOnUiThread(() -> showDashboard(cached));
+        String local = readCachedDashboard();
+        if (local == null) {
+            try (InputStream input = getAssets().open("snake-finance-mobile.html")) {
+                java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+                byte[] buffer = new byte[8192];
+                int count;
+                while ((count = input.read(buffer)) != -1) bytes.write(buffer, 0, count);
+                String bundled = bytes.toString("UTF-8");
+                if (validDashboard(bundled)) local = bundled;
+            } catch (Exception ignored) {}
+        }
+        final String cached = local;
+        if (cached != null) showDashboard(cached);
 
         Executors.newSingleThreadExecutor().execute(() -> {
             HttpURLConnection connection = null;
             try {
                 connection = (HttpURLConnection) new URL(
                         APP_URL + "&t=" + System.currentTimeMillis()).openConnection();
-                connection.setConnectTimeout(12000);
-                connection.setReadTimeout(25000);
+                connection.setConnectTimeout(5000);
+                connection.setReadTimeout(9000);
                 connection.setRequestProperty("Accept", "text/html,application/xhtml+xml");
                 connection.setRequestProperty("Accept-Encoding", "identity");
                 connection.setRequestProperty("Cache-Control", "no-cache");
