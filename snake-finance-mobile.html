@@ -2362,7 +2362,19 @@ html[data-tema] #app{padding-bottom:120px!important}
     if(document.getElementById('capture-status'))document.getElementById('capture-status').textContent=connectionMessage;
   }catch(error){status=null;connectionMessage=error.message;const el=document.getElementById('capture-status');if(el)el.textContent=connectionMessage;}finally{busy=false;}};
   window.captureDisconnect=function(){if(busy)return;if(!confirm('Desconectar WhatsApp e IA neste aparelho? Seus lançamentos serão mantidos.'))return;if(bridge?.clearIntegrationConfig&&!bridge.clearIntegrationConfig()){alert('Não foi possível desconectar.');return;}connectionGeneration++;sessionKey='';config={url:'',configured:false};waItems=[];status=null;connectionMessage='Serviço desconectado.';window.captureSettings();};
-  window.captureAsk=async function(){if(busy)return;const text=document.getElementById('capture-question')?.value.trim();if(!text||text.length>3500)return;busy=true;try{const result=await api('/ai/finance','POST',{text,context:aiContext()});if(result.intent==='transaction'){if(!ST.msg)throw Error('Ative Registrar despesas por mensagem em Avisos para abrir rascunhos.');const e={source:'manual',id:'ai_'+Date.now()+'_'+(++requestNumber),title:'Rascunho por IA',text,postedAt:Date.now()};draft={event:e,data:applyAi(result,localDraft(e))};showDraft();}else if(result.intent==='answer'&&typeof result.answer==='string'&&result.answer.length<=12000){answers.push({question:text,answer:result.answer});answers=answers.slice(-10);AS='chat';draw();}else throw Error('A IA retornou uma resposta inválida.');}catch(error){alert(error.message);}finally{busy=false;}};
+  function localFinancialAnswer(question){
+    const norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    const q=norm(question);
+    if(!/(quanto|gastei|gasto|despesa|total)/.test(q))return null;
+    const known=['estacionamento','combustivel','farmacia','cerveja','alimentacao','mercado','padaria','delivery','aluguel','pensao','lazer','transporte','ifood'];
+    const term=known.find(x=>q.includes(x));
+    if(!term)return null;
+    const match=term==='ifood'?'delivery':term;
+    const records=ML().filter(x=>x.s==='r'&&x.t==='d'&&norm([x.n,x.c,x.sub,x.desc].join(' ')).includes(match));
+    const total=records.reduce((sum,x)=>sum+x.v,0);
+    return 'Consulta local — '+monthName(YM)+': '+records.length+' lançamento(s) de '+term+', total '+brl(total)+'. Dados do livro financeiro do aplicativo. Confira a classificação dos lançamentos.';
+  }
+  window.captureAsk=async function(){if(busy)return;const text=document.getElementById('capture-question')?.value.trim();if(!text||text.length>3500)return;busy=true;try{if(!config.configured){const local=localFinancialAnswer(text);if(local){answers.push({question:text,answer:local});answers=answers.slice(-10);AS='chat';draw();return;}throw Error('Consulta com IA exige conectar o serviço em Configurações → Captura, WhatsApp e IA. Consultas locais por categoria estão disponíveis sem conexão.');}const result=await api('/ai/finance','POST',{text,context:aiContext()});if(result.intent==='transaction'){if(!ST.msg)throw Error('Ative Registrar despesas por mensagem em Avisos para abrir rascunhos.');const e={source:'manual',id:'ai_'+Date.now()+'_'+(++requestNumber),title:'Rascunho por IA',text,postedAt:Date.now()};draft={event:e,data:applyAi(result,localDraft(e))};showDraft();}else if(result.intent==='answer'&&typeof result.answer==='string'&&result.answer.length<=12000){answers.push({question:text,answer:result.answer});answers=answers.slice(-10);AS='chat';draw();}else throw Error('A IA retornou uma resposta inválida.');}catch(error){alert(error.message);}finally{busy=false;}};
   // Preserve all fixed-rule alerts; replace only the former demonstration tabs.
   const noticeDismissKey='assessor_notice_dismissals_v85';
   let dismissed=[];
