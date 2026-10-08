@@ -60,6 +60,9 @@ public final class MainActivity extends Activity {
     private static final String OTA_TEMP_FILE = "snake_dashboard_candidate.html";
 
     private WebView webView;
+    private FrameLayout startupSplash;
+    private boolean dashboardReady = false;
+    private boolean authenticatedForDisplay = false;
     private ValueCallback<Uri[]> fileCallback;
     private Uri capturedImageUri;
     private Bundle pendingState;
@@ -74,18 +77,19 @@ public final class MainActivity extends Activity {
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
                 .getString("web_cache_version", "");
-        if (!"1.5.1".equals(nativeVersion)) {
+        if (!"1.5.5".equals(nativeVersion)) {
             webView.clearCache(true);
             getSharedPreferences("native_runtime", MODE_PRIVATE).edit()
-                    .putString("web_cache_version", "1.5.1").apply();
+                    .putString("web_cache_version", "1.5.5").apply();
         }
         FrameLayout root = new FrameLayout(this);
-        root.setBackgroundColor(Color.parseColor("#020A14"));
+        root.setBackgroundColor(Color.BLACK);
         root.addView(webView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         FrameLayout splash = new FrameLayout(this);
         splash.setBackgroundColor(Color.BLACK);
+        startupSplash = splash;
         // Full-screen black and gold Snake Finance opening (not the square launcher icon).
         splash.addView(new View(this) {
             final android.graphics.Paint paint = new android.graphics.Paint(3);
@@ -134,9 +138,15 @@ public final class MainActivity extends Activity {
                     OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::handleBackNavigation);
         }
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            root.removeView(splash);
             requestAuthentication();
         }, 3000L);
+    }
+
+    private void revealDashboardWhenReady() {
+        if (!authenticatedForDisplay || !dashboardReady || startupSplash == null) return;
+        FrameLayout splash = startupSplash;
+        startupSplash = null;
+        if (splash.getParent() instanceof ViewGroup) ((ViewGroup) splash.getParent()).removeView(splash);
     }
 
     private int dp(int value) {
@@ -153,7 +163,9 @@ public final class MainActivity extends Activity {
         if (isFinishing()) return;
         authenticationInProgress = false;
         authenticated = true;
+        authenticatedForDisplay = true;
         webView.setVisibility(View.VISIBLE);
+        revealDashboardWhenReady();
 
         if (pendingState == null) {
             if (webView.getUrl() == null) loadDashboardHtml();
@@ -331,6 +343,12 @@ public final class MainActivity extends Activity {
         value.addJavascriptInterface(bridge, "AndroidBridge");
         value.addJavascriptInterface(bridge, "AndroidApp");
         value.setWebViewClient(new WebViewClient() {
+            @Override public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                dashboardReady = true;
+                revealDashboardWhenReady();
+            }
+
             @Override
             public WebResourceResponse shouldInterceptRequest(
                     WebView view, WebResourceRequest request) {
