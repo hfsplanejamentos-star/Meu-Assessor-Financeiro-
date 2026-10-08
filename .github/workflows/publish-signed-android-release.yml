@@ -62,13 +62,15 @@ jobs:
           test -f "$APK"
           test -n "$APKSIGNER"
           "$APKSIGNER" verify --verbose --print-certs "$APK"
-          cp "$APK" "app/build/outputs/apk/release/Snake-Finance-v1.5.0.apk"
+          AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -1)"
+          "$AAPT" dump badging "$APK" | grep -E "^package:|^sdkVersion:|^targetSdkVersion:"
+          cp "$APK" "app/build/outputs/apk/release/Snake-Finance-v1.5.4.apk"
 
       - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: Snake-Finance-v1.5.0-SIGNED
-          path: android-capture/app/build/outputs/apk/release/Snake-Finance-v1.5.0.apk
+          name: Snake-Finance-v1.5.4-SIGNED
+          path: android-capture/app/build/outputs/apk/release/Snake-Finance-v1.5.4.apk
           if-no-files-found: error
           retention-days: 90
 
@@ -76,9 +78,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete "v1.5.0" --yes --cleanup-tag 2>/dev/null || true
-          gh release create "v1.5.0" \
-            "app/build/outputs/apk/release/Snake-Finance-v1.5.0.apk" \
+          gh release delete "v1.5.4" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "v1.5.4" \
+            "app/build/outputs/apk/release/Snake-Finance-v1.5.4.apk" \
             --repo "${{ github.repository }}" \
-            --title "Snake Finance 1.5.0" \
+            --title "Snake Finance 1.5.4" \
             --notes "Transição OTA do Snake Finance com Mobile V84 aprovado, cache/rollback e correções de captura Caju/Pix."
