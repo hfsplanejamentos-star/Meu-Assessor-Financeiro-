@@ -53,7 +53,7 @@ public final class MainActivity extends Activity {
     static final int REQUEST_VOICE = 701;
     private static final int REQUEST_FILE = 702;
     private static final String APP_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/snake-finance-mobile.html?android=1.5.1";
+            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/snake-finance-mobile.html?android=1.5.3";
     private static final String APP_BASE_URL =
             "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/";
     private static final String OTA_CACHE_FILE = "snake_dashboard_last_good.html";
@@ -398,7 +398,7 @@ public final class MainActivity extends Activity {
                 files.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
                         "image/*", "application/pdf", "text/csv", "text/plain",
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        "application/vnd.ms-excel", "application/x-ofx"
+                        "application/vnd.ms-excel", "application/x-ofx", "application/json", "text/json"
                 });
 
                 Intent gallery;
