@@ -3,7 +3,7 @@ import { internalMutation, internalQuery } from "./_generated/server";
 const fields = { ownerHash:v.string(), draftId:v.string(), sourceType:v.string(), sourceId:v.optional(v.string()), amountCents:v.number(), direction:v.union(v.literal("expense"),v.literal("income")), account:v.string(), transactionType:v.optional(v.string()), counterparty:v.optional(v.string()), category:v.string(), subcategory:v.optional(v.string()), description:v.string(), date:v.string() };
 export const prepare=internalMutation({args:fields,handler:async(ctx,args)=>{
  if(!Number.isSafeInteger(args.amountCents)||args.amountCents<=0) throw new Error("invalid_amount");
- if(!/^\d{4}-\d{2}-\d{2}$/.test(args.date)) throw new Error("invalid_date");
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(args.date) || Number.isNaN(Date.parse(args.date+"T12:00:00Z"))) throw new Error("invalid_date");
  if(!args.account.trim()||!args.category.trim()||!args.description.trim()) throw new Error("missing_fields");
  const existing=await ctx.db.query("assessorDrafts").withIndex("by_owner_draft",q=>q.eq("ownerHash",args.ownerHash).eq("draftId",args.draftId)).unique();
  if(existing) return {draftId:existing.draftId,status:existing.status,duplicate:true};
