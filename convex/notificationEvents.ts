@@ -61,11 +61,10 @@ export const ingest = internalMutation({
         .query("notificationEvents")
         .withIndex("by_owner_and_event_id", (q) => q.eq("ownerHash", args.ownerHash).eq("eventId", event.eventId))
         .unique();
-      const byFingerprint = await ctx.db
-        .query("notificationEvents")
-        .withIndex("by_owner_and_fingerprint", (q) => q.eq("ownerHash", args.ownerHash).eq("fingerprint", event.fingerprint))
-        .unique();
-      if (byId || byFingerprint) {
+      // A fingerprint is a review signal, not a unique transaction identifier.
+      // Two legitimate Pix/debit events can have identical text, amount and minute.
+      // Only retrying the exact same eventId is treated as a duplicate.
+      if (byId) {
         duplicates += 1;
         continue;
       }
