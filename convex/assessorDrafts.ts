@@ -14,6 +14,8 @@ export const prepare=internalMutation({args:fields,handler:async(ctx,args)=>{
  return {draftId:args.draftId,status:"pending",duplicate:false};
 }});
 export const listPending=internalQuery({args:{ownerHash:v.string()},handler:async(ctx,{ownerHash})=>await ctx.db.query("assessorDrafts").withIndex("by_owner_status",q=>q.eq("ownerHash",ownerHash).eq("status","pending")).take(100)});
+// Read-only reconciliation queue: a confirmed draft is not yet a ledger entry.
+export const listConfirmed=internalQuery({args:{ownerHash:v.string()},handler:async(ctx,{ownerHash})=>await ctx.db.query("assessorDrafts").withIndex("by_owner_status",q=>q.eq("ownerHash",ownerHash).eq("status","confirmed")).take(100)});
 export const decide=internalMutation({args:{ownerHash:v.string(),draftId:v.string(),decision:v.union(v.literal("confirm"),v.literal("reject"))},handler:async(ctx,args)=>{
  const row=await ctx.db.query("assessorDrafts").withIndex("by_owner_draft",q=>q.eq("ownerHash",args.ownerHash).eq("draftId",args.draftId)).unique();
  if(!row)return {ok:false,error:"not_found"};
