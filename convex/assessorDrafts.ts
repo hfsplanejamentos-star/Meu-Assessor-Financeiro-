@@ -3,7 +3,7 @@ import { internalMutation, internalQuery } from "./_generated/server";
 const fields = { ownerHash:v.string(), draftId:v.string(), sourceType:v.string(), sourceId:v.optional(v.string()), amountCents:v.number(), direction:v.union(v.literal("expense"),v.literal("income")), account:v.string(), transactionType:v.optional(v.string()), counterparty:v.optional(v.string()), category:v.string(), subcategory:v.optional(v.string()), description:v.string(), date:v.string() };
 export const prepare=internalMutation({args:fields,handler:async(ctx,args)=>{
  if(!Number.isSafeInteger(args.amountCents)||args.amountCents<=0) throw new Error("invalid_amount");
- const dateMatch=/^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(args.date);
+ const dateMatch=/^(\d{4})-(\d{2})-(\d{2})$/.exec(args.date);
  const parsedDate=dateMatch?new Date(Date.UTC(Number(dateMatch[1]),Number(dateMatch[2])-1,Number(dateMatch[3]))):null;
  if(!dateMatch||!parsedDate||parsedDate.toISOString().slice(0,10)!==args.date) throw new Error("invalid_date");
  if(!args.account.trim()||!args.category.trim()||!args.description.trim()) throw new Error("missing_fields");
