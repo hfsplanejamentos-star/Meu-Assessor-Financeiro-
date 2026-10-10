@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "./_generated/server";
+import { planAssessorCashPosting } from "./assessorPosting";
 const fields = { ownerHash:v.string(), draftId:v.string(), sourceType:v.string(), sourceId:v.optional(v.string()), amountCents:v.number(), direction:v.union(v.literal("expense"),v.literal("income")), account:v.string(), transactionType:v.optional(v.string()), counterparty:v.optional(v.string()), category:v.string(), subcategory:v.optional(v.string()), description:v.string(), date:v.string() };
 export const prepare=internalMutation({args:fields,handler:async(ctx,args)=>{
  if(!Number.isSafeInteger(args.amountCents)||args.amountCents<=0) throw new Error("invalid_amount");
@@ -42,3 +43,31 @@ export const decide=internalMutation({args:{ownerHash:v.string(),draftId:v.strin
  const next=args.decision==="confirm"?"confirmed":"rejected";await ctx.db.patch(row._id,{status:next,updatedAt:Date.now()});
  return {ok:true,status:next,alreadyDecided:false,financeStateUpdated:false};
 }});
+
+/**
+ * Atomic opt-in posting for already-confirmed, cash-account drafts only.
+ * Both the transaction and account balance are written to financeState
+ * in one Convex mutation. Unsupported account types stay untouched.
+ */
+export const postConfirmedCash = internalMutation({
+ args: { ownerHash:v.string(), ownerKey:v.string(), draftId:v.string(), baseVersion:v.optional(v.number()) },
+ handler: async(ctx,args)=>{
+  const draft=await ctx.db.query("assessorDrafts")
+   .withIndex("by_owner_draft",q=>q.eq("ownerHash",args.ownerHash).eq("draftId",args.draftId)).unique();
+  if(!draft)return {ok:false,error:"draft_not_found",financeStateUpdated:false};
+  if(draft.status!=="confirmed")return {ok:false,error:"draft_not_confirmed",financeStateUpdated:false};
+  const state=await ctx.db.query("financeState").withIndex("by_owner",q=>q.eq("ownerKey",args.ownerKey)).unique();
+  if(!state)return {ok:false,error:"finance_state_missing",financeStateUpdated:false};
+  const plan=planAssessorCashPosting(state.payload,draft);
+  if(!plan.ok){
+   if(plan.alreadyPosted)return {ok:true,alreadyPosted:true,financeStateUpdated:false,version:state.version};
+   return {ok:false,error:plan.error,financeStateUpdated:false,version:state.version};
+  }
+  if(args.baseVersion!==undefined&&args.baseVersion!==state.version)
+   return {ok:false,error:"version_conflict",financeStateUpdated:false,version:state.version};
+  const version=state.version+1,updatedAt=Date.now();
+  await ctx.db.patch(state._id,{payload:plan.payload,version,updatedAt,deviceId:"assessor-ia"});
+  return {ok:true,alreadyPosted:false,financeStateUpdated:true,version,transactionId:plan.transactionId,
+    accountId:plan.accountId,previousBalance:plan.previousBalance,updatedBalance:plan.updatedBalance};
+ }
+});
