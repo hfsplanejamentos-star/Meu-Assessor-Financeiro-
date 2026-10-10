@@ -152,8 +152,10 @@ for (const path of ["/assessor/drafts", "/assessor/decision"]) {
 http.route({path:"/assessor/drafts",method:"GET",handler:httpAction(async(ctx,req)=>{
  const headers=secureCors(req),hash=await ownerHash(req);
  if(!hash)return json({ok:false,error:"invalid_sync_key"},401,headers);
- const drafts=await ctx.runQuery(internal.assessorDrafts.listPending,{ownerHash:hash});
- return json({ok:true,drafts},200,headers);
+ const status=new URL(req.url).searchParams.get("status")||"pending";
+ if(status!=="pending"&&status!=="confirmed")return json({ok:false,error:"invalid_status"},400,headers);
+ const drafts=await ctx.runQuery(status==="confirmed"?internal.assessorDrafts.listConfirmed:internal.assessorDrafts.listPending,{ownerHash:hash});
+ return json({ok:true,status,drafts,financeStateUpdated:false},200,headers);
 })});
 http.route({path:"/assessor/drafts",method:"POST",handler:httpAction(async(ctx,req)=>{
  const headers=secureCors(req),hash=await ownerHash(req);
@@ -169,7 +171,7 @@ http.route({path:"/assessor/decision",method:"POST",handler:httpAction(async(ctx
  let body:any;try{body=await req.json()}catch{return json({ok:false,error:"invalid_json"},400,headers)}
  if(typeof body?.draftId!=="string"||!["confirm","reject"].includes(body?.decision))return json({ok:false,error:"invalid_decision"},400,headers);
  const result=await ctx.runMutation(internal.assessorDrafts.decide,{ownerHash:hash,draftId:body.draftId,decision:body.decision});
- return json(result,result.ok?200:404,headers);
+ return json(result,result.ok?200:result.error==="decision_conflict"?409:404,headers);
 })});
 
 export default http;
