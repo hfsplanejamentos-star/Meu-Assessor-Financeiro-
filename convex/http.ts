@@ -182,4 +182,25 @@ http.route({path:"/assessor/reconciliation",method:"GET",handler:httpAction(asyn
  const result=await ctx.runQuery(internal.assessorDrafts.reconciliation,{ownerHash:hash,ownerKey:syncKey(req)});
  return json({ok:true,...result},200,headers);
 })});
+
+http.route({path:"/assessor/post",method:"OPTIONS",handler:httpAction(async(_ctx,req)=>
+ new Response(null,{status:204,headers:secureCors(req)}))});
+http.route({path:"/assessor/post",method:"POST",handler:httpAction(async(ctx,req)=>{
+ const headers=secureCors(req),hash=await ownerHash(req);
+ if(!hash)return json({ok:false,error:"invalid_sync_key"},401,headers);
+ let body:unknown;
+ try{body=await req.json()}catch{return json({ok:false,error:"invalid_json"},400,headers)}
+ if(!body||typeof body!=="object")return json({ok:false,error:"invalid_request"},400,headers);
+ const input=body as Record<string,unknown>;
+ if(typeof input.draftId!=="string"||input.draftId.length<8||input.draftId.length>128||
+    (input.baseVersion!==undefined&&(!Number.isSafeInteger(input.baseVersion)||Number(input.baseVersion)<0)))
+  return json({ok:false,error:"invalid_request"},400,headers);
+ const result=await ctx.runMutation(internal.assessorDrafts.postConfirmedCash,{
+  ownerHash:hash,ownerKey:syncKey(req),draftId:input.draftId,
+  baseVersion:typeof input.baseVersion==="number"?input.baseVersion:undefined
+ });
+ const status=result.ok?200:result.error==="draft_not_found"?404:
+  ["version_conflict","draft_not_confirmed","source_already_registered","duplicate_reference"].includes(result.error||"")?409:422;
+ return json(result,status,headers);
+})});
 export default http;
