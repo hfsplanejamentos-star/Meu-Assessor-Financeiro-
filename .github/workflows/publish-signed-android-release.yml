@@ -49,6 +49,10 @@ jobs:
         with:
           gradle-version: "8.10.2"
 
+      - name: Snake Finance regression suite
+        working-directory: .
+        run: node tests/snake-finance-regression.cjs
+
       - name: Tests
         run: gradle testDebugUnitTest --stacktrace
 
