@@ -174,4 +174,12 @@ http.route({path:"/assessor/decision",method:"POST",handler:httpAction(async(ctx
  return json(result,result.ok?200:result.error==="decision_conflict"?409:404,headers);
 })});
 
+http.route({path:"/assessor/reconciliation",method:"OPTIONS",handler:httpAction(async(_ctx,req)=>new Response(null,{status:204,headers:secureCors(req)}))});
+http.route({path:"/assessor/reconciliation",method:"GET",handler:httpAction(async(ctx,req)=>{
+ const headers=secureCors(req);
+ const hash=await ownerHash(req);
+ if(!hash)return json({ok:false,error:"invalid_sync_key"},401,headers);
+ const result=await ctx.runQuery(internal.assessorDrafts.reconciliation,{ownerHash:hash,ownerKey:syncKey(req)});
+ return json({ok:true,...result},200,headers);
+})});
 export default http;
