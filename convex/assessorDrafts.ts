@@ -16,6 +16,22 @@ export const prepare=internalMutation({args:fields,handler:async(ctx,args)=>{
 export const listPending=internalQuery({args:{ownerHash:v.string()},handler:async(ctx,{ownerHash})=>await ctx.db.query("assessorDrafts").withIndex("by_owner_status",q=>q.eq("ownerHash",ownerHash).eq("status","pending")).take(100)});
 // Read-only reconciliation queue: a confirmed draft is not yet a ledger entry.
 export const listConfirmed=internalQuery({args:{ownerHash:v.string()},handler:async(ctx,{ownerHash})=>await ctx.db.query("assessorDrafts").withIndex("by_owner_status",q=>q.eq("ownerHash",ownerHash).eq("status","confirmed")).take(100)});
+// Read-only cross-check against the canonical financeState transactions array.
+// Never infer duplicates from equal amounts alone.
+export const reconciliation=internalQuery({
+ args:{ownerHash:v.string(),ownerKey:v.string()},
+ handler:async(ctx,{ownerHash,ownerKey})=>{
+  const drafts=await ctx.db.query("assessorDrafts").withIndex("by_owner_status",q=>q.eq("ownerHash",ownerHash).eq("status","confirmed")).take(100);
+  const state=await ctx.db.query("financeState").withIndex("by_owner",q=>q.eq("ownerKey",ownerKey)).unique();
+  const transactions=Array.isArray(state?.payload?.transactions)?state.payload.transactions:[];
+  const items=drafts.map(d=>{
+   const matches=transactions.filter((t:any)=>t&&typeof t==="object"&&(t.assessorDraftId===d.draftId||(d.sourceId&&t.sourceId===d.sourceId&&t.sourceType===d.sourceType)));
+   return {draftId:d.draftId,amountCents:d.amountCents,date:d.date,account:d.account,category:d.category,
+    referenceMatches:matches.length,status:matches.length===1?"linked":matches.length>1?"duplicate_reference":"needs_review"};
+  });
+  return {readOnly:true,financeStateUpdated:false,financeStateVersion:state?.version??null,items};
+ }
+});
 export const decide=internalMutation({args:{ownerHash:v.string(),draftId:v.string(),decision:v.union(v.literal("confirm"),v.literal("reject"))},handler:async(ctx,args)=>{
  const row=await ctx.db.query("assessorDrafts").withIndex("by_owner_draft",q=>q.eq("ownerHash",args.ownerHash).eq("draftId",args.draftId)).unique();
  if(!row)return {ok:false,error:"not_found"};
