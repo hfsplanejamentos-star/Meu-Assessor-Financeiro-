@@ -54,19 +54,24 @@
     // Explicit confirmation persists before posting. A failed post must be
     // shown as "confirmado, mas não lançado", never as a successful expense.
     await confirm(draftId);
+    let posting;
     try {
-      const posting = await postCash(draftId,baseVersion);
-      if (posting.financeStateUpdated || posting.alreadyPosted) {
-        // Refresh shared local state only after a verified server response.
-        await root.FinanceCloud?.pull?.();
-      }
-      return {confirmed:true,posted:!!(posting.financeStateUpdated || posting.alreadyPosted),posting};
+      posting = await postCash(draftId,baseVersion);
     } catch (cause) {
-      const err = new Error("confirmed_not_posted");
-      err.code = "confirmed_not_posted";
+      // A timeout after a server commit is NOT proof the posting failed.
+      const definiteFailure = typeof cause?.status==="number" && cause.status>=400;
+      const err = new Error(definiteFailure ? "confirmed_not_posted" : "posting_status_unknown");
+      err.code = definiteFailure ? "confirmed_not_posted" : "posting_status_unknown";
       err.cause = cause;
       throw err;
     }
+    const posted=!!(posting.financeStateUpdated || posting.alreadyPosted);
+    let syncPending=false;
+    if (posted && root.FinanceCloud?.pull) {
+      try { await root.FinanceCloud.pull(); }
+      catch (_) { syncPending=true; }
+    }
+    return {confirmed:true,posted,syncPending,posting};
   }
   const listPending = () => request("/assessor/drafts?status=pending");
   const listConfirmed = () => request("/assessor/drafts?status=confirmed");
