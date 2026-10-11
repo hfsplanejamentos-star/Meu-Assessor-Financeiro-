@@ -112,3 +112,48 @@ assert.match(html,/function saveSafetyBackup\(\)/,'pre-import safety backup');
 assert.match(html,/function exportBackup\(\)/,'backup export entrypoint');
 assert.match(html,/function persistLedger\(\)/,'ledger persistence');
 console.log('PASS Snake Finance: recurrence, rollback, capture identity and backup structure');
+
+
+/* Recurring transaction and persistence behavior with isolated in-memory storage. */
+const storage=new Map();
+context.localStorage={setItem(k,v){storage.set(k,v)},getItem(k){return storage.get(k)||null}};
+context.alert=()=>{};
+context.LEDGER_KEY='snake_test_ledger';
+context.PERSIST_BLOCKED=false;
+vm.runInContext(extract('function persistLedger(','function nextId('),context);
+assert.equal(context.persistLedger(),true);
+assert.equal(JSON.parse(storage.get('snake_test_ledger')).length,fixture.length);
+context.PERSIST_BLOCKED=true;
+assert.equal(context.persistLedger(),false,'blocked persistence must not claim success');
+context.PERSIST_BLOCKED=false;
+context.localStorage={setItem(){throw Error('quota exceeded')}};
+assert.equal(context.persistLedger(),false,'storage quota failure must not claim success');
+context.localStorage={setItem(k,v){storage.set(k,v)},getItem(k){return storage.get(k)||null}};
+const fields={ed:{value:'12'},ev:{value:'89,90'},ea:{value:'c6'}};
+context.$=id=>fields[id];
+context.YM='2026-10';
+context.closeDay=()=>{};
+context.draw=()=>{};
+context.brl=v=>String(v);
+context.L=[{id:101,d:'2026-10-12',n:'Recorrência teste',t:'d',s:'p',v:7500,a:'c6'}];
+vm.runInContext(extract('let EFFECT_UNDO=null;','const oldSaveLanc=saveLanc;'),context);
+context.confirmEfet(101);
+assert.equal(context.L[0].s,'r','recurrence realized');
+assert.equal(context.L[0].v,8990,'realized with edited amount');
+assert.equal(context.L[0].comp,'2026-10-01','competence preserved');
+assert.equal(JSON.parse(storage.get('snake_test_ledger'))[0].v,8990,'saved after realization');
+context.undo();
+assert.equal(context.L[0].s,'p','undo returns planned state');
+assert.equal(context.L[0].v,7500,'undo restores original amount');
+assert.equal(JSON.parse(storage.get('snake_test_ledger'))[0].s,'p','undo persisted');
+const oldCount=context.L.length;
+context.confirmEfet(101);
+context.confirmEfet(101);
+assert.equal(context.L.length,oldCount,'double confirmation does not create transactions');
+/* Same monetary value is NOT a duplicate when source event identity differs. */
+vm.runInContext('function captureKey(e){return e.source+":"+e.id;} function recorded(e){return L.find(x=>x.captureId===captureKey(e));}',context);
+context.L=[{id:1,captureId:'bank:pix-001',v:5000},{id:2,captureId:'bank:debit-002',v:5000}];
+assert.equal(context.recorded({source:'bank',id:'pix-001'}).id,1);
+assert.equal(context.recorded({source:'bank',id:'debit-002'}).id,2);
+assert.equal(context.recorded({source:'bank',id:'new-003'}),undefined);
+console.log('PASS Snake Finance: persistence failures, recurring effective/undo, and event identity dedup');
