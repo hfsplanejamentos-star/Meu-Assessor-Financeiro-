@@ -76,3 +76,39 @@ assert.throws(()=>context.validateLedger([{...fixture[0],v:-1}]),/inválido/,'ne
 assert.throws(()=>context.validateLedger([{...fixture[0],captureId:'invalid-source'}]),/captura inválida/,'invalid capture source rejected');
 assert.equal(context.accountBalance('c6','2026-10-10'),43000,'test fixtures must not mutate balances');
 console.log('PASS Snake Finance: independent C6/XP/Caju/Carbon, projected vs actual, ledger integrity');
+
+
+/* Recurrence: effectuation must commit once and roll back on storage errors. */
+vm.runInContext(extract('function confirmEfet(','const oldSaveLanc='),context);
+context.YM='2026-10';
+context.L=[{id:101,d:'2026-10-12',a:'c6',t:'d',s:'p',v:8990,n:'Plano',c:'con'}];
+context.AC={c6:['C6'],caju:['Caju'],carbon:['Carbon'],xp:['XP']};
+context.$=id=>({ed:{value:'12'},ev:{value:'95,50'},ea:{value:'c6'}}[id]);
+context.brl=n=>'R$ '+n;context.closeDay=()=>{};context.draw=()=>{};context.persistLedger=()=>true;
+context.confirmEfet(101);
+assert.equal(context.L[0].v,9550,'actualized amount');
+assert.equal(context.L[0].s,'r','recurrence marked realized');
+assert.equal(context.L[0].comp,'2026-10-01','competence retained');
+context.undo();
+assert.equal(context.L[0].s,'p','undo restores planned status');
+assert.equal(context.L[0].v,8990,'undo restores original amount');
+context.persistLedger=()=>false;
+context.alert=()=>{};
+context.confirmEfet(101);
+assert.equal(context.L[0].s,'p','storage failure must roll back');
+assert.equal(context.L[0].v,8990,'storage failure restores value');
+/* Captured events: same amount is allowed with distinct capture IDs. */
+const sameAmount=[
+ {id:201,d:'2026-10-09',a:'c6',t:'d',s:'r',v:5000,n:'Pix para A',captureId:'bank:pix-a'},
+ {id:202,d:'2026-10-09',a:'c6',t:'d',s:'r',v:5000,n:'Débito para B',captureId:'bank:debit-b'}
+];
+assert.equal(context.validateLedger(sameAmount).length,2,'different transactions with equal amounts remain distinct');
+assert.match(html,/function captureKey\(e\)\{return e\.source\+':'\+e\.id;\}/,'capture event identity');
+assert.match(html,/function recorded\(e\)\{return L\.find\(x=>x\.captureId===captureKey\(e\)\);\}/,'capture identity checked before save');
+/* Backup must include ledger and relevant settings, and save must fail safely. */
+assert.match(html,/function backupState\(\)/,'backup export payload');
+assert.match(html,/schema:'snake-finance-backup',version:2/,'versioned backup');
+assert.match(html,/function saveSafetyBackup\(\)/,'pre-import safety backup');
+assert.match(html,/function exportBackup\(\)/,'backup export entrypoint');
+assert.match(html,/function persistLedger\(\)/,'ledger persistence');
+console.log('PASS Snake Finance: recurrence, rollback, capture identity and backup structure');
