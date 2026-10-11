@@ -116,6 +116,7 @@ console.log('PASS Snake Finance: recurrence, rollback, capture identity and back
 
 /* Recurring transaction and persistence behavior with isolated in-memory storage. */
 const storage=new Map();
+context.L=fixture.slice();
 context.localStorage={setItem(k,v){storage.set(k,v)},getItem(k){return storage.get(k)||null}};
 context.alert=()=>{};
 context.LEDGER_KEY='snake_test_ledger';
