@@ -19,7 +19,14 @@
  $("prevMonth").onclick=()=>adjustMonth(-1);$("nextMonth").onclick=()=>adjustMonth(1);
  function eventRow(text,user=false){const el=document.createElement("div");el.className="bubble"+(user?" user":" answer");el.textContent=text;$("chatMessages").insertBefore(el,$("draftMount"));$("chatMessages").scrollTop=$("chatMessages").scrollHeight}
  function postableAccount(account){if(!account)return false;const key=norm([account.id,account.name,account.institution,account.type].join(" "));return !/caju|beneficio|credito|cartao|carbon|investimento|investment|poupanca|meta|(^|\s)xp(\s|$)/.test(key)&&/conta|corrente|dinheiro|banco|bank|checking|cash/.test(norm(account.type))}
- function presentAccount(id){const a=session.cloud?.payload?.accounts?.find(a=>String(a.id)===String(id));return a?.name || (id?"Conta não sincronizada":"Selecionar conta")}
+ function presentAccount(id){
+   if(String(id||"").startsWith("card:")){
+     const c=(session.cloud?.payload?.cards||[]).find(c=>String(c.id)===String(id).slice(5));
+     return c?.name||"Cartão (integração pendente)";
+   }
+   const a=session.cloud?.payload?.accounts?.find(a=>String(a.id)===String(id));
+   return a?.name || (id?"Conta não sincronizada":"Selecionar conta");
+ }
  function showAmounts(){
    const state=session.cloud?.payload;
    if(!state)return;
@@ -62,6 +69,10 @@
      if(!postableAccount(a))opt.textContent+=" · requer integração específica";
      sel.add(opt);
    }
+   for(const c of (session.cloud?.payload?.cards||[])){
+     if(!c?.id||!/caju|carbon/i.test(String(c.name||"")))continue;
+     sel.add(new Option((c.name||String(c.id))+" · exige integração específica","card:"+c.id));
+   }
    if([...sel.options].some(o=>o.value===old))sel.value=old;
  }
  function guess(text){
@@ -87,6 +98,10 @@
      const hits=accounts.filter(a=>norm([a.id,a.name].join(" ")).includes(userBank) &&
        (userBank!=="c6"||!/carbon/i.test(a.name||"")));
      if(hits.length===1)candidate.account=String(hits[0].id);
+     else if(userBank==="caju"||userBank==="carbon"){
+       const cards=(session.cloud?.payload?.cards||[]).filter(c=>norm(c.name).includes(userBank));
+       if(cards.length===1)candidate.account="card:"+cards[0].id;
+     }
    }
    return candidate;
  }
