@@ -51,7 +51,12 @@
  }
  function fillAccounts(){
    const sel=$("fieldAccount"),old=sel.value;sel.replaceChildren(new Option("Selecione a conta sincronizada",""));
-   for(const a of (session.cloud?.payload?.accounts||[])){
+   const accounts=session.cloud?.payload?.accounts||[];
+   if(!accounts.length){
+     for(const [id,label] of [["demo:c6","C6 Conta Corrente"],["demo:carbon","C6 Carbon"],["demo:caju","Caju"],["demo:itau","Itaú"],["demo:xp","XP"]])
+       sel.add(new Option(label+" · somente prévia",id));
+   }
+   for(const a of accounts){
      if(!a||!a.id)continue;
      const opt=new Option(a.name||String(a.id),String(a.id));
      if(!postableAccount(a))opt.textContent+=" · requer integração específica";
@@ -166,7 +171,9 @@
        transactionType:d.payment,category:d.category,subcategory:d.subcategory,
        description:d.description,date:d.date,counterparty:d.counterparty||undefined
      });
-     if(prepared.duplicate && prepared.draftId!==d.draftId)throw new Error("source_already_registered");
+     // A prepared draft is immutable. Never silently post stale server fields
+     // after a local edit or a timeout; require explicit reconciliation instead.
+     if(prepared.duplicate)throw new Error("draft_already_prepared_review");
      const outcome=await api.confirmCash(d.draftId,latest.state.version);
      if(!outcome.posted)throw new Error("confirmed_not_posted");
      d.posted=true;status.textContent=outcome.syncPending?"Lançamento registrado; atualização local pendente.":"Lançamento confirmado no financeiro.";
@@ -184,7 +191,7 @@
    if(!local){eventRow("Mensagem recebida. Consultas financeiras exigem conexão e verificação dos dados; não vou inventar valores.");return;}
    session.draft=local;
    const extra=await interpretText(text);
-   if(extra?.answer){eventRow(extra.answer);return;}
+   if(extra?.answer){eventRow("A IA retornou uma resposta, mas valores financeiros precisam ser conferidos no histórico antes de serem exibidos.");return;}
    if(extra&&extra.amount){
       // Provider is advisory: account/payment still require user review.
       Object.assign(local,extra);
