@@ -8,7 +8,7 @@ async function scenario({failPost=false,failRefresh=false,networkError=false}={}
  const win={
   localStorage:{getItem:()=> "a".repeat(40)},
   crypto:{randomUUID:()=> "00000000-0000-4000-8000-000000000001"},
-  FinanceCloud:{pull:async()=>{pulled++;if(failRefresh)throw new Error("sync_unavailable")}},
+  FinanceCloud:{pull:async()=>{pulled++;if(failRefresh)throw new Error("sync_unavailable");return {version:3}}},
   fetch:async(url,options)=>{
    calls.push({path:new URL(url).pathname,body:options.body?JSON.parse(options.body):null});
    if(url.endsWith("/assessor/post")&&networkError)throw new Error("network_timeout");
