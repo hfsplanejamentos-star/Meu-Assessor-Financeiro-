@@ -68,8 +68,13 @@
     const posted=!!(posting.financeStateUpdated || posting.alreadyPosted);
     let syncPending=false;
     if (posted && root.FinanceCloud?.pull) {
-      try { await root.FinanceCloud.pull(); }
+      try {
+        const result=await root.FinanceCloud.pull();
+        if (!result || result.ok===false) syncPending=true;
+      }
       catch (_) { syncPending=true; }
+    } else if (posted) {
+      syncPending=true;
     }
     return {confirmed:true,posted,syncPending,posting};
   }
