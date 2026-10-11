@@ -187,7 +187,19 @@
  }
  async function send(){
    const input=$("messageInput"),text=input.value.trim();if(!text)return;input.value="";
-   eventRow(text,true);const local=guess(text);
+   eventRow(text,true);
+   if(/\b(quanto|resumo|total|gastos|despesas)\b/i.test(text)){
+     const summary=window.SnakeAssessorSummary?.summarize(text,session.cloud?.payload,session.month);
+     if(summary){
+       if(!summary.available){eventRow("Não há dados financeiros sincronizados para essa consulta. Nenhum valor será estimado.");return}
+       const detail=summary.byBank.map(b=>b.bank+": "+brl(b.cents/100)).join("; ");
+       eventRow("Em "+session.month+", "+summary.category+": "+brl(summary.totalCents/100)+
+         " em "+summary.count+" lançamento(s) identificado(s)."+(detail?" Por origem: "+detail+".":"")+
+         " Inclui despesas identificadas no Caju; registros sem classificação podem não aparecer.");
+       return;
+     }
+   }
+   const local=guess(text);
    if(!local){eventRow("Mensagem recebida. Consultas financeiras exigem conexão e verificação dos dados; não vou inventar valores.");return;}
    session.draft=local;
    const extra=await interpretText(text);
