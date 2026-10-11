@@ -73,12 +73,14 @@
     }
     return {confirmed:true,posted,syncPending,posting};
   }
+  const readFinanceState = () => request("/finance/state");
+  const interpretText = (text, context={}) => request("/ai/finance",{method:"POST",body:{text,context}});
   const listPending = () => request("/assessor/drafts?status=pending");
   const listConfirmed = () => request("/assessor/drafts?status=confirmed");
   const reconciliation = () => request("/assessor/reconciliation");
 
   root.SnakeAssessorApi = Object.freeze({
     newDraftId,prepare,confirm,reject,postCash,confirmCash,
-    listPending,listConfirmed,reconciliation,
+    readFinanceState,interpretText,listPending,listConfirmed,reconciliation,
   });
 })(window);
