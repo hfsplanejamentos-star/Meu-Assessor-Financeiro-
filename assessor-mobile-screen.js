@@ -143,7 +143,8 @@
    const edit=document.createElement("button");edit.textContent="✎ Editar";edit.disabled=!!d.posted;
    const no=document.createElement("button");no.className="stop";no.textContent="✕ Cancelar";no.disabled=!!d.posted;
    buttons.append(yes,edit,no);card.append(buttons);
-   if(d.account?.startsWith("card:")&&d.payment==="Crédito"){
+   const reviewCard=(session.cloud?.payload?.cards||[]).find(c=>String(c.id)===String(d.account||"").slice(5));
+   if(d.account?.startsWith("card:")&&/carbon/i.test(reviewCard?.name||"")&&d.payment==="Crédito"){
      const forecast=document.createElement("button");
      forecast.textContent="▣ Conferir parcelas e vencimentos";
      forecast.className="gold-button";forecast.style.marginTop="8px";
