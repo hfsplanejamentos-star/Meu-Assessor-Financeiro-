@@ -84,12 +84,12 @@ dialog label{font-size:11px;color:var(--muted);display:block;margin:10px 0 0}dia
 <label>Movimentação<select id="fieldDirection"><option value="expense">Despesa</option><option value="income">Receita</option></select></label>
 <label>Categoria<input id="fieldCategory" required></label><label>Subcategoria<input id="fieldSubcategory"></label>
 <label>Conta<select id="fieldAccount" required><option value="">Selecione a conta sincronizada</option></select></label>
-<label>Forma de pagamento<select id="fieldPayment"><option value="Pix">Pix</option><option value="Débito">Débito</option><option value="Crédito">Crédito</option><option value="Dinheiro">Dinheiro</option></select></label>
+<label>Forma de pagamento<select id="fieldPayment" required><option value="">Selecione para confirmar</option><option value="Pix">Pix</option><option value="Débito">Débito</option><option value="Crédito">Crédito</option><option value="Dinheiro">Dinheiro</option></select></label>
 <label>Data<input id="fieldDate" type="date" required></label><label>Estabelecimento / destinatário<input id="fieldCounterparty"></label><label>Descrição<textarea id="fieldDescription" required></textarea></label>
 <div class="dialog-actions"><button type="button" id="draftDismiss">Cancelar</button><button type="submit" class="primary">Salvar prévia</button></div></form></dialog>
 <dialog id="addDialog"><h2>Adicionar com o Assessor IA</h2><div class="upload-grid"><button id="chooseVoice">🎤<p>Falar (áudio)</p></button><button id="choosePhoto">📷<p>Tirar foto</p></button><button id="chooseDocument">📄<p>PDF / Extrato</p></button><button id="chooseText">✎<p>Digitar texto</p></button></div><div class="dialog-actions"><button id="addDismiss">Fechar</button></div></dialog>
 <dialog id="settingsDialog"><h2>Temas do app</h2><div class="theme-buttons"><button data-theme-option="dourado" class="selected">Dourado</button><button data-theme-option="limao">Limão</button><button data-theme-option="branco">Branco</button></div><p class="hint">Dourado é o padrão. A conexão do financeiro é opcional; sem ela, os lançamentos são somente prévias.</p><div class="dialog-actions"><button id="refreshState">Atualizar contas (leitura)</button><button id="settingsDismiss">Fechar</button></div></dialog>
-<input hidden type="file" id="documentFile" accept=".pdf,.csv,.ofx,.txt,.xlsx,.xls,image/*" multiple>
+<input hidden type="file" id="documentFile" accept=".pdf,.csv,.ofx,.txt,image/jpeg,image/png,image/webp">
 <input hidden type="file" id="photoFile" accept="image/*" capture="environment">
 <div id="toast" role="status"></div>
 <script src="./assessor-mobile-api.js"></script>
