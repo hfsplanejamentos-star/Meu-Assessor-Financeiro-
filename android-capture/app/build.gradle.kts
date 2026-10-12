@@ -1,3 +1,4 @@
+import java.util.zip.ZipFile
 plugins { id("com.android.application") }
 
 val releaseStorePath = System.getenv("ANDROID_KEYSTORE_FILE")
@@ -75,7 +76,7 @@ val installApprovedSplash = tasks.register("installApprovedSplash") {
     doLast {
         val zipFile = sourceZip.asFile
         require(zipFile.isFile) { "Missing approved splash archive: $zipFile" }
-        java.util.zip.ZipFile(zipFile).use { archive ->
+        ZipFile(zipFile).use { archive ->
             val entry = archive.entries().asSequence().firstOrNull {
                 !it.isDirectory && it.name.substringAfterLast('/') == "snake_splash_aprovada.jpg"
             } ?: error("Approved splash JPG not found inside archive")
