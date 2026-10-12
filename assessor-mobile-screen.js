@@ -249,6 +249,36 @@
      session.extractedRows=[];
    }
    eventRow(text,true);
+   // Fatura do C6 Carbon: separar compras já lançadas de parcelas futuras,
+   // sempre com vencimento dia 7 e mês da fatura no ciclo de fechamento.
+   if(/fatura|parcelas? (?:do |de )?cart[aã]o/i.test(text)&&
+      /carbon|c6|cart[aã]o|cr[eé]dito/i.test(text)){
+     if(!session.cloud?.payload||!api?.listCarbonInvoices){
+       eventRow("Para consultar a fatura, conecte primeiro o financeiro. Nenhum valor será estimado.");
+       return;
+     }
+     const cards=(session.cloud.payload.cards||[]).filter(c=>
+       /carbon/i.test(String(c.name||""))&&!/caju/i.test(String(c.name||"")));
+     if(cards.length!==1){
+       eventRow("Não foi possível identificar um único C6 Carbon no financeiro. Confira o cadastro.");
+       return;
+     }
+     try{
+       const result=await api.listCarbonInvoices(String(cards[0].id),session.month,3);
+       if(!result.ok)throw new Error(result.error||"invoice_unavailable");
+       eventRow("Faturas C6 Carbon (valores comprometidos, NÃO pagamentos efetuados):");
+       for(const cycle of result.rows){
+         eventRow("Fechamento "+cycle.closingDate+" · Vencimento "+cycle.dueDate+
+           ": "+brl(cycle.committedCents/100)+" já lançados + "+
+           brl(cycle.plannedCents/100)+" parcelas previstas = "+
+           brl(cycle.totalCents/100)+" comprometidos.");
+       }
+     }catch(err){
+       eventRow("Não consegui conferir as faturas: "+(err.code||err.message||"erro")+
+         ". Nenhum valor foi alterado.");
+     }
+     return;
+   }
    if(/\b(quanto|resumo|total|gastos|despesas)\b/i.test(text)){
      const summary=window.SnakeAssessorSummary?.summarize(text,session.cloud?.payload,session.month);
      if(summary){
