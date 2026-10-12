@@ -158,3 +158,39 @@ assert.equal(context.recorded({source:'bank',id:'pix-001'}).id,1);
 assert.equal(context.recorded({source:'bank',id:'debit-002'}).id,2);
 assert.equal(context.recorded({source:'bank',id:'new-003'}),undefined);
 console.log('PASS Snake Finance: persistence failures, recurring effective/undo, and event identity dedup');
+
+
+/* Recurrence confirmation and persistence rollback tests with isolated DOM mocks. */
+{
+ const values={ed:{value:'12'},ev:{value:'89,90'},ea:{value:'c6'}};
+ const store=new Map();
+ let fail=false,draws=0,closed=0,alerts=[];
+ const env={Date,Math,Number,String,Array,Set,Map,JSON,console,
+  L:[{id:301,d:'2026-10-12',a:'c6',t:'d',s:'p',v:7990,n:'Conta de luz',c:'con'}],
+  YM:'2026-10',AC:{c6:['C6']},PERSIST_BLOCKED:false,LEDGER_KEY:'test-ledger',
+  localStorage:{setItem(k,v){if(fail)throw Error('quota');store.set(k,v);}},
+  alert(msg){alerts.push(msg)},$:(id)=>values[id],brl:v=>String(v),
+  closeDay(){closed++},draw(){draws++},OPEN:1,LAST:0,TOAST:'',EFFECT_UNDO:null};
+ vm.createContext(env);
+ vm.runInContext(extract('function validISO(','function moneyInput('),env);
+ vm.runInContext(extract('function moneyInput(','function monthBefore('),env);
+ vm.runInContext(extract('function persistLedger(','function nextId('),env);
+ vm.runInContext(extract('function confirmEfet(','const oldSaveLanc='),env);
+ env.confirmEfet(301);
+ assert.equal(env.L[0].s,'r','recurrence paid');
+ assert.equal(env.L[0].v,8990,'actual amount overrides planned');
+ assert.equal(env.L[0].comp,'2026-10-01','competence retained');
+ assert.equal(JSON.parse(store.get('test-ledger'))[0].v,8990,'saved value matches ledger');
+ env.undo();
+ assert.equal(env.L[0].s,'p','undo returns planned');
+ assert.equal(env.L[0].v,7990,'undo restores original amount');
+ assert.equal(JSON.parse(store.get('test-ledger'))[0].s,'p','undo persists');
+ fail=true;
+ env.confirmEfet(301);
+ assert.equal(env.L[0].s,'p','failed storage must roll back recurrence');
+ assert.equal(env.L[0].v,7990,'failed storage must preserve amount');
+ assert.ok(alerts.some(x=>x.includes('Não foi possível salvar')),'storage failure reported');
+ assert.equal(draws,2,'failed transaction must not redraw as success');
+ assert.equal(closed,1,'failed transaction must not close as success');
+}
+console.log('PASS Snake Finance: recurring actualization, undo, persistence and rollback on storage failure');
