@@ -1751,13 +1751,32 @@ function openAdd(tipo){
  <label>Data<input id="ad" type="date" value="${YM}-${String(YM==='2026-10'?HJ:1).padStart(2,'0')}"></label>
  <label>Conta<select id="aa">${desp?'<option value="c6">C6</option><option value="caju">Caju</option><option value="carbon">C6 Carbon</option>':'<option value="c6">C6</option><option value="caju">Caju</option>'}</select></label>
  ${desp?`<label>Categoria<select id="ac" onchange="if($('asub'))$('asub').innerHTML=subOptions(this.value)">${cats}</select></label><label>Subcategoria<select id="asub">${subOptions(Object.keys(CAT)[0])}</select></label>`:''}
+ ${desp?'<div id="carbonParcelBox" style="display:none"><label>Quantidade de parcelas<input id="carbonInstallments" type="number" min="1" max="120" step="1" value="1"></label><p class="m">C6 Carbon: fechamento dia 5 · vencimento dia 7. O valor informado é o total da compra; as parcelas aparecem nos meses das respectivas faturas.</p></div>':''}
  <label>Status<select id="as2"><option value="r">Realizado</option><option value="p">Previsto</option></select></label>
  <button class="bt p" onclick="saveAdd('${tipo}')">Salvar ${desp?'despesa':'receita'}</button></div></div>`;
+ if(desp){const account=$('aa'),box=$('carbonParcelBox');const toggle=()=>{box.style.display=account.value==='carbon'?'block':'none'};account.addEventListener('change',toggle);toggle();}
 }
+function carbonInvoiceMonth(date){const ym=date.slice(0,7),day=Number(date.slice(8,10));const [year,month]=ym.split('-').map(Number);const offset=day>=5?1:0;const dt=new Date(Date.UTC(year,month-1+offset,1));return dt.toISOString().slice(0,7);}
+function addInvoiceMonths(ym,n){const [year,month]=ym.split('-').map(Number);return new Date(Date.UTC(year,month-1+n,1)).toISOString().slice(0,7);}
+
 function saveAdd(tipo){
- const nome=$('an').value.trim(),raw=$('av').value.trim().replace(/\./g,'').replace(',','.'),valor=Math.round(Number(raw)*100),dia=$('ad').value,a=$('aa').value,s2=$('as2').value;
- if(!nome||!Number.isFinite(valor)||valor<=0||!/^\d{4}-\d{2}-\d{2}$/.test(dia)){alert('Informe descrição, valor e data válidos.');return;}
- const before=L.slice(),oldId=NID;const x={id:NID++,d:dia,n:nome,t:tipo,v:valor,a:a,s:s2};if(tipo=='d'){x.c=$('ac').value;x.sub=$('asub')?.value||'';}L.push(x);NID=nextId();if(!persistLedger()){L=before;NID=oldId;return;}YM=dia.slice(0,7);SEL=dia;MD=0;v65CloseQuick();$('md').style.display='none';TOAST=`${nome} incluído · ${brl(valor)}`;draw();
+ const nome=$('an').value.trim(),raw=$('av').value.trim().replace(/\\./g,'').replace(',','.'),valor=Math.round(Number(raw)*100),dia=$('ad').value,a=$('aa').value,s2=$('as2').value;
+ if(!nome||!Number.isSafeInteger(valor)||valor<=0||!/^\\d{4}-\\d{2}-\\d{2}$/.test(dia)||!validISO(dia)){alert('Informe descrição, valor e data válidos.');return;}
+ const carbon=tipo==='d'&&a==='carbon';
+ const count=carbon?Number($('carbonInstallments').value):1;
+ if(!Number.isSafeInteger(count)||count<1||count>120||valor<count){alert('Confira as parcelas: de 1 a 120, com valor mínimo de R$ 0,01 por parcela.');return;}
+ const before=L.slice(),oldId=NID,firstMonth=carbon?carbonInvoiceMonth(dia):dia.slice(0,7),group='carbon-'+String(NID)+'-'+dia;
+ const base=Math.floor(valor/count),extra=valor%count;
+ const entries=Array.from({length:count},(_,i)=>{
+  const amount=base+(i<extra?1:0);
+  const x={id:NID++,d:dia,n:carbon&&count>1?nome+' ('+(i+1)+'/'+count+')':nome,t:tipo,v:amount,a,s:s2};
+  if(tipo==='d'){x.c=$('ac').value;x.sub=$('asub')?.value||'';}
+  if(carbon){x.comp=addInvoiceMonths(firstMonth,i)+'-01';x.invoiceDue=addInvoiceMonths(firstMonth,i)+'-07';x.installmentGroup=group;x.installmentIndex=i+1;x.installmentCount=count;x.purchaseTotal=valor;}
+  return x;
+ });
+ L.push(...entries);NID=nextId();
+ if(!persistLedger()){L=before;NID=oldId;return;}
+ YM=firstMonth;SEL=dia;MD=0;v65CloseQuick();$('md').style.display='none';TOAST=carbon?'Compra no Carbon registrada em '+count+' parcela(s) · '+brl(valor):nome+' incluído · '+brl(valor);draw();
 }
 
 document.addEventListener('keydown',e=>{if(e.key=='Escape')closeDay();});
