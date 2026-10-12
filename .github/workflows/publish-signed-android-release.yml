@@ -45,7 +45,14 @@ jobs:
           ZIP="app/src/main/assets/Snake_Finance_Splash_Original_Android.zip"
           if [ ! -s "$IMAGE" ] && [ -s "$ZIP" ]; then
             echo "Extracting user-approved splash from uploaded archive"
-            unzip -Z1 "$ZIP" | grep -E '(^|/)snake_splash_aprovada\\.jpg
+            ENTRY="$(unzip -Z1 "$ZIP" | grep -F 'snake_splash_aprovada.jpg' | head -1)"
+            test -n "$ENTRY" || { echo "::error::Original JPG not found inside archive"; exit 1; }
+            unzip -p "$ZIP" "$ENTRY" > "$IMAGE"
+          fi
+          test -s "$IMAGE" || { echo "::error::Official splash JPG missing"; exit 1; }
+          file "$IMAGE" | grep -q "JPEG image data" || { echo "::error::Official splash is not JPEG"; exit 1; }
+          identify "$IMAGE" | grep -q '691x1536' || { echo "::error::Unexpected splash dimensions"; exit 1; }
+
       - name: Java 17
         uses: actions/setup-java@v4
         with:
