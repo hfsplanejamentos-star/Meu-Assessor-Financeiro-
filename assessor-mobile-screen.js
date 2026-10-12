@@ -264,9 +264,14 @@
        return;
      }
      try{
-       const result=await api.listCarbonInvoices(String(cards[0].id),session.month,3);
+       // Include the previous closing cycle: it normally matures on day 7
+       // of the selected month. Also show future due dates.
+       const [selectedYear,selectedMonth]=session.month.split("-").map(Number);
+       const prevClosing=new Date(selectedYear,selectedMonth-2,1);
+       const firstCycle=prevClosing.getFullYear()+"-"+String(prevClosing.getMonth()+1).padStart(2,"0");
+       const result=await api.listCarbonInvoices(String(cards[0].id),firstCycle,4);
        if(!result.ok)throw new Error(result.error||"invoice_unavailable");
-       eventRow("Faturas C6 Carbon (valores comprometidos, NÃO pagamentos efetuados):");
+       eventRow("Faturas C6 Carbon — incluindo vencimento do mês selecionado e próximos ciclos. Valores comprometidos, NÃO pagamentos efetuados:");
        for(const cycle of result.rows){
          eventRow("Fechamento "+cycle.closingDate+" · Vencimento "+cycle.dueDate+
            ": "+brl(cycle.committedCents/100)+" já lançados + "+
