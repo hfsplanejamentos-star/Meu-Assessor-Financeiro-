@@ -7,7 +7,7 @@
     "convex:dev": "convex dev",
     "convex:deploy": "convex deploy",
     "test:assessor-posting": "node --experimental-strip-types tests/assessor-posting.test.mjs",
-    "test:assessor": "npm run test:assessor-posting && node tests/assessor-client.test.cjs && node tests/assessor-screen.test.cjs && node tests/assessor-summary.test.cjs && node tests/assessor-caju-legacy.test.cjs && node --experimental-strip-types tests/assessor-projections.test.mjs && node --experimental-strip-types tests/assessor-attachment.test.mjs && node --experimental-strip-types tests/assessor-audio.test.mjs"
+    "test:assessor": "npm run test:assessor-posting && node tests/assessor-client.test.cjs && node tests/assessor-screen.test.cjs && node tests/assessor-summary.test.cjs && node tests/assessor-caju-legacy.test.cjs && node --experimental-strip-types tests/assessor-projections.test.mjs && node --experimental-strip-types tests/assessor-attachment.test.mjs && node --experimental-strip-types tests/assessor-audio.test.mjs && node --experimental-strip-types tests/assessor-invoices.test.mjs"
   },
   "dependencies": {
     "convex": "^1.27.0"
