@@ -1359,7 +1359,7 @@ function openAccount(a){
  const cutoff=lastMonthDay(YM);
  // Account balances and credit limits are cumulative; show the transactions that
  // formed the balance, not only transactions booked in the selected month.
- const items=L.filter(x=>x.a===a&&validISO(x.d)&&x.d<=cutoff);
+ const items=L.filter(x=>(x.a===a||(x.t==='t'&&x.to===a))&&validISO(x.d)&&x.d<=cutoff);
  const title=(AC[a]?.[0]||a)+' · histórico até '+monthName(YM);
  detailModal(title,items);
  if(a==='carbon'){
@@ -1369,7 +1369,12 @@ function openAccount(a){
    const note=document.createElement('p');
    note.className='m';
    note.style.cssText='margin:8px 0 12px;line-height:1.5';
-   note.textContent='Limite: '+brs(cfg.limit*100)+' · Em uso: '+brs(used)+' · Disponível: '+brs(Math.max(0,cfg.limit*100-used))+' · Saldo inicial em uso: '+brs(Math.round(cfg.opening*100))+'. O saldo inicial não é um lançamento.';
+   note.textContent='Limite: '+brs(cfg.limit*100)+' · Em uso: '+brs(used)+' · Disponível: '+brs(Math.max(0,cfg.limit*100-used))+' · Saldo inicial em uso: '+brs(Math.round(cfg.opening*100))+'.';
+   if(Math.round(cfg.opening*100)===10000&&!items.some(x=>x.a==='carbon'&&x.t==='d'&&x.v===10000)){
+    const info=document.createElement('p');info.className='m';info.style.cssText='margin:4px 0 12px;line-height:1.5';
+    info.textContent='Abastecimento para trabalho: R$ 100,00 confirmados no saldo inicial do Carbon. Ainda não há lançamento individual identificado para esta despesa; não foi criado outro gasto para evitar duplicidade.';
+    note.insertAdjacentElement('afterend',info);
+   }
    header.insertAdjacentElement('afterend',note);
   }
  }
@@ -1378,7 +1383,7 @@ function openAccount(a){
   if(header){
    const note=document.createElement('p');note.className='m';
    note.style.cssText='margin:8px 0 12px;line-height:1.5';
-   note.textContent='Saldo calculado até '+cutoff+': '+brs(accountBalance('caju',cutoff))+'. Confira recargas, reembolsos e saldo inicial; não aplique correção manual sem extrato.';
+   note.textContent='Saldo calculado até '+cutoff+': '+brs(cajuBalance(YM))+'. Confira recargas, reembolsos e saldo inicial; não aplique correção manual sem extrato.';
    header.insertAdjacentElement('afterend',note);
   }
  }
