@@ -251,6 +251,56 @@
      toast(status.textContent);
    }finally{session.posting=false;controls.forEach(b=>b.disabled=!!d.posted);}
  }
+
+ async function auditSavedCarbonSettings(){
+   const cards=(session.cloud?.payload?.cards||[]).filter(c=>
+     /carbon/i.test(String(c.name||""))&&!/caju/i.test(String(c.name||"")));
+   if(!api?.auditCarbonSettings||cards.length!==1){
+     eventRow("Não encontrei um único C6 Carbon na sincronização. Confira a conta antes de alterar qualquer cadastro.");
+     return;
+   }
+   try{
+     const result=await api.auditCarbonSettings(String(cards[0].id));
+     if(result.configAligned){
+       eventRow("C6 Carbon está cadastrado corretamente: fechamento dia 5 e vencimento dia 7. Nenhuma alteração necessária.");
+       return;
+     }
+     eventRow("Auditoria do C6 Carbon: fechamento cadastrado "+
+       (result.configuredClosing??"não definido")+", vencimento "+
+       (result.configuredDue??"não definido")+". Regra confirmada: 5 e 7. "+
+       result.transactions+" compras, "+result.invoices+" faturas armazenadas, "+
+       result.cycleMismatch+" diferenças de ciclo, "+result.missingInvoiceMonth+
+       " compras sem mês de fatura explícito e "+result.paidInvoices+
+       " faturas pagas. Nenhum dado foi modificado.");
+     if(!result.safeMetadataOnly){
+       eventRow("O cartão possui histórico. Por segurança, não alterarei o fechamento/vencimento automaticamente. É necessária conciliação das faturas antigas.");
+       return;
+     }
+     const box=document.createElement("div");box.className="review";
+     const message=document.createElement("p");message.className="hint";
+     message.textContent="Este cartão não possui compras nem faturas. Você pode corrigir SOMENTE os dados de fechamento e vencimento; nenhum saldo ou transação será modificado.";
+     const button=document.createElement("button");button.className="gold-button";
+     button.textContent="Aplicar fechamento dia 5 e vencimento dia 7";
+     box.append(message,button);$("chatMessages").insertBefore(box,$("draftMount"));
+     button.onclick=async()=>{
+       if(!window.confirm("Confirmar correção APENAS do cadastro do C6 Carbon para fechamento dia 5 e vencimento dia 7? O histórico não será alterado."))return;
+       button.disabled=true;
+       try{
+         const changed=await api.repairCarbonSettings(String(cards[0].id),result.financeStateVersion);
+         box.remove();
+         eventRow(changed.alreadyAligned?"Cadastro já atualizado. Nenhuma gravação necessária.":
+           "Cadastro do C6 Carbon corrigido para 5/7, sem modificar transações. Atualizando a leitura…");
+         await refreshState();
+       }catch(error){
+         eventRow("Correção não realizada: "+(error.code||error.message||"erro")+
+           ". Reinicie a auditoria para evitar sobrepor alterações de outro dispositivo.");
+       }
+     };
+   }catch(error){
+     eventRow("Não foi possível auditar o cartão: "+(error.code||error.message||"erro")+
+       ". Nenhuma configuração foi modificada.");
+   }
+ }
  async function send(){
    const input=$("messageInput"),text=input.value.trim();if(!text)return;input.value="";
    if(session.extractedRows.length){
@@ -258,6 +308,12 @@
      session.extractedRows=[];
    }
    eventRow(text,true);
+   if(/verificar|conferir|auditar|corrigir/i.test(text)&&
+      /carbon|cart[aã]o c6/i.test(text)&&
+      /cadastro|configura|fechamento|vencimento|carbon/i.test(text)){
+     await auditSavedCarbonSettings();
+     return;
+   }
    // Fatura do C6 Carbon: separar compras já lançadas de parcelas futuras,
    // sempre com vencimento dia 7 e mês da fatura no ciclo de fechamento.
    if(/fatura|parcelas? (?:do |de )?cart[aã]o/i.test(text)&&
