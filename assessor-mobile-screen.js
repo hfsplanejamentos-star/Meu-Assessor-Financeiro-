@@ -19,6 +19,15 @@
  $("prevMonth").onclick=()=>adjustMonth(-1);$("nextMonth").onclick=()=>adjustMonth(1);
  function eventRow(text,user=false){const el=document.createElement("div");el.className="bubble"+(user?" user":" answer");el.textContent=text;$("chatMessages").insertBefore(el,$("draftMount"));$("chatMessages").scrollTop=$("chatMessages").scrollHeight}
  function postableAccount(account){if(!account)return false;const key=norm([account.id,account.name,account.institution,account.type].join(" "));return !/caju|beneficio|credito|cartao|carbon|investimento|investment|poupanca|meta|(^|\s)xp(\s|$)/.test(key)&&/conta|corrente|dinheiro|banco|bank|checking|cash/.test(norm(account.type))}
+ function carbonConfigMessage(err){
+   if(err?.code==="carbon_closing_day_conflict")
+     return "O C6 Carbon está cadastrado com fechamento dia "+
+       (err.details?.configuredClosing??"diferente de 5")+
+       ". Você confirmou fechamento dia 5 e vencimento dia 7. É necessário conciliar o cadastro antes de projetar; nenhum lançamento foi alterado.";
+   if(err?.code==="carbon_due_day_conflict")
+     return "O vencimento cadastrado do C6 Carbon diverge do dia 7 confirmado. Confira os dados do cartão antes de calcular a fatura.";
+   return "Não foi possível conferir a fatura: "+(err?.code||err?.message||"erro");
+ }
  function presentAccount(id){
    if(String(id||"").startsWith("card:")){
      const c=(session.cloud?.payload?.cards||[]).find(c=>String(c.id)===String(id).slice(5));
@@ -163,7 +172,7 @@
            details.append(line);
          }
          card.append(details);
-       }catch(err){toast("Projeção indisponível: "+(err.code||err.message||"erro"))}
+       }catch(err){toast(carbonConfigMessage(err))}
        finally{forecast.disabled=false}
      };
      card.append(forecast);
@@ -276,8 +285,7 @@
            brl(cycle.totalCents/100)+" comprometidos.");
        }
      }catch(err){
-       eventRow("Não consegui conferir as faturas: "+(err.code||err.message||"erro")+
-         ". Nenhum valor foi alterado.");
+       eventRow(carbonConfigMessage(err)+" Nenhum valor foi alterado.");
      }
      return;
    }
