@@ -1378,6 +1378,17 @@ function openAccount(a){
    header.insertAdjacentElement('afterend',note);
   }
  }
+ if(a==='caju'&&YM==='2026-10'){
+  const header=$('md')?.querySelector('.mc .sp');
+  if(header){
+   const action=document.createElement('button');
+   action.className='bt';
+   action.textContent='Aplicar ajustes autorizados (R$ 698,56)';
+   action.style.cssText='display:block;margin:10px 0;';
+   action.onclick=applyCajuOctReconciliation;
+   header.insertAdjacentElement('afterend',action);
+  }
+ }
  if(a==='caju'){
   const header=$('md')?.querySelector('.mc .sp');
   if(header){
@@ -1387,6 +1398,22 @@ function openAccount(a){
    header.insertAdjacentElement('afterend',note);
   }
  }
+}
+function applyCajuOctReconciliation(){
+ const marker='ajuste-caju-out-2026-69856';
+ if(L.some(x=>x.reconciliationId===marker)){alert('Os ajustes de outubro já foram registrados. Nenhuma despesa duplicada.');return;}
+ if(YM!=='2026-10'||cajuBalance('2026-10')!==117004){
+  alert('O saldo de outubro não é mais R$ 1.170,04. Não foi aplicado ajuste automático; confira as movimentações para evitar duplicidade.');return;
+ }
+ if(!confirm('Registrar duas despesas de conciliação em 12/10/2026, Mercado R$ 349,28 e Alimentação R$ 349,28? Não representam compras individualmente comprovadas no extrato.'))return;
+ const entries=[
+  {id:nextId(),d:'2026-10-12',comp:'2026-10-01',a:'caju',t:'d',s:'r',v:34928,c:'mer',sub:'Ajuste de conciliação',n:'Ajuste de conciliação — Mercado',reconciliationId:marker},
+  {id:nextId()+1,d:'2026-10-12',comp:'2026-10-01',a:'caju',t:'d',s:'r',v:34928,c:'ali',sub:'Ajuste de conciliação',n:'Ajuste de conciliação — Alimentação',reconciliationId:marker}
+ ];
+ L.push(...entries);
+ if(!persistLedger()){L.splice(L.length-entries.length,entries.length);return;}
+ closeDay();draw();
+ alert('Ajustes registrados. Saldo Caju de outubro: '+brl(cajuBalance('2026-10'))+'.');
 }
 function openType(t,title){detailModal(title,ML().filter(x=>x.t===t))}
 function openPending(){detailModal('A pagar',ML().filter(x=>(x.t==='d'||x.t==='t')&&x.s==='p'))}
