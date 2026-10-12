@@ -4,6 +4,7 @@ import { internal } from "./_generated/api";
 import { classifyByRules, redactForAi, type Classification, type Direction } from "./notificationClassifier";
 import { validateAttachment, parseAttachmentOutput } from "./assessorAttachment";
 import { validateAudio } from "./assessorAudio";
+import { previewCarbonInstallments, previewCajuMonth } from "./assessorProjection";
 
 const http = httpRouter();
 const legacyCors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type, X-Sync-Key", "Access-Control-Allow-Methods": "GET, POST, OPTIONS" };
@@ -298,5 +299,38 @@ http.route({path:"/assessor/transcribe",method:"POST",handler:httpAction(async(c
   return json({ok:true,text:transcript,requiresReview:true,financeStateUpdated:false},200,headers);
  }catch{return json({ok:false,error:"transcription_failed"},502,headers)}
 })});
+
+
+/** READ-ONLY previews: no draft creation and no posting to financeState. */
+http.route({path:"/assessor/card-preview",method:"OPTIONS",handler:httpAction(async(_ctx,req)=>
+ new Response(null,{status:204,headers:secureCors(req)}))});
+http.route({path:"/assessor/card-preview",method:"POST",handler:httpAction(async(ctx,req)=>{
+ const headers=secureCors(req),hash=await ownerHash(req);
+ if(!hash)return json({ok:false,error:"invalid_sync_key"},401,headers);
+ let body:any;
+ try{body=await req.json()}catch{return json({ok:false,error:"invalid_json"},400,headers)}
+ if(!body||typeof body.cardId!=="string"||typeof body.purchaseDate!=="string"||
+   !Number.isSafeInteger(body.totalCents)||!Number.isInteger(body.installments))
+  return json({ok:false,error:"invalid_preview_request"},400,headers);
+ const state=await ctx.runQuery(internal.financeState.get,{ownerKey:syncKey(req)});
+ if(!state)return json({ok:false,error:"finance_state_missing"},404,headers);
+ const projection=previewCarbonInstallments(state.payload,{
+  cardId:body.cardId,purchaseDate:body.purchaseDate,totalCents:body.totalCents,installments:body.installments
+ });
+ return json({...projection,financeStateVersion:state.version},projection.ok?200:422,headers);
+})});
+http.route({path:"/assessor/caju-preview",method:"GET",handler:httpAction(async(ctx,req)=>{
+ const headers=secureCors(req),hash=await ownerHash(req);
+ if(!hash)return json({ok:false,error:"invalid_sync_key"},401,headers);
+ const month=new URL(req.url).searchParams.get("month")||"";
+ if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))
+  return json({ok:false,error:"invalid_month"},400,headers);
+ const state=await ctx.runQuery(internal.financeState.get,{ownerKey:syncKey(req)});
+ if(!state)return json({ok:false,error:"finance_state_missing"},404,headers);
+ const projection=previewCajuMonth(state.payload,month);
+ return json({...projection,financeStateVersion:state.version},projection.ok?200:422,headers);
+})});
+http.route({path:"/assessor/caju-preview",method:"OPTIONS",handler:httpAction(async(_ctx,req)=>
+ new Response(null,{status:204,headers:secureCors(req)}))});
 
 export default http;
