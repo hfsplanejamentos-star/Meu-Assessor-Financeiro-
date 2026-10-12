@@ -53,7 +53,7 @@ public final class MainActivity extends Activity {
     static final int REQUEST_VOICE = 701;
     private static final int REQUEST_FILE = 702;
     private static final String APP_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/snake-finance-mobile.html?android=1.5.6";
+            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/snake-finance-mobile.html?android=1.5.7";
     private static final String APP_BASE_URL =
             "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/";
     private static final String OTA_CACHE_FILE = "snake_dashboard_last_good.html";
@@ -62,6 +62,7 @@ public final class MainActivity extends Activity {
     private WebView webView;
     private FrameLayout startupSplash;
     private boolean dashboardReady = false;
+    private volatile boolean showUpdatedDashboardNotice = false;
     private boolean authenticatedForDisplay = false;
     private ValueCallback<Uri[]> fileCallback;
     private Uri capturedImageUri;
@@ -77,10 +78,10 @@ public final class MainActivity extends Activity {
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
                 .getString("web_cache_version", "");
-        if (!"1.5.6".equals(nativeVersion)) {
+        if (!"1.5.7".equals(nativeVersion)) {
             webView.clearCache(true);
             getSharedPreferences("native_runtime", MODE_PRIVATE).edit()
-                    .putString("web_cache_version", "1.5.6").apply();
+                    .putString("web_cache_version", "1.5.7").apply();
         }
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
@@ -322,7 +323,10 @@ public final class MainActivity extends Activity {
                 if (!validDashboard(document)) throw new Exception("dashboard remoto inválido");
                 saveDashboardAtomically(document);
                 if (cached == null || !document.equals(cached)) {
-                    runOnUiThread(() -> showDashboard(document));
+                    runOnUiThread(() -> {
+                        showUpdatedDashboardNotice = true;
+                        showDashboard(document);
+                    });
                 }
             } catch (Exception ignored) {
                 if (cached == null) {
@@ -401,6 +405,10 @@ public final class MainActivity extends Activity {
                 super.onPageFinished(view, url);
                 dashboardReady = true;
                 revealDashboardWhenReady();
+                if (showUpdatedDashboardNotice) {
+                    showUpdatedDashboardNotice = false;
+                    view.evaluateJavascript("(function(){var n=document.createElement('div');n.textContent='Snake Finance: painel atualizado pelo GitHub';n.style.cssText='position:fixed;bottom:80px;left:14px;right:14px;z-index:2147483647;background:#171717;color:#f1ce79;padding:14px;border:1px solid #b68d38;border-radius:12px;text-align:center;font:600 14px sans-serif;box-shadow:0 8px 24px #0008';document.body.appendChild(n);setTimeout(function(){n.remove()},6500)})()", null);
+                }
             }
 
             @Override
