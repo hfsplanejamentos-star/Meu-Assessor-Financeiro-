@@ -61,6 +61,24 @@ assert.equal(snap.expensesCents,3000);
 assert.equal(snap.refundsCents,500);
 assert.equal(snap.availableCents,172500,"250 + 1500 - 15 - 15 + 5");
 assert.equal(snap.ledgerUpdated,false);
+const documentedRecharge=base();
+documentedRecharge.transactions.push(
+ {id:"recarga-entry",date:"2026-10-01",value:1500,card:"card_caju_alimentacao",benefit:true,status:"realized",desc:"Recarga Caju Benefícios"}
+);
+assert.equal(previewCajuMonth(documentedRecharge,"2026-10").availableCents,175000,
+ "credit recharge transaction must NOT be added a second time");
+const unclassifiedCredit=base();
+unclassifiedCredit.transactions.push(
+ {id:"unknown-credit",date:"2026-10-08",value:100,card:"card_caju_alimentacao",benefit:true,status:"realized",desc:"Crédito sem descrição"}
+);
+assert.equal(previewCajuMonth(unclassifiedCredit,"2026-10").error,
+ "caju_unclassified_credit_requires_review","do not assume ambiguous positive transaction is a refund");
+const explicitRefund=base();
+explicitRefund.transactions.push(
+ {id:"refund",date:"2026-10-08",value:20,card:"card_caju_alimentacao",benefit:true,status:"realized",kind:"refund",desc:"Estorno compra"}
+);
+assert.equal(previewCajuMonth(explicitRefund,"2026-10").availableCents,177000);
+
 assert.equal(previewCajuMonth(caju,"2026-11").error,"caju_opening_or_recharge_unverified");
 const missingPrevious=base();delete missingPrevious.meta.cajuOpeningByMonth;
 assert.equal(previewCajuMonth(missingPrevious,"2026-10").error,"caju_opening_or_recharge_unverified");
