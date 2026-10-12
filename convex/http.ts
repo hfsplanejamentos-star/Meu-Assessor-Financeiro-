@@ -368,4 +368,28 @@ http.route({path:"/assessor/carbon-audit",method:"GET",handler:httpAction(async(
  return json({...audit,financeStateVersion:state.version},audit.ok?200:422,headers);
 })});
 
+
+/** Correct Carbon settings ONLY after explicit confirmation and clean-history audit. */
+http.route({path:"/assessor/carbon-repair",method:"OPTIONS",handler:httpAction(async(_ctx,req)=>
+ new Response(null,{status:204,headers:secureCors(req)}))});
+http.route({path:"/assessor/carbon-repair",method:"POST",handler:httpAction(async(ctx,req)=>{
+ const headers=secureCors(req),hash=await ownerHash(req);
+ if(!hash)return json({ok:false,error:"invalid_sync_key"},401,headers);
+ let body:unknown;
+ try{body=await req.json()}catch{return json({ok:false,error:"invalid_json"},400,headers)}
+ if(!body||typeof body!=="object")return json({ok:false,error:"invalid_request"},400,headers);
+ const input=body as Record<string,unknown>;
+ if(input.confirm!==true||input.expectedClosing!==5||input.expectedDue!==7||
+   typeof input.cardId!=="string"||!input.cardId||input.cardId.length>128||
+   typeof input.baseVersion!=="number"||!Number.isSafeInteger(input.baseVersion)||input.baseVersion<0)
+  return json({ok:false,error:"explicit_confirmation_required"},400,headers);
+ const result=await ctx.runMutation(internal.financeState.repairCarbonConfig,{
+  ownerKey:syncKey(req),cardId:input.cardId,baseVersion:input.baseVersion
+ });
+ const status=result.ok?200:
+  result.error==="finance_state_missing"?404:
+  result.error==="version_conflict"||result.error==="carbon_history_requires_reconciliation"?409:422;
+ return json(result,status,headers);
+})});
+
 export default http;
