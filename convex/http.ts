@@ -3,6 +3,7 @@ import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { classifyByRules, redactForAi, type Classification, type Direction } from "./notificationClassifier";
 import { validateAttachment, parseAttachmentOutput } from "./assessorAttachment";
+import { validateAudio } from "./assessorAudio";
 
 const http = httpRouter();
 const legacyCors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type, X-Sync-Key", "Access-Control-Allow-Methods": "GET, POST, OPTIONS" };
@@ -261,6 +262,41 @@ http.route({path:"/assessor/analyze-attachment",method:"POST",handler:httpAction
    fileName:file.name,items:parsed.items.map((row,i)=>({...row,sourceId:sourceHash.slice(0,48)+":"+i})),
    warnings:parsed.warnings,hasMore:parsed.hasMore,reviewRequired:true,financeStateUpdated:false},200,headers);
  }catch{return json({ok:false,error:"analysis_failed"},502,headers)}
+})});
+
+
+/** User-initiated voice transcription only. Transcript is returned for user review. */
+http.route({path:"/assessor/transcribe",method:"OPTIONS",handler:httpAction(async(_ctx,req)=>
+ new Response(null,{status:204,headers:secureCors(req)}))});
+http.route({path:"/assessor/transcribe",method:"POST",handler:httpAction(async(ctx,req)=>{
+ const headers=secureCors(req),hash=await ownerHash(req);
+ if(!hash)return json({ok:false,error:"invalid_sync_key"},401,headers);
+ if(Number(req.headers.get("Content-Length")||0)>5_600_000)
+  return json({ok:false,error:"audio_size_limit"},413,headers);
+ const rate=await ctx.runMutation(internal.notificationEvents.consumeRateLimit,{ownerHash:hash,now:Date.now()});
+ if(!rate.allowed)return json({ok:false,error:"rate_limited",retryAfterMs:rate.retryAfterMs},429,headers);
+ let raw:unknown;
+ try{raw=await req.json()}catch{return json({ok:false,error:"invalid_json"},400,headers)}
+ const audio=validateAudio(raw);
+ if(!audio.ok)return json({ok:false,error:audio.error},400,headers);
+ const token=process.env.OPENAI_API_KEY;
+ if(!token)return json({ok:false,error:"ai_not_configured"},503,headers);
+ try{
+  const decoded=atob(audio.base64);
+  const bytes=Uint8Array.from(decoded,x=>x.charCodeAt(0));
+  const multipart=new FormData();
+  multipart.append("file",new Blob([bytes.buffer as ArrayBuffer],{type:audio.mimeType}),audio.fileName);
+  multipart.append("model",process.env.OPENAI_TRANSCRIPTION_MODEL||"gpt-4o-mini-transcribe");
+  multipart.append("language","pt");
+  const provider=await fetch("https://api.openai.com/v1/audio/transcriptions",{
+   method:"POST",headers:{"Authorization":"Bearer "+token},body:multipart
+  });
+  if(!provider.ok)return json({ok:false,error:"transcription_provider_unavailable"},502,headers);
+  const output:any=await provider.json();
+  const transcript=String(output?.text||"").trim().slice(0,4000);
+  if(!transcript)return json({ok:false,error:"empty_transcript"},422,headers);
+  return json({ok:true,text:transcript,requiresReview:true,financeStateUpdated:false},200,headers);
+ }catch{return json({ok:false,error:"transcription_failed"},502,headers)}
 })});
 
 export default http;
