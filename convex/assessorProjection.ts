@@ -53,18 +53,21 @@ export function previewCarbonInstallments(payload:unknown,request:CarbonPreviewR
   return {ok:false as const,error:"invalid_installment_count"};
  const count=request.installments,each=Math.floor(request.totalCents/count),remainder=request.totalCents%count;
  if(each<=0)return{ok:false as const,error:"installments_exceed_amount"};
+ let firstClosing=monthDate(original.getUTCFullYear(),original.getUTCMonth(),closing);
+ if(original.getTime()>firstClosing.getTime())
+  firstClosing=monthDate(original.getUTCFullYear(),original.getUTCMonth()+1,closing);
  const list=[];
  for(let i=0;i<count;i++){
-  const purchase=addMonths(original,i);
-  let closingDate=monthDate(purchase.getUTCFullYear(),purchase.getUTCMonth(),closing);
-  if(purchase.getTime()>closingDate.getTime())
-   closingDate=monthDate(purchase.getUTCFullYear(),purchase.getUTCMonth()+1,closing);
+  // Subsequent installments must advance exactly one BILLING CYCLE each.
+  // Recomputing from the purchase anniversary may put two payments in one invoice.
+  const closingDate=monthDate(firstClosing.getUTCFullYear(),firstClosing.getUTCMonth()+i,closing);
   const dueMonthOffset=due<=closing?1:0;
   const dueDate=monthDate(closingDate.getUTCFullYear(),closingDate.getUTCMonth()+dueMonthOffset,due);
   if(dueDate.getTime()<=closingDate.getTime())
    return{ok:false as const,error:"inconsistent_billing_cycle"};
   const amountCents=i===count-1?each+remainder:each;
-  list.push({number:i+1,of:count,purchaseDate:dateISO(purchase),
+  list.push({number:i+1,of:count,purchaseDate:dateISO(original),
+   installmentReferenceDate:i===0?dateISO(original):dateISO(closingDate),
    closingDate:dateISO(closingDate),dueDate:dateISO(dueDate),
    invoiceMonth:dateISO(dueDate).slice(0,7),amountCents});
  }
@@ -102,7 +105,7 @@ export function previewCajuMonth(payload:unknown,month:string){
   if(!["realized","real","realizado","realizada","paid","pago","posted"].includes(status))continue;
   const id=String(t.cardId||t.card||""),isCaju=t.benefit===true||cajuIds.has(id)||/caju/.test(norm(t.origin||t.source||""));
   if(!isCaju||t.invoicePayment||t.cardPayment||t.transfer||t.transferId)continue;
-  const txId=t.id===undefined?"":String(t.id),sourceKey=t.sourceId&&t.sourceType?String(t.sourceType)+":"+String(t.sourceId):"";
+  const txId=t.id===undefined||t.id===null?"":String(t.id),sourceKey=t.sourceId&&t.sourceType?String(t.sourceType)+":"+String(t.sourceId):"";
   if(txId&&seenIDs.has(txId)||sourceKey&&seenSources.has(sourceKey))continue;
   if(txId)seenIDs.add(txId);if(sourceKey)seenSources.add(sourceKey);
   const cents=finiteCents(t.value);
