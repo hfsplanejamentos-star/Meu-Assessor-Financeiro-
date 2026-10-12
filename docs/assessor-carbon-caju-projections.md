@@ -1,11 +1,11 @@
 # Assessor IA — Projeções C6 Carbon e Caju (12/10/2026)
 
 ## C6 Carbon — prévia, sem lançamento real
-- **Vencimento confirmado: dia 7.** Não inferir o dia de fechamento: usar exclusivamente o cadastro do cartão, e bloquear a prévia se não houver fechamento válido.
+- **Regra confirmada: fechamento dia 5 e vencimento dia 7.** As projeções exigem que o cadastro do cartão esteja coerente com ambos. Compras registradas até o dia 5 pertencem ao fechamento do próprio mês; compras após o dia 5 entram no fechamento seguinte.
 - `POST /assessor/card-preview` consulta `financeState` e retorna parcelas e seus respectivos ciclos de fechamento e vencimento. **Não altera saldos, faturas ou o livro de transações.**
-- Compras após o fechamento vão para o ciclo seguinte; as parcelas subsequentes avançam exatamente um ciclo por mês.
+- Compras até o dia 5 (inclusive) entram na fatura com vencimento dia 7 do próprio mês; compras de dia 6 em diante entram no ciclo seguinte. Parcelas subsequentes avançam exatamente um ciclo por mês. Exemplo: compra 04/10/2026, 3x, vencimentos 07/10, 07/11, 07/12; compra 06/10/2026, vencimentos 07/11, 07/12, 07/01/2027.
 - Divisão monetária em centavos: exemplo R$ 100,00 / 3 = R$ 33,33 + R$ 33,33 + R$ 33,34.
-- A rotina retorna `carbon_due_day_conflict` se o cadastro atual informa vencimento diferente de 7. Exige correção controlada do cadastro antes de liberar efetivação.
+- A rotina retorna `carbon_closing_day_conflict` quando o cadastro diverge de fechamento dia 5 e `carbon_due_day_conflict` quando diverge de vencimento dia 7. A configuração padrão para **novos cadastros** do C6 Carbon foi atualizada, mas cartões existentes **não foram migrados nem tiveram transações antigas modificadas**. O cadastro persistido e o histórico precisam de conciliação antes da efetivação.
 - Compatibilidade corrigida **na prévia**: `invoiceMonth` mantém a mesma semântica do motor legado (mês de fechamento), enquanto `dueMonth` e `dueDate` indicam quando a parcela vence. Assim não há deslocamento de faturas entre os dois cálculos.
 - `GET /assessor/invoices?cardId=...&month=YYYY-MM&count=4` consulta faturas já lançadas e parcelas previstas, separando `committedCents`, `plannedCents` e `totalCents`. O pagamento efetivo da fatura não é inferido dessa soma.
 - Ainda é obrigatório conciliar `status: planned`, pagamento e limite efetivamente disponível antes de permitir lançamento parcelado e publicação.
