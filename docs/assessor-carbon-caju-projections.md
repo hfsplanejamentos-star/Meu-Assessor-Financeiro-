@@ -16,6 +16,14 @@
 - A rotina não soma recargas de meses anteriores e não permite duplicidade comprovada por identificador de origem.
 - A tela principal `index.html` foi corrigida: o Caju não pode eliminar duas compras legítimas só por terem mesmo valor/data/descrição. As referências bancárias determinam deduplicação; registros sem ID permanecem para revisão.
 
+## Auditoria de cadastros existentes (sem migração automática)
+- `GET /assessor/carbon-audit?cardId=...`: consulta o cadastro atual e conta compras, faturas (inclusive pagas), divergências entre ciclos de fechamento, datas de vencimento e recorrências vinculadas.
+- `POST /assessor/carbon-repair`: exige confirmação explícita do usuário, `baseVersion` atual, fechamento 5 e vencimento 7. **Só corrige metadados de cartão que não possua compras, faturas nem recorrências vinculadas.**
+- Se houver qualquer histórico, o endpoint retorna `carbon_history_requires_reconciliation` (409) e mantém o cadastro original; não migra `invoiceMonth`, não altera parcelas e não reabre pagamentos.
+- O histórico de auditoria recebe um registro somente quando a atualização segura for aplicada. Nenhuma correção foi executada contra dados reais nesta rodada.
+- No chat, o usuário pode solicitar "Verificar cadastro do C6 Carbon"; verá os riscos. Quando a atualização for considerada segura, o aplicativo apresenta uma confirmação adicional antes da gravação.
+- As rotas acima permanecem na branch de desenvolvimento, sem implantação verificada no Convex.
+
 ## Integração Mobile
 - A janela existente de revisão do Assessor IA contém campo **Quantidade de parcelas**, exibido apenas quando o usuário seleciona C6 Carbon como cartão e método Crédito.
 - O botão de conferir parcelas/vencimentos consulta a API em modo leitura, sem efetivar a compra.
