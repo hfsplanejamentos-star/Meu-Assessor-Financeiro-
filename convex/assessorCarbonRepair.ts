@@ -10,7 +10,7 @@ type State = Record<string, any>;
 export function planCarbonConfigRepair(payload:unknown,cardId:string,now:string) {
  const report=auditCarbonConfiguration(payload,cardId);
  if(!report.ok)return{ok:false as const,error:report.error,report};
- if(report.configAligned)return{ok:true as const,alreadyAligned:true,updated:false,report};
+ if(report.configAligned)return{ok:true as const,alreadyAligned:true as const,updated:false as const,report};
  if(!report.safeMetadataOnly || report.mustReviewBeforeChanging)
   return{ok:false as const,error:"carbon_history_requires_reconciliation",report};
  const db=payload as State;
@@ -29,5 +29,5 @@ export function planCarbonConfigRepair(payload:unknown,cardId:string,now:string)
     ...(Array.isArray(db.auditLog)?db.auditLog:[])
    ].slice(0,1000)
  };
- return{ok:true as const,alreadyAligned:false,updated:true,report,payload:updatedPayload};
+ return{ok:true as const,alreadyAligned:false as const,updated:true as const,report,payload:updatedPayload};
 }
