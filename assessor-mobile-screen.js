@@ -10,7 +10,7 @@
  const norm=s=>String(s??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
  const today=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-")};
  const moneyCents=n=>{const x=Math.round(Number(n)*100);return Number.isSafeInteger(x)&&x>0?x:null};
- const session={draft:null,posting:false,cloud:null,month:today().slice(0,7),agendaDay:new Date(),recognition:null,files:[]};
+ const session={draft:null,posting:false,cloud:null,month:today().slice(0,7),agendaDay:new Date(),recognition:null,files:[],extractedRows:[]};
  function toast(s){const box=$("toast");box.textContent=s;box.style.display="block";clearTimeout(window.__snakeToast);window.__snakeToast=setTimeout(()=>box.style.display="none",6000)}
  function switchView(name){for(const n of ["home","chat","agenda"])$("screen"+n[0].toUpperCase()+n.slice(1)).classList.toggle("active",n===name);document.querySelectorAll("nav [data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===name));$("topHome").style.display=name==="home"?"flex":"none";if(name==="chat")$("chatMessages").scrollTop=$("chatMessages").scrollHeight;window.scrollTo({top:0,behavior:"instant"})}
  document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>switchView(b.dataset.view)));
@@ -84,7 +84,7 @@
    const fuel=/combustivel|combustível|gasolina|posto/i.test(text);
    const beer=/cerveja|chopp|chope/i.test(text);
    const food=/mercado|padaria|delivery|ifood/i.test(text);
-   const payment=/cr[eé]dito/i.test(text)?"Crédito":/d[eé]bito/i.test(text)?"Débito":/pix/i.test(text)?"Pix":"Pix";
+   const payment=/cr[eé]dito/i.test(text)?"Crédito":/d[eé]bito/i.test(text)?"Débito":/pix/i.test(text)?"Pix":"";
    const candidate={
      draftId:api?.newDraftId?.() || "demo-"+String(Date.now()),
      amount,direction:/recebi|recebimento|ganhei|sal[aá]rio/i.test(text)?"income":"expense",
@@ -141,7 +141,7 @@
    const detail=document.createElement("p");detail.className="hint";detail.id="reviewStatus";
    detail.textContent=d.posted?"Registrado e vinculado ao financeiro.":"Confira todas as informações antes da confirmação.";
    card.append(detail);root.append(card);
-   yes.onclick=postExpense;edit.onclick=openEditor;no.onclick=()=>{session.draft=null;reviewPreview();eventRow("Prévia cancelada. Nenhum lançamento financeiro foi efetuado.")};
+   yes.onclick=postExpense;edit.onclick=openEditor;no.onclick=()=>{session.draft=null;reviewPreview();eventRow("Prévia cancelada. Nenhum lançamento financeiro foi efetuado.");nextExtractedRow()};
    $("chatMessages").scrollTop=$("chatMessages").scrollHeight;
  }
  function openEditor(){
@@ -167,7 +167,7 @@
  async function postExpense(){
    const d=session.draft;if(!d||session.posting||d.posted)return;
    if(!api||!session.cloud)return toast("Conecte a sincronização Cloud antes de lançar valores reais.");
-   if(!d.account)return openEditor();
+   if(!d.account||!d.payment)return openEditor();
    const account=(session.cloud.payload.accounts||[]).find(a=>String(a.id)===String(d.account));
    if(!postableAccount(account))return toast("Caju, XP, Carbon e cartões exigem integração específica. Nenhum valor foi lançado.");
    if(d.payment==="Crédito")return toast("Compra a crédito exige integração de fatura. Nenhum valor foi lançado.");
@@ -193,7 +193,7 @@
      if(!outcome.posted)throw new Error("confirmed_not_posted");
      d.posted=true;status.textContent=outcome.syncPending?"Lançamento registrado; atualização local pendente.":"Lançamento confirmado no financeiro.";
      eventRow(outcome.syncPending?"Lançamento registrado no servidor. Sincronize a tela para atualizar os cards.":"Lançamento registrado com sucesso no Snake Finance.");
-     await refreshState();reviewPreview();
+     await refreshState();reviewPreview();nextExtractedRow();
    }catch(e){
      const uncertain=e.code==="posting_status_unknown";
      status.textContent=uncertain?"Resultado incerto após falha de rede. Consulte a conciliação antes de tentar novamente.":"Não lançado nesta tentativa: "+(e.code||e.message||"erro");
@@ -229,7 +229,7 @@
  $("sendBtn").onclick=send;$("messageInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();send()}});
  $("newExpense").onclick=()=>{session.draft={
    draftId:api?.newDraftId?.()||"demo-"+Date.now(),amount:0,direction:"expense",category:"Outros",
-   subcategory:"",account:"",payment:"Pix",date:today(),counterparty:"",description:"",
+   subcategory:"",account:"",payment:"",date:today(),counterparty:"",description:"",
    sourceType:"chat",posted:false};switchView("chat");openEditor()};
  $("checkSpending").onclick=()=>{switchView("chat");$("messageInput").value="Quanto gastei neste mês?";$("messageInput").focus()};
  function attach(){ $("addDialog").showModal() }
@@ -239,11 +239,75 @@
  $("cameraBtn").onclick=()=>$("photoFile").click();$("photoBtn").onclick=()=>$("documentFile").click();
  $("chooseText").onclick=()=>{$("addDialog").close();switchView("chat");$("messageInput").focus()};
  $("addDismiss").onclick=()=>$("addDialog").close();
+
+ function nextExtractedRow(){
+   if(!session.extractedRows.length)return;
+   const x=session.extractedRows.shift();
+   const hint=norm(x.accountHint||"");
+   const accounts=session.cloud?.payload?.accounts||[];
+   const cards=session.cloud?.payload?.cards||[];
+   let account="";
+   if(/caju|carbon/.test(hint)){
+     const matches=cards.filter(c=>norm(c.name||"").includes(hint.includes("caju")?"caju":"carbon"));
+     if(matches.length===1)account="card:"+matches[0].id;
+   }else if(/c6|itau|ita[uú]|xp/.test(hint)){
+     const name=hint.includes("c6")?"c6":hint.includes("xp")?"xp":"itau";
+     const matches=accounts.filter(a=>norm([a.name,a.id].join(" ")).includes(name)&&
+       (name!=="c6"||!/carbon/.test(norm(a.name))));
+     if(matches.length===1)account=String(matches[0].id);
+   }
+   const paymentKey=norm(x.paymentType||"");
+   const payment=/credito/.test(paymentKey)?"Crédito":/debito/.test(paymentKey)?"Débito":
+     /pix/.test(paymentKey)?"Pix":/dinheiro|especie/.test(paymentKey)?"Dinheiro":"";
+   session.draft={
+     draftId:api?.newDraftId?.()||"demo-"+Date.now(),
+     amount:x.amountCents/100,direction:x.direction,account,payment,
+     category:x.category,subcategory:x.subcategory,
+     date:x.date,description:x.description,counterparty:x.counterparty,
+     sourceId:x.sourceId,sourceType:x.sourceType,posted:false
+   };
+   eventRow("Movimentação para revisão. Restam "+session.extractedRows.length+
+     " item(ns) na fila. Confirme ou cancele este item para seguir.");
+   reviewPreview();
+ }
  function filesPicked(e){
-   const files=Array.from(e.target.files||[]);if(!files.length)return;
-   session.files=files;switchView("chat");
-   eventRow("Anexo selecionado: "+files.map(f=>f.name).join(", ")+". Análise de PDF, foto e extrato ainda não ativada; nenhum dado foi transmitido.");
+   const files=Array.from(e.target.files||[]);
    e.target.value="";
+   if(!files.length)return;
+   if(files.length>1){toast("Selecione um documento por vez.");return}
+   const file=files[0];
+   session.files=[file];switchView("chat");
+   const card=document.createElement("div");card.className="review";
+   const heading=document.createElement("h3");heading.textContent="Analisar anexo: "+(file.name||"documento");
+   const help=document.createElement("p");help.className="hint";
+   help.textContent="Ao tocar em Analisar, o arquivo será enviado ao serviço de IA para extração. Nenhuma movimentação será registrada sem confirmação individual.";
+   const buttons=document.createElement("div");buttons.className="review-actions";
+   const go=document.createElement("button");go.className="ok";go.textContent="Analisar arquivo";
+   const cancel=document.createElement("button");cancel.textContent="Descartar";
+   buttons.append(go,cancel);card.append(heading,help,buttons);
+   $("chatMessages").insertBefore(card,$("draftMount"));
+   cancel.onclick=()=>{card.remove();session.files=[];eventRow("Arquivo descartado sem envio.")};
+   go.onclick=async()=>{
+     if(!api?.analyzeAttachment){toast("Serviço de análise indisponível.");return}
+     go.disabled=true;go.textContent="Analisando…";
+     try{
+       const result=await api.analyzeAttachment(file);
+       card.remove();session.files=[];
+       if(!result.items?.length){
+         eventRow("Análise concluída, mas nenhuma movimentação foi identificada com segurança. Confira o documento original.");
+         return;
+       }
+       // One review at a time. Do not post statement rows in bulk.
+       session.extractedRows=result.items.map(item=>({...item,sourceType:result.sourceType}));
+       eventRow("Foram identificadas "+result.items.length+" movimentações em "+file.name+
+         ". Os valores são sugestões da IA e precisam de revisão. "+
+         (result.hasMore?"O documento tem mais linhas que o limite desta análise.":""));
+       nextExtractedRow();
+     }catch(err){
+       go.disabled=false;go.textContent="Tentar análise novamente";
+       toast("Análise não concluída: "+(err.code||err.message||"erro"));
+     }
+   };
  }
  $("documentFile").onchange=filesPicked;$("photoFile").onchange=filesPicked;
  function talk(){
