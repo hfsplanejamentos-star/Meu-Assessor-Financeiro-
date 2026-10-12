@@ -310,15 +310,66 @@
    };
  }
  $("documentFile").onchange=filesPicked;$("photoFile").onchange=filesPicked;
+
+ async function recordVoiceFallback(){
+   if(session.recorder){
+     if(session.recorder.state!=="inactive")session.recorder.stop();
+     return;
+   }
+   if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==="undefined"||!api?.transcribeAudio){
+     toast("Gravação de áudio indisponível neste dispositivo.");
+     return;
+   }
+   let stream;
+   try{stream=await navigator.mediaDevices.getUserMedia({audio:true})}
+   catch{toast("Permissão do microfone não concedida.");return}
+   const mime=["audio/webm","audio/mp4","audio/ogg"].find(m=>MediaRecorder.isTypeSupported?.(m));
+   if(!mime){stream.getTracks().forEach(t=>t.stop());toast("Formato de áudio indisponível.");return}
+   const recorder=new MediaRecorder(stream,{mimeType:mime}),chunks=[];
+   session.recorder=recorder;
+   recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};
+   recorder.onerror=()=>toast("Erro durante a gravação do áudio.");
+   recorder.onstop=async()=>{
+     clearTimeout(session.voiceTimeout);
+     stream.getTracks().forEach(t=>t.stop());
+     session.recorder=null;$("voiceBtn").textContent="♩";
+     const blob=new Blob(chunks,{type:mime});
+     if(blob.size<32){toast("Áudio muito curto ou vazio.");return}
+     if(blob.size>4_000_000){toast("Áudio excedeu 4 MB. Grave uma mensagem mais curta.");return}
+     if(!window.confirm("Enviar este áudio ao serviço de IA para transcrição? Nenhuma despesa será lançada automaticamente.")){
+       toast("Áudio descartado sem envio.");return;
+     }
+     try{
+       toast("Transcrevendo áudio…");
+       const result=await api.transcribeAudio(blob);
+       $("messageInput").value=result.text;
+       switchView("chat");
+       toast("Áudio transcrito. Confira o texto e toque em Enviar.");
+     }catch(e){toast("Transcrição indisponível: "+(e.code||e.message||"erro"))}
+   };
+   try{
+     recorder.start();
+     $("voiceBtn").textContent="■";
+     toast("Gravando áudio. Toque novamente no microfone para finalizar (máximo 60 segundos).");
+     session.voiceTimeout=setTimeout(()=>{if(recorder.state!=="inactive")recorder.stop()},60000);
+   }catch{
+     session.recorder=null;
+     stream.getTracks().forEach(t=>t.stop());
+     toast("Não foi possível iniciar a gravação.");
+   }
+ }
  function talk(){
+   if(session.recorder){recordVoiceFallback();return}
    const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
-   if(!SpeechRecognition)return toast("Transcrição por voz indisponível neste navegador. A integração de áudio está pendente.");
+   if(!SpeechRecognition){recordVoiceFallback();return}
    if(session.recognition){session.recognition.stop();return}
    const r=new SpeechRecognition();r.lang="pt-BR";r.interimResults=false;
-   r.onresult=event=>{$("messageInput").value=event.results[0][0].transcript;toast("Texto transcrito. Confira e toque em enviar.")};
-   r.onerror=()=>toast("Áudio não transcrito. Verifique a permissão do microfone.");
+   r.onresult=event=>{$("messageInput").value=event.results[0][0].transcript;toast("Texto transcrito. Confira e toque em Enviar.")};
+   r.onerror=()=>toast("Não foi possível transcrever pelo navegador. Tente novamente ou use o anexo de áudio.");
    r.onend=()=>{session.recognition=null;$("voiceBtn").textContent="♩"};
-   session.recognition=r;try{r.start();$("voiceBtn").textContent="■";toast("Ouvindo…")}catch{session.recognition=null;toast("Microfone indisponível")}
+   session.recognition=r;
+   try{r.start();$("voiceBtn").textContent="■";toast("Ouvindo…")}
+   catch{session.recognition=null;recordVoiceFallback()}
  }
  $("voiceBtn").onclick=talk;$("chooseVoice").onclick=()=>{$("addDialog").close();switchView("chat");talk()};
  function settings(){$("settingsDialog").showModal()}
