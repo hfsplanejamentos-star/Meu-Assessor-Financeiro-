@@ -43,6 +43,27 @@ export const consumeRateLimit = internalMutation({
   },
 });
 
+
+/** Separate cost guard for media AI analysis and voice transcription.
+ * Uses the existing per-owner rate-limit table with an isolated namespace.
+ */
+export const consumeMediaRateLimit = internalMutation({
+ args:{ownerHash:v.string(),now:v.number()},
+ returns:v.object({allowed:v.boolean(),retryAfterMs:v.number()}),
+ handler:async(ctx,args)=>{
+  const ownerHash="assessor-media:"+args.ownerHash,windowMs=3_600_000,maxRequests=20;
+  const row=await ctx.db.query("notificationRateLimits").withIndex("by_owner",q=>q.eq("ownerHash",ownerHash)).unique();
+  if(!row||args.now-row.windowStartedAt>=windowMs){
+   if(row)await ctx.db.patch(row._id,{windowStartedAt:args.now,requestCount:1});
+   else await ctx.db.insert("notificationRateLimits",{ownerHash,windowStartedAt:args.now,requestCount:1});
+   return{allowed:true,retryAfterMs:0};
+  }
+  if(row.requestCount>=maxRequests)return{allowed:false,retryAfterMs:Math.max(1,windowMs-(args.now-row.windowStartedAt))};
+  await ctx.db.patch(row._id,{requestCount:row.requestCount+1});
+  return{allowed:true,retryAfterMs:0};
+ }
+});
+
 export const ingest = internalMutation({
   args: {
     ownerHash: v.string(),
