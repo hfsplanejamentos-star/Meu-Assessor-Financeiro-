@@ -217,7 +217,7 @@ http.route({path:"/assessor/analyze-attachment",method:"POST",handler:httpAction
  if(!hash)return json({ok:false,error:"invalid_sync_key"},401,headers);
  if(Number(req.headers.get("Content-Length")||0)>5_600_000)
   return json({ok:false,error:"attachment_size_limit"},413,headers);
- const rate=await ctx.runMutation(internal.notificationEvents.consumeRateLimit,{ownerHash:hash,now:Date.now()});
+ const rate=await ctx.runMutation(internal.notificationEvents.consumeMediaRateLimit,{ownerHash:hash,now:Date.now()});
  if(!rate.allowed)return json({ok:false,error:"rate_limited",retryAfterMs:rate.retryAfterMs},429,headers);
  let data:unknown;
  try{data=await req.json()}catch{return json({ok:false,error:"invalid_json"},400,headers)}
@@ -273,7 +273,7 @@ http.route({path:"/assessor/transcribe",method:"POST",handler:httpAction(async(c
  if(!hash)return json({ok:false,error:"invalid_sync_key"},401,headers);
  if(Number(req.headers.get("Content-Length")||0)>5_600_000)
   return json({ok:false,error:"audio_size_limit"},413,headers);
- const rate=await ctx.runMutation(internal.notificationEvents.consumeRateLimit,{ownerHash:hash,now:Date.now()});
+ const rate=await ctx.runMutation(internal.notificationEvents.consumeMediaRateLimit,{ownerHash:hash,now:Date.now()});
  if(!rate.allowed)return json({ok:false,error:"rate_limited",retryAfterMs:rate.retryAfterMs},429,headers);
  let raw:unknown;
  try{raw=await req.json()}catch{return json({ok:false,error:"invalid_json"},400,headers)}
