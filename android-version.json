@@ -1,6 +1,6 @@
 {
-  "versionCode": 21,
-  "versionName": "1.4.12",
-  "downloadUrl": "https://github.com/hfsplanejamentos-star/Meu-Assessor-Financeiro-/releases/latest",
-  "notes": "Versão de transição do Snake Finance para atualizações de interface sem reinstalar o APK."
+  "versionCode": 30,
+  "versionName": "1.5.6",
+  "downloadUrl": "https://github.com/hfsplanejamentos-star/Meu-Assessor-Financeiro-/releases/tag/v1.5.6",
+  "notes": "Snake Finance 1.5.6 Build 30. Verificação de atualizações a cada 6 horas; instalação de APK mediante confirmação do Android."
 }
