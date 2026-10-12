@@ -5,6 +5,8 @@
 type Item = Record<string, any>;
 type State = Record<string, any>;
 export type CarbonPreviewRequest={cardId:string;purchaseDate:string;totalCents:number;installments:number};
+export const CARBON_CLOSING_DAY=5;
+export const CARBON_DUE_DAY=7;
 const finiteCents=(n:unknown):number|null=>{
  if(typeof n!=="number"||!Number.isFinite(n))return null;
  const cents=Math.round(n*100);
@@ -38,13 +40,15 @@ export function previewCarbonInstallments(payload:unknown,request:CarbonPreviewR
  if(!card)return {ok:false as const,error:"card_not_found"};
  if(!/carbon/.test(norm(card.name))||/caju/.test(norm(card.name)))
   return {ok:false as const,error:"unsupported_card"};
- const closing=Number(card.closing),configuredDue=Number(card.due);
- // Refuse to change an existing conflicting rule without explicit approval.
- if(!Number.isInteger(closing)||closing<1||closing>31)
+ const configuredClosing=Number(card.closing),configuredDue=Number(card.due);
+ if(!Number.isInteger(configuredClosing)||configuredClosing<1||configuredClosing>31)
   return {ok:false as const,error:"closing_day_missing"};
- if(Number.isInteger(configuredDue)&&configuredDue>0&&configuredDue!==7)
+ if(configuredClosing!==CARBON_CLOSING_DAY)
+  return {ok:false as const,error:"carbon_closing_day_conflict",
+   configuredClosing,expectedClosing:CARBON_CLOSING_DAY};
+ if(Number.isInteger(configuredDue)&&configuredDue>0&&configuredDue!==CARBON_DUE_DAY)
   return {ok:false as const,error:"carbon_due_day_conflict",configuredDue};
- const due=7; // User-confirmed C6 Carbon vencimento dia 7.
+ const closing=CARBON_CLOSING_DAY,due=CARBON_DUE_DAY;
  const original=validDate(request.purchaseDate);
  if(!original)return {ok:false as const,error:"invalid_date"};
  if(!Number.isSafeInteger(request.totalCents)||request.totalCents<=0||request.totalCents>100_000_000_00)
@@ -144,16 +148,20 @@ export function previewCarbonInvoices(payload:unknown,cardId:string,startMonth:s
  const card=db.cards.find((c:Item)=>String(c.id)===cardId);
  if(!card||!/carbon/.test(norm(card.name))||/caju/.test(norm(card.name)))
   return{ok:false as const,error:"unsupported_card"};
- const closing=Number(card.closing),configuredDue=Number(card.due);
- if(!Number.isInteger(closing)||closing<1||closing>31)
+ const configuredClosing=Number(card.closing),configuredDue=Number(card.due);
+ if(!Number.isInteger(configuredClosing)||configuredClosing<1||configuredClosing>31)
   return{ok:false as const,error:"closing_day_missing"};
- if(Number.isInteger(configuredDue)&&configuredDue>0&&configuredDue!==7)
+ if(configuredClosing!==CARBON_CLOSING_DAY)
+  return{ok:false as const,error:"carbon_closing_day_conflict",
+   configuredClosing,expectedClosing:CARBON_CLOSING_DAY};
+ if(Number.isInteger(configuredDue)&&configuredDue>0&&configuredDue!==CARBON_DUE_DAY)
   return{ok:false as const,error:"carbon_due_day_conflict"};
+ const closing=CARBON_CLOSING_DAY;
  const [baseYear,baseMonth]=startMonth.split("-").map(Number);
  const cycles=[];
  for(let i=0;i<months;i++){
   const closingDate=monthDate(baseYear,baseMonth-1+i,closing);
-  const dueDate=monthDate(closingDate.getUTCFullYear(),closingDate.getUTCMonth()+(7<=closing?1:0),7);
+  const dueDate=monthDate(closingDate.getUTCFullYear(),closingDate.getUTCMonth()+(CARBON_DUE_DAY<=closing?1:0),CARBON_DUE_DAY);
   const key=dateISO(closingDate).slice(0,7);
   const cycle={invoiceMonth:key,closingDate:dateISO(closingDate),
    dueDate:dateISO(dueDate),dueMonth:dateISO(dueDate).slice(0,7),
