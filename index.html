@@ -2479,10 +2479,25 @@ function renderInvoiceManagement(){
 function ensureCajuMonthly(){return false}
 function enforceCleanRecurringOnly(){return false}
 window.enforceCleanRecurringOnly=enforceCleanRecurringOnly;
+/* Caju: nunca descarte dois pagamentos legítimos pelo mesmo valor/data/descrição.
+   Apenas IDs de origem iguais comprovam reimportação do mesmo registro. */
+function uniqueCajuTransactionRefs(rows){
+ const ids=new Set(),sources=new Set();
+ return rows.filter(t=>{
+   const id=t.id===undefined||t.id===null?'':String(t.id);
+   const src=t.androidNotificationId?'notification:'+String(t.androidNotificationId):
+     t.sourceId&&t.sourceType?String(t.sourceType)+':'+String(t.sourceId):
+     t.externalId?'external:'+String(t.androidPackage||'')+':'+String(t.externalId):'';
+   if((id&&ids.has(id))||(src&&sources.has(src)))return false;
+   if(id)ids.add(id);
+   if(src)sources.add(src);
+   return true;
+ });
+}
 function cajuSnapshot(cardId,key){
  const isCaju=t=>t.benefit===true||String(t.cardId||t.card||'')===String(cardId)||/caju/i.test([t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' '));
  const raw=(db.transactions||[]).filter(t=>isCaju(t)&&!['planned','planejada','planejado','prevista','previsto','ignored','cancelled','canceled'].includes(String(t.status||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase())&&!t.excludeFromBalance);
- const seen=new Set(),all=raw.filter(t=>{const sig=[String(t.date||'').slice(0,10),Number(t.value||0).toFixed(2),String(t.desc||t.description||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()].join('|');if(seen.has(sig))return false;seen.add(sig);return true});
+ const all=uniqueCajuTransactionRefs(raw);
  const configured=db.automationState?.cajuMonthlyTopups?.[key]??db.meta?.cajuRechargeByMonth?.[key];
  const recharge=Number(configured??(key==='2026-09'?1006.89:key==='2026-10'?(db.meta?.cajuOctoberCredit??1572.40):key>'2026-10'?1500:0));
  const spent=all.filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)<0).reduce((sum,t)=>sum+Math.abs(Number(t.value)||0),0);
@@ -2500,8 +2515,7 @@ function cajuBalanceAt(cardId,key){return cajuSnapshot(cardId,key).available}
 function cajuCapacityAt(cardId,key){return cajuSnapshot(cardId,key).credit}
 function cajuTxRows(key,negativeOnly=false){
  const card=(db.cards||[]).find(c=>String(c.id)==='card_caju_alimentacao'||/caju/i.test(String(c.name||'')));if(!card)return[];
- const seen=new Set();
- return (db.transactions||[]).filter(t=>{const ids=[t.cardId,t.card,t.account,t.accountId].map(String),txt=[t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' ').toLowerCase();return String(t.date||'').slice(0,7)===key&&!['planned','planejada','planejado','prevista','previsto','ignored','cancelled','canceled'].includes(String(t.status||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase())&&!t.excludeFromBalance&&(!negativeOnly||Number(t.value)<0)&&(ids.includes(String(card.id))||t.benefit===true||/caju/.test(txt))}).filter(t=>{const sig=[String(t.date||'').slice(0,10),Number(t.value||0).toFixed(2),String(t.desc||t.description||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()].join('|');if(seen.has(sig))return false;seen.add(sig);return true});
+ return uniqueCajuTransactionRefs((db.transactions||[]).filter(t=>{const ids=[t.cardId,t.card,t.account,t.accountId].map(String),txt=[t.origin,t.source,t.accountName,t.cardName,t.bank].filter(Boolean).join(' ').toLowerCase();return String(t.date||'').slice(0,7)===key&&!['planned','planejada','planejado','prevista','previsto','ignored','cancelled','canceled'].includes(String(t.status||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase())&&!t.excludeFromBalance&&(!negativeOnly||Number(t.value)<0)&&(ids.includes(String(card.id))||t.benefit===true||/caju/.test(txt))}));
 }
 function cajuNormalizedSub(t){
  const raw=String(t.sub||t.cat||'Alimentação').trim()||'Alimentação',desc=String(t.desc||t.description||'').toLowerCase(),rawKey=raw.toLowerCase();
