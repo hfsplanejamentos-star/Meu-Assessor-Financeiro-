@@ -474,6 +474,24 @@
  document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("selected",x===b));toast("Integração de agenda pendente.")});
  document.querySelector(".status span").textContent=new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
  session.month=today().slice(0,7);labelMonth();agendaDate();fillAccounts();
+ // Pull-to-refresh: gesture triggers a read-only cloud update, never a post.
+ let refreshTouchY=null,refreshTouchReady=false,refreshGestureBusy=false;
+ document.addEventListener("touchstart",event=>{
+   refreshTouchY=null;refreshTouchReady=false;
+   if(event.touches?.length!==1||document.querySelector('dialog[open]'))return;
+   if(event.target?.closest?.(".chat-scroll,.compose,.review,dialog,nav"))return;
+   if((document.scrollingElement?.scrollTop||0)>2)return;
+   refreshTouchY=event.touches[0].clientY;
+   refreshTouchReady=true;
+ },{passive:true});
+ document.addEventListener("touchend",async event=>{
+   if(!refreshTouchReady||refreshTouchY===null||refreshGestureBusy)return;
+   refreshTouchReady=false;
+   const endY=event.changedTouches?.[0]?.clientY;
+   if(typeof endY!=="number"||endY-refreshTouchY<90)return;
+   refreshGestureBusy=true;
+   try{await refreshState()}finally{refreshGestureBusy=false}
+ },{passive:true});
  // Read-only operation: never create, confirm or post a draft on startup.
  if(api)refreshState();
 })();
