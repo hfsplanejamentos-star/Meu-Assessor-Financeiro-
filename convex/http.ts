@@ -163,7 +163,7 @@ http.route({path:"/assessor/drafts",method:"POST",handler:httpAction(async(ctx,r
  const headers=secureCors(req),hash=await ownerHash(req);
  if(!hash)return json({ok:false,error:"invalid_sync_key"},401,headers);
  let body:any;try{body=await req.json()}catch{return json({ok:false,error:"invalid_json"},400,headers)}
- if(!body||typeof body!=="object"||!["chat","notification","voice","image","pdf"].includes(body.sourceType)||!["expense","income"].includes(body.direction)||typeof body.draftId!=="string"||body.draftId.length<8||body.draftId.length>128||typeof body.amountCents!=="number"||!Number.isSafeInteger(body.amountCents)||body.amountCents<=0||typeof body.account!=="string"||typeof body.category!=="string"||typeof body.description!=="string"||typeof body.date!=="string")return json({ok:false,error:"invalid_draft"},400,headers);
+ if(!body||typeof body!=="object"||!["chat","notification","voice","image","pdf","statement"].includes(body.sourceType)||!["expense","income"].includes(body.direction)||typeof body.draftId!=="string"||body.draftId.length<8||body.draftId.length>128||typeof body.amountCents!=="number"||!Number.isSafeInteger(body.amountCents)||body.amountCents<=0||typeof body.account!=="string"||typeof body.category!=="string"||typeof body.description!=="string"||typeof body.date!=="string")return json({ok:false,error:"invalid_draft"},400,headers);
  const result=await ctx.runMutation(internal.assessorDrafts.prepare,{ownerHash:hash,draftId:body.draftId,sourceType:body.sourceType,sourceId:typeof body.sourceId==="string"?body.sourceId:undefined,amountCents:body.amountCents,direction:body.direction,account:body.account,transactionType:typeof body.transactionType==="string"?body.transactionType:undefined,counterparty:typeof body.counterparty==="string"?body.counterparty:undefined,category:body.category,subcategory:typeof body.subcategory==="string"?body.subcategory:undefined,description:body.description,date:body.date});
  return json({ok:true,...result},200,headers);
 })});
@@ -258,7 +258,7 @@ http.route({path:"/assessor/analyze-attachment",method:"POST",handler:httpAction
   const raw=String(result?.output_text || result?.output?.flatMap((i:any)=>i.content||[]).map((i:any)=>i.text||"").join("")||"");
   const parsed=parseAttachmentOutput(raw);
   if(!parsed.ok)return json({ok:false,error:parsed.error},422,headers);
-  return json({ok:true,sourceType:format==="pdf"?"pdf":format==="image"?"image":"pdf",
+  return json({ok:true,sourceType:format==="pdf"?"pdf":format==="image"?"image":"statement",
    fileName:file.name,items:parsed.items.map((row,i)=>({...row,sourceId:sourceHash.slice(0,48)+":"+i})),
    warnings:parsed.warnings,hasMore:parsed.hasMore,reviewRequired:true,financeStateUpdated:false},200,headers);
  }catch{return json({ok:false,error:"analysis_failed"},502,headers)}
