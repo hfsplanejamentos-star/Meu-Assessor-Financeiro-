@@ -91,8 +91,23 @@ public final class MainActivity extends Activity {
         FrameLayout splash = new FrameLayout(this);
         splash.setBackgroundColor(Color.BLACK);
         startupSplash = splash;
+        // Use the exact user-approved JPG when packaged in assets. Never crop or redraw it.
+        // Legacy canvas is retained only for builds where the asset is not yet present.
+        try {
+            android.graphics.Bitmap splashBitmap = android.graphics.BitmapFactory.decodeStream(
+                getAssets().open("snake_splash_aprovada.jpg"));
+            if (splashBitmap != null) {
+                ImageView approvedSplash = new ImageView(this);
+                approvedSplash.setImageBitmap(splashBitmap);
+                approvedSplash.setBackgroundColor(Color.BLACK);
+                approvedSplash.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                splash.addView(approvedSplash, new FrameLayout.LayoutParams(-1, -1));
+            }
+        } catch (java.io.IOException missingApprovedSplash) {
+            // An absent asset must not crash app startup.
+        }
         // Approved black/gold splash: centered ribbon S, rising bars, two-tone title and waves.
-        splash.addView(new View(this) {
+        if (splash.getChildCount() == 0) splash.addView(new View(this) {
             final android.graphics.Paint paint = new android.graphics.Paint(3);
             @Override protected void onDraw(android.graphics.Canvas canvas) {
                 super.onDraw(canvas);
