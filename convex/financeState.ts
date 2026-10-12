@@ -1,5 +1,6 @@
 import { internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
+import { planCarbonConfigRepair } from "./assessorCarbonRepair";
 
 export const get = internalQuery({
   args: { ownerKey: v.string() },
@@ -55,4 +56,32 @@ export const reset = internalMutation({
     else await ctx.db.insert("financeState", { ownerKey: args.ownerKey, payload: args.emptyPayload, version, updatedAt, deviceId: args.deviceId });
     return { ok: true, version, updatedAt };
   },
+});
+
+
+/**
+ * Explicit, version-checked repair of Carbon card SETTINGS ONLY.
+ * Do not allow it when transactions or saved invoices refer to that card.
+ */
+export const repairCarbonConfig = internalMutation({
+ args:{ownerKey:v.string(),cardId:v.string(),baseVersion:v.number()},
+ handler:async(ctx,args)=>{
+  if(!Number.isSafeInteger(args.baseVersion)||args.baseVersion<0)
+   return{ok:false,error:"invalid_base_version",financeStateUpdated:false};
+  const state=await ctx.db.query("financeState").withIndex("by_owner",q=>q.eq("ownerKey",args.ownerKey)).unique();
+  if(!state)return{ok:false,error:"finance_state_missing",financeStateUpdated:false};
+  if(state.version!==args.baseVersion)
+   return{ok:false,error:"version_conflict",version:state.version,financeStateUpdated:false};
+  const updatedAt=Date.now();
+  const plan=planCarbonConfigRepair(state.payload,args.cardId,new Date(updatedAt).toISOString());
+  if(!plan.ok)return{ok:false,error:plan.error,report:plan.report,
+   version:state.version,financeStateUpdated:false};
+  if(!plan.updated)return{ok:true,alreadyAligned:true,version:state.version,financeStateUpdated:false};
+  const version=state.version+1;
+  await ctx.db.patch(state._id,{
+   payload:plan.payload,version,updatedAt,deviceId:"assessor-ia-carbon-config"
+  });
+  return{ok:true,alreadyAligned:false,version,financeStateUpdated:true,
+   cardId:args.cardId,closing:5,due:7};
+ }
 });
