@@ -22,4 +22,14 @@ const cajuRows=html.slice(html.indexOf("function cajuTxRows("),html.indexOf("fun
 assert(snapshot.includes("uniqueCajuTransactionRefs(raw)"),"monthly Caju snapshot must use source IDs");
 assert(cajuRows.includes("return uniqueCajuTransactionRefs("),"category rows must use same dedup");
 assert(!snapshot.includes("Number(t.value||0).toFixed(2)")&&!cajuRows.includes("Number(t.value||0).toFixed(2)"),"no value-based Caju dedup");
+const rechargeStart=snapshot.indexOf("const isCajuRecharge=");
+const rechargeEnd=snapshot.indexOf("const refunds=",rechargeStart);
+assert(rechargeStart>=0&&rechargeEnd>rechargeStart,"recharge guard must exist");
+const isCajuRecharge=new Function(snapshot.slice(rechargeStart,rechargeEnd)+";return isCajuRecharge;")();
+assert(isCajuRecharge({desc:"Recarga Caju Outubro"}));
+assert(isCajuRecharge({sub:"Crédito benefício"}));
+assert(isCajuRecharge({description:"Caju Benefícios"}));
+assert(!isCajuRecharge({desc:"Estorno de compra no mercado"}));
+assert(!isCajuRecharge({desc:"Pix recebido"}));
+assert(snapshot.includes("!isCajuRecharge(t)"),"recharges should not be counted as refunds");
 console.log("Legacy Caju: distinct equal amounts preserved, duplicate source collapsed, snapshot/chart share rule");
