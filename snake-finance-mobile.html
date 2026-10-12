@@ -1760,8 +1760,8 @@ function carbonInvoiceMonth(date){const ym=date.slice(0,7),day=Number(date.slice
 function addInvoiceMonths(ym,n){const [year,month]=ym.split('-').map(Number);return new Date(Date.UTC(year,month-1+n,1)).toISOString().slice(0,7);}
 
 function saveAdd(tipo){
- const nome=$('an').value.trim(),raw=$('av').value.trim().replace(/\\./g,'').replace(',','.'),valor=Math.round(Number(raw)*100),dia=$('ad').value,a=$('aa').value,s2=$('as2').value;
- if(!nome||!Number.isSafeInteger(valor)||valor<=0||!/^\\d{4}-\\d{2}-\\d{2}$/.test(dia)||!validISO(dia)){alert('Informe descrição, valor e data válidos.');return;}
+ const nome=$('an').value.trim(),raw=$('av').value.trim().replace(/\./g,'').replace(',','.'),valor=Math.round(Number(raw)*100),dia=$('ad').value,a=$('aa').value,s2=$('as2').value;
+ if(!nome||!Number.isSafeInteger(valor)||valor<=0||!/^\d{4}-\d{2}-\d{2}$/.test(dia)||!validISO(dia)){alert('Informe descrição, valor e data válidos.');return;}
  const carbon=tipo==='d'&&a==='carbon';
  const count=carbon?Number($('carbonInstallments').value):1;
  if(!Number.isSafeInteger(count)||count<1||count>120||valor<count){alert('Confira as parcelas: de 1 a 120, com valor mínimo de R$ 0,01 por parcela.');return;}
@@ -1776,7 +1776,7 @@ function saveAdd(tipo){
  });
  L.push(...entries);NID=nextId();
  if(!persistLedger()){L=before;NID=oldId;return;}
- YM=firstMonth;SEL=dia;MD=0;v65CloseQuick();$('md').style.display='none';TOAST=carbon?'Compra no Carbon registrada em '+count+' parcela(s) · '+brl(valor):nome+' incluído · '+brl(valor);draw();
+ YM=firstMonth;SEL=carbon?firstMonth+'-01':dia;MD=0;v65CloseQuick();$('md').style.display='none';TOAST=carbon?'Compra no Carbon registrada em '+count+' parcela(s) · '+brl(valor):nome+' incluído · '+brl(valor);draw();
 }
 
 document.addEventListener('keydown',e=>{if(e.key=='Escape')closeDay();});
