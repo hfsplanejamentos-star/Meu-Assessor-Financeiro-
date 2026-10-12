@@ -4,7 +4,7 @@ import { internal } from "./_generated/api";
 import { classifyByRules, redactForAi, type Classification, type Direction } from "./notificationClassifier";
 import { validateAttachment, parseAttachmentOutput } from "./assessorAttachment";
 import { validateAudio } from "./assessorAudio";
-import { previewCarbonInstallments, previewCajuMonth } from "./assessorProjection";
+import { previewCarbonInstallments, previewCajuMonth, previewCarbonInvoices } from "./assessorProjection";
 
 const http = httpRouter();
 const legacyCors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type, X-Sync-Key", "Access-Control-Allow-Methods": "GET, POST, OPTIONS" };
@@ -333,4 +333,23 @@ http.route({path:"/assessor/caju-preview",method:"GET",handler:httpAction(async(
 http.route({path:"/assessor/caju-preview",method:"OPTIONS",handler:httpAction(async(_ctx,req)=>
  new Response(null,{status:204,headers:secureCors(req)}))});
 
+
+/** Existing Carbon invoices and future commitments, READ-ONLY. */
+http.route({path:"/assessor/invoices",method:"OPTIONS",handler:httpAction(async(_ctx,req)=>
+ new Response(null,{status:204,headers:secureCors(req)}))});
+http.route({path:"/assessor/invoices",method:"GET",handler:httpAction(async(ctx,req)=>{
+ const headers=secureCors(req),hash=await ownerHash(req);
+ if(!hash)return json({ok:false,error:"invalid_sync_key"},401,headers);
+ const params=new URL(req.url).searchParams;
+ const cardId=params.get("cardId")||"";
+ const month=params.get("month")||"";
+ const countString=params.get("count")||"6";
+ if(cardId.length<1||cardId.length>128||!/^([1-9]|1\d|2[0-4])$/.test(countString)||
+   !/^\d{4}-(0[1-9]|1[0-2])$/.test(month))
+  return json({ok:false,error:"invalid_invoice_query"},400,headers);
+ const state=await ctx.runQuery(internal.financeState.get,{ownerKey:syncKey(req)});
+ if(!state)return json({ok:false,error:"finance_state_missing"},404,headers);
+ const result=previewCarbonInvoices(state.payload,cardId,month,Number(countString));
+ return json({...result,financeStateVersion:state.version},result.ok?200:422,headers);
+})});
 export default http;
