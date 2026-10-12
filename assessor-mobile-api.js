@@ -100,12 +100,28 @@
     return request("/assessor/analyze-attachment",{method:"POST",body:{name:file.name,mimeType,base64}});
   }
 
+
+  async function transcribeAudio(blob) {
+    if (!blob || typeof blob.size!=="number" || blob.size<32 || blob.size>4_000_000)
+      throw new Error("audio_size_limit");
+    const mimeType=String(blob.type||"").split(";")[0].toLowerCase();
+    if (!["audio/webm","audio/ogg","audio/mpeg","audio/mp3","audio/wav","audio/x-wav","audio/mp4"].includes(mimeType))
+      throw new Error("unsupported_audio_type");
+    const base64=await new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=()=>resolve(String(reader.result||"").split(",")[1]||"");
+      reader.onerror=()=>reject(new Error("audio_read_failed"));
+      reader.readAsDataURL(blob);
+    });
+    return request("/assessor/transcribe",{method:"POST",body:{mimeType,base64}});
+  }
+
   const listPending = () => request("/assessor/drafts?status=pending");
   const listConfirmed = () => request("/assessor/drafts?status=confirmed");
   const reconciliation = () => request("/assessor/reconciliation");
 
   root.SnakeAssessorApi = Object.freeze({
     newDraftId,prepare,confirm,reject,postCash,confirmCash,
-    readFinanceState,interpretText,analyzeAttachment,listPending,listConfirmed,reconciliation,
+    readFinanceState,interpretText,analyzeAttachment,transcribeAudio,listPending,listConfirmed,reconciliation,
   });
 })(window);
