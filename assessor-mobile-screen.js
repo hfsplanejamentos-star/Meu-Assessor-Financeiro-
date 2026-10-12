@@ -274,7 +274,8 @@
        result.transactions+" compras, "+result.invoices+" faturas armazenadas, "+
        result.cycleMismatch+" diferenças de ciclo, "+result.missingInvoiceMonth+
        " compras sem mês de fatura explícito e "+result.paidInvoices+
-       " faturas pagas. Nenhum dado foi modificado.");
+       " faturas pagas e "+(result.linkedRecurring||0)+
+       " recorrências vinculadas. Nenhum dado foi modificado.");
      if(!result.safeMetadataOnly){
        eventRow("O cartão possui histórico. Por segurança, não alterarei o fechamento/vencimento automaticamente. É necessária conciliação das faturas antigas.");
        return;
