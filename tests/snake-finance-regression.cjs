@@ -194,3 +194,24 @@ console.log('PASS Snake Finance: persistence failures, recurring effective/undo,
  assert.equal(closed,1,'failed transaction must not close as success');
 }
 console.log('PASS Snake Finance: recurring actualization, undo, persistence and rollback on storage failure');
+
+
+/* C6 Carbon invoice cycle: closes on day 5, due on day 7; installments span future months. */
+{
+ const env={Date,Math};vm.createContext(env);
+ vm.runInContext(extract('function carbonInvoiceMonth(','function saveAdd(tipo){'),env);
+ assert.equal(env.carbonInvoiceMonth('2026-10-04'),'2026-10');
+ assert.equal(env.carbonInvoiceMonth('2026-10-05'),'2026-11');
+ assert.equal(env.carbonInvoiceMonth('2026-10-12'),'2026-11');
+ assert.equal(env.carbonInvoiceMonth('2026-12-31'),'2027-01');
+ assert.equal(env.addInvoiceMonths('2026-11',1),'2026-12');
+ assert.equal(env.addInvoiceMonths('2026-11',2),'2027-01');
+ const cents=10001,count=3,base=Math.floor(cents/count),extra=cents%count;
+ const shares=Array.from({length:count},(_,i)=>base+(i<extra?1:0));
+ assert.equal(shares.reduce((a,b)=>a+b,0),cents);
+ assert.deepEqual(shares,[3334,3334,3333]);
+ assert.match(html,/invoiceDue=addInvoiceMonths\(firstMonth,i\)\+'-07'/);
+ assert.match(html,/installmentIndex=i\+1/);
+ assert.match(html,/const carbon=tipo==='d'&&a==='carbon'/);
+}
+console.log('PASS Snake Finance: Carbon billing cycle, installments and cent rounding');
