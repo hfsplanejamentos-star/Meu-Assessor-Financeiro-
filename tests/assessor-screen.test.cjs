@@ -32,7 +32,7 @@ class El{
 function Option(text,value){this.textContent=text;this.value=value}
 async function scenario(accountType,duplicate=false){
  const elements=new Map(),get=id=>{if(!elements.has(id))elements.set(id,new El());return elements.get(id)};
- const document={getElementById:get,createElement:t=>new El(t),querySelectorAll:()=>[],querySelector:()=>new El()};
+ const document={getElementById:get,createElement:t=>new El(t),querySelectorAll:()=>[],querySelector:()=>new El(),addEventListener:()=>{}};
  const localStorage={getItem:()=>null,setItem:()=>{}};
  let prepares=0,posts=0,reads=0;
  const account={id:accountType==="Benefício"?"caju":"c6",name:accountType==="Benefício"?"Caju Alimentação":"C6 Conta Corrente",type:accountType,balance:500};
