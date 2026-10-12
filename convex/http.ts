@@ -5,6 +5,7 @@ import { classifyByRules, redactForAi, type Classification, type Direction } fro
 import { validateAttachment, parseAttachmentOutput } from "./assessorAttachment";
 import { validateAudio } from "./assessorAudio";
 import { previewCarbonInstallments, previewCajuMonth, previewCarbonInvoices } from "./assessorProjection";
+import { auditCarbonConfiguration } from "./assessorCarbonAudit";
 
 const http = httpRouter();
 const legacyCors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type, X-Sync-Key", "Access-Control-Allow-Methods": "GET, POST, OPTIONS" };
@@ -352,4 +353,19 @@ http.route({path:"/assessor/invoices",method:"GET",handler:httpAction(async(ctx,
  const result=previewCarbonInvoices(state.payload,cardId,month,Number(countString));
  return json({...result,financeStateVersion:state.version},result.ok?200:422,headers);
 })});
+
+/** Inspect mismatched Carbon 5/7 configuration and legacy invoices; NEVER change them. */
+http.route({path:"/assessor/carbon-audit",method:"OPTIONS",handler:httpAction(async(_ctx,req)=>
+ new Response(null,{status:204,headers:secureCors(req)}))});
+http.route({path:"/assessor/carbon-audit",method:"GET",handler:httpAction(async(ctx,req)=>{
+ const headers=secureCors(req),hash=await ownerHash(req);
+ if(!hash)return json({ok:false,error:"invalid_sync_key"},401,headers);
+ const cardId=new URL(req.url).searchParams.get("cardId")||"";
+ if(!cardId||cardId.length>128)return json({ok:false,error:"invalid_card_id"},400,headers);
+ const state=await ctx.runQuery(internal.financeState.get,{ownerKey:syncKey(req)});
+ if(!state)return json({ok:false,error:"finance_state_missing"},404,headers);
+ const audit=auditCarbonConfiguration(state.payload,cardId);
+ return json({...audit,financeStateVersion:state.version},audit.ok?200:422,headers);
+})});
+
 export default http;
