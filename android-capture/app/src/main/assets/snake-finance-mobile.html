@@ -1355,7 +1355,34 @@ function openLanc(id){
  x.a=$('lx_a').value;x.s=$('lx_s').value;
  persistLedger();closeDay();draw();
 }
-function openAccount(a){detailModal((AC[a]?.[0]||a)+' · lançamentos',ML().filter(x=>x.a===a))}
+function openAccount(a){
+ const cutoff=lastMonthDay(YM);
+ // Account balances and credit limits are cumulative; show the transactions that
+ // formed the balance, not only transactions booked in the selected month.
+ const items=L.filter(x=>x.a===a&&validISO(x.d)&&x.d<=cutoff);
+ const title=(AC[a]?.[0]||a)+' · histórico até '+monthName(YM);
+ detailModal(title,items);
+ if(a==='carbon'){
+  const cfg=ALERT_CFG.carbon,used=creditUsed(alertRef(YM),cfg);
+  const header=$('md')?.querySelector('.mc .sp');
+  if(header){
+   const note=document.createElement('p');
+   note.className='m';
+   note.style.cssText='margin:8px 0 12px;line-height:1.5';
+   note.textContent='Limite: '+brs(cfg.limit*100)+' · Em uso: '+brs(used)+' · Disponível: '+brs(Math.max(0,cfg.limit*100-used))+' · Saldo inicial em uso: '+brs(Math.round(cfg.opening*100))+'. O saldo inicial não é um lançamento.';
+   header.insertAdjacentElement('afterend',note);
+  }
+ }
+ if(a==='caju'){
+  const header=$('md')?.querySelector('.mc .sp');
+  if(header){
+   const note=document.createElement('p');note.className='m';
+   note.style.cssText='margin:8px 0 12px;line-height:1.5';
+   note.textContent='Saldo calculado até '+cutoff+': '+brs(accountBalance('caju',cutoff))+'. Confira recargas, reembolsos e saldo inicial; não aplique correção manual sem extrato.';
+   header.insertAdjacentElement('afterend',note);
+  }
+ }
+}
 function openType(t,title){detailModal(title,ML().filter(x=>x.t===t))}
 function openPending(){detailModal('A pagar',ML().filter(x=>(x.t==='d'||x.t==='t')&&x.s==='p'))}
 function openEfet(id){const x=L.find(y=>y.id==id);MD='efet';$('md').style.display='flex';$('md').innerHTML=`<div class="mc"><div class="sp"><div><p class="h" style="font-size:1.2em">Efetivar recorrência</p><p class="m">${escapeHTML(x.n)}</p></div><button class="bt" onclick="closeDay()">Fechar</button></div><div class="fm"><label>Valor pago (R$)<input id="ev" inputmode="decimal" value="${(x.v/100).toFixed(2).replace('.',',')}"></label><label>Data de pagamento<input id="ed" type="number" min="1" max="31" value="${HJ}"></label><label>Conta / cartão<select id="ea"><option value="c6" ${x.a=='c6'?'selected':''}>C6</option><option value="caju" ${x.a=='caju'?'selected':''}>Caju</option><option value="carbon" ${x.a=='carbon'?'selected':''}>C6 Carbon</option></select></label><button class="bt p" onclick="confirmEfet(${id})">Confirmar efetivação</button></div></div>`;}
