@@ -35,7 +35,11 @@ export function auditCarbonConfiguration(payload:unknown,cardId:string){
  const validClosing=Number.isInteger(configuredClosing)&&configuredClosing>=1&&configuredClosing<=31;
  const validDue=Number.isInteger(configuredDue)&&configuredDue>=1&&configuredDue<=31;
  const configAligned=validClosing&&validDue&&configuredClosing===CARBON_CLOSING_DAY&&configuredDue===CARBON_DUE_DAY;
+ if(payload.recurring!==undefined&&!Array.isArray(payload.recurring))
+  return {ok:false as const,error:"invalid_recurring_history"};
  const invoices=Array.isArray(payload.invoices)?payload.invoices.filter((i:unknown)=>isRow(i)&&String(i.cardId)===cardId):[];
+ const linkedRecurring=Array.isArray(payload.recurring)?payload.recurring.filter((item:unknown)=>isRow(item)&&
+  [item.card,item.cardId,item.account,item.accountId].some(id=>id!==undefined&&id!==null&&String(id)===cardId)).length:0;
  const affected:Row[]=[];
  let transactions=0,missingInvoiceMonth=0,cycleMismatch=0,invalidDates=0,explicitPreserved=0;
  for(const t of payload.transactions) {
@@ -70,7 +74,7 @@ export function auditCarbonConfiguration(payload:unknown,cardId:string){
  const riskCount=cycleMismatch+invalidDates+dueDateConflicts;
  // Only metadata can be safely changed automatically when no history exists.
  // Paid/closed invoices may be contractually final and must not be rewritten.
- const safeMetadataOnly=!transactions&&!invoices.length;
+ const safeMetadataOnly=!transactions&&!invoices.length&&!linkedRecurring;
  const status=configAligned?(riskCount>0?"aligned_with_history_warnings":"aligned"):
   safeMetadataOnly?"safe_metadata_only":"manual_reconciliation_required";
  return {
@@ -81,7 +85,7 @@ export function auditCarbonConfiguration(payload:unknown,cardId:string){
   status,configAligned,safeMetadataOnly,
   mustReviewBeforeChanging:!configAligned&&!safeMetadataOnly,
   transactions,missingInvoiceMonth,explicitPreserved,cycleMismatch,invalidDates,
-  invoices:invoices.length,paidInvoices,closedInvoices,dueDateConflicts,
+  invoices:invoices.length,paidInvoices,closedInvoices,dueDateConflicts,linkedRecurring,
   riskCount,affected,
   guidance:configAligned?
    (riskCount>0?
@@ -89,6 +93,6 @@ export function auditCarbonConfiguration(payload:unknown,cardId:string){
      "O cadastro já corresponde ao fechamento dia 5 e vencimento dia 7."):
    safeMetadataOnly?
    "Sem histórico do cartão: a atualização dos metadados pode ser proposta para confirmação.":
-   "Há histórico de faturas ou compras. Conciliar antes de mudar o cadastro; não alterar meses nem pagamentos automaticamente."
+   "Há histórico de faturas, compras ou recorrências. Conciliar antes de mudar o cadastro; não alterar meses nem pagamentos automaticamente."
  };
 }
