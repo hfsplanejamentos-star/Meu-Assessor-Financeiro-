@@ -132,15 +132,16 @@ public final class MainActivity extends Activity {
         // Keep Android status/navigation bars outside the WebView content area.
         // This prevents the status clock and icons from overlapping the dashboard header.
         if (Build.VERSION.SDK_INT >= 35) {
-            getWindow().getDecorView().setOnApplyWindowInsetsListener((view, insets) -> {
+            root.setOnApplyWindowInsetsListener((view, insets) -> {
                 android.graphics.Insets bars = insets.getInsets(
                         android.view.WindowInsets.Type.statusBars()
                                 | android.view.WindowInsets.Type.navigationBars());
-                root.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+                view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
                 return insets;
             });
         }
         setContentView(root);
+        if (Build.VERSION.SDK_INT >= 35) root.requestApplyInsets();
         webView.setVisibility(View.INVISIBLE);
         pendingState = state;
 
