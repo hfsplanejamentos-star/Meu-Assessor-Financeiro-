@@ -164,7 +164,7 @@ export function previewCarbonInvoices(payload:unknown,cardId:string,startMonth:s
  const seenIDs=new Set<string>(),seenSources=new Set<string>();
  for(const t of db.transactions){
   if(!t||typeof t!=="object")continue;
-  if(String(t.card||t.cardId||t.account||"")!==cardId)continue;
+  if(![t.card,t.cardId,t.account].some(id=>id!==undefined&&id!==null&&String(id)===cardId))continue;
   if(t.invoicePayment||t.cardPayment||t.kind==="invoice_payment"||t.transfer)continue;
   const status=norm(t.status||"realized");
   if(["cancelled","canceled","cancelado","rejected","ignored"].includes(status))continue;
