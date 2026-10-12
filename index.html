@@ -1832,7 +1832,7 @@ function transactionsForMonth(key=activeMonth){return (db.transactions||[]).filt
 const STORAGE='assessor_v180_simulacao_ficticia';
 const seed={
  accounts:[{id:'c6',name:'C6 Conta Corrente',type:'Conta corrente',balance:7280.32},{id:'btg',name:'BTG Investimentos',type:'Investimento',balance:32800},{id:'wallet',name:'Carteira',type:'Dinheiro',balance:350}],
- cards:[{id:'c6card',name:'C6 Carbon',type:'Crédito',used:2350.70,limit:12000,due:25},{id:'nu',name:'Nubank',type:'Crédito',used:1280.50,limit:7000,due:3}],
+ cards:[{id:'c6card',name:'C6 Carbon',type:'Crédito',used:2350.70,limit:12000,closing:5,due:7},{id:'nu',name:'Nubank',type:'Crédito',used:1280.50,limit:7000,due:3}],
  categories:[
   {name:'Moradia',icon:'🏠',subs:['Aluguel','Internet','Energia','Água']},
   {name:'Alimentação',icon:'🛒',subs:['Mercado','Restaurante','Delivery']},
