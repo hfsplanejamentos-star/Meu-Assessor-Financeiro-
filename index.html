@@ -2501,7 +2501,9 @@ function cajuSnapshot(cardId,key){
  const configured=db.automationState?.cajuMonthlyTopups?.[key]??db.meta?.cajuRechargeByMonth?.[key];
  const recharge=Number(configured??(key==='2026-09'?1006.89:key==='2026-10'?(db.meta?.cajuOctoberCredit??1572.40):key>'2026-10'?1500:0));
  const spent=all.filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)<0).reduce((sum,t)=>sum+Math.abs(Number(t.value)||0),0);
- const refunds=all.filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)>0&&!/crédito benefício|caju benefícios/i.test(String(t.sub||t.desc||''))).reduce((sum,t)=>sum+Number(t.value||0),0);
+ const isCajuRecharge=t=>/recarga|credito beneficio|caju beneficios|carga de beneficio|benefit[_ -]?topup/i.test(
+   String([t.sub,t.desc,t.description,t.kind].filter(Boolean).join(' ')).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase());
+ const refunds=all.filter(t=>String(t.date||'').slice(0,7)===key&&Number(t.value)>0&&!isCajuRecharge(t)).reduce((sum,t)=>sum+Number(t.value||0),0);
  let previous=0;
  if(key==='2026-10')previous=Number(db.meta?.cajuStatementAvailable??db.meta?.cajuLatestReportedBalance??1419.88);
  else if(key>'2026-10'){const [yy,mm]=key.split('-').map(Number),date=new Date(yy,mm-2,1),prevKey=date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0');previous=cajuSnapshot(cardId,prevKey).available}
