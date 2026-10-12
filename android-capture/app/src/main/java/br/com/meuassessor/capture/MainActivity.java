@@ -92,7 +92,7 @@ public final class MainActivity extends Activity {
         splash.setBackgroundColor(Color.BLACK);
         startupSplash = splash;
         // Use the exact user-approved JPG when packaged in assets. Never crop or redraw it.
-        // Legacy canvas is retained only for builds where the asset is not yet present.
+        // No alternative splash image or generated logo is permitted.
         try {
             android.graphics.Bitmap splashBitmap = android.graphics.BitmapFactory.decodeStream(
                 getAssets().open("snake_splash_aprovada.jpg"));
@@ -106,73 +106,6 @@ public final class MainActivity extends Activity {
         } catch (java.io.IOException missingApprovedSplash) {
             // An absent asset must not crash app startup.
         }
-        // Approved black/gold splash: centered ribbon S, rising bars, two-tone title and waves.
-        if (splash.getChildCount() == 0) splash.addView(new View(this) {
-            final android.graphics.Paint paint = new android.graphics.Paint(3);
-            @Override protected void onDraw(android.graphics.Canvas canvas) {
-                super.onDraw(canvas);
-                float w=getWidth(), h=getHeight(), cx=w/2f;
-                float scale=Math.min(w/390f,h/820f);
-                canvas.drawColor(Color.BLACK);
-                canvas.save();
-                canvas.translate(cx,h*.405f);
-                canvas.scale(scale,scale);
-                paint.setStyle(android.graphics.Paint.Style.FILL);
-                paint.setShader(new android.graphics.LinearGradient(-100,-105,100,110,
-                    new int[]{0xff99631e,0xffffe9a6,0xffb77823,0xffffdb83},null,
-                    android.graphics.Shader.TileMode.CLAMP));
-                // Ribbon S silhouette, rather than a plain font glyph.
-                android.graphics.Path ribbon=new android.graphics.Path();
-                ribbon.moveTo(75,-112);
-                ribbon.cubicTo(10,-158,-92,-125,-91,-63);
-                ribbon.cubicTo(-93,-13,44,-14,52,33);
-                ribbon.cubicTo(58,62,18,76,-33,95);
-                ribbon.lineTo(-33,119);
-                ribbon.cubicTo(47,103,99,63,93,19);
-                ribbon.cubicTo(87,-31,-42,-44,-46,-70);
-                ribbon.cubicTo(-51,-91,9,-101,75,-90);
-                ribbon.close();
-                canvas.drawPath(ribbon,paint);
-                for(int n=0;n<3;n++) {
-                    float left=-114+n*21;
-                    float top=93-(n*18);
-                    canvas.drawRoundRect(left,top,left+15,120,4,4,paint);
-                }
-                paint.setShader(null);
-                canvas.restore();
-                float titleY=h*.585f;
-                paint.setTypeface(android.graphics.Typeface.create("sans-serif",android.graphics.Typeface.BOLD));
-                paint.setTextSize(30*scale);
-                paint.setTextAlign(android.graphics.Paint.Align.LEFT);
-                float aWidth=paint.measureText("SNAKE ");
-                float bWidth=paint.measureText("FINANCE");
-                float left=(w-aWidth-bWidth)/2;
-                paint.setColor(Color.WHITE);canvas.drawText("SNAKE ",left,titleY,paint);
-                paint.setColor(0xffd3a048);canvas.drawText("FINANCE",left+aWidth,titleY,paint);
-                paint.setTextAlign(android.graphics.Paint.Align.CENTER);
-                paint.setTextSize(12*scale);
-                paint.setTypeface(android.graphics.Typeface.create("sans-serif-medium",android.graphics.Typeface.NORMAL));
-                paint.setColor(0xffd6d1c7);
-                canvas.drawText("A S S E S S O R   F I N A N C E I R O   I A",cx,titleY+29*scale,paint);
-                paint.setStyle(android.graphics.Paint.Style.STROKE);
-                paint.setStrokeWidth(1.6f*scale);
-                for(int j=0;j<9;j++){
-                    paint.setColor(j%2==0?0xffa77a31:0xff60421c);
-                    android.graphics.Path wave=new android.graphics.Path();
-                    float y=h*(.83f+j*.012f);
-                    wave.moveTo(0,y+22*scale);
-                    wave.cubicTo(w*.28f,y-65*scale,w*.54f,y+64*scale,w,y-70*scale);
-                    canvas.drawPath(wave,paint);
-                }
-                paint.setStyle(android.graphics.Paint.Style.FILL);
-                paint.setColor(0xff59482e);
-                canvas.drawRoundRect(cx-62*scale,h*.957f,cx+62*scale,h*.963f,4*scale,4*scale,paint);
-                paint.setShader(new android.graphics.LinearGradient(cx-62*scale,0,cx+62*scale,0,
-                    0xffa97624,0xffffe8a0,android.graphics.Shader.TileMode.CLAMP));
-                canvas.drawRoundRect(cx-62*scale,h*.957f,cx+4*scale,h*.963f,4*scale,4*scale,paint);
-                paint.setShader(null);
-            }
-        },new FrameLayout.LayoutParams(-1,-1));
         root.addView(splash, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
