@@ -25,9 +25,9 @@ const addMonths=(date:Date,i:number)=>
 const norm=(x:unknown)=>String(x??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
 
 /**
- * The invoice month is the DUE month (not the purchase month).
- * A charge on or before closing day is assigned to that cycle;
- * a charge after closing goes to the following cycle.
+ * invoiceMonth follows the existing Snake Finance ledger: CLOSING cycle month.
+ * dueMonth / dueDate are separate presentation fields for when payment is due.
+ * Never group ledger entries by dueMonth in the current engine.
  * Closing date precedes due date. C6 Carbon due day = 7.
  */
 export function previewCarbonInstallments(payload:unknown,request:CarbonPreviewRequest){
@@ -69,12 +69,12 @@ export function previewCarbonInstallments(payload:unknown,request:CarbonPreviewR
   list.push({number:i+1,of:count,purchaseDate:dateISO(original),
    installmentReferenceDate:i===0?dateISO(original):dateISO(closingDate),
    closingDate:dateISO(closingDate),dueDate:dateISO(dueDate),
-   invoiceMonth:dateISO(dueDate).slice(0,7),amountCents});
+   invoiceMonth:dateISO(closingDate).slice(0,7),dueMonth:dateISO(dueDate).slice(0,7),amountCents});
  }
  return{ok:true as const,cardId:request.cardId,cardName:String(card.name||"C6 Carbon"),
   dueDay:due,closingDay:closing,totalCents:request.totalCents,installments:count,rows:list,
   ledgerUpdated:false,requiresLedgerCompatibilityReview:true,
-  note:"Prévia somente: o motor financeiro atual pode usar mês de fechamento em vez de mês de vencimento."};
+  note:"Prévia somente: invoiceMonth segue o mês de fechamento do motor existente; dueMonth é o mês de vencimento. Nenhuma fatura foi alterada."};
 }
 
 /**
