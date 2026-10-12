@@ -24,6 +24,8 @@ function cycleOf(date:Date,closing:number) {
 export function auditCarbonConfiguration(payload:unknown,cardId:string){
  if(!isRow(payload)||!Array.isArray(payload.cards)||!Array.isArray(payload.transactions))
   return {ok:false as const,error:"invalid_finance_payload"};
+ if(payload.invoices!==undefined&&!Array.isArray(payload.invoices))
+  return {ok:false as const,error:"invalid_invoice_history"};
  const matched=payload.cards.filter((c:unknown)=>isRow(c)&&String(c.id)===cardId);
  if(matched.length!==1)return {ok:false as const,error:"card_not_found_or_ambiguous"};
  const card=matched[0] as Row;
@@ -69,7 +71,8 @@ export function auditCarbonConfiguration(payload:unknown,cardId:string){
  // Only metadata can be safely changed automatically when no history exists.
  // Paid/closed invoices may be contractually final and must not be rewritten.
  const safeMetadataOnly=!transactions&&!invoices.length;
- const status=configAligned?"aligned":safeMetadataOnly?"safe_metadata_only":"manual_reconciliation_required";
+ const status=configAligned?(riskCount>0?"aligned_with_history_warnings":"aligned"):
+  safeMetadataOnly?"safe_metadata_only":"manual_reconciliation_required";
  return {
   ok:true as const,readOnly:true,financeStateUpdated:false,cardId,
   expectedClosing:CARBON_CLOSING_DAY,expectedDue:CARBON_DUE_DAY,
@@ -81,7 +84,9 @@ export function auditCarbonConfiguration(payload:unknown,cardId:string){
   invoices:invoices.length,paidInvoices,closedInvoices,dueDateConflicts,
   riskCount,affected,
   guidance:configAligned?
-   "O cadastro já corresponde ao fechamento dia 5 e vencimento dia 7.":
+   (riskCount>0?
+     "Cadastro 5/7 está correto, mas o histórico possui divergências de ciclos ou vencimentos que exigem revisão.":
+     "O cadastro já corresponde ao fechamento dia 5 e vencimento dia 7."):
    safeMetadataOnly?
    "Sem histórico do cartão: a atualização dos metadados pode ser proposta para confirmação.":
    "Há histórico de faturas ou compras. Conciliar antes de mudar o cadastro; não alterar meses nem pagamentos automaticamente."
