@@ -80,12 +80,32 @@
   }
   const readFinanceState = () => request("/finance/state");
   const interpretText = (text, context={}) => request("/ai/finance",{method:"POST",body:{text,context}});
+
+  async function analyzeAttachment(file) {
+    if (!file || typeof file.size!=="number" || typeof file.name!=="string")
+      throw new Error("invalid_file");
+    if (file.size<8 || file.size>4_000_000) throw new Error("attachment_size_limit");
+    const ext=file.name.toLowerCase().split(".").pop();
+    const mimeByExt={"pdf":"application/pdf","jpg":"image/jpeg","jpeg":"image/jpeg",
+      "png":"image/png","webp":"image/webp","txt":"text/plain","csv":"text/csv","ofx":"application/x-ofx"};
+    const mimeType=mimeByExt[ext]||file.type;
+    if(!Object.values(mimeByExt).includes(mimeType))throw new Error("unsupported_attachment_type");
+    // FileReader sends bytes only after an explicit tap on "Analisar arquivo".
+    const base64=await new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onerror=()=>reject(new Error("attachment_read_failed"));
+      reader.onload=()=>resolve(String(reader.result||"").split(",")[1]||"");
+      reader.readAsDataURL(file);
+    });
+    return request("/assessor/analyze-attachment",{method:"POST",body:{name:file.name,mimeType,base64}});
+  }
+
   const listPending = () => request("/assessor/drafts?status=pending");
   const listConfirmed = () => request("/assessor/drafts?status=confirmed");
   const reconciliation = () => request("/assessor/reconciliation");
 
   root.SnakeAssessorApi = Object.freeze({
     newDraftId,prepare,confirm,reject,postCash,confirmCash,
-    readFinanceState,interpretText,listPending,listConfirmed,reconciliation,
+    readFinanceState,interpretText,analyzeAttachment,listPending,listConfirmed,reconciliation,
   });
 })(window);
