@@ -9,6 +9,7 @@ on:
       - "assessor-*.js"
       - "assessor-*.html"
       - "tests/assessor-*"
+      - "index.html"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/assessor-ci.yml"
