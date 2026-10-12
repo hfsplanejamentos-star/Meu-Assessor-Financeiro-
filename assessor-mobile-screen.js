@@ -35,7 +35,12 @@
      const hits=a.filter(x=>rx.test(String(x.name||""))&&!/carbon|credito|crédito/i.test(String(x.name||"")));
      $(id).textContent=hits.length===1&&Number.isFinite(Number(hits[0].balance))?brl(hits[0].balance):"—";
    }
-   $("balanceCaju").textContent="—"; // Caju requires the month-specific benefit engine.
+   $("balanceCaju").textContent="—"; // Only show a benefit balance when its inputs are verified.
+   const cajuMonth=session.month;
+   if(api?.previewCajuMonth)api.previewCajuMonth(cajuMonth)
+    .then(data=>{if(cajuMonth===session.month&&data.ok&&data.verifiedInputs)
+      $("balanceCaju").textContent=brl(data.availableCents/100)})
+    .catch(()=>{});
    const tx=Array.isArray(state.transactions)?state.transactions:[];
    const month=tx.filter(t=>String(t.date||"").startsWith(session.month)&&
      (!t.status||["realized","real","paid","received","posted"].includes(norm(t.status)))&&
@@ -90,7 +95,7 @@
      amount,direction:/recebi|recebimento|ganhei|sal[aá]rio/i.test(text)?"income":"expense",
      category:fuel?"Transporte":beer||food?"Alimentação":"Outros",
      subcategory:fuel?"Combustível":beer?"Cerveja":/padaria/i.test(text)?"Padaria":food?"Mercado":"",
-     date:today(),account:"",payment,description:text,counterparty:"",sourceType:"chat",posted:false
+     date:today(),account:"",payment,installments:1,description:text,counterparty:"",sourceType:"chat",posted:false
    };
    const accounts=session.cloud?.payload?.accounts||[];
    const userBank=/\bcaju\b/i.test(text)?"caju":/\bxp\b/i.test(text)?"xp":/c6\s*carbon/i.test(text)?"carbon":/\bitau\b|\bitaú\b/i.test(text)?"itau":/\bc6\b/i.test(text)?"c6":"";
@@ -126,7 +131,7 @@
    const title=document.createElement("h3");title.textContent=d.direction==="income"?"↗ Lançamento de Receita":"⛽ Lançamento de Despesa";card.appendChild(title);
    for(const [label,value] of [
      ["Valor",brl(d.amount)],["Categoria",d.category],["Subcategoria",d.subcategory||"—"],
-     ["Conta",presentAccount(d.account)],["Forma de pagamento",d.payment],
+     ["Conta",presentAccount(d.account)],[...(d.payment==="Crédito"&&d.installments>1?[["Parcelas",String(d.installments)+"x"]]:[])],["Forma de pagamento",d.payment||"A revisar"],
      ["Data",d.date],["Estabelecimento",d.counterparty||"A revisar"]]){
       const pair=document.createElement("div");pair.className="pair";
       const a=document.createElement("span");a.textContent=label;
@@ -138,6 +143,30 @@
    const edit=document.createElement("button");edit.textContent="✎ Editar";edit.disabled=!!d.posted;
    const no=document.createElement("button");no.className="stop";no.textContent="✕ Cancelar";no.disabled=!!d.posted;
    buttons.append(yes,edit,no);card.append(buttons);
+   if(d.account?.startsWith("card:")&&d.payment==="Crédito"){
+     const forecast=document.createElement("button");
+     forecast.textContent="▣ Conferir parcelas e vencimentos";
+     forecast.className="gold-button";forecast.style.marginTop="8px";
+     forecast.onclick=async()=>{
+       if(!api?.previewCardPurchase||!session.cloud)return toast("Conecte o financeiro para consultar a projeção.");
+       forecast.disabled=true;
+       try{
+         const projection=await api.previewCardPurchase(d.account.slice(5),d.date,moneyCents(d.amount),d.installments||1);
+         let existing=card.querySelector(".invoice-projection");if(existing)existing.remove();
+         const details=document.createElement("div");details.className="invoice-projection hint";details.style.marginTop="10px";
+         details.textContent="Somente prévia — nenhuma compra lançada. Vencimento dia "+
+           projection.dueDay+". Fechamento dia "+projection.closingDay+".";
+         for(const part of projection.rows){
+           const line=document.createElement("p");
+           line.textContent=part.number+"/"+part.of+" · Fatura "+part.dueDate+" · "+brl(part.amountCents/100);
+           details.append(line);
+         }
+         card.append(details);
+       }catch(err){toast("Projeção indisponível: "+(err.code||err.message||"erro"))}
+       finally{forecast.disabled=false}
+     };
+     card.append(forecast);
+   }
    const detail=document.createElement("p");detail.className="hint";detail.id="reviewStatus";
    detail.textContent=d.posted?"Registrado e vinculado ao financeiro.":"Confira todas as informações antes da confirmação.";
    card.append(detail);root.append(card);
@@ -151,16 +180,26 @@
    $("fieldCategory").value=d.category;$("fieldSubcategory").value=d.subcategory;
    fillAccounts();$("fieldAccount").value=d.account||"";
    $("fieldPayment").value=d.payment;
+   $("fieldInstallments").value=d.installments||1;
+   updateInstallmentVisibility();
    $("fieldDate").value=d.date;$("fieldCounterparty").value=d.counterparty||"";
    $("fieldDescription").value=d.description;$("draftDialog").showModal();
  }
+ function updateInstallmentVisibility(){
+   const isCarbon=String($("fieldAccount").value||"").startsWith("card:")&&
+      /carbon/i.test($("fieldAccount").selectedOptions?.[0]?.textContent||"");
+   $("installmentField").hidden=!isCarbon||$("fieldPayment").value!=="Crédito";
+   if($("installmentField").hidden)$("fieldInstallments").value="1";
+ }
+ $("fieldAccount").addEventListener("change",updateInstallmentVisibility);
+ $("fieldPayment").addEventListener("change",updateInstallmentVisibility);
  $("draftDismiss").onclick=()=>$("draftDialog").close();
  $("draftForm").onsubmit=e=>{
    e.preventDefault();const d=session.draft;if(!d)return;
    const amount=Number($("fieldAmount").value);if(!moneyCents(amount))return toast("Informe um valor válido.");
    Object.assign(d,{amount,direction:$("fieldDirection").value,category:$("fieldCategory").value.trim(),
      subcategory:$("fieldSubcategory").value.trim(),account:$("fieldAccount").value,
-     payment:$("fieldPayment").value,date:$("fieldDate").value,counterparty:$("fieldCounterparty").value.trim(),
+     payment:$("fieldPayment").value,installments:Number($("fieldInstallments").value)||1,date:$("fieldDate").value,counterparty:$("fieldCounterparty").value.trim(),
      description:$("fieldDescription").value.trim()});
    $("draftDialog").close();switchView("chat");reviewPreview();toast("Prévia editada. Nenhum lançamento foi realizado.");
  };
@@ -168,6 +207,8 @@
    const d=session.draft;if(!d||session.posting||d.posted)return;
    if(!api||!session.cloud)return toast("Conecte a sincronização Cloud antes de lançar valores reais.");
    if(!d.account||!d.payment)return openEditor();
+   if(d.installments>1&&!(d.payment==="Crédito"&&String(d.account).startsWith("card:")))
+     return toast("Parcelas somente no cartão de crédito. Nenhum valor foi lançado.");
    const account=(session.cloud.payload.accounts||[]).find(a=>String(a.id)===String(d.account));
    if(!postableAccount(account))return toast("Caju, XP, Carbon e cartões exigem integração específica. Nenhum valor foi lançado.");
    if(d.payment==="Crédito")return toast("Compra a crédito exige integração de fatura. Nenhum valor foi lançado.");
@@ -233,7 +274,7 @@
  $("sendBtn").onclick=send;$("messageInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();send()}});
  $("newExpense").onclick=()=>{session.extractedRows=[];session.draft={
    draftId:api?.newDraftId?.()||"demo-"+Date.now(),amount:0,direction:"expense",category:"Outros",
-   subcategory:"",account:"",payment:"",date:today(),counterparty:"",description:"",
+   subcategory:"",account:"",payment:"",installments:1,date:today(),counterparty:"",description:"",
    sourceType:"chat",posted:false};switchView("chat");openEditor()};
  $("checkSpending").onclick=()=>{switchView("chat");$("messageInput").value="Quanto gastei neste mês?";$("messageInput").focus()};
  function attach(){ $("addDialog").showModal() }
@@ -267,7 +308,7 @@
      draftId:api?.newDraftId?.()||"demo-"+Date.now(),
      amount:x.amountCents/100,direction:x.direction,account,payment,
      category:x.category,subcategory:x.subcategory,
-     date:x.date,description:x.description,counterparty:x.counterparty,
+     date:x.date,description:x.description,counterparty:x.counterparty,installments:1,
      sourceId:x.sourceId,sourceType:x.sourceType,posted:false
    };
    eventRow("Movimentação para revisão. Restam "+session.extractedRows.length+
