@@ -1,0 +1,16 @@
+import assert from "node:assert/strict";
+import {validateAudio} from "../convex/assessorAudio.ts";
+const encoded=bytes=>Buffer.from(bytes).toString("base64");
+const webm=Buffer.concat([Buffer.from([0x1a,0x45,0xdf,0xa3]),Buffer.alloc(60,1)]);
+const wav=Buffer.concat([Buffer.from("RIFF"),Buffer.alloc(60,1)]);
+const good=validateAudio({mimeType:"audio/webm",base64:encoded(webm)});
+assert.equal(good.ok,true);
+assert.equal(good.fileName,"assessor-audio.webm");
+assert.equal(good.byteLength,64);
+assert.equal(validateAudio({mimeType:"audio/wav",base64:encoded(wav)}).ok,true);
+assert.equal(validateAudio({mimeType:"application/pdf",base64:encoded(webm)}).error,"unsupported_audio_type");
+assert.equal(validateAudio({mimeType:"audio/webm",base64:encoded(wav)}).error,"audio_signature_mismatch");
+assert.equal(validateAudio({mimeType:"audio/webm",base64:"?@!x"}).ok,false);
+assert.equal(validateAudio({mimeType:"audio/webm",base64:encoded(Buffer.alloc(4_000_001,0))}).ok,false);
+assert.equal(validateAudio({mimeType:"audio/webm",base64:encoded(Buffer.alloc(16,0))}).ok,false);
+console.log("Assessor voice validation: supported formats, signatures and size checks OK");
