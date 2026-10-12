@@ -14,6 +14,7 @@ import android.os.Looper;
 import android.provider.MediaStore;
 import android.speech.RecognizerIntent;
 import android.view.View;
+import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.window.OnBackInvokedDispatcher;
 import android.webkit.PermissionRequest;
@@ -348,6 +349,46 @@ public final class MainActivity extends Activity {
         WebAppBridge bridge = new WebAppBridge(this);
         value.addJavascriptInterface(bridge, "AndroidBridge");
         value.addJavascriptInterface(bridge, "AndroidApp");
+        // Pull-to-refresh only from the top of the dashboard, not inside a modal.
+        // Reloading the WebView preserves the app's localStorage and ledger.
+        value.setOnTouchListener(new View.OnTouchListener() {
+            private float startY;
+            private boolean eligible;
+            private boolean fired;
+            @Override public boolean onTouch(View view, MotionEvent event) {
+                switch (event.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN:
+                        startY = event.getY();
+                        eligible = authenticated && !value.canScrollVertically(-1);
+                        fired = false;
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        if (eligible && !fired && event.getY() - startY > dp(120)) {
+                            fired = true;
+                            eligible = false;
+                            value.evaluateJavascript(
+                                "(function(){var m=document.getElementById('md');" +
+                                "return !(m&&getComputedStyle(m).display!=='none')&&" +
+                                "!(document.scrollingElement&&document.scrollingElement.scrollTop>2);" +
+                                "})()",
+                                allowed -> {
+                                    if ("true".equals(allowed) && authenticated) {
+                                        android.widget.Toast.makeText(MainActivity.this,
+                                            "Atualizando Snake Finance…",
+                                            android.widget.Toast.LENGTH_SHORT).show();
+                                        value.reload();
+                                    }
+                                });
+                        }
+                        break;
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        eligible = false;
+                        break;
+                }
+                return false;
+            }
+        });
         value.setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
