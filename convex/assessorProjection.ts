@@ -128,3 +128,75 @@ export function previewCajuMonth(payload:unknown,month:string){
   expensesCents:spent,refundsCents:refunds,availableCents:available,rows,
   verifiedInputs:true,ledgerUpdated:false};
 }
+
+
+/**
+ * Read-only view of committed versus planned credit-card installments.
+ * invoiceMonth is the legacy closing-cycle key. dueMonth is the payment month.
+ * No bank-account debit or invoice payment is generated.
+ */
+export function previewCarbonInvoices(payload:unknown,cardId:string,startMonth:string,months=6){
+ const db=payload as State;
+ if(!db||!Array.isArray(db.cards)||!Array.isArray(db.transactions))
+  return{ok:false as const,error:"invalid_finance_payload"};
+ if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(startMonth)||!Number.isInteger(months)||months<1||months>24)
+  return{ok:false as const,error:"invalid_invoice_range"};
+ const card=db.cards.find((c:Item)=>String(c.id)===cardId);
+ if(!card||!/carbon/.test(norm(card.name))||/caju/.test(norm(card.name)))
+  return{ok:false as const,error:"unsupported_card"};
+ const closing=Number(card.closing),configuredDue=Number(card.due);
+ if(!Number.isInteger(closing)||closing<1||closing>31)
+  return{ok:false as const,error:"closing_day_missing"};
+ if(Number.isInteger(configuredDue)&&configuredDue>0&&configuredDue!==7)
+  return{ok:false as const,error:"carbon_due_day_conflict"};
+ const [baseYear,baseMonth]=startMonth.split("-").map(Number);
+ const cycles=[];
+ for(let i=0;i<months;i++){
+  const closingDate=monthDate(baseYear,baseMonth-1+i,closing);
+  const dueDate=monthDate(closingDate.getUTCFullYear(),closingDate.getUTCMonth()+(7<=closing?1:0),7);
+  const key=dateISO(closingDate).slice(0,7);
+  const cycle={invoiceMonth:key,closingDate:dateISO(closingDate),
+   dueDate:dateISO(dueDate),dueMonth:dateISO(dueDate).slice(0,7),
+   committedCents:0,plannedCents:0,totalCents:0,transactionCount:0};
+  cycles.push(cycle);
+ }
+ const cycleByMonth=new Map(cycles.map(row=>[row.invoiceMonth,row]));
+ const seenIDs=new Set<string>(),seenSources=new Set<string>();
+ for(const t of db.transactions){
+  if(!t||typeof t!=="object")continue;
+  if(String(t.card||t.cardId||t.account||"")!==cardId)continue;
+  if(t.invoicePayment||t.cardPayment||t.kind==="invoice_payment"||t.transfer)continue;
+  const status=norm(t.status||"realized");
+  if(["cancelled","canceled","cancelado","rejected","ignored"].includes(status))continue;
+  const signedCents=finiteCents(t.value);
+  if(signedCents===null)return{ok:false as const,error:"invalid_card_transaction_amount"};
+  if(signedCents>=0)continue;
+  const txId=t.id===undefined||t.id===null?"":String(t.id);
+  const sourceKey=t.sourceId&&t.sourceType?String(t.sourceType)+":"+String(t.sourceId):"";
+  if(txId&&seenIDs.has(txId)||sourceKey&&seenSources.has(sourceKey))continue;
+  if(txId)seenIDs.add(txId);if(sourceKey)seenSources.add(sourceKey);
+  const date=validDate(String(t.date||""));
+  const derived=date?dateISO(
+    date.getUTCDate()>closing?
+    monthDate(date.getUTCFullYear(),date.getUTCMonth()+1,1):
+    monthDate(date.getUTCFullYear(),date.getUTCMonth(),1)
+  ).slice(0,7):null;
+  const recorded=String(t.invoiceMonth||"");
+  if(recorded&&!/^\d{4}-(0[1-9]|1[0-2])$/.test(recorded))
+   return{ok:false as const,error:"invalid_invoice_month",transactionId:txId||undefined};
+  if(!recorded&&!derived)return{ok:false as const,error:"invoice_month_missing",transactionId:txId||undefined};
+  const cycle=cycleByMonth.get(recorded||derived||"");
+  if(!cycle)continue;
+  // 'planned' is a future obligation, not a paid/realized debit.
+  if(["planned","pending","prevista","previsto","planejada","planejado","forecast"].includes(status))
+   cycle.plannedCents-=signedCents;
+  else if(["realized","real","realizado","realizada","posted","confirmed","confirmado","paid","pago"].includes(status))
+   cycle.committedCents-=signedCents;
+  else return{ok:false as const,error:"unrecognized_card_status",transactionId:txId||undefined};
+  cycle.totalCents-=signedCents;
+  cycle.transactionCount++;
+ }
+ return{ok:true as const,cardId,startMonth,months,rows:cycles,
+  ledgerUpdated:false,totalsAreNotInvoicePayment:true,
+  note:"Valores previstos e realizados por mês de fechamento, com vencimento informado separadamente. Nenhum pagamento foi efetuado."};
+}
