@@ -18,11 +18,18 @@ const request=(date,installments=3,totalCents=10000)=>({
 const before=previewCarbonInstallments(base(),request("2026-10-29"));
 assert.equal(before.ok,true);
 assert.deepEqual(before.rows.map(r=>r.dueDate),["2026-11-07","2026-12-07","2027-01-07"]);
+assert.deepEqual(before.rows.map(r=>r.invoiceMonth),["2026-10","2026-11","2026-12"],"legacy ledger month must be closing cycle");
+assert.deepEqual(before.rows.map(r=>r.dueMonth),["2026-11","2026-12","2027-01"],"separate due month");
+assert.notEqual(before.rows[0].invoiceMonth,before.rows[0].dueMonth);
+
 assert.deepEqual(before.rows.map(r=>r.amountCents),[3333,3333,3334]);
 assert.equal(before.rows.reduce((sum,r)=>sum+r.amountCents,0),10000);
 const after=previewCarbonInstallments(base(),request("2026-10-31"));
 assert.equal(after.ok,true);
 assert.deepEqual(after.rows.map(r=>r.dueDate),["2026-12-07","2027-01-07","2027-02-07"]);
+assert.deepEqual(after.rows.map(r=>r.invoiceMonth),["2026-11","2026-12","2027-01"]);
+assert.deepEqual(after.rows.map(r=>r.dueMonth),["2026-12","2027-01","2027-02"]);
+
 assert.equal(new Set(after.rows.map(r=>r.invoiceMonth)).size,3,"one installment per billing cycle");
 assert.equal(after.ledgerUpdated,false);
 assert.equal(after.requiresLedgerCompatibilityReview,true);
