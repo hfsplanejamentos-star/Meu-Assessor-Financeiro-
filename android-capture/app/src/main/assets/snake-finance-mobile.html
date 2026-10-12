@@ -1918,13 +1918,17 @@ function cajuBalance(ym){
  for(let m=start;m<=ym;m=addMonthsYM(m,1)){
   const cfg=CAJU_CFG[m];
   // A recarga pertence ao mês de competência, mesmo quando creditada fisicamente no fim do mês anterior.
-  const credits=L.filter(x=>x.a==='caju'&&x.t==='r'&&x.s==='r'&&cajuCompetence(x)===m).reduce((q,x)=>q+x.v,0);
+  const monthCredits=L.filter(x=>x.a==='caju'&&x.t==='r'&&x.s==='r'&&cajuCompetence(x)===m);
+  // Refunds/adjustments are credits but do not replace the configured monthly reload.
+  const isReload=x=>/recarga|recarreg|caju.*benef[ií]cio|benef[ií]cio.*caju|aux[ií]lio alimenta[cç][aã]o.*cr[eé]dito/i.test(String(x.n||''));
+  const reloadEntries=monthCredits.filter(isReload).reduce((q,x)=>q+x.v,0);
+  const otherCredits=monthCredits.filter(x=>!isReload(x)).reduce((q,x)=>q+x.v,0);
   const spent=L.filter(x=>x.a==='caju'&&x.t==='d'&&x.s==='r'&&cajuCompetence(x)===m).reduce((q,x)=>q+x.v,0);
   const outgoing=L.filter(x=>x.a==='caju'&&x.t==='t'&&x.s==='r'&&cajuCompetence(x)===m).reduce((q,x)=>q+x.v,0);
   const incoming=L.filter(x=>x.to==='caju'&&x.a!=='caju'&&x.t==='t'&&x.s==='r'&&cajuCompetence(x)===m).reduce((q,x)=>q+x.v,0);
   const opening=cfg&&Number.isInteger(cfg.opening)?cfg.opening:(m===anchor?ORIGINAL_FUNDS:balance);
-  const reload=credits>0?credits:(cfg&&Number.isInteger(cfg.reload)?cfg.reload:0);
-  balance=opening+reload+incoming-spent-outgoing;
+  const reload=reloadEntries>0?reloadEntries:(cfg&&Number.isInteger(cfg.reload)?cfg.reload:0);
+  balance=opening+reload+otherCredits+incoming-spent-outgoing;
  }
  return balance;
 }
