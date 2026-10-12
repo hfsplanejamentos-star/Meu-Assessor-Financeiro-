@@ -202,6 +202,10 @@
  }
  async function send(){
    const input=$("messageInput"),text=input.value.trim();if(!text)return;input.value="";
+   if(session.extractedRows.length){
+     eventRow("Fila anterior encerrada: "+session.extractedRows.length+" item(ns) não foram lançados.");
+     session.extractedRows=[];
+   }
    eventRow(text,true);
    if(/\b(quanto|resumo|total|gastos|despesas)\b/i.test(text)){
      const summary=window.SnakeAssessorSummary?.summarize(text,session.cloud?.payload,session.month);
@@ -227,7 +231,7 @@
    reviewPreview();
  }
  $("sendBtn").onclick=send;$("messageInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();send()}});
- $("newExpense").onclick=()=>{session.draft={
+ $("newExpense").onclick=()=>{session.extractedRows=[];session.draft={
    draftId:api?.newDraftId?.()||"demo-"+Date.now(),amount:0,direction:"expense",category:"Outros",
    subcategory:"",account:"",payment:"",date:today(),counterparty:"",description:"",
    sourceType:"chat",posted:false};switchView("chat");openEditor()};
