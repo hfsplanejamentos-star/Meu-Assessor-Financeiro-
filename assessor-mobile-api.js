@@ -78,6 +78,9 @@
     }
     return {confirmed:true,posted,syncPending,posting};
   }
+  const previewCardPurchase = (cardId,purchaseDate,totalCents,installments=1) =>
+    request("/assessor/card-preview",{method:"POST",body:{cardId,purchaseDate,totalCents,installments}});
+  const previewCajuMonth = month => request("/assessor/caju-preview?month="+encodeURIComponent(month));
   const readFinanceState = () => request("/finance/state");
   const interpretText = (text, context={}) => request("/ai/finance",{method:"POST",body:{text,context}});
 
@@ -122,6 +125,6 @@
 
   root.SnakeAssessorApi = Object.freeze({
     newDraftId,prepare,confirm,reject,postCash,confirmCash,
-    readFinanceState,interpretText,analyzeAttachment,transcribeAudio,listPending,listConfirmed,reconciliation,
+    readFinanceState,interpretText,analyzeAttachment,transcribeAudio,previewCardPurchase,previewCajuMonth,listPending,listConfirmed,reconciliation,
   });
 })(window);
