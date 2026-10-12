@@ -111,7 +111,15 @@ export function previewCajuMonth(payload:unknown,month:string){
   const cents=finiteCents(t.value);
   if(cents===null) return{ok:false as const,error:"invalid_caju_transaction_amount"};
   if(cents<0)spent-=cents;
-  else if(cents>0&&!/recarga|credito beneficio|caju beneficios/.test(norm(t.desc||t.sub||"")))refunds+=cents;
+  else if(cents>0){
+   const evidence=norm([t.kind,t.sub,t.desc,t.description,t.type,t.origin].filter(Boolean).join(" "));
+   const topup=/recarga|credito beneficio|caju beneficios|benefit[_ -]?topup|carga de beneficio/.test(evidence);
+   const refund=/estorno|reembolso|refund|devolucao|chargeback/.test(evidence);
+   if(topup===refund)
+    return{ok:false as const,error:"caju_unclassified_credit_requires_review",transactionId:txId||undefined};
+   if(refund)refunds+=cents;
+   // Recharge appears once in the configured monthly field, never as another credit.
+  }
   rows++;
  }
  const available=opening+recharge-spent+refunds;
