@@ -3,7 +3,7 @@ import {previewCarbonInstallments,previewCajuMonth} from "../convex/assessorProj
 
 const base=()=>({
  cards:[
-  {id:"card_c6_carbon",name:"C6 Bank Carbon",type:"Crédito",due:7,closing:30,limit:2500},
+  {id:"card_c6_carbon",name:"C6 Bank Carbon",type:"Crédito",due:7,closing:5,limit:2500},
   {id:"card_caju_alimentacao",name:"Caju Alimentação",type:"Benefício",balance:400}
  ],
  transactions:[],
@@ -15,20 +15,20 @@ const base=()=>({
 const request=(date,installments=3,totalCents=10000)=>({
  cardId:"card_c6_carbon",purchaseDate:date,installments,totalCents
 });
-const before=previewCarbonInstallments(base(),request("2026-10-29"));
+const before=previewCarbonInstallments(base(),request("2026-10-04"));
 assert.equal(before.ok,true);
-assert.deepEqual(before.rows.map(r=>r.dueDate),["2026-11-07","2026-12-07","2027-01-07"]);
+assert.deepEqual(before.rows.map(r=>r.dueDate),["2026-10-07","2026-11-07","2026-12-07"]);
 assert.deepEqual(before.rows.map(r=>r.invoiceMonth),["2026-10","2026-11","2026-12"],"legacy ledger month must be closing cycle");
-assert.deepEqual(before.rows.map(r=>r.dueMonth),["2026-11","2026-12","2027-01"],"separate due month");
-assert.notEqual(before.rows[0].invoiceMonth,before.rows[0].dueMonth);
+assert.deepEqual(before.rows.map(r=>r.dueMonth),["2026-10","2026-11","2026-12"],"separate due month");
+assert.equal(before.rows[0].invoiceMonth,before.rows[0].dueMonth,"closing day 5 and due day 7 are in same month");
 
 assert.deepEqual(before.rows.map(r=>r.amountCents),[3333,3333,3334]);
 assert.equal(before.rows.reduce((sum,r)=>sum+r.amountCents,0),10000);
-const after=previewCarbonInstallments(base(),request("2026-10-31"));
+const after=previewCarbonInstallments(base(),request("2026-10-06"));
 assert.equal(after.ok,true);
-assert.deepEqual(after.rows.map(r=>r.dueDate),["2026-12-07","2027-01-07","2027-02-07"]);
+assert.deepEqual(after.rows.map(r=>r.dueDate),["2026-11-07","2026-12-07","2027-01-07"]);
 assert.deepEqual(after.rows.map(r=>r.invoiceMonth),["2026-11","2026-12","2027-01"]);
-assert.deepEqual(after.rows.map(r=>r.dueMonth),["2026-12","2027-01","2027-02"]);
+assert.deepEqual(after.rows.map(r=>r.dueMonth),["2026-11","2026-12","2027-01"]);
 
 assert.equal(new Set(after.rows.map(r=>r.invoiceMonth)).size,3,"one installment per billing cycle");
 assert.equal(after.ledgerUpdated,false);
@@ -37,10 +37,17 @@ const single=previewCarbonInstallments(base(),request("2026-10-12",1,7800));
 assert.equal(single.ok,true);
 assert.equal(single.rows[0].dueDate,"2026-11-07");
 assert.equal(single.rows[0].amountCents,7800);
+const onClosingDay=previewCarbonInstallments(base(),request("2026-10-05",1,1250));
+assert.equal(onClosingDay.rows[0].dueDate,"2026-10-07","purchase on closing day belongs to current cycle");
+const afterClosingDay=previewCarbonInstallments(base(),request("2026-10-06",1,1250));
+assert.equal(afterClosingDay.rows[0].dueDate,"2026-11-07","purchase after closing rolls forward");
+
 assert.equal(previewCarbonInstallments(base(),request("2026-02-30")).error,"invalid_date");
 assert.equal(previewCarbonInstallments(base(),request("2026-10-10",49)).error,"invalid_installment_count");
 const noClosing=base();delete noClosing.cards[0].closing;
 assert.equal(previewCarbonInstallments(noClosing,request("2026-10-10")).error,"closing_day_missing");
+const wrongClosing=base();wrongClosing.cards[0].closing=30;
+assert.equal(previewCarbonInstallments(wrongClosing,request("2026-10-04")).error,"carbon_closing_day_conflict");
 const wrongDue=base();wrongDue.cards[0].due=25;
 assert.equal(previewCarbonInstallments(wrongDue,request("2026-10-10")).error,"carbon_due_day_conflict");
 const wrongCard=previewCarbonInstallments(base(),{...request("2026-10-10"),cardId:"card_caju_alimentacao"});
