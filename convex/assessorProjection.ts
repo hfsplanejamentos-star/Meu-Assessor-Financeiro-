@@ -1,0 +1,119 @@
+/**
+ * READ-ONLY projections for C6 Carbon invoice cycles and Caju benefits.
+ * Do not write or implicitly reconcile the canonical ledger.
+ */
+type Item = Record<string, any>;
+type State = Record<string, any>;
+export type CarbonPreviewRequest={cardId:string;purchaseDate:string;totalCents:number;installments:number};
+const finiteCents=(n:unknown):number|null=>{
+ if(typeof n!=="number"||!Number.isFinite(n))return null;
+ const cents=Math.round(n*100);
+ return Number.isSafeInteger(cents)&&Math.abs(n*100-cents)<0.00001?cents:null;
+};
+const ym=(year:number,monthZero:number)=>String(year)+"-"+String(monthZero+1).padStart(2,"0");
+const validDate=(date:string)=>{
+ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+ if(!m)return null;
+ const d=new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));
+ return Number.isFinite(d.getTime())&&d.toISOString().slice(0,10)===date?d:null;
+};
+const monthDate=(year:number,monthZero:number,day:number)=>
+ new Date(Date.UTC(year,monthZero,Math.min(day,new Date(Date.UTC(year,monthZero+1,0)).getUTCDate())));
+const dateISO=(date:Date)=>date.toISOString().slice(0,10);
+const addMonths=(date:Date,i:number)=>
+ monthDate(date.getUTCFullYear(),date.getUTCMonth()+i,date.getUTCDate());
+const norm=(x:unknown)=>String(x??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+
+/**
+ * The invoice month is the DUE month (not the purchase month).
+ * A charge on or before closing day is assigned to that cycle;
+ * a charge after closing goes to the following cycle.
+ * Closing date precedes due date. C6 Carbon due day = 7.
+ */
+export function previewCarbonInstallments(payload:unknown,request:CarbonPreviewRequest){
+ const db=payload as State;
+ if(!db||!Array.isArray(db.cards)||!Array.isArray(db.transactions))
+  return {ok:false as const,error:"invalid_finance_payload"};
+ const card=db.cards.find((c:Item)=>String(c.id)===request.cardId);
+ if(!card)return {ok:false as const,error:"card_not_found"};
+ if(!/carbon/.test(norm(card.name))||/caju/.test(norm(card.name)))
+  return {ok:false as const,error:"unsupported_card"};
+ const closing=Number(card.closing),configuredDue=Number(card.due);
+ // Refuse to change an existing conflicting rule without explicit approval.
+ if(!Number.isInteger(closing)||closing<1||closing>31)
+  return {ok:false as const,error:"closing_day_missing"};
+ if(Number.isInteger(configuredDue)&&configuredDue>0&&configuredDue!==7)
+  return {ok:false as const,error:"carbon_due_day_conflict",configuredDue};
+ const due=7; // User-confirmed C6 Carbon vencimento dia 7.
+ const original=validDate(request.purchaseDate);
+ if(!original)return {ok:false as const,error:"invalid_date"};
+ if(!Number.isSafeInteger(request.totalCents)||request.totalCents<=0||request.totalCents>100_000_000_00)
+  return {ok:false as const,error:"invalid_amount"};
+ if(!Number.isInteger(request.installments)||request.installments<1||request.installments>48)
+  return {ok:false as const,error:"invalid_installment_count"};
+ const count=request.installments,each=Math.floor(request.totalCents/count),remainder=request.totalCents%count;
+ if(each<=0)return{ok:false as const,error:"installments_exceed_amount"};
+ const list=[];
+ for(let i=0;i<count;i++){
+  const purchase=addMonths(original,i);
+  let closingDate=monthDate(purchase.getUTCFullYear(),purchase.getUTCMonth(),closing);
+  if(purchase.getTime()>closingDate.getTime())
+   closingDate=monthDate(purchase.getUTCFullYear(),purchase.getUTCMonth()+1,closing);
+  const dueMonthOffset=due<=closing?1:0;
+  const dueDate=monthDate(closingDate.getUTCFullYear(),closingDate.getUTCMonth()+dueMonthOffset,due);
+  if(dueDate.getTime()<=closingDate.getTime())
+   return{ok:false as const,error:"inconsistent_billing_cycle"};
+  const amountCents=i===count-1?each+remainder:each;
+  list.push({number:i+1,of:count,purchaseDate:dateISO(purchase),
+   closingDate:dateISO(closingDate),dueDate:dateISO(dueDate),
+   invoiceMonth:dateISO(dueDate).slice(0,7),amountCents});
+ }
+ return{ok:true as const,cardId:request.cardId,cardName:String(card.name||"C6 Carbon"),
+  dueDay:due,closingDay:closing,totalCents:request.totalCents,installments:count,rows:list,
+  ledgerUpdated:false,requiresLedgerCompatibilityReview:true,
+  note:"Prévia somente: o motor financeiro atual pode usar mês de fechamento em vez de mês de vencimento."};
+}
+
+/**
+ * Caju = confirmed opening balance + one recharge for current month
+ *        - realized expenses + realized refunds in that month.
+ * No earlier recharge is summed again. No default or fabricated values.
+ */
+export function previewCajuMonth(payload:unknown,month:string){
+ const db=payload as State;
+ if(!db||!Array.isArray(db.transactions)||!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))
+  return{ok:false as const,error:"invalid_caju_state_or_month"};
+ const rechargeRaw=db.automationState?.cajuMonthlyTopups?.[month]??db.meta?.cajuRechargeByMonth?.[month];
+ const openingRaw=db.meta?.cajuOpeningByMonth?.[month]??db.automationState?.cajuMonthlyOpenings?.[month];
+ if(rechargeRaw===undefined||openingRaw===undefined)
+  return{ok:false as const,error:"caju_opening_or_recharge_unverified",
+   missingOpening:openingRaw===undefined,missingRecharge:rechargeRaw===undefined};
+ const recharge=finiteCents(rechargeRaw),opening=finiteCents(openingRaw);
+ if(recharge===null||opening===null||recharge<0||opening<0)
+  return{ok:false as const,error:"invalid_caju_reference_values"};
+ const cards=Array.isArray(db.cards)?db.cards:[];
+ const cajuIds=new Set(cards.filter((c:Item)=>/caju/.test(norm(c.name))).map((c:Item)=>String(c.id)));
+ if(!cajuIds.size)return{ok:false as const,error:"caju_card_not_found"};
+ const seenIDs=new Set<string>(),seenSources=new Set<string>();
+ let spent=0,refunds=0,rows=0;
+ for(const t of db.transactions){
+  if(!t||typeof t!=="object"||String(t.date||"").slice(0,7)!==month)continue;
+  const status=norm(t.status||"realized");
+  if(!["realized","real","realizado","realizada","paid","pago","posted"].includes(status))continue;
+  const id=String(t.cardId||t.card||""),isCaju=t.benefit===true||cajuIds.has(id)||/caju/.test(norm(t.origin||t.source||""));
+  if(!isCaju||t.invoicePayment||t.cardPayment||t.transfer||t.transferId)continue;
+  const txId=t.id===undefined?"":String(t.id),sourceKey=t.sourceId&&t.sourceType?String(t.sourceType)+":"+String(t.sourceId):"";
+  if(txId&&seenIDs.has(txId)||sourceKey&&seenSources.has(sourceKey))continue;
+  if(txId)seenIDs.add(txId);if(sourceKey)seenSources.add(sourceKey);
+  const cents=finiteCents(t.value);
+  if(cents===null) return{ok:false as const,error:"invalid_caju_transaction_amount"};
+  if(cents<0)spent-=cents;
+  else if(cents>0&&!/recarga|credito beneficio|caju beneficios/.test(norm(t.desc||t.sub||"")))refunds+=cents;
+  rows++;
+ }
+ const available=opening+recharge-spent+refunds;
+ if(!Number.isSafeInteger(available))return{ok:false as const,error:"caju_balance_overflow"};
+ return{ok:true as const,month,openingCents:opening,rechargeCents:recharge,
+  expensesCents:spent,refundsCents:refunds,availableCents:available,rows,
+  verifiedInputs:true,ledgerUpdated:false};
+}
