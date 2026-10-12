@@ -131,7 +131,7 @@
    const title=document.createElement("h3");title.textContent=d.direction==="income"?"↗ Lançamento de Receita":"⛽ Lançamento de Despesa";card.appendChild(title);
    for(const [label,value] of [
      ["Valor",brl(d.amount)],["Categoria",d.category],["Subcategoria",d.subcategory||"—"],
-     ["Conta",presentAccount(d.account)],[...(d.payment==="Crédito"&&d.installments>1?[["Parcelas",String(d.installments)+"x"]]:[])],["Forma de pagamento",d.payment||"A revisar"],
+     ["Conta",presentAccount(d.account)],...(d.payment==="Crédito"&&d.installments>1?[["Parcelas",String(d.installments)+"x"]]:[]),["Forma de pagamento",d.payment||"A revisar"],
      ["Data",d.date],["Estabelecimento",d.counterparty||"A revisar"]]){
       const pair=document.createElement("div");pair.className="pair";
       const a=document.createElement("span");a.textContent=label;
