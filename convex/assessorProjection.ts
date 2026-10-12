@@ -172,7 +172,8 @@ export function previewCarbonInvoices(payload:unknown,cardId:string,startMonth:s
   if(signedCents===null)return{ok:false as const,error:"invalid_card_transaction_amount"};
   if(signedCents>=0)continue;
   const txId=t.id===undefined||t.id===null?"":String(t.id);
-  const sourceKey=t.sourceId&&t.sourceType?String(t.sourceType)+":"+String(t.sourceId):"";
+  const sourceKey=t.sourceId&&t.sourceType?String(t.sourceType)+":"+String(t.sourceId)+
+   (Number.isInteger(t.installmentNo)?":part:"+String(t.installmentNo):""):"";
   if(txId&&seenIDs.has(txId)||sourceKey&&seenSources.has(sourceKey))continue;
   if(txId)seenIDs.add(txId);if(sourceKey)seenSources.add(sourceKey);
   const date=validDate(String(t.date||""));
