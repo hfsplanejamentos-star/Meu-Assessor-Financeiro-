@@ -262,7 +262,10 @@
    try{
      const result=await api.auditCarbonSettings(String(cards[0].id));
      if(result.configAligned){
-       eventRow("C6 Carbon está cadastrado corretamente: fechamento dia 5 e vencimento dia 7. Nenhuma alteração necessária.");
+       eventRow("C6 Carbon cadastrado com fechamento dia 5 e vencimento dia 7."+
+         (result.riskCount>0?" Atenção: foram identificadas "+result.riskCount+
+           " divergências no histórico de compras/vencimentos. É necessária revisão das faturas antigas; nada foi alterado.":
+           " Nenhuma alteração necessária."));
        return;
      }
      eventRow("Auditoria do C6 Carbon: fechamento cadastrado "+
