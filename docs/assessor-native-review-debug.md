@@ -27,6 +27,15 @@
 
 - A pipeline `.github/workflows/assessor-ci.yml` foi configurada para verificar módulos, lógica e compilação Android, porém o resultado da execução completa não foi confirmado neste atendimento.
 
+## Conexão segura de leitura no APK separado
+- Nas Configurações do Assessor IA, informe **a mesma chave de sincronização do Snake Finance**, nunca uma senha de banco, token de terceiros ou credencial do Teams.
+- A chave é digitada em campo oculto, usada para consultar `GET /finance/state` e aceita somente quando há estado financeiro correspondente. Se não houver dados, a conexão anterior é preservada.
+- O botão **Desconectar** remove a chave da instância de testes, oculta os saldos exibidos e invalida respostas de leitura em andamento. Não altera o aplicativo instalado ou o banco Convex.
+- A chave não é copiada automaticamente do APK estável: o Android mantém ambos os aplicativos em áreas de armazenamento separadas.
+- O APK de testes ainda usa `SNAKE_ASSESSOR_PREVIEW_ONLY=true`: **não pode salvar transações, confirmar notificações como despesas, nem corrigir cartões no ledger**.
+- Os testes de regressão `assessor-connection.test.cjs` e `assessor-ui-connection.test.cjs` verificam chave oculta, autorização explícita, rollback de chave inválida, desconexão e resposta atrasada.
+- O novo formulário é uma mudança visual limitada às Configurações; requer aprovação da captura visual antes de considerar o layout totalmente validado.
+
 ## Checklist de homologação física
 1. Instalar debug ao lado do aplicativo estável e confirmar que nenhum dado do estável foi substituído.
 2. Ativar permissão de leitura de notificações no app de testes; permitir apenas os quatro apps financeiros.
