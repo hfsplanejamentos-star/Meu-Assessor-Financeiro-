@@ -62,9 +62,28 @@ public final class MainActivity extends Activity {
 
     static final int REQUEST_BACKUP_EXPORT = 708;
     private String pendingBackupJson;
+    private static final String BACKUP_PENDING_FILE = "snake_backup_pending.json";
+    private java.io.File pendingBackupFile() {
+        return new java.io.File(getFilesDir(), BACKUP_PENDING_FILE);
+    }
     void exportBackupDocument(String json, String filename) {
         runOnUiThread(() -> {
-            pendingBackupJson = json;
+            try {
+                byte[] content = json.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                if (content.length < 20) throw new java.io.IOException("JSON sem conteúdo");
+                java.io.File tmp = new java.io.File(getFilesDir(), BACKUP_PENDING_FILE + ".tmp");
+                try (java.io.FileOutputStream out = new java.io.FileOutputStream(tmp)) {
+                    out.write(content);
+                    out.flush();
+                    out.getFD().sync();
+                }
+                java.io.File target = pendingBackupFile();
+                if (!tmp.renameTo(target)) throw new java.io.IOException("Não foi possível preservar o backup antes de exportar");
+                pendingBackupJson = json;
+            } catch (Exception e) {
+                android.widget.Toast.makeText(this, "Exportação cancelada: " + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
+                return;
+            }
             Intent save = new Intent(Intent.ACTION_CREATE_DOCUMENT);
             save.addCategory(Intent.CATEGORY_OPENABLE);
             save.setType("application/json");
@@ -566,9 +585,17 @@ public final class MainActivity extends Activity {
         if (requestCode == REQUEST_BACKUP_EXPORT) {
             String json = pendingBackupJson;
             pendingBackupJson = null;
-            if (resultCode == RESULT_OK && data != null && data.getData() != null && json != null) {
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) {
                 try {
-                    byte[] bytes = json.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                    byte[] bytes;
+                    java.io.File staged = pendingBackupFile();
+                    if (staged.isFile() && staged.length() >= 20) {
+                        bytes = java.nio.file.Files.readAllBytes(staged.toPath());
+                    } else if (json != null) {
+                        bytes = json.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                    } else {
+                        throw new java.io.IOException("Backup temporário indisponível");
+                    }
                     if (bytes.length < 20) throw new java.io.IOException("Conteúdo JSON vazio");
                     Uri target = data.getData();
                     try (java.io.OutputStream out = getContentResolver().openOutputStream(target, "wt")) {
@@ -588,8 +615,19 @@ public final class MainActivity extends Activity {
                     }
                     if (actual != bytes.length) throw new java.io.IOException(
                         "Arquivo não confirmado: esperado " + bytes.length + " B, encontrado " + actual + " B");
+                    try (java.io.InputStream check = getContentResolver().openInputStream(target)) {
+                        if (check == null) throw new java.io.IOException("Arquivo exportado não pode ser reaberto");
+                        java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+                        byte[] chunk = new byte[8192];
+                        int n; long total = 0;
+                        while ((n = check.read(chunk)) != -1) { digest.update(chunk, 0, n); total += n; }
+                        byte[] expected = java.security.MessageDigest.getInstance("SHA-256").digest(bytes);
+                        if (total != bytes.length || !java.util.Arrays.equals(expected, digest.digest()))
+                            throw new java.io.IOException("Falha na conferência de integridade do arquivo exportado");
+                    }
+                    staged.delete();
                     android.widget.Toast.makeText(this,
-                        "Backup confirmado: " + actual + " bytes gravados", android.widget.Toast.LENGTH_LONG).show();
+                        "Backup confirmado e verificado: " + actual + " bytes", android.widget.Toast.LENGTH_LONG).show();
                 } catch (Exception e) {
                     android.widget.Toast.makeText(this,
                         "Backup NÃO confirmado: " + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
