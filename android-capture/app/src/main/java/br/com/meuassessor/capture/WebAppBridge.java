@@ -16,6 +16,45 @@ final class WebAppBridge {
     }
 
     @JavascriptInterface
+    public void preserveLedgerSnapshot(String ledgerJson) {
+        if (ledgerJson == null || ledgerJson.length() < 10) return;
+        try {
+            org.json.JSONArray rows = new org.json.JSONArray(ledgerJson);
+            if (rows.length() == 0) return;
+            java.io.File folder = new java.io.File(activity.getFilesDir(), "financial_recovery");
+            if (!folder.exists() && !folder.mkdirs()) return;
+            java.io.File snapshot = new java.io.File(folder, "ledger_preserved.json");
+            // Never overwrite the first nonempty rescue snapshot.
+            if (snapshot.exists() && snapshot.length() > 10) return;
+            java.io.File temp = new java.io.File(folder, "ledger_preserved.tmp");
+            try (java.io.FileOutputStream out = new java.io.FileOutputStream(temp)) {
+                out.write(ledgerJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                out.getFD().sync();
+            }
+            if (!temp.renameTo(snapshot)) temp.delete();
+        } catch (Exception ignored) { }
+    }
+
+    @JavascriptInterface
+    public void exportPreservedLedger() {
+        try {
+            java.io.File file = new java.io.File(new java.io.File(activity.getFilesDir(),
+                "financial_recovery"), "ledger_preserved.json");
+            if (!file.exists() || file.length() < 10) {
+                activity.runOnUiThread(() -> android.widget.Toast.makeText(activity,
+                    "Nenhuma cópia interna preservada encontrada", android.widget.Toast.LENGTH_LONG).show());
+                return;
+            }
+            byte[] data = java.nio.file.Files.readAllBytes(file.toPath());
+            activity.exportBackupDocument(new String(data, java.nio.charset.StandardCharsets.UTF_8),
+                "Snake_Finance_Lancamentos_Preservados.json");
+        } catch (Exception e) {
+            activity.runOnUiThread(() -> android.widget.Toast.makeText(activity,
+                "Falha ao acessar cópia preservada", android.widget.Toast.LENGTH_LONG).show());
+        }
+    }
+
+    @JavascriptInterface
     public void exportBackup(String json, String filename) {
         if (json == null || json.isEmpty()) {
             activity.runOnUiThread(() -> android.widget.Toast.makeText(activity,
