@@ -33,13 +33,15 @@
     return true;
   }
   async function request(path, {method="GET",body}={}) {
-    // A preview APK may read and interpret, but MUST NOT prepare drafts,
-    // confirm transactions, post balances, or change card configuration.
-    // Keep the protection in the transport layer as well as the UI.
+    // Strict allowlist: the isolated preview may use POST ONLY for
+    // non-ledger analysis. Newly added endpoints default to blocked.
+    const previewSafePosts=[
+      "/ai/finance","/assessor/analyze-attachment",
+      "/assessor/transcribe","/assessor/card-preview"
+    ];
     if (root.SNAKE_ASSESSOR_PREVIEW_ONLY===true &&
-        method.toUpperCase()==="POST" &&
-        ["/assessor/drafts","/assessor/decision","/assessor/post",
-         "/assessor/carbon-repair","/finance/state"].includes(path)) {
+        method.toUpperCase()!=="GET" &&
+        !previewSafePosts.includes(path)) {
       const error=new Error("preview_read_only");
       error.code="preview_read_only";
       throw error;
