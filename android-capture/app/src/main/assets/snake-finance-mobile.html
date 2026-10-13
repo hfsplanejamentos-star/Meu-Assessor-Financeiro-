@@ -1827,7 +1827,8 @@ function saveAdd(tipo){
 }
 
 document.addEventListener('keydown',e=>{if(e.key=='Escape')closeDay();});
-function rst(){if(!confirm('Restaurar a base de exemplo substitui seus lançamentos. Exporte um backup primeiro. Continuar?'))return;saveSafetyBackup();PERSIST_BLOCKED=false;closeDay();L=JSON.parse(JSON.stringify(L0));persistLedger();YM='2026-10';SEL=APP_TODAY.startsWith(YM)?APP_TODAY:`${YM}-01`;OPEN=0;TOAST='';LAST=0;NID=nextId();migrateWorkCategory();CATDB=completeBackupCategories(CATDB,L).categories;wInit();cInit();draw();}
+function rst(){alert('Restaurar dados de exemplo está desativado para proteger seus lançamentos.');return;}
+function rstDisabledLegacy(){if(!confirm('Restaurar a base de exemplo substitui seus lançamentos. Exporte um backup primeiro. Continuar?'))return;saveSafetyBackup();PERSIST_BLOCKED=false;closeDay();L=JSON.parse(JSON.stringify(L0));persistLedger();YM='2026-10';SEL=APP_TODAY.startsWith(YM)?APP_TODAY:`${YM}-01`;OPEN=0;TOAST='';LAST=0;NID=nextId();migrateWorkCategory();CATDB=completeBackupCategories(CATDB,L).categories;wInit();cInit();draw();}
 function boot(){
  try{const raw=localStorage.getItem(LEDGER_KEY)||localStorage.getItem('assessor_tx');
  try {
