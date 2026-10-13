@@ -370,6 +370,15 @@ public final class MainActivity extends Activity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
+                if (BuildConfig.DEBUG) {
+                    // The preview must never navigate away to the production
+                    // website inside a WebView holding the native bank bridge.
+                    // External HTTPS links are opened in the device browser.
+                    if ("https".equalsIgnoreCase(uri.getScheme())) {
+                        startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                    }
+                    return true;
+                }
                 String host = uri.getHost() == null ? "" : uri.getHost();
                 if ("hfsplanejamentos-star.github.io".equalsIgnoreCase(host)) return false;
                 startActivity(new Intent(Intent.ACTION_VIEW, uri));
