@@ -41,6 +41,7 @@ const state={version:1,payload:{accounts:[{id:"c6",name:"C6 Conta Corrente",
 let draftCounter=0;
 const window={AndroidBridge:android,localStorage:storage,scrollTo:()=>{},confirm:()=>true,
  SnakeAssessorApi:{
+  hasSyncKey:()=>true,
   newDraftId:()=> "native-draft-"+String(++draftCounter).padStart(6,"0"),
   readFinanceState:async()=>({state}),
   interpretText:async()=>null,
