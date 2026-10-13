@@ -18,7 +18,17 @@ public final class BankNotificationListener extends NotificationListenerService 
 
     @Override public void onListenerConnected() {
         super.onListenerConnected();
-        getSharedPreferences(DIAG_PREFS,Context.MODE_PRIVATE).edit().putBoolean(KEY_CONNECTED,true)
+        new EncryptedQueueStore(this).pruneUnauthorized(this);
+        SharedPreferences prefs=getSharedPreferences(DIAG_PREFS,Context.MODE_PRIVATE);
+        SharedPreferences.Editor cleanup=prefs.edit();
+        if(!BankAllowlist.contains(this,prefs.getString(KEY_RAW_PACKAGE,""))) {
+            cleanup.remove(KEY_RAW_TITLE).remove(KEY_RAW_TEXT);
+        }
+        if(!BankAllowlist.contains(this,prefs.getString(KEY_PACKAGE,""))) {
+            cleanup.remove(KEY_TITLE).remove(KEY_TEXT);
+        }
+        cleanup.apply();
+        prefs.edit().putBoolean(KEY_CONNECTED,true)
                 .putString(KEY_RESULT,"Serviço conectado e aguardando notificação").putLong(KEY_TIME,System.currentTimeMillis()).apply();
     }
     @Override public void onListenerDisconnected() {
