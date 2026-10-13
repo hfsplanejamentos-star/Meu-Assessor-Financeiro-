@@ -133,5 +133,15 @@ async function confirmCurrent(){
  assert.equal(posted.length,2);
  assert.equal(ack.includes("notification-preview-004"),false,
   "preview cannot acknowledge unposted bank expense");
+ events.push({id:"notification-known-005",sourcePackage:"com.c6bank.app",
+  title:"Pix enviado",text:"R$ 30,00 para Loja",amountCents:3000,
+  direction:"expense",postedAt:postedAt+4000});
+ state.payload.transactions.push({id:"ledger-known",sourceType:"notification",sourceId:"notification-known-005"});
+ window.meuAssessorAndroidAutoSync();
+ await wait();
+ assert.equal(ack.includes("notification-known-005"),false,
+  "preview must not silently remove events already linked to the canonical ledger");
+ assert.equal(prepared.length,2);
+
  console.log("Assessor native review: equal-value Pix, Caju guard, explicit discard and read-only debug APK PASS");
 })().catch(error=>{console.error(error);process.exitCode=1});
