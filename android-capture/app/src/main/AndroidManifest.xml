@@ -19,7 +19,7 @@
         android:enableOnBackInvokedCallback="true"
         android:icon="@drawable/ic_assessor_launcher"
         android:roundIcon="@drawable/ic_assessor_launcher"
-        android:label="Snake Finance"
+        android:label="${snakeAppLabel}"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="false">
