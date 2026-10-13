@@ -64,6 +64,31 @@ final class EncryptedQueueStore {
         }
     }
 
+    /**
+     * Remove previously queued events from apps no longer authorized.
+     * This runs before exposing JSON to the WebView and on listener startup.
+     */
+    synchronized int pruneUnauthorized(Context context) {
+        try {
+            JSONArray queue = read();
+            JSONArray kept = new JSONArray();
+            int removed = 0;
+            for (int i = 0; i < queue.length(); i++) {
+                JSONObject item = queue.getJSONObject(i);
+                if (BankAllowlist.contains(context, item.optString("sourcePackage", ""))) {
+                    kept.put(item);
+                } else {
+                    removed++;
+                }
+            }
+            if (removed > 0) write(kept);
+            return removed;
+        } catch (Exception error) {
+            // Fail closed: callers must not expose queue data after a failed prune.
+            return -1;
+        }
+    }
+
     synchronized boolean acknowledge(String[] ids) {
         try {
             if (ids == null || ids.length == 0) return true;
