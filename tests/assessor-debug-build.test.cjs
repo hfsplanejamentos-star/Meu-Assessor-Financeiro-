@@ -6,6 +6,13 @@ const manifest=read("android-capture/app/src/main/AndroidManifest.xml");
 const main=read("android-capture/app/src/main/java/br/com/meuassessor/capture/MainActivity.java");
 const ui=read("assessor-mobile-screen.js");
 const html=read("assessor-ia-mobile.html");
+const ci=read(".github/workflows/assessor-ci.yml");
+assert.match(ci,/workflow_dispatch:/,"Allow manual workflow execution for APK testing");
+assert.match(ci,/npx convex dev --once --typecheck disable/,"Generate Convex API types before tsc");
+assert.match(ci,/CONVEX_DEPLOY_KEY: ""/,"Do not use a production Convex key during type generation");
+assert.doesNotMatch(ci,/npx convex deploy/,"CI must not deploy finance functions while building debug APK");
+assert.match(ci,/Snake-Finance-Assessor-IA-preview-only/,"Upload isolated APK artifact only after tests");
+
 const scripts=[
  "assessor-mobile-api.js","assessor-mobile-summary.js",
  "assessor-mobile-notifications.js","assessor-mobile-screen.js"
