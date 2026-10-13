@@ -317,6 +317,7 @@
    const amountCents=moneyCents(d.amount);
    if(!amountCents)return toast("Valor inválido.");
    session.posting=true;
+   let advanceAfterPosting=false;
    const controls=$("draftMount").querySelectorAll("button");controls.forEach(b=>b.disabled=true);
    const status=$("reviewStatus");status.textContent="Confirmando lançamento no backend…";
    try{
@@ -331,7 +332,7 @@
        eventRow("Notificação já vinculada a uma transação real. Nenhum segundo lançamento foi criado."+
          (cleared?"":" Não foi possível limpar a notificação local."));
        session.cloud=latest.state;
-       reviewPreview();advanceReviewQueue();
+       reviewPreview();advanceAfterPosting=true;
        return;
      }
      if(!(latest.state.payload?.accounts||[]).some(a=>String(a.id)===d.account&&postableAccount(a)))throw new Error("account_not_available");
@@ -352,12 +353,16 @@
      status.textContent=outcome.syncPending?"Lançamento registrado; atualização local pendente.":"Lançamento confirmado no financeiro.";
      if(nativeClearWarning)eventRow("A movimentação foi registrada, mas a fila Android não pôde ser limpa. Não confirme novamente.");
      eventRow(outcome.syncPending?"Lançamento registrado no servidor. Sincronize a tela para atualizar os cards.":"Lançamento registrado com sucesso no Snake Finance.");
-     await refreshState();reviewPreview();advanceReviewQueue();
+     await refreshState();reviewPreview();advanceAfterPosting=true;
    }catch(e){
      const uncertain=e.code==="posting_status_unknown";
      status.textContent=uncertain?"Resultado incerto após falha de rede. Consulte a conciliação antes de tentar novamente.":"Não lançado nesta tentativa: "+(e.code||e.message||"erro");
      toast(status.textContent);
-   }finally{session.posting=false;controls.forEach(b=>b.disabled=!!d.posted);}
+   }finally{
+     session.posting=false;
+     controls.forEach(b=>b.disabled=!!d.posted);
+     if(advanceAfterPosting)advanceReviewQueue();
+   }
  }
 
  async function auditSavedCarbonSettings(){
