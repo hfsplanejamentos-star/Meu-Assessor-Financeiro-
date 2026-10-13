@@ -16,6 +16,16 @@ final class WebAppBridge {
     }
 
     @JavascriptInterface
+    public void exportBackup(String json, String filename) {
+        if (json == null || json.isEmpty()) {
+            activity.runOnUiThread(() -> android.widget.Toast.makeText(activity,
+                "Backup vazio: nenhum arquivo foi criado", android.widget.Toast.LENGTH_LONG).show());
+            return;
+        }
+        activity.exportBackupDocument(json, filename);
+    }
+
+    @JavascriptInterface
     public int notificationCount() {
         return new EncryptedQueueStore(activity).size();
     }
