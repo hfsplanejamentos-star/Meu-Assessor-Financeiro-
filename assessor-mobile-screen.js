@@ -10,7 +10,7 @@
  const norm=s=>String(s??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
  const today=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-")};
  const moneyCents=n=>{const x=Math.round(Number(n)*100);return Number.isSafeInteger(x)&&x>0?x:null};
- const session={draft:null,posting:false,cloud:null,month:today().slice(0,7),agendaDay:new Date(),recognition:null,files:[],extractedRows:[]};
+ const session={draft:null,posting:false,cloud:null,month:today().slice(0,7),agendaDay:new Date(),recognition:null,files:[],extractedRows:[],nativeRows:[],nativeSeen:new Set(),nativeScanBusy:false};
  function toast(s){const box=$("toast");box.textContent=s;box.style.display="block";clearTimeout(window.__snakeToast);window.__snakeToast=setTimeout(()=>box.style.display="none",6000)}
  function switchView(name){for(const n of ["home","chat","agenda"])$("screen"+n[0].toUpperCase()+n.slice(1)).classList.toggle("active",n===name);document.querySelectorAll("nav [data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===name));$("topHome").style.display=name==="home"?"flex":"none";if(name==="chat")$("chatMessages").scrollTop=$("chatMessages").scrollHeight;window.scrollTo({top:0,behavior:"instant"})}
  document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>switchView(b.dataset.view)));
@@ -134,6 +134,98 @@
   }catch(e){toast("IA online indisponível; interpretação local para revisão.");}
   return null;
  }
+
+ function alreadyLinkedNotification(id){
+   if(!id)return false;
+   const rows=session.cloud?.payload?.transactions;
+   return Array.isArray(rows)&&rows.some(t=>t&&typeof t==="object"&&
+     (t.androidNotificationId===id||(t.sourceType==="notification"&&t.sourceId===id)));
+ }
+ function nextNativeNotification(){
+   if(session.posting||(session.draft&&!session.draft.posted))return false;
+   if(!session.nativeRows.length)return false;
+   const n=session.nativeRows.shift();
+   const accounts=session.cloud?.payload?.accounts||[];
+   const cards=session.cloud?.payload?.cards||[];
+   // C6 account/card cannot be inferred from the same banking app notification.
+   // User must explicitly choose C6 current account vs Carbon before posting.
+   let account="";
+   if(n.bank==="Caju"){
+     const matches=cards.filter(x=>/caju/i.test(String(x.name||"")));
+     if(matches.length===1)account="card:"+String(matches[0].id);
+   }else if(n.bank==="XP"||n.bank==="Itaú"){
+     const name=n.bank==="XP"?/\bxp\b/i:/itau|itaú/i;
+     const matches=accounts.filter(x=>name.test(String(x.name||"")+" "+String(x.id||"")));
+     if(matches.length===1)account=String(matches[0].id);
+   }
+   session.draft={
+     draftId:api?.newDraftId?.()||"notification-"+n.sourceId,
+     amount:n.amountCents/100,direction:n.direction,
+     account,payment:n.paymentType,installments:1,
+     category:n.category,subcategory:n.subcategory,
+     date:n.date,description:n.description,counterparty:n.counterparty,
+     sourceType:"notification",sourceId:n.sourceId,posted:false
+   };
+   eventRow("Notificação "+n.bank+" · "+brl(n.amountCents/100)+" · "+n.date+
+     ". Confira direção, conta, modalidade, favorecido e categoria antes de confirmar.");
+   switchView("chat");reviewPreview();
+   return true;
+ }
+ function advanceReviewQueue(){
+   if(session.extractedRows.length){nextExtractedRow();return}
+   nextNativeNotification();
+ }
+ async function scanNativeNotifications(manual=false){
+   if(session.nativeScanBusy)return;
+   const native=window.SnakeAssessorNativeNotifications;
+   if(!native?.available?.()){
+     if(manual)eventRow("A captura automática está disponível somente no aplicativo Android autorizado.");
+     return;
+   }
+   session.nativeScanBusy=true;
+   try{
+     const result=native.list();
+     if(result.error){eventRow("A fila Android não pôde ser lida: "+result.error);return}
+     let added=0,alreadySaved=0;
+     for(const row of result.rows){
+       if(alreadyLinkedNotification(row.sourceId)){
+         // Only clear a native event when the canonical ledger already references it.
+         if(native.acknowledge(row.sourceId))alreadySaved++;
+         continue;
+       }
+       if(session.nativeSeen.has(row.sourceId))continue;
+       session.nativeSeen.add(row.sourceId);
+       session.nativeRows.push(row);
+       added++;
+     }
+     if(added){
+       eventRow(added+" notificação(ões) aguardando revisão. "+
+         "Nada foi lançado ou descartado automaticamente.");
+       if(!session.draft||session.draft.posted)nextNativeNotification();
+     }else if(manual){
+       eventRow(alreadySaved?
+         alreadySaved+" notificação(ões) já registradas foram conciliadas e retiradas da fila Android.":
+         session.nativeRows.length+" notificação(ões) já presentes na fila desta sessão. Nenhum lançamento novo.");
+     }
+     if(result.invalid&&manual)
+       eventRow(result.invalid+" item(ns) inválido(s) ou não autorizado(s) não foram importados para revisão.");
+   }finally{session.nativeScanBusy=false}
+ }
+ async function cancelReview(){
+   const d=session.draft;if(!d||session.posting)return;
+   if(d.sourceType==="notification"){
+     if(typeof window.confirm!=="function"||
+         !window.confirm("Descartar esta notificação da fila Android? Nenhum lançamento será criado."))return;
+     const native=window.SnakeAssessorNativeNotifications;
+     if(!native?.acknowledge(d.sourceId)){
+       toast("Não consegui remover a notificação do Android. Ela permanece pendente.");
+       return;
+     }
+     eventRow("Notificação descartada por sua confirmação. Nenhum lançamento efetuado.");
+   }else eventRow("Prévia cancelada. Nenhum lançamento financeiro foi efetuado.");
+   session.draft=null;reviewPreview();advanceReviewQueue();
+ }
+
  function reviewPreview(){
    const d=session.draft,root=$("draftMount");root.replaceChildren();if(!d)return;
    const card=document.createElement("div");card.className="review";
@@ -180,7 +272,7 @@
    const detail=document.createElement("p");detail.className="hint";detail.id="reviewStatus";
    detail.textContent=d.posted?"Registrado e vinculado ao financeiro.":"Confira todas as informações antes da confirmação.";
    card.append(detail);root.append(card);
-   yes.onclick=postExpense;edit.onclick=openEditor;no.onclick=()=>{session.draft=null;reviewPreview();eventRow("Prévia cancelada. Nenhum lançamento financeiro foi efetuado.");nextExtractedRow()};
+   yes.onclick=postExpense;edit.onclick=openEditor;no.onclick=cancelReview;
    $("chatMessages").scrollTop=$("chatMessages").scrollHeight;
  }
  function openEditor(){
@@ -216,7 +308,7 @@
  async function postExpense(){
    const d=session.draft;if(!d||session.posting||d.posted)return;
    if(!api||!session.cloud)return toast("Conecte a sincronização Cloud antes de lançar valores reais.");
-   if(!d.account||!d.payment)return openEditor();
+   if(!d.account||!d.payment||!d.direction)return openEditor();
    if(d.installments>1&&!(d.payment==="Crédito"&&String(d.account).startsWith("card:")))
      return toast("Parcelas somente no cartão de crédito. Nenhum valor foi lançado.");
    const account=(session.cloud.payload.accounts||[]).find(a=>String(a.id)===String(d.account));
@@ -231,9 +323,20 @@
      // Read the current version before posting, so concurrent updates are rejected.
      const latest=await api.readFinanceState();
      if(!latest.state)throw new Error("finance_state_missing");
+     if(d.sourceType==="notification"&&Array.isArray(latest.state.payload?.transactions)&&
+       latest.state.payload.transactions.some(t=>t&&(t.androidNotificationId===d.sourceId||
+       (t.sourceType==="notification"&&t.sourceId===d.sourceId)))){
+       d.posted=true;
+       const cleared=window.SnakeAssessorNativeNotifications?.acknowledge(d.sourceId);
+       eventRow("Notificação já vinculada a uma transação real. Nenhum segundo lançamento foi criado."+
+         (cleared?"":" Não foi possível limpar a notificação local."));
+       session.cloud=latest.state;
+       reviewPreview();advanceReviewQueue();
+       return;
+     }
      if(!(latest.state.payload?.accounts||[]).some(a=>String(a.id)===d.account&&postableAccount(a)))throw new Error("account_not_available");
      const prepared=await api.prepare({
-       draftId:d.draftId,sourceType:d.sourceType,amountCents,direction:d.direction,account:d.account,
+       draftId:d.draftId,sourceType:d.sourceType,sourceId:d.sourceId||undefined,amountCents,direction:d.direction,account:d.account,
        transactionType:d.payment,category:d.category,subcategory:d.subcategory,
        description:d.description,date:d.date,counterparty:d.counterparty||undefined
      });
@@ -242,9 +345,14 @@
      if(prepared.duplicate)throw new Error("draft_already_prepared_review");
      const outcome=await api.confirmCash(d.draftId,latest.state.version);
      if(!outcome.posted)throw new Error("confirmed_not_posted");
-     d.posted=true;status.textContent=outcome.syncPending?"Lançamento registrado; atualização local pendente.":"Lançamento confirmado no financeiro.";
+     d.posted=true;
+     let nativeClearWarning=false;
+     if(d.sourceType==="notification")
+       nativeClearWarning=!window.SnakeAssessorNativeNotifications?.acknowledge(d.sourceId);
+     status.textContent=outcome.syncPending?"Lançamento registrado; atualização local pendente.":"Lançamento confirmado no financeiro.";
+     if(nativeClearWarning)eventRow("A movimentação foi registrada, mas a fila Android não pôde ser limpa. Não confirme novamente.");
      eventRow(outcome.syncPending?"Lançamento registrado no servidor. Sincronize a tela para atualizar os cards.":"Lançamento registrado com sucesso no Snake Finance.");
-     await refreshState();reviewPreview();nextExtractedRow();
+     await refreshState();reviewPreview();advanceReviewQueue();
    }catch(e){
      const uncertain=e.code==="posting_status_unknown";
      status.textContent=uncertain?"Resultado incerto após falha de rede. Consulte a conciliação antes de tentar novamente.":"Não lançado nesta tentativa: "+(e.code||e.message||"erro");
@@ -530,7 +638,7 @@
    document.querySelectorAll("[data-theme-option]").forEach(b=>b.classList.toggle("selected",b.dataset.themeOption===t))}}catch(_){}
  $("refreshState").onclick=refreshState;
  $("financeBtn").onclick=()=>toast("Financeiro completo: use a tela principal do Snake Finance.");
- $("alertBtn").onclick=()=>toast("Avisos financeiros em desenvolvimento; nenhuma notificação fictícia será enviada.");
+ $("alertBtn").onclick=()=>{switchView("chat");scanNativeNotifications(true)};
  $("alertShortcut").onclick=$("alertBtn").onclick;
  function agendaDate(){$("dayLabel").textContent=session.agendaDay.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
  $("dayBack").onclick=()=>{session.agendaDay.setDate(session.agendaDay.getDate()-1);agendaDate()};
@@ -559,4 +667,12 @@
  },{passive:true});
  // Read-only operation: never create, confirm or post a draft on startup.
  if(api)refreshState();
+ // Native callback only queues an editable review; no financial posting on event.
+ const oldNativeCallback=window.meuAssessorAndroidAutoSync;
+ window.meuAssessorAndroidAutoSync=()=>{
+   if(typeof oldNativeCallback==="function")try{oldNativeCallback()}catch(_){}
+   scanNativeNotifications(false);
+ };
+ if(window.SnakeAssessorNativeNotifications?.available?.())
+   scanNativeNotifications(false);
 })();
