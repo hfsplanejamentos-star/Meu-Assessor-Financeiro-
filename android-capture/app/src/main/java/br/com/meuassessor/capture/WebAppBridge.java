@@ -54,6 +54,10 @@ final class WebAppBridge {
 
     @JavascriptInterface
     public void markNotificationsConsumed() {
+        // Legacy bulk clear is used only by the existing release dashboard.
+        // The isolated preview must clear a specific event by acknowledged ID,
+        // after an explicit decision, never empty the whole bank queue.
+        if (BuildConfig.DEBUG) return;
         new EncryptedQueueStore(activity).clear();
     }
 
