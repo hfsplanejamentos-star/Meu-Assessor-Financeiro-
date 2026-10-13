@@ -81,7 +81,7 @@ dialog{background:var(--surface);border:1px solid var(--gold);border-radius:17px
 </main>
 <dialog id="draftDialog"><h2>Confirmar lançamento</h2><p class="hint">Confira valor, conta e classificação. A efetivação só ocorre após confirmação explícita.</p>
 <form id="draftForm"><label>Valor (R$)<input id="fieldAmount" type="number" min="0.01" step="0.01" required></label>
-<label>Movimentação<select id="fieldDirection"><option value="expense">Despesa</option><option value="income">Receita</option></select></label>
+<label>Movimentação<select id="fieldDirection" required><option value="">Selecione o tipo</option><option value="expense">Despesa</option><option value="income">Receita</option></select></label>
 <label>Categoria<input id="fieldCategory" required></label><label>Subcategoria<input id="fieldSubcategory"></label>
 <label>Conta<select id="fieldAccount" required><option value="">Selecione a conta sincronizada</option></select></label>
 <label>Forma de pagamento<select id="fieldPayment" required><option value="">Selecione para confirmar</option><option value="Pix">Pix</option><option value="Débito">Débito</option><option value="Crédito">Crédito</option><option value="Dinheiro">Dinheiro</option></select></label>
@@ -95,5 +95,6 @@ dialog{background:var(--surface);border:1px solid var(--gold);border-radius:17px
 <div id="toast" role="status"></div>
 <script src="./assessor-mobile-api.js"></script>
 <script src="./assessor-mobile-summary.js"></script>
+<script src="./assessor-mobile-notifications.js"></script>
 <script src="./assessor-mobile-screen.js"></script>
 </body></html>
