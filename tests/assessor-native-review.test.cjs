@@ -117,5 +117,20 @@ async function confirmCurrent(){
  assert.equal(ack.includes("notification-caju-003"),true,
   "only confirmed discard should clear an unposted Caju event");
  assert.equal(posted.length,2);
- console.log("Assessor native review: two same-value Pix, guarded Caju, explicit ACK and discard PASS");
+ // A debug preview must never invoke the backend posting path, even if
+ // the user taps its financial confirmation button.
+ window.SNAKE_ASSESSOR_PREVIEW_ONLY=true;
+ events.push({id:"notification-preview-004",sourcePackage:"com.c6bank.app",
+  title:"Pix enviado",text:"R$ 40,00 para Posto",amountCents:4000,
+  direction:"expense",postedAt:postedAt+3000});
+ window.meuAssessorAndroidAutoSync();
+ await wait();
+ const previewGuarded=get("draftMount").children[0];
+ assert(previewGuarded,"debug preview must still display the alert for checking");
+ await previewGuarded.querySelectorAll("button")[0].onclick();
+ assert.equal(prepared.length,2);
+ assert.equal(posted.length,2);
+ assert.equal(ack.includes("notification-preview-004"),false,
+  "preview cannot acknowledge unposted bank expense");
+ console.log("Assessor native review: equal-value Pix, Caju guard, explicit discard and read-only debug APK PASS");
 })().catch(error=>{console.error(error);process.exitCode=1});
