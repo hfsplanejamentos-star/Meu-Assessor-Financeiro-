@@ -1836,7 +1836,22 @@ function boot(){
  const saved=raw?JSON.parse(raw):null;if(raw&&!Array.isArray(saved))throw Error('Formato inválido');L=saved===null?JSON.parse(JSON.stringify(L0)):validateLedger(saved);if(OPENING_INVALID||(window.SNAKE_DISTRIBUTABLE&&!localStorage.getItem(OPENING_KEY))){L=[];PERSIST_BLOCKED=true;setTimeout(openBackupPanel,100);}}
  catch(e){L=[];PERSIST_BLOCKED=true;setTimeout(()=>alert('Os dados salvos não puderam ser lidos. Nada foi sobrescrito. Exporte um backup em Configurações e importe uma cópia válida.'),20);}
  YM=APP_TODAY.slice(0,7);if(!L.some(x=>(x.comp||x.d||'').startsWith(YM)))YM='2026-10';
- SEL=APP_TODAY.startsWith(YM)?APP_TODAY:`${YM}-01`;migrateLegacyPayment();NID=nextId();migrateWorkCategory();CATDB=completeBackupCategories(CATDB,L).categories;wInit();cInit();draw();
+ SEL=APP_TODAY.startsWith(YM)?APP_TODAY:`${YM}-01`;migrateLegacyPayment();NID=nextId();migrateWorkCategory();try{
+ CATDB=completeBackupCategories(CATDB,L).categories;wInit();cInit();draw();
+}catch(err){
+ PERSIST_BLOCKED=true;
+ console.error('Snake Finance: falha de montagem; nenhuma gravação financeira autorizada',err);
+ const target=document.getElementById('v')||document.getElementById('app')||document.body;
+ const panel=document.createElement('section');
+ panel.id='snakeSafeRecovery';
+ panel.style.cssText='margin:18px;padding:18px;border:1px solid #c8a45d;border-radius:18px;background:#16130d;color:#f3e3b6;position:relative;z-index:50';
+ const h=document.createElement('h2');h.textContent='Modo seguro · recuperação de dados';panel.appendChild(h);
+ const p=document.createElement('p');p.textContent='O painel encontrou um erro de montagem. Seus dados não foram apagados por esta tela. Gravações financeiras foram bloqueadas.';panel.appendChild(p);
+ const code=document.createElement('p');code.textContent='Diagnóstico: '+String(err&&err.message||err).slice(0,180);panel.appendChild(code);
+ const raw=document.createElement('button');raw.textContent='Exportar armazenamento original';raw.style.cssText='padding:12px;margin:8px;background:#d8b55c;color:#111;border-radius:10px';raw.onclick=()=>exportRawRecovery();panel.appendChild(raw);
+ const preserved=document.createElement('button');preserved.textContent='Exportar cópia interna preservada';preserved.style.cssText='padding:12px;margin:8px;background:#d8b55c;color:#111;border-radius:10px';preserved.onclick=()=>exportPreservedLedger();panel.appendChild(preserved);
+ target.prepend(panel);
+}
 }
 function setT(n){document.documentElement.dataset.tema=n;try{localStorage.setItem('tema',n);}catch(e){}}
 let t0=null;try{t0=localStorage.getItem('tema');}catch(e){}
