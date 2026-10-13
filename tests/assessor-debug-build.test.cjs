@@ -21,7 +21,15 @@ assert.match(main,/if \(BuildConfig\.DEBUG\) loadAssessorPreview\(\)/);
 assert.match(main,/else loadDashboardHtml\(\)/);
 assert.match(main,/if \(!BuildConfig\.DEBUG\) UpdateChecker\.check\(this\)/);
 assert.match(main,/SNAKE_ASSESSOR_PREVIEW_ONLY=true/);
+assert.match(main,/APP_BASE_URL \+ "assessor-ia-mobile\.html"/);
+assert.match(main,/if \(BuildConfig\.DEBUG\) \{[\s\S]*?never navigate away/i);
+assert.match(main,/String\[\] allowedMimeTypes = BuildConfig\.DEBUG/);
+assert.match(main,/if \("https"\.equalsIgnoreCase\(uri\.getScheme\(\)\)\)/);
+
 assert.match(ui,/if\(window\.SNAKE_ASSESSOR_PREVIEW_ONLY===true\)/);
+assert.match(read("assessor-mobile-api.js"),/preview_read_only/);
+assert.match(read("assessor-mobile-api.js"),/root\.SNAKE_ASSESSOR_PREVIEW_ONLY===true/);
+
 assert.match(ui,/Prévia Android: a correção do cartão está desativada/);
 let page=html;
 for(const script of scripts){
