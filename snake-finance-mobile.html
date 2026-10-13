@@ -1862,7 +1862,17 @@ document.addEventListener('keydown',e=>{if(e.key=='Escape')closeDay();});
 function rst(){alert('Restaurar dados de exemplo está desativado para proteger seus lançamentos.');return;}
 function rstDisabledLegacy(){if(!confirm('Restaurar a base de exemplo substitui seus lançamentos. Exporte um backup primeiro. Continuar?'))return;saveSafetyBackup();PERSIST_BLOCKED=false;closeDay();L=JSON.parse(JSON.stringify(L0));persistLedger();YM='2026-10';SEL=APP_TODAY.startsWith(YM)?APP_TODAY:`${YM}-01`;OPEN=0;TOAST='';LAST=0;NID=nextId();migrateWorkCategory();CATDB=completeBackupCategories(CATDB,L).categories;wInit();cInit();draw();}
 function boot(){
- try{const raw=localStorage.getItem(LEDGER_KEY)||localStorage.getItem('assessor_tx');
+ try{
+ const currentRaw=localStorage.getItem(LEDGER_KEY);
+ const legacyRaw=localStorage.getItem('assessor_tx');
+ // A newer empty list must never mask a nonempty older ledger.
+ const isNonemptyLedger=function(value){if(!value)return false;try{const parsed=JSON.parse(value);return Array.isArray(parsed)&&parsed.length>0;}catch(ignore){return false;}};
+ const raw=isNonemptyLedger(currentRaw)?currentRaw:(isNonemptyLedger(legacyRaw)?legacyRaw:(currentRaw||legacyRaw));
+ if(!isNonemptyLedger(currentRaw)&&isNonemptyLedger(legacyRaw)){
+   PERSIST_BLOCKED=true;
+   setTimeout(()=>alert('Base anterior encontrada. Gravações bloqueadas até exportar e validar os lançamentos originais.'),100);
+ }
+
  try{const native=window.AndroidBridge||window.AndroidApp;if(raw&&native&&typeof native.preserveLedgerSnapshot==='function'){const rows=JSON.parse(raw);if(Array.isArray(rows)&&rows.length>0)native.preserveLedgerSnapshot(raw);}}catch(ignore){}
  if(!raw||raw==='[]'){PERSIST_BLOCKED=true;setTimeout(()=>alert('Base vazia: proteção contra gravações ativada. Preserve os dados e exporte a cópia de recuperação.'),100);}
  const saved=raw?JSON.parse(raw):null;if(raw&&!Array.isArray(saved))throw Error('Formato inválido');L=saved===null?JSON.parse(JSON.stringify(L0)):validateLedger(saved);if(OPENING_INVALID||(window.SNAKE_DISTRIBUTABLE&&!localStorage.getItem(OPENING_KEY))){L=[];PERSIST_BLOCKED=true;setTimeout(openBackupPanel,100);}}
