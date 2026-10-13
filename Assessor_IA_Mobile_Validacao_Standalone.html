@@ -1,0 +1,1196 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0b08">
+<title>Snake Finance · Assessor IA Mobile</title>
+<style>
+:root{--bg:#090a08;--surface:#191b19;--surface2:#262722;--line:#423b29;--gold:#f3c454;--text:#f7f2e8;--muted:#a8a69d;--green:#2acf69;--red:#f3696c;font:14px system-ui,Arial,sans-serif;color-scheme:dark}
+body[data-theme=limao]{--gold:#d0f75e;--line:#48532d}
+body[data-theme=branco]{--bg:#eff3f5;--surface:white;--surface2:#edf1f2;--line:#d5dde0;--gold:#397fc9;--text:#203040;--muted:#617381;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text)}button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}
+main{margin:0 auto;max-width:440px;min-height:100dvh;padding-bottom:90px;background:radial-gradient(ellipse at top right,color-mix(in srgb,var(--gold) 9%,transparent),transparent 55%),var(--bg);position:relative}
+.status{padding:12px 22px 4px;display:flex;justify-content:space-between;font-size:12px}
+.top{display:flex;align-items:center;gap:10px;padding:9px 16px 12px;border-bottom:1px solid var(--line)}
+.logo{font:bold italic 42px Georgia,serif;color:var(--gold);text-shadow:0 0 15px color-mix(in srgb,var(--gold) 40%,transparent)}
+.top strong{font-size:17px;letter-spacing:1px}.top small{display:block;color:var(--gold);letter-spacing:1.6px;font-size:10px}
+.top .tools{margin-left:auto;display:flex;gap:7px}
+.circle{width:36px;height:36px;border-radius:50%;background:var(--surface);border:1px solid var(--line);color:var(--text);font-size:21px}
+section.screen{display:none;padding:13px 16px}section.screen.active{display:block}
+.month{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:43px;font-weight:700}
+.month button{background:none;color:var(--text);border:0;font-size:24px;padding:7px 15px}
+.banks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:12px 0}
+.bank{border:1px solid var(--gold);border-radius:12px;min-height:101px;background:linear-gradient(150deg,color-mix(in srgb,var(--gold) 9%,var(--surface)),var(--bg));padding:10px 8px}
+.bank .name{font-size:13px;font-weight:800}.bank .value{font-size:15px;font-weight:800;margin-top:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bank small{display:block;color:var(--muted);margin-top:5px}
+.panel{border:1px solid var(--line);background:var(--surface);border-radius:15px;padding:14px;margin:12px 0}
+.fin-sums{display:grid;grid-template-columns:1fr 1fr;gap:14px}.fin-sums div+div{border-left:1px solid var(--line);padding-left:15px}
+.fin-sums strong{display:block;margin-top:8px;font-size:19px}.bar{height:10px;border-radius:8px;background:linear-gradient(to right,#2d9af0 0 55%,#2bc85f 55% 73%,#39382f 73%);margin:17px 0 12px}
+.available{color:var(--green);font-size:19px;font-weight:800;margin-top:5px}
+.shortcuts{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.shortcuts button{background:var(--surface);border:1px solid var(--line);border-radius:12px;color:var(--text);font-size:11px;padding:9px 4px;min-height:91px}.shortcuts button:first-child{border-color:var(--gold)}.shortcuts span{display:block;font-size:25px;margin-bottom:8px}
+.panel h3{font-size:14px;margin:0 0 12px}.panel h3 small{float:right;color:var(--gold);font-size:11px}
+.donut-area{display:flex;align-items:center;gap:14px}.donut{width:137px;height:137px;flex:0 0 137px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#248fcf 0 28%,#ef5252 28% 46%,#f4c03b 46% 58%,#c9815f 58% 69%,#2884cf 69%)}.donut b{height:86px;width:86px;background:var(--surface);display:grid;place-items:center;border-radius:50%;font-size:13px;text-align:center}
+.legend{flex:1;color:var(--muted);font-size:11px}.legend p{display:flex;justify-content:space-between;gap:5px;margin:10px 0}.legend em{display:inline-block;width:9px;height:9px;background:var(--gold);border-radius:50%;margin-right:5px}.legend span{margin-right:auto}
+.hint{color:var(--muted);font-size:11px;line-height:1.5}
+.chat-head{display:flex;align-items:center;gap:9px;margin-bottom:14px}.bot{width:43px;height:43px;flex:none;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffe695,#c59424 70%);border:2px solid #f9d878;display:grid;place-items:center;color:#30200a;font-size:23px;box-shadow:0 0 14px #eac05877}.bot.small{height:34px;width:34px;font-size:17px}
+.chat-head h1,.agenda-head h1{margin:0;font-size:18px}.chat-head p,.agenda-head p{font-size:11px;margin:3px 0;color:var(--muted)}
+.chat-scroll{height:calc(100dvh - 322px);min-height:380px;overflow-y:auto;scrollbar-width:thin;padding-bottom:10px}
+.bubble{background:var(--surface);border:1px solid var(--line);border-radius:15px;padding:12px;max-width:85%;line-height:1.5;margin:10px 0}.bubble.user{margin-left:auto;background:linear-gradient(115deg,#c48a2b,#ffe183);border:0;color:#281f0f}.bubble.answer{margin-left:42px}
+.review{margin:12px 0 14px 41px;border-radius:14px;border:1px solid #665532;background:var(--surface2);padding:12px}
+.review h3{margin:0 0 11px;font-size:14px}.pair{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:12px}.pair span{color:var(--muted)}.pair b{text-align:right;word-break:break-word}
+.review-actions{display:flex;gap:5px;margin-top:12px}.review-actions button{flex:1;padding:10px 4px;border-radius:8px;border:1px solid var(--line);color:var(--text);background:var(--surface);font-size:11px}.review-actions .ok{background:var(--green);color:#103419;border:0}.review-actions .stop{background:#442023;color:#ff898a}
+.compose{position:sticky;bottom:77px;background:var(--bg);padding:5px 0 0}.compose-main{display:flex;gap:5px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:4px}.compose-main input{flex:1;width:0;border:0;outline:none;background:none;color:var(--text);font-size:12px}.compose-main button{border:0;background:none;color:var(--text);font-size:19px;padding:8px 4px}.compose-main button.send{border-radius:9px;background:var(--gold);color:#30220d;min-width:38px}
+.chat-shortcuts{display:flex;gap:6px;margin-top:8px}.chat-shortcuts button{flex:1;background:var(--surface);color:var(--muted);border:1px solid var(--line);border-radius:9px;padding:9px 3px;font-size:10px}
+.agenda-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.tabs{display:flex;gap:4px;border:1px solid var(--line);padding:3px;background:var(--surface);border-radius:12px}.tabs button{flex:1;color:var(--muted);background:transparent;border:0;padding:11px;border-radius:9px}.tabs .selected{background:var(--gold);color:#251f0e;font-weight:700}
+.agenda-day{display:flex;justify-content:space-between;align-items:center;margin:14px 0}
+.agenda-empty{color:var(--muted);text-align:center;padding:26px 8px;font-size:12px;line-height:1.6}
+.gold-button{background:var(--gold);border:0;border-radius:10px;color:#241b0e;padding:13px;font-weight:800;width:100%}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);max-width:440px;width:100%;height:78px;padding-bottom:env(safe-area-inset-bottom);border:1px solid var(--line);background:linear-gradient(90deg,color-mix(in srgb,var(--gold) 10%,var(--surface)),var(--bg));border-radius:18px 18px 0 0;display:flex;justify-content:space-around;align-items:center;z-index:5}
+nav button{background:none;border:0;color:var(--muted);font-size:10px;min-width:54px;display:flex;align-items:center;flex-direction:column;gap:4px}
+nav .active{color:var(--gold)}nav button span{font-size:22px}nav .center span{height:50px;width:50px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#ffe58b,#bc8a28);border:2px solid #ffe09a;box-shadow:0 0 17px #d9a93eaa;font-size:28px;margin-top:-18px}
+dialog{background:var(--surface);border:1px solid var(--gold);border-radius:17px;color:var(--text);width:min(390px,calc(100% - 30px));padding:17px;max-height:90dvh;overflow:auto}dialog::backdrop{background:#000b}dialog h2{font-size:17px;margin:0 0 12px}
+[hidden]{display:none!important}dialog label{font-size:11px;color:var(--muted);display:block;margin:10px 0 0}dialog input,dialog select,dialog textarea{width:100%;padding:10px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:9px;margin-top:4px}dialog textarea{min-height:65px}
+.dialog-actions{display:flex;gap:8px;margin-top:16px}.dialog-actions button{flex:1;border:1px solid var(--line);border-radius:9px;padding:11px;background:var(--surface2);color:var(--text)}.dialog-actions button.primary{background:var(--gold);color:#251b0b}
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.upload-grid button{border:1px solid var(--line);border-radius:10px;background:var(--surface2);color:var(--text);padding:15px 6px;font-size:12px}
+.theme-buttons{display:flex;gap:7px}.theme-buttons button{flex:1;border:1px solid var(--line);border-radius:9px;padding:10px 5px;color:var(--text);background:var(--surface2)}.theme-buttons .selected{border-color:var(--gold)}
+#toast{display:none;position:fixed;bottom:91px;left:50%;transform:translateX(-50%);width:min(390px,calc(100% - 28px));background:var(--surface2);border:1px solid var(--gold);border-radius:12px;padding:12px;z-index:30;font-size:12px}
+</style>
+</head>
+<body data-theme="dourado">
+<main><div class="status"><span>9:41</span><span>▂▄▆ ◖ ▰</span></div>
+<header class="top" id="topHome"><span class="logo">S</span><div><strong>SNAKE FINANCE</strong><small>MEU ASSESSOR IA</small></div><div class="tools"><button id="alertBtn" class="circle">♧</button><button class="circle" id="settingsBtn">⚙</button></div></header>
+<section class="screen active" id="screenHome">
+ <div class="month"><button id="prevMonth">‹</button><b id="monthLabel">Outubro 2026</b><button id="nextMonth">›</button></div>
+ <div class="banks"><div class="bank"><div class="name">C6</div><div class="value" id="balanceC6">—</div><small>Disponível</small></div><div class="bank"><div class="name">🟡 CAJU</div><div class="value" id="balanceCaju">—</div><small>Disponível</small></div><div class="bank"><div class="name">Itaú</div><div class="value" id="balanceItau">—</div><small>Disponível</small></div></div>
+ <div class="panel"><div class="fin-sums"><div>Receitas<strong id="monthIncome">—</strong></div><div>Despesas<strong id="monthExpense">—</strong></div></div><div class="bar"></div>Saldo do mês<div class="available" id="monthNet">—</div></div>
+ <div class="shortcuts"><button data-view="chat"><span>🤖</span>Assessor IA</button><button data-view="agenda"><span>▦</span>Agenda Teams</button><button id="alertShortcut"><span>♧</span>Alertas</button><button id="docShortcut"><span>▤</span>Documentos</button></div>
+ <div class="panel"><h3>Despesas por Categoria <small>Ver todas ›</small></h3><div class="donut-area"><div class="donut"><b id="donutSum">—</b></div><div class="legend"><p><em></em><span>Moradia</span><b>—</b></p><p><em></em><span>Alimentação</span><b>—</b></p><p><em></em><span>Transporte</span><b>—</b></p><p><em></em><span>Lazer</span><b>—</b></p><p><em></em><span>Outros</span><b>—</b></p></div></div></div><p class="hint" id="dataStatus">Aguardando dados reais. Não serão exibidos saldos fictícios.</p>
+</section>
+<section class="screen" id="screenChat">
+ <div class="chat-head"><button class="circle" data-view="home">‹</button><div class="bot">🤖</div><div style="flex:1"><h1>Assessor IA</h1><p>Seu assistente financeiro e pessoal</p></div><button class="circle" id="chatSettings">⋯</button></div>
+ <div class="chat-scroll" id="chatMessages"><div class="bubble">Olá! Você pode enviar um texto, áudio, foto ou extrato. Vou mostrar os dados para confirmação.</div><div id="draftMount"></div></div>
+ <div class="compose"><div class="compose-main"><button id="attachBtn" aria-label="Anexos">♧</button><button id="cameraBtn" aria-label="Câmera">▣</button><button id="photoBtn" aria-label="Fotos">▧</button><button id="voiceBtn" aria-label="Áudio">♩</button><input id="messageInput" aria-label="Mensagem" placeholder="Digite sua mensagem..."><button id="sendBtn" class="send" aria-label="Enviar">➤</button></div><div class="chat-shortcuts"><button id="newExpense">▤ Registrar despesa</button><button id="checkSpending">▥ Consultar gastos</button><button data-view="agenda">▦ Ver agenda</button></div></div>
+</section>
+<section class="screen" id="screenAgenda">
+ <div class="agenda-head"><button class="circle" data-view="home">‹</button><span style="font-size:26px;color:var(--gold)">▦</span><div style="flex:1"><h1>Agenda (Teams)</h1><p>Seus compromissos e tarefas</p></div></div>
+ <div class="tabs"><button class="selected">Hoje</button><button>Semana</button><button>Mês</button></div>
+ <div class="agenda-day"><button id="dayBack" class="circle">‹</button><b id="dayLabel"></b><button id="dayForward" class="circle">›</button></div>
+ <div class="panel"><h3>Compromissos <small>Não conectado</small></h3><div class="agenda-empty">Nenhum compromisso sincronizado.<br>Teams e Google Agenda exigem autorização da conta.</div><button id="newMeeting" class="gold-button">＋ Nova reunião</button></div><div class="panel"><h3>Próximos Compromissos</h3><div class="agenda-empty">Nenhum compromisso carregado.</div></div>
+</section>
+<nav><button data-view="home" class="active"><span>⌂</span>Início</button><button id="financeBtn"><span>▣</span>Financeiro</button><button class="center" data-view="chat"><span>🤖</span>Assessor IA</button><button data-view="agenda"><span>▦</span>Agenda</button><button id="moreBtn"><span>•••</span>Mais</button></nav>
+</main>
+<dialog id="draftDialog"><h2>Confirmar lançamento</h2><p class="hint">Confira valor, conta e classificação. A efetivação só ocorre após confirmação explícita.</p>
+<form id="draftForm"><label>Valor (R$)<input id="fieldAmount" type="number" min="0.01" step="0.01" required></label>
+<label>Movimentação<select id="fieldDirection" required><option value="">Selecione o tipo</option><option value="expense">Despesa</option><option value="income">Receita</option></select></label>
+<label>Categoria<input id="fieldCategory" required></label><label>Subcategoria<input id="fieldSubcategory"></label>
+<label>Conta<select id="fieldAccount" required><option value="">Selecione a conta sincronizada</option></select></label>
+<label>Forma de pagamento<select id="fieldPayment" required><option value="">Selecione para confirmar</option><option value="Pix">Pix</option><option value="Débito">Débito</option><option value="Crédito">Crédito</option><option value="Dinheiro">Dinheiro</option></select></label>
+<label id="installmentField" hidden>Quantidade de parcelas (C6 Carbon)<input id="fieldInstallments" type="number" min="1" max="48" step="1" value="1" required></label>
+<label>Data<input id="fieldDate" type="date" required></label><label>Estabelecimento / destinatário<input id="fieldCounterparty"></label><label>Descrição<textarea id="fieldDescription" required></textarea></label>
+<div class="dialog-actions"><button type="button" id="draftDismiss">Cancelar</button><button type="submit" class="primary">Salvar prévia</button></div></form></dialog>
+<dialog id="addDialog"><h2>Adicionar com o Assessor IA</h2><div class="upload-grid"><button id="chooseVoice">🎤<p>Falar (áudio)</p></button><button id="choosePhoto">📷<p>Tirar foto</p></button><button id="chooseDocument">📄<p>PDF / Extrato</p></button><button id="chooseText">✎<p>Digitar texto</p></button></div><div class="dialog-actions"><button id="addDismiss">Fechar</button></div></dialog>
+<dialog id="settingsDialog"><h2>Configurações do Assessor IA</h2><p class="hint">Escolha o tema da interface.</p><div class="theme-buttons"><button data-theme-option="dourado" class="selected">Dourado</button><button data-theme-option="limao">Limão</button><button data-theme-option="branco">Branco</button></div><h3>Sincronização financeira</h3><p class="hint" id="syncConnectionStatus" role="status">Não conectado. A captura e revisão de notificações locais funcionam sem a sincronização.</p><label>Chave de sincronização do Snake Finance<input id="syncKeyField" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" minlength="32" maxlength="256" placeholder="Cole a mesma chave de sincronização do seu financeiro"></label><p class="hint">Utilize a chave de sincronização do Snake Finance, nunca sua senha bancária. Nesta versão de teste, a conexão é somente leitura.</p><div class="dialog-actions"><button id="connectFinance">Conectar (leitura)</button><button id="disconnectFinance">Desconectar</button></div><div class="dialog-actions"><button id="refreshState">Atualizar contas (leitura)</button><button id="settingsDismiss">Fechar</button></div></dialog>
+<input hidden type="file" id="documentFile" accept=".pdf,.csv,.ofx,.txt,image/jpeg,image/png,image/webp">
+<input hidden type="file" id="photoFile" accept="image/*" capture="environment">
+<div id="toast" role="status"></div>
+<script>
+/* Validação standalone: nunca permitir gravação no motor financeiro. */
+Object.defineProperty(window, "SNAKE_ASSESSOR_PREVIEW_ONLY", {
+  value: true, writable: false, configurable: false
+});
+</script>
+<script data-source="assessor-mobile-api.js">
+/**
+ * Headless client for the approved Assessor IA interface.
+ * No DOM changes, no automatic posting, and no silent transaction creation.
+ * Call confirmCash() ONLY from an explicit "Confirmar" user action.
+ */
+(function (root) {
+  "use strict";
+  const API = "https://effervescent-marlin-88.convex.site";
+  const KEY = "assessor_cloud_sync_key";
+
+  function key() {
+    let value="";
+    try { value=(root.localStorage?.getItem(KEY) || "").trim(); } catch (_){}
+    if (value.length < 32 || value.length > 256)
+      throw new Error("A chave de sincronização do Assessor IA deve ter de 32 a 256 caracteres.");
+    return value;
+  }
+  function hasSyncKey() {
+    try { return key().length>=32; } catch (_) { return false; }
+  }
+  function setSyncKey(value) {
+    const raw=String(value||"");
+    const candidate=raw.trim();
+    if(candidate.length<32||candidate.length>256 ||
+       /[\u0000-\u001f]/.test(raw))
+      throw new Error("Chave inválida: informe apenas a chave de sincronização do Snake Finance.");
+    if (!root.localStorage) throw new Error("Armazenamento seguro do navegador indisponível.");
+    root.localStorage.setItem(KEY,candidate);
+    return true;
+  }
+  function disconnectSync() {
+    root.localStorage?.removeItem(KEY);
+    return true;
+  }
+  async function request(path, {method="GET",body}={}) {
+    // Strict allowlist: the isolated preview may use POST ONLY for
+    // non-ledger analysis. Newly added endpoints default to blocked.
+    const previewSafePosts=[
+      "/ai/finance","/assessor/analyze-attachment",
+      "/assessor/transcribe","/assessor/card-preview"
+    ];
+    if (root.SNAKE_ASSESSOR_PREVIEW_ONLY===true &&
+        method.toUpperCase()!=="GET" &&
+        !previewSafePosts.includes(path)) {
+      const error=new Error("preview_read_only");
+      error.code="preview_read_only";
+      throw error;
+    }
+    const response = await root.fetch(API + path, {
+      method, cache:"no-store",
+      headers: {"Content-Type":"application/json","X-Sync-Key":key()},
+      ...(body===undefined?{}:{body:JSON.stringify(body)}),
+    });
+    const data = await response.json().catch(()=>({ok:false,error:"invalid_response"}));
+    if (!response.ok || data.ok===false) {
+      const error = new Error(data.error || "request_failed");
+      error.code = data.error || "request_failed";
+      error.status = response.status;
+      error.details = data;
+      throw error;
+    }
+    return data;
+  }
+  function newDraftId() {
+    if (!root.crypto?.randomUUID) throw new Error("Identificador seguro indisponível");
+    return root.crypto.randomUUID();
+  }
+  function prepare(draft) {
+    if (!draft || typeof draft!=="object") throw new Error("Rascunho ausente");
+    if (!draft.draftId) throw new Error("Informe um draftId estável para evitar duplicidade");
+    return request("/assessor/drafts",{method:"POST",body:draft});
+  }
+  function confirm(draftId) {
+    return request("/assessor/decision",{method:"POST",body:{draftId,decision:"confirm"}});
+  }
+  function reject(draftId) {
+    return request("/assessor/decision",{method:"POST",body:{draftId,decision:"reject"}});
+  }
+  function postCash(draftId,baseVersion) {
+    return request("/assessor/post",{method:"POST",body:{
+      draftId,...(baseVersion===undefined?{}:{baseVersion})
+    }});
+  }
+  async function confirmCash(draftId,baseVersion) {
+    // Explicit confirmation persists before posting. A failed post must be
+    // shown as "confirmado, mas não lançado", never as a successful expense.
+    await confirm(draftId);
+    let posting;
+    try {
+      posting = await postCash(draftId,baseVersion);
+    } catch (cause) {
+      // A timeout after a server commit is NOT proof the posting failed.
+      const definiteFailure = typeof cause?.status==="number" && cause.status>=400;
+      const err = new Error(definiteFailure ? "confirmed_not_posted" : "posting_status_unknown");
+      err.code = definiteFailure ? "confirmed_not_posted" : "posting_status_unknown";
+      err.cause = cause;
+      throw err;
+    }
+    const posted=!!(posting.financeStateUpdated || posting.alreadyPosted);
+    let syncPending=false;
+    if (posted && root.FinanceCloud?.pull) {
+      try {
+        const result=await root.FinanceCloud.pull();
+        if (!result || result.ok===false) syncPending=true;
+      }
+      catch (_) { syncPending=true; }
+    } else if (posted) {
+      syncPending=true;
+    }
+    return {confirmed:true,posted,syncPending,posting};
+  }
+  const previewCardPurchase = (cardId,purchaseDate,totalCents,installments=1) =>
+    request("/assessor/card-preview",{method:"POST",body:{cardId,purchaseDate,totalCents,installments}});
+  const previewCajuMonth = month => request("/assessor/caju-preview?month="+encodeURIComponent(month));
+  const auditCarbonSettings = cardId => request("/assessor/carbon-audit?cardId="+encodeURIComponent(cardId));
+  const repairCarbonSettings = (cardId,baseVersion) =>
+    request("/assessor/carbon-repair",{method:"POST",body:{
+      cardId,baseVersion,confirm:true,expectedClosing:5,expectedDue:7
+    }});
+  const listCarbonInvoices = (cardId,month,count=6) => request("/assessor/invoices?"+
+    new URLSearchParams({cardId,month,count:String(count)}).toString());
+  const readFinanceState = () => request("/finance/state");
+  const interpretText = (text, context={}) => request("/ai/finance",{method:"POST",body:{text,context}});
+
+  async function analyzeAttachment(file) {
+    if (!file || typeof file.size!=="number" || typeof file.name!=="string")
+      throw new Error("invalid_file");
+    if (file.size<8 || file.size>4_000_000) throw new Error("attachment_size_limit");
+    const ext=file.name.toLowerCase().split(".").pop();
+    const mimeByExt={"pdf":"application/pdf","jpg":"image/jpeg","jpeg":"image/jpeg",
+      "png":"image/png","webp":"image/webp","txt":"text/plain","csv":"text/csv","ofx":"application/x-ofx"};
+    const mimeType=mimeByExt[ext]||file.type;
+    if(!Object.values(mimeByExt).includes(mimeType))throw new Error("unsupported_attachment_type");
+    // FileReader sends bytes only after an explicit tap on "Analisar arquivo".
+    const base64=await new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onerror=()=>reject(new Error("attachment_read_failed"));
+      reader.onload=()=>resolve(String(reader.result||"").split(",")[1]||"");
+      reader.readAsDataURL(file);
+    });
+    return request("/assessor/analyze-attachment",{method:"POST",body:{name:file.name,mimeType,base64}});
+  }
+
+
+  async function transcribeAudio(blob) {
+    if (!blob || typeof blob.size!=="number" || blob.size<32 || blob.size>4_000_000)
+      throw new Error("audio_size_limit");
+    const mimeType=String(blob.type||"").split(";")[0].toLowerCase();
+    if (!["audio/webm","audio/ogg","audio/mpeg","audio/mp3","audio/wav","audio/x-wav","audio/mp4"].includes(mimeType))
+      throw new Error("unsupported_audio_type");
+    const base64=await new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=()=>resolve(String(reader.result||"").split(",")[1]||"");
+      reader.onerror=()=>reject(new Error("audio_read_failed"));
+      reader.readAsDataURL(blob);
+    });
+    return request("/assessor/transcribe",{method:"POST",body:{mimeType,base64}});
+  }
+
+  const listPending = () => request("/assessor/drafts?status=pending");
+  const listConfirmed = () => request("/assessor/drafts?status=confirmed");
+  const reconciliation = () => request("/assessor/reconciliation");
+
+  root.SnakeAssessorApi = Object.freeze({
+    newDraftId,prepare,confirm,reject,postCash,confirmCash,
+    hasSyncKey,setSyncKey,disconnectSync,readFinanceState,interpretText,analyzeAttachment,transcribeAudio,previewCardPurchase,previewCajuMonth,listCarbonInvoices,auditCarbonSettings,repairCarbonSettings,listPending,listConfirmed,reconciliation,
+  });
+})(window);
+
+</script>
+<script data-source="assessor-mobile-summary.js">
+/* Financial Q&A from confirmed existing ledger rows; no writes, no guessing.
+ * Caju benefit transactions are intentionally included in expense queries,
+ * even when marked excludeFromExpense in the general dashboard.
+ */
+(function(root){
+ "use strict";
+ const norm=s=>String(s??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+ const settled=t=>!t.status||["realized","real","paid","pago","realizado","realizada","posted","received","recebido"].includes(norm(t.status));
+ const transfer=t=>t.transfer||t.transferId||t.invoicePayment||t.cardPayment||
+  ["transfer","goal_transfer","invoice_payment","refund","reversal"].includes(norm(t.kind))||
+  t.excludeFromBalance||t.excludeFromPatrimony&&t.excludeFromExpense!==true&&t.benefit!==true;
+ function categoryQuery(text){
+  const s=norm(text);
+  if(!/(quanto|total|soma|valor|gastei|gastos|despesas)/.test(s))return null;
+  if(/cerveja|chopp|chope/.test(s))return{label:"cerveja",test:t=>/cerveja|chopp|chope|deposito cego/.test(norm([t.cat,t.sub,t.subcategory,t.desc,t.description].join(" ")))};
+  if(/combustivel|gasolina|abastec/.test(s))return{label:"combustível",test:t=>/combustivel|gasolina|abastec|posto de gasolina/.test(norm([t.cat,t.sub,t.subcategory,t.desc,t.description].join(" ")))};
+  if(/farmacia|medicamento/.test(s))return{label:"farmácia",test:t=>/farmacia|medicamento|drogaria/.test(norm([t.cat,t.sub,t.subcategory,t.desc,t.description].join(" ")))};
+  if(/mercado|supermercado/.test(s))return{label:"mercado",test:t=>/mercado|supermercado|hortifruti/.test(norm([t.cat,t.sub,t.subcategory,t.desc,t.description].join(" ")))};
+  if(/gastei|gastos|despesas/.test(s))return{label:"despesas",test:()=>true};
+  return null;
+ }
+ function bankOf(t,db){
+  const ids=[t.cardId,t.card,t.account,t.accountId].map(String);
+  const card=(db.cards||[]).find(c=>ids.includes(String(c.id)));
+  const acc=(db.accounts||[]).find(a=>ids.includes(String(a.id)));
+  const key=norm([t.origin,t.source,t.bank,t.accountName,t.cardName,card?.name,acc?.name,acc?.institution].filter(Boolean).join(" "));
+  if(t.benefit===true||ids.includes("card_caju_alimentacao")||key.includes("caju"))return "Caju";
+  if(key.includes("c6")||ids.includes("c6")||ids.includes("acc_c6"))return "C6";
+  if(/itau|ita[uú]/.test(key))return "Itaú";
+  if(/\bxp\b/.test(key))return "XP";
+  return acc?.name||card?.name||"Conta não identificada";
+ }
+ function summarize(text,payload,month){
+  const category=categoryQuery(text);
+  if(!category)return null;
+  if(!payload||!Array.isArray(payload.transactions))return{supported:true,available:false,reason:"no_ledger"};
+  if(!/^\d{4}-\d{2}$/.test(month))return{supported:true,available:false,reason:"invalid_month"};
+  const ids=new Set(),origins=new Set(),totals=new Map();let amountCents=0,count=0;
+  for(const t of payload.transactions){
+    if(!t||typeof t!=="object"||String(t.date||"").slice(0,7)!==month||!settled(t)||transfer(t)||!category.test(t))continue;
+    const value=Number(t.value);
+    if(!Number.isFinite(value)||value>=0)continue;
+    const cents=Math.round(-value*100);
+    if(!Number.isSafeInteger(cents)||cents<=0||Math.abs(-value*100-cents)>0.001)continue;
+    const uniqueId=t.id===undefined||t.id===null?"":String(t.id);
+    const sourceId=t.androidNotificationId||((t.sourceType&&t.sourceId)?String(t.sourceType)+":"+String(t.sourceId):"");
+    if((uniqueId&&ids.has(uniqueId))||(sourceId&&origins.has(sourceId)))continue;
+    if(uniqueId)ids.add(uniqueId);if(sourceId)origins.add(sourceId);
+    const bank=bankOf(t,payload);totals.set(bank,(totals.get(bank)||0)+cents);
+    amountCents+=cents;count++;
+  }
+  return{supported:true,available:true,category:category.label,month,count,totalCents:amountCents,
+   byBank:Array.from(totals.entries()).map(([bank,cents])=>({bank,cents})).sort((a,b)=>b.cents-a.cents),
+   coverage:"Transações realizadas e identificadas no histórico; inclui Caju. Despesas sem categoria ou descrição identificável podem não ser encontradas."};
+ }
+ root.SnakeAssessorSummary=Object.freeze({summarize});
+})(window);
+
+</script>
+<script data-source="assessor-mobile-notifications.js">
+/**
+ * Read-only bridge from Android's encrypted notification queue to Assessor IA.
+ * No posting, preparation, upload, or acknowledgement occurs during list().
+ * Equal-value events with distinct IDs always remain separate.
+ */
+(function(root) {
+ "use strict";
+ const ALLOWED = Object.freeze({
+  "com.c6bank.app":"C6",
+  "br.com.xp.carteira":"XP",
+  "com.caju.employee":"Caju",
+  "br.com.itau":"Itaú"
+ });
+ const clean = value => String(value??"").replace(/[\u0000-\u001f]/g," ").trim();
+ const formatDate = ms => {
+  const date=new Date(ms);
+  if(!Number.isFinite(date.getTime())||date.getFullYear()<2020||date.getFullYear()>2100)return "";
+  return [date.getFullYear(),String(date.getMonth()+1).padStart(2,"0"),
+   String(date.getDate()).padStart(2,"0")].join("-");
+ };
+ function nativeBridge(){
+  for(const name of ["AndroidBridge","AndroidApp"]){
+   const bridge=root[name];
+   if(bridge&&typeof bridge.getPendingNotifications==="function"&&
+     typeof bridge.acknowledgeNotifications==="function")return bridge;
+  }
+  return null;
+ }
+ function normalize(raw){
+  if(!raw||typeof raw!=="object")return null;
+  const sourcePackage=clean(raw.sourcePackage);
+  const accountHint=ALLOWED[sourcePackage];
+  if(!accountHint)return null;
+  const eventId=clean(raw.id);
+  const amountCents=Number(raw.amountCents);
+  const postedAt=Number(raw.postedAt);
+  const date=formatDate(postedAt);
+  if(eventId.length<8||eventId.length>128||!Number.isSafeInteger(amountCents)||
+     amountCents<=0||amountCents>100_000_000_00||!date)return null;
+  const direction=raw.direction==="income"||raw.direction==="expense"?raw.direction:"";
+  const title=clean(raw.title).slice(0,90);
+  const body=clean(raw.text).slice(0,220);
+  const description=[title,body].filter(Boolean).join(" · ").slice(0,240)||"Notificação bancária";
+  const paymentText=(title+" "+body).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+  const methods=[
+   /\bpix\b/.test(paymentText)?"Pix":null,
+   /\bdebito\b/.test(paymentText)?"Débito":null,
+   /\bcredito\b/.test(paymentText)&&/\bcompra\b|\bcartao\b/.test(paymentText)?"Crédito":null
+  ].filter(Boolean);
+  // Unclear method must be selected by the user, not silently assumed as Pix.
+  const payment=methods.length===1?methods[0]:"";
+  return Object.freeze({
+   sourceType:"notification",sourceId:eventId,
+   amountCents,date,direction,accountHint,paymentType:payment,
+   category:"Outros",subcategory:"",description,counterparty:"",
+   bank:accountHint,sourcePackage,postedAt
+  });
+ }
+ function list(){
+  const bridge=nativeBridge();
+  if(!bridge)return{available:false,rows:[],invalid:0,error:null};
+  try{
+   const data=JSON.parse(String(bridge.getPendingNotifications()||"[]"));
+   if(!Array.isArray(data))return{available:true,rows:[],invalid:0,error:"invalid_native_queue"};
+   const ids=new Set(),rows=[];let invalid=0;
+   for(const item of data.slice(0,500)){
+    const x=normalize(item);
+    if(!x){invalid++;continue}
+    if(ids.has(x.sourceId))continue; // exact ID only: NOT amount/date/description
+    ids.add(x.sourceId);rows.push(x);
+   }
+   return{available:true,rows,invalid,error:null};
+  }catch{return{available:true,rows:[],invalid:0,error:"native_queue_unreadable"}}
+ }
+ function acknowledge(sourceId){
+  const id=clean(sourceId);
+  if(id.length<8||id.length>128)return false;
+  const bridge=nativeBridge();
+  if(!bridge)return false;
+  try{return bridge.acknowledgeNotifications(JSON.stringify([id]))===true}catch{return false}
+ }
+ root.SnakeAssessorNativeNotifications=Object.freeze({
+  list,acknowledge,normalize,available:()=>Boolean(nativeBridge())
+ });
+})(window);
+
+</script>
+<script data-source="assessor-mobile-screen.js">
+/* Snake Finance / Assessor IA Mobile. Interface based on the user-approved
+ * gold/green/white design. Existing financeState remains the single source
+ * of truth. No automatic ledger posting, document extraction or calendar writes.
+ */
+(() => {
+ "use strict";
+ const $=id=>document.getElementById(id);
+ const api=window.SnakeAssessorApi;
+ const brl=n=>Number(n).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+ const norm=s=>String(s??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+ const today=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-")};
+ const moneyCents=n=>{const x=Math.round(Number(n)*100);return Number.isSafeInteger(x)&&x>0?x:null};
+ const session={draft:null,posting:false,cloud:null,month:today().slice(0,7),agendaDay:new Date(),recognition:null,files:[],extractedRows:[],nativeRows:[],nativeSeen:new Set(),nativeScanBusy:false,connectionEpoch:0};
+ function toast(s){const box=$("toast");box.textContent=s;box.style.display="block";clearTimeout(window.__snakeToast);window.__snakeToast=setTimeout(()=>box.style.display="none",6000)}
+ function switchView(name){for(const n of ["home","chat","agenda"])$("screen"+n[0].toUpperCase()+n.slice(1)).classList.toggle("active",n===name);document.querySelectorAll("nav [data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===name));$("topHome").style.display=name==="home"?"flex":"none";if(name==="chat")$("chatMessages").scrollTop=$("chatMessages").scrollHeight;window.scrollTo({top:0,behavior:"instant"})}
+ document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>switchView(b.dataset.view)));
+ function labelMonth(){const [y,m]=session.month.split("-").map(Number);$("monthLabel").textContent=new Date(y,m-1,1).toLocaleDateString("pt-BR",{month:"long",year:"numeric"}).replace(/^./,c=>c.toUpperCase())}
+ function adjustMonth(step){const [y,m]=session.month.split("-").map(Number);const d=new Date(y,m-1+step,1);session.month=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");labelMonth();showAmounts()}
+ $("prevMonth").onclick=()=>adjustMonth(-1);$("nextMonth").onclick=()=>adjustMonth(1);
+ function eventRow(text,user=false){const el=document.createElement("div");el.className="bubble"+(user?" user":" answer");el.textContent=text;$("chatMessages").insertBefore(el,$("draftMount"));$("chatMessages").scrollTop=$("chatMessages").scrollHeight}
+ function postableAccount(account){if(!account)return false;const key=norm([account.id,account.name,account.institution,account.type].join(" "));return !/caju|beneficio|credito|cartao|carbon|investimento|investment|poupanca|meta|(^|\s)xp(\s|$)/.test(key)&&/conta|corrente|dinheiro|banco|bank|checking|cash/.test(norm(account.type))}
+ function carbonConfigMessage(err){
+   if(err?.code==="carbon_closing_day_conflict")
+     return "O C6 Carbon está cadastrado com fechamento dia "+
+       (err.details?.configuredClosing??"diferente de 5")+
+       ". Você confirmou fechamento dia 5 e vencimento dia 7. É necessário conciliar o cadastro antes de projetar; nenhum lançamento foi alterado.";
+   if(err?.code==="carbon_due_day_conflict")
+     return "O vencimento cadastrado do C6 Carbon diverge do dia 7 confirmado. Confira os dados do cartão antes de calcular a fatura.";
+   return "Não foi possível conferir a fatura: "+(err?.code||err?.message||"erro");
+ }
+ function presentAccount(id){
+   if(String(id||"").startsWith("card:")){
+     const c=(session.cloud?.payload?.cards||[]).find(c=>String(c.id)===String(id).slice(5));
+     return c?.name||"Cartão (integração pendente)";
+   }
+   const a=session.cloud?.payload?.accounts?.find(a=>String(a.id)===String(id));
+   return a?.name || (id?"Conta não sincronizada":"Selecionar conta");
+ }
+ function showAmounts(){
+   const state=session.cloud?.payload;
+   if(!state)return;
+   const a=Array.isArray(state.accounts)?state.accounts:[];
+   for(const [id,rx] of [["balanceC6",/c6.*conta|conta.*c6/i],["balanceItau",/itau|itaú/i]]){
+     const hits=a.filter(x=>rx.test(String(x.name||""))&&!/carbon|credito|crédito/i.test(String(x.name||"")));
+     $(id).textContent=hits.length===1&&Number.isFinite(Number(hits[0].balance))?brl(hits[0].balance):"—";
+   }
+   $("balanceCaju").textContent="—"; // Only show a benefit balance when its inputs are verified.
+   const cajuMonth=session.month,epoch=session.connectionEpoch;
+   if(api?.previewCajuMonth&&api?.hasSyncKey?.())api.previewCajuMonth(cajuMonth)
+    .then(data=>{if(epoch===session.connectionEpoch&&api.hasSyncKey()&&session.cloud&&cajuMonth===session.month&&data.ok&&data.verifiedInputs)
+      $("balanceCaju").textContent=brl(data.availableCents/100)})
+    .catch(()=>{});
+   const tx=Array.isArray(state.transactions)?state.transactions:[];
+   const month=tx.filter(t=>String(t.date||"").startsWith(session.month)&&
+     (!t.status||["realized","real","paid","received","posted"].includes(norm(t.status)))&&
+     !t.transfer&&!t.transferId&&!t.invoicePayment&&!t.cardPayment&&!t.excludeFromExpense&&!t.excludeFromBalance&&
+     !["transfer","invoice_payment","goal_transfer","reversal"].includes(String(t.kind||"")));
+   const income=month.reduce((sum,t)=>sum+(Number(t.value)>0?Number(t.value):0),0);
+   const spent=-month.reduce((sum,t)=>sum+(Number(t.value)<0?Number(t.value):0),0);
+   $("monthIncome").textContent=brl(income);$("monthExpense").textContent=brl(spent);
+   $("monthNet").textContent=brl(income-spent);$("donutSum").textContent=brl(spent);
+   $("dataStatus").textContent="Consulta de leitura do financeiro: saldos e transações disponíveis. Caju e gráficos por categoria aguardam auditoria específica.";
+ }
+ async function refreshState(){
+   const epoch=session.connectionEpoch;
+   if(!api){toast("Serviço do Assessor IA não carregou.");return null}
+   if(!api.hasSyncKey?.()){
+     $("dataStatus").textContent="Sem conexão financeira. Notificações locais podem ser revisadas.";
+     updateSyncConnectionStatus();
+     return null;
+   }
+   try{
+     const res=await api.readFinanceState();
+     if(epoch!==session.connectionEpoch||!api.hasSyncKey?.())return null;
+     session.cloud=res.state||null;
+     $("dataStatus").textContent=res.state?"Conectado em modo de leitura · versão "+res.state.version:"Sincronização sem dados cadastrados.";
+     showAmounts();fillAccounts();toast(res.state?"Contas sincronizadas para consulta.":"Sem estado financeiro na nuvem.");
+     return session.cloud;
+   }catch(err){
+     if(epoch!==session.connectionEpoch)return null;
+     $("dataStatus").textContent="Financeiro não conectado · configure a chave no Snake Finance.";
+     updateSyncConnectionStatus();toast("Leitura da nuvem indisponível: "+(err.code||err.message));return null}
+ }
+ function clearCloudView(){
+   session.connectionEpoch++;
+   session.cloud=null;
+   for(const id of ["balanceC6","balanceItau","balanceCaju","monthIncome","monthExpense","monthNet","donutSum"])
+     $(id).textContent="—";
+   $("dataStatus").textContent="Financeiro desconectado · sem acesso aos saldos.";
+   fillAccounts();
+   updateSyncConnectionStatus();
+ }
+ function updateSyncConnectionStatus(){
+   const connected=!!api?.hasSyncKey?.();
+   $("syncConnectionStatus").textContent=!connected?
+     "Não conectado. A fila Android continua disponível para revisão local.":
+     session.cloud?
+       "Conectado ao Snake Finance para consultas de leitura. Nenhuma despesa será efetivada pelo APK de testes.":
+       "Chave configurada, mas nenhum saldo confirmado. Confira a sincronização.";
+ }
+
+ function fillAccounts(){
+   const sel=$("fieldAccount"),old=sel.value;sel.replaceChildren(new Option("Selecione a conta sincronizada",""));
+   const accounts=session.cloud?.payload?.accounts||[];
+   if(!accounts.length){
+     for(const [id,label] of [["demo:c6","C6 Conta Corrente"],["demo:carbon","C6 Carbon"],["demo:caju","Caju"],["demo:itau","Itaú"],["demo:xp","XP"]])
+       sel.add(new Option(label+" · somente prévia",id));
+   }
+   for(const a of accounts){
+     if(!a||!a.id)continue;
+     const opt=new Option(a.name||String(a.id),String(a.id));
+     if(!postableAccount(a))opt.textContent+=" · requer integração específica";
+     sel.add(opt);
+   }
+   for(const c of (session.cloud?.payload?.cards||[])){
+     if(!c?.id||!/caju|carbon/i.test(String(c.name||"")))continue;
+     sel.add(new Option((c.name||String(c.id))+" · exige integração específica","card:"+c.id));
+   }
+   if([...sel.options].some(o=>o.value===old))sel.value=old;
+ }
+ function guess(text){
+   // Local, advisory extraction only. AI may refine, never auto-post.
+   const m=text.match(/(?:R\$\s*)?(\d{1,7}(?:\.\d{3})*(?:,\d{1,2})?|\d{1,7}(?:\.\d{1,2})?)\s*(?:reais|real)?/i);
+   if(!m)return null;
+   const raw=m[1],amount=Number(raw.includes(",")?raw.replace(/\./g,"").replace(",","."):raw);
+   if(!Number.isFinite(amount)||amount<=0)return null;
+   const fuel=/combustivel|combustível|gasolina|posto/i.test(text);
+   const beer=/cerveja|chopp|chope/i.test(text);
+   const food=/mercado|padaria|delivery|ifood/i.test(text);
+   const payment=/cr[eé]dito/i.test(text)?"Crédito":/d[eé]bito/i.test(text)?"Débito":/pix/i.test(text)?"Pix":"";
+   const candidate={
+     draftId:api?.newDraftId?.() || "demo-"+String(Date.now()),
+     amount,direction:/recebi|recebimento|ganhei|sal[aá]rio/i.test(text)?"income":"expense",
+     category:fuel?"Transporte":beer||food?"Alimentação":"Outros",
+     subcategory:fuel?"Combustível":beer?"Cerveja":/padaria/i.test(text)?"Padaria":food?"Mercado":"",
+     date:today(),account:"",payment,installments:1,description:text,counterparty:"",sourceType:"chat",posted:false
+   };
+   const accounts=session.cloud?.payload?.accounts||[];
+   const userBank=/\bcaju\b/i.test(text)?"caju":/\bxp\b/i.test(text)?"xp":/c6\s*carbon/i.test(text)?"carbon":/\bitau\b|\bitaú\b/i.test(text)?"itau":/\bc6\b/i.test(text)?"c6":"";
+   if(userBank){
+     const hits=accounts.filter(a=>norm([a.id,a.name].join(" ")).includes(userBank) &&
+       (userBank!=="c6"||!/carbon/i.test(a.name||"")));
+     if(hits.length===1)candidate.account=String(hits[0].id);
+     else if(userBank==="caju"||userBank==="carbon"){
+       const cards=(session.cloud?.payload?.cards||[]).filter(c=>norm(c.name).includes(userBank));
+       if(cards.length===1)candidate.account="card:"+cards[0].id;
+     }
+   }
+   return candidate;
+ }
+ async function interpretText(text){
+  if(!api||!session.cloud)return null;
+  try{
+    const out=await api.interpretText(text);
+    if(out.intent==="answer")return {answer:out.answer||"A consulta necessita de dados financeiros verificados."};
+    if(out.intent==="transaction"&&out.draft){
+     const d=out.draft;
+     const amount=Math.abs(Number(d.value));
+     if(!Number.isFinite(amount)||amount<=0)return null;
+     return {amount,direction:Number(d.value)<0?"expense":"income",date:/^\d{4}-\d{2}-\d{2}$/.test(d.date||"")?d.date:today(),
+       category:String(d.cat||"Outros"),subcategory:String(d.sub||""),description:String(d.desc||text)};
+    }
+  }catch(e){toast("IA online indisponível; interpretação local para revisão.");}
+  return null;
+ }
+
+ function alreadyLinkedNotification(id){
+   if(!id)return false;
+   const rows=session.cloud?.payload?.transactions;
+   return Array.isArray(rows)&&rows.some(t=>t&&typeof t==="object"&&
+     (t.androidNotificationId===id||(t.sourceType==="notification"&&t.sourceId===id)));
+ }
+ function nextNativeNotification(){
+   if(session.posting||(session.draft&&!session.draft.posted))return false;
+   if(!session.nativeRows.length)return false;
+   const n=session.nativeRows.shift();
+   const accounts=session.cloud?.payload?.accounts||[];
+   const cards=session.cloud?.payload?.cards||[];
+   // C6 account/card cannot be inferred from the same banking app notification.
+   // User must explicitly choose C6 current account vs Carbon before posting.
+   let account="";
+   if(n.bank==="Caju"){
+     const matches=cards.filter(x=>/caju/i.test(String(x.name||"")));
+     if(matches.length===1)account="card:"+String(matches[0].id);
+   }else if(n.bank==="XP"||n.bank==="Itaú"){
+     const name=n.bank==="XP"?/\bxp\b/i:/itau|itaú/i;
+     const matches=accounts.filter(x=>name.test(String(x.name||"")+" "+String(x.id||"")));
+     if(matches.length===1)account=String(matches[0].id);
+   }
+   session.draft={
+     draftId:api?.newDraftId?.()||"notification-"+n.sourceId,
+     amount:n.amountCents/100,direction:n.direction,
+     account,payment:n.paymentType,installments:1,
+     category:n.category,subcategory:n.subcategory,
+     date:n.date,description:n.description,counterparty:n.counterparty,
+     sourceType:"notification",sourceId:n.sourceId,posted:false
+   };
+   eventRow("Notificação "+n.bank+" · "+brl(n.amountCents/100)+" · "+n.date+
+     ". Confira direção, conta, modalidade, favorecido e categoria antes de confirmar.");
+   switchView("chat");reviewPreview();
+   return true;
+ }
+
+ function preserveNativeReview(){
+   const d=session.draft;
+   if(!d||d.posted||d.sourceType!=="notification")return;
+   const native=window.SnakeAssessorNativeNotifications;
+   const existing=native?.list?.().rows?.find(x=>x.sourceId===d.sourceId);
+   if(existing&&!session.nativeRows.some(x=>x.sourceId===existing.sourceId)){
+     session.nativeRows.unshift(existing);
+     eventRow("Notificação bancária preservada na fila para revisão posterior.");
+   }
+ }
+ function advanceReviewQueue(){
+   if(session.extractedRows.length){nextExtractedRow();return}
+   nextNativeNotification();
+ }
+ async function scanNativeNotifications(manual=false){
+   if(session.nativeScanBusy)return;
+   const native=window.SnakeAssessorNativeNotifications;
+   if(!native?.available?.()){
+     if(manual)eventRow("A captura automática está disponível somente no aplicativo Android autorizado.");
+     return;
+   }
+   session.nativeScanBusy=true;
+   try{
+     const result=native.list();
+     if(result.error){eventRow("A fila Android não pôde ser lida: "+result.error);return}
+     let added=0,alreadySaved=0;
+     for(const row of result.rows){
+       if(alreadyLinkedNotification(row.sourceId)){
+         // Production can reconcile an already-posted event by stable source ID.
+         // The read-only preview never changes the Android queue silently.
+         if(window.SNAKE_ASSESSOR_PREVIEW_ONLY!==true&&
+            native.acknowledge(row.sourceId))alreadySaved++;
+         continue;
+       }
+       if(session.nativeSeen.has(row.sourceId))continue;
+       session.nativeSeen.add(row.sourceId);
+       session.nativeRows.push(row);
+       added++;
+     }
+     if(added){
+       eventRow(added+" notificação(ões) aguardando revisão. "+
+         "Nada foi lançado ou descartado automaticamente.");
+       if(!session.draft||session.draft.posted)nextNativeNotification();
+     }else if(manual){
+       if((!session.draft||session.draft.posted)&&session.nativeRows.length)nextNativeNotification();
+       eventRow(alreadySaved?
+         alreadySaved+" notificação(ões) já registradas foram conciliadas e retiradas da fila Android.":
+         session.nativeRows.length+" notificação(ões) já presentes na fila desta sessão. Nenhum lançamento novo.");
+     }
+     if(result.invalid&&manual)
+       eventRow(result.invalid+" item(ns) inválido(s) ou não autorizado(s) não foram importados para revisão.");
+   }finally{session.nativeScanBusy=false}
+ }
+ async function cancelReview(){
+   const d=session.draft;if(!d||session.posting)return;
+   if(d.sourceType==="notification"){
+     if(typeof window.confirm!=="function"||
+         !window.confirm("Descartar esta notificação da fila Android? Nenhum lançamento será criado."))return;
+     const native=window.SnakeAssessorNativeNotifications;
+     if(!native?.acknowledge(d.sourceId)){
+       toast("Não consegui remover a notificação do Android. Ela permanece pendente.");
+       return;
+     }
+     eventRow("Notificação descartada por sua confirmação. Nenhum lançamento efetuado.");
+   }else eventRow("Prévia cancelada. Nenhum lançamento financeiro foi efetuado.");
+   session.draft=null;reviewPreview();advanceReviewQueue();
+ }
+
+ function reviewPreview(){
+   const d=session.draft,root=$("draftMount");root.replaceChildren();if(!d)return;
+   const card=document.createElement("div");card.className="review";
+   const title=document.createElement("h3");title.textContent=d.direction==="income"?"↗ Lançamento de Receita":"⛽ Lançamento de Despesa";card.appendChild(title);
+   for(const [label,value] of [
+     ["Valor",brl(d.amount)],["Categoria",d.category],["Subcategoria",d.subcategory||"—"],
+     ["Conta",presentAccount(d.account)],...(d.payment==="Crédito"&&d.installments>1?[["Parcelas",String(d.installments)+"x"]]:[]),["Forma de pagamento",d.payment||"A revisar"],
+     ["Data",d.date],["Estabelecimento",d.counterparty||"A revisar"]]){
+      const pair=document.createElement("div");pair.className="pair";
+      const a=document.createElement("span");a.textContent=label;
+      const b=document.createElement("b");b.textContent=value;
+      pair.append(a,b);card.append(pair);
+   }
+   const buttons=document.createElement("div");buttons.className="review-actions";
+   const yes=document.createElement("button");yes.className="ok";yes.textContent=d.sourceType==="notification"?(d.direction==="income"?"✓ Salvar receita":"✓ Salvar despesa"):"✓ Confirmar";yes.disabled=!!d.posted;
+   const edit=document.createElement("button");edit.textContent="✎ Editar";edit.disabled=!!d.posted;
+   const no=document.createElement("button");no.className="stop";no.textContent="✕ Cancelar";no.disabled=!!d.posted;
+   buttons.append(yes,edit,no);card.append(buttons);
+   const reviewCard=(session.cloud?.payload?.cards||[]).find(c=>String(c.id)===String(d.account||"").slice(5));
+   if(d.account?.startsWith("card:")&&/carbon/i.test(reviewCard?.name||"")&&d.payment==="Crédito"){
+     const forecast=document.createElement("button");
+     forecast.textContent="▣ Conferir parcelas e vencimentos";
+     forecast.className="gold-button";forecast.style.marginTop="8px";
+     forecast.onclick=async()=>{
+       if(!api?.previewCardPurchase||!session.cloud)return toast("Conecte o financeiro para consultar a projeção.");
+       forecast.disabled=true;
+       try{
+         const projection=await api.previewCardPurchase(d.account.slice(5),d.date,moneyCents(d.amount),d.installments||1);
+         let existing=card.querySelector(".invoice-projection");if(existing)existing.remove();
+         const details=document.createElement("div");details.className="invoice-projection hint";details.style.marginTop="10px";
+         details.textContent="Somente prévia — nenhuma compra lançada. Vencimento dia "+
+           projection.dueDay+". Fechamento dia "+projection.closingDay+".";
+         for(const part of projection.rows){
+           const line=document.createElement("p");
+           line.textContent=part.number+"/"+part.of+" · Fatura "+part.dueDate+" · "+brl(part.amountCents/100);
+           details.append(line);
+         }
+         card.append(details);
+       }catch(err){toast(carbonConfigMessage(err))}
+       finally{forecast.disabled=false}
+     };
+     card.append(forecast);
+   }
+   const detail=document.createElement("p");detail.className="hint";detail.id="reviewStatus";
+   detail.textContent=d.posted?"Registrado e vinculado ao financeiro.":"Confira todas as informações antes da confirmação.";
+   card.append(detail);root.append(card);
+   yes.onclick=postExpense;edit.onclick=openEditor;no.onclick=cancelReview;
+   $("chatMessages").scrollTop=$("chatMessages").scrollHeight;
+ }
+ function openEditor(){
+   const d=session.draft||guess("R$ 1,00");if(!d)return;
+   session.draft=d;
+   $("fieldAmount").value=d.amount;$("fieldDirection").value=d.direction;
+   $("fieldCategory").value=d.category;$("fieldSubcategory").value=d.subcategory;
+   fillAccounts();$("fieldAccount").value=d.account||"";
+   $("fieldPayment").value=d.payment;
+   $("fieldInstallments").value=d.installments||1;
+   updateInstallmentVisibility();
+   $("fieldDate").value=d.date;$("fieldCounterparty").value=d.counterparty||"";
+   $("fieldDescription").value=d.description;$("draftDialog").showModal();
+ }
+ function updateInstallmentVisibility(){
+   const isCarbon=String($("fieldAccount").value||"").startsWith("card:")&&
+      /carbon/i.test($("fieldAccount").selectedOptions?.[0]?.textContent||"");
+   $("installmentField").hidden=!isCarbon||$("fieldPayment").value!=="Crédito";
+   if($("installmentField").hidden)$("fieldInstallments").value="1";
+ }
+ $("fieldAccount").addEventListener("change",updateInstallmentVisibility);
+ $("fieldPayment").addEventListener("change",updateInstallmentVisibility);
+ $("draftDismiss").onclick=()=>$("draftDialog").close();
+ $("draftForm").onsubmit=e=>{
+   e.preventDefault();const d=session.draft;if(!d)return;
+   const amount=Number($("fieldAmount").value);if(!moneyCents(amount))return toast("Informe um valor válido.");
+   Object.assign(d,{amount,direction:$("fieldDirection").value,category:$("fieldCategory").value.trim(),
+     subcategory:$("fieldSubcategory").value.trim(),account:$("fieldAccount").value,
+     payment:$("fieldPayment").value,installments:Number($("fieldInstallments").value)||1,date:$("fieldDate").value,counterparty:$("fieldCounterparty").value.trim(),
+     description:$("fieldDescription").value.trim()});
+   $("draftDialog").close();switchView("chat");reviewPreview();toast("Prévia editada. Nenhum lançamento foi realizado.");
+ };
+ async function postExpense(){
+   const d=session.draft;if(!d||session.posting||d.posted)return;
+   if(window.SNAKE_ASSESSOR_PREVIEW_ONLY===true)
+     return toast("Prévia Android: lançamentos reais desativados até a auditoria final.");
+   if(!api||!session.cloud)return toast("Conecte a sincronização Cloud antes de lançar valores reais.");
+   if(!d.account||!d.payment||!d.direction)return openEditor();
+   if(d.installments>1&&!(d.payment==="Crédito"&&String(d.account).startsWith("card:")))
+     return toast("Parcelas somente no cartão de crédito. Nenhum valor foi lançado.");
+   const account=(session.cloud.payload.accounts||[]).find(a=>String(a.id)===String(d.account));
+   if(!postableAccount(account))return toast("Caju, XP, Carbon e cartões exigem integração específica. Nenhum valor foi lançado.");
+   if(d.payment==="Crédito")return toast("Compra a crédito exige integração de fatura. Nenhum valor foi lançado.");
+   const amountCents=moneyCents(d.amount);
+   if(!amountCents)return toast("Valor inválido.");
+   session.posting=true;
+   let advanceAfterPosting=false;
+   const controls=$("draftMount").querySelectorAll("button");controls.forEach(b=>b.disabled=true);
+   const status=$("reviewStatus");status.textContent="Confirmando lançamento no backend…";
+   try{
+     // Read the current version before posting, so concurrent updates are rejected.
+     const latest=await api.readFinanceState();
+     if(!latest.state)throw new Error("finance_state_missing");
+     if(d.sourceType==="notification"&&Array.isArray(latest.state.payload?.transactions)&&
+       latest.state.payload.transactions.some(t=>t&&(t.androidNotificationId===d.sourceId||
+       (t.sourceType==="notification"&&t.sourceId===d.sourceId)))){
+       d.posted=true;
+       const cleared=window.SnakeAssessorNativeNotifications?.acknowledge(d.sourceId);
+       eventRow("Notificação já vinculada a uma transação real. Nenhum segundo lançamento foi criado."+
+         (cleared?"":" Não foi possível limpar a notificação local."));
+       session.cloud=latest.state;
+       reviewPreview();advanceAfterPosting=true;
+       return;
+     }
+     if(!(latest.state.payload?.accounts||[]).some(a=>String(a.id)===d.account&&postableAccount(a)))throw new Error("account_not_available");
+     const prepared=await api.prepare({
+       draftId:d.draftId,sourceType:d.sourceType,sourceId:d.sourceId||undefined,amountCents,direction:d.direction,account:d.account,
+       transactionType:d.payment,category:d.category,subcategory:d.subcategory,
+       description:d.description,date:d.date,counterparty:d.counterparty||undefined
+     });
+     // A prepared draft is immutable. Never silently post stale server fields
+     // after a local edit or a timeout; require explicit reconciliation instead.
+     if(prepared.duplicate)throw new Error("draft_already_prepared_review");
+     const outcome=await api.confirmCash(d.draftId,latest.state.version);
+     if(!outcome.posted)throw new Error("confirmed_not_posted");
+     d.posted=true;
+     let nativeClearWarning=false;
+     if(d.sourceType==="notification")
+       nativeClearWarning=!window.SnakeAssessorNativeNotifications?.acknowledge(d.sourceId);
+     status.textContent=outcome.syncPending?"Lançamento registrado; atualização local pendente.":"Lançamento confirmado no financeiro.";
+     if(nativeClearWarning)eventRow("A movimentação foi registrada, mas a fila Android não pôde ser limpa. Não confirme novamente.");
+     eventRow(outcome.syncPending?"Lançamento registrado no servidor. Sincronize a tela para atualizar os cards.":"Lançamento registrado com sucesso no Snake Finance.");
+     await refreshState();reviewPreview();advanceAfterPosting=true;
+   }catch(e){
+     const uncertain=e.code==="posting_status_unknown";
+     status.textContent=uncertain?"Resultado incerto após falha de rede. Consulte a conciliação antes de tentar novamente.":"Não lançado nesta tentativa: "+(e.code||e.message||"erro");
+     toast(status.textContent);
+   }finally{
+     session.posting=false;
+     controls.forEach(b=>b.disabled=!!d.posted);
+     if(advanceAfterPosting)advanceReviewQueue();
+   }
+ }
+
+ async function auditSavedCarbonSettings(){
+   const cards=(session.cloud?.payload?.cards||[]).filter(c=>
+     /carbon/i.test(String(c.name||""))&&!/caju/i.test(String(c.name||"")));
+   if(!api?.auditCarbonSettings||cards.length!==1){
+     eventRow("Não encontrei um único C6 Carbon na sincronização. Confira a conta antes de alterar qualquer cadastro.");
+     return;
+   }
+   try{
+     const result=await api.auditCarbonSettings(String(cards[0].id));
+     if(result.configAligned){
+       eventRow("C6 Carbon cadastrado com fechamento dia 5 e vencimento dia 7."+
+         (result.riskCount>0?" Atenção: foram identificadas "+result.riskCount+
+           " divergências no histórico de compras/vencimentos. É necessária revisão das faturas antigas; nada foi alterado.":
+           " Nenhuma alteração necessária."));
+       return;
+     }
+     eventRow("Auditoria do C6 Carbon: fechamento cadastrado "+
+       (result.configuredClosing??"não definido")+", vencimento "+
+       (result.configuredDue??"não definido")+". Regra confirmada: 5 e 7. "+
+       result.transactions+" compras, "+result.invoices+" faturas armazenadas, "+
+       result.cycleMismatch+" diferenças de ciclo, "+result.missingInvoiceMonth+
+       " compras sem mês de fatura explícito e "+result.paidInvoices+
+       " faturas pagas e "+(result.linkedRecurring||0)+
+       " recorrências vinculadas. Nenhum dado foi modificado.");
+     if(!result.safeMetadataOnly){
+       eventRow("O cartão possui histórico. Por segurança, não alterarei o fechamento/vencimento automaticamente. É necessária conciliação das faturas antigas.");
+       return;
+     }
+     const box=document.createElement("div");box.className="review";
+     const message=document.createElement("p");message.className="hint";
+     message.textContent="Este cartão não possui compras nem faturas. Você pode corrigir SOMENTE os dados de fechamento e vencimento; nenhum saldo ou transação será modificado.";
+     const button=document.createElement("button");button.className="gold-button";
+     button.textContent="Aplicar fechamento dia 5 e vencimento dia 7";
+     box.append(message,button);$("chatMessages").insertBefore(box,$("draftMount"));
+     button.onclick=async()=>{
+       if(window.SNAKE_ASSESSOR_PREVIEW_ONLY===true){
+         eventRow("Prévia Android: a correção do cartão está desativada neste aplicativo de testes.");
+         return;
+       }
+       if(!window.confirm("Confirmar correção APENAS do cadastro do C6 Carbon para fechamento dia 5 e vencimento dia 7? O histórico não será alterado."))return;
+       button.disabled=true;
+       try{
+         const changed=await api.repairCarbonSettings(String(cards[0].id),result.financeStateVersion);
+         box.remove();
+         eventRow(changed.alreadyAligned?"Cadastro já atualizado. Nenhuma gravação necessária.":
+           "Cadastro do C6 Carbon corrigido para 5/7, sem modificar transações. Atualizando a leitura…");
+         await refreshState();
+       }catch(error){
+         eventRow("Correção não realizada: "+(error.code||error.message||"erro")+
+           ". Reinicie a auditoria para evitar sobrepor alterações de outro dispositivo.");
+       }
+     };
+   }catch(error){
+     eventRow("Não foi possível auditar o cartão: "+(error.code||error.message||"erro")+
+       ". Nenhuma configuração foi modificada.");
+   }
+ }
+ async function send(){
+   const input=$("messageInput"),text=input.value.trim();if(!text)return;input.value="";
+   preserveNativeReview();
+   if(session.extractedRows.length){
+     eventRow("Fila anterior encerrada: "+session.extractedRows.length+" item(ns) não foram lançados.");
+     session.extractedRows=[];
+   }
+   eventRow(text,true);
+   if(/verificar|conferir|auditar|corrigir/i.test(text)&&
+      /carbon|cart[aã]o c6/i.test(text)&&
+      /cadastro|configura|fechamento|vencimento|carbon/i.test(text)){
+     await auditSavedCarbonSettings();
+     return;
+   }
+   // Fatura do C6 Carbon: separar compras já lançadas de parcelas futuras,
+   // sempre com vencimento dia 7 e mês da fatura no ciclo de fechamento.
+   if(/fatura|parcelas? (?:do |de )?cart[aã]o/i.test(text)&&
+      /carbon|c6|cart[aã]o|cr[eé]dito/i.test(text)){
+     if(!session.cloud?.payload||!api?.listCarbonInvoices){
+       eventRow("Para consultar a fatura, conecte primeiro o financeiro. Nenhum valor será estimado.");
+       return;
+     }
+     const cards=(session.cloud.payload.cards||[]).filter(c=>
+       /carbon/i.test(String(c.name||""))&&!/caju/i.test(String(c.name||"")));
+     if(cards.length!==1){
+       eventRow("Não foi possível identificar um único C6 Carbon no financeiro. Confira o cadastro.");
+       return;
+     }
+     try{
+       // Closing on day 5 and due on day 7 belong to the SAME month.
+       // Start from the selected month, then show the next three cycles.
+       const result=await api.listCarbonInvoices(String(cards[0].id),session.month,4);
+       if(!result.ok)throw new Error(result.error||"invoice_unavailable");
+       eventRow("Faturas C6 Carbon — incluindo fechamento dia 5 e vencimento dia 7 do mês selecionado e próximos ciclos. Valores comprometidos, NÃO pagamentos efetuados:");
+       for(const cycle of result.rows){
+         eventRow("Fechamento "+cycle.closingDate+" · Vencimento "+cycle.dueDate+
+           ": "+brl(cycle.committedCents/100)+" já lançados + "+
+           brl(cycle.plannedCents/100)+" parcelas previstas = "+
+           brl(cycle.totalCents/100)+" comprometidos.");
+       }
+     }catch(err){
+       eventRow(carbonConfigMessage(err)+" Nenhum valor foi alterado.");
+     }
+     return;
+   }
+   if(/\b(quanto|resumo|total|gastos|despesas)\b/i.test(text)){
+     const summary=window.SnakeAssessorSummary?.summarize(text,session.cloud?.payload,session.month);
+     if(summary){
+       if(!summary.available){eventRow("Não há dados financeiros sincronizados para essa consulta. Nenhum valor será estimado.");return}
+       const detail=summary.byBank.map(b=>b.bank+": "+brl(b.cents/100)).join("; ");
+       eventRow("Em "+session.month+", "+summary.category+": "+brl(summary.totalCents/100)+
+         " em "+summary.count+" lançamento(s) identificado(s)."+(detail?" Por origem: "+detail+".":"")+
+         " Inclui despesas identificadas no Caju; registros sem classificação podem não aparecer.");
+       return;
+     }
+   }
+   const local=guess(text);
+   if(!local){eventRow("Mensagem recebida. Consultas financeiras exigem conexão e verificação dos dados; não vou inventar valores.");return;}
+   session.draft=local;
+   const extra=await interpretText(text);
+   if(extra?.answer){eventRow("A IA retornou uma resposta, mas valores financeiros precisam ser conferidos no histórico antes de serem exibidos.");return;}
+   if(extra&&extra.amount){
+      // Provider is advisory: account/payment still require user review.
+      Object.assign(local,extra);
+   }
+   eventRow("Identifiquei uma movimentação. Confira valor, banco, categoria e data antes de confirmar.");
+   reviewPreview();
+ }
+ $("sendBtn").onclick=send;$("messageInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();send()}});
+ $("newExpense").onclick=()=>{preserveNativeReview();session.extractedRows=[];session.draft={
+   draftId:api?.newDraftId?.()||"demo-"+Date.now(),amount:0,direction:"expense",category:"Outros",
+   subcategory:"",account:"",payment:"",installments:1,date:today(),counterparty:"",description:"",
+   sourceType:"chat",posted:false};switchView("chat");openEditor()};
+ $("checkSpending").onclick=()=>{switchView("chat");$("messageInput").value="Quanto gastei neste mês?";$("messageInput").focus()};
+ function attach(){ $("addDialog").showModal() }
+ $("attachBtn").onclick=attach;$("docShortcut").onclick=()=>$("documentFile").click();
+ $("chooseDocument").onclick=()=>{$("addDialog").close();$("documentFile").click()};
+ $("choosePhoto").onclick=()=>{$("addDialog").close();$("photoFile").click()};
+ $("cameraBtn").onclick=()=>$("photoFile").click();$("photoBtn").onclick=()=>$("documentFile").click();
+ $("chooseText").onclick=()=>{$("addDialog").close();switchView("chat");$("messageInput").focus()};
+ $("addDismiss").onclick=()=>$("addDialog").close();
+
+ function nextExtractedRow(){
+   if(!session.extractedRows.length)return;
+   preserveNativeReview();
+   const x=session.extractedRows.shift();
+   const hint=norm(x.accountHint||"");
+   const accounts=session.cloud?.payload?.accounts||[];
+   const cards=session.cloud?.payload?.cards||[];
+   let account="";
+   if(/caju|carbon/.test(hint)){
+     const matches=cards.filter(c=>norm(c.name||"").includes(hint.includes("caju")?"caju":"carbon"));
+     if(matches.length===1)account="card:"+matches[0].id;
+   }else if(/c6|itau|ita[uú]|xp/.test(hint)){
+     const name=hint.includes("c6")?"c6":hint.includes("xp")?"xp":"itau";
+     const matches=accounts.filter(a=>norm([a.name,a.id].join(" ")).includes(name)&&
+       (name!=="c6"||!/carbon/.test(norm(a.name))));
+     if(matches.length===1)account=String(matches[0].id);
+   }
+   const paymentKey=norm(x.paymentType||"");
+   const payment=/credito/.test(paymentKey)?"Crédito":/debito/.test(paymentKey)?"Débito":
+     /pix/.test(paymentKey)?"Pix":/dinheiro|especie/.test(paymentKey)?"Dinheiro":"";
+   session.draft={
+     draftId:api?.newDraftId?.()||"demo-"+Date.now(),
+     amount:x.amountCents/100,direction:x.direction,account,payment,
+     category:x.category,subcategory:x.subcategory,
+     date:x.date,description:x.description,counterparty:x.counterparty,installments:1,
+     sourceId:x.sourceId,sourceType:x.sourceType,posted:false
+   };
+   eventRow("Movimentação para revisão. Restam "+session.extractedRows.length+
+     " item(ns) na fila. Confirme ou cancele este item para seguir.");
+   reviewPreview();
+ }
+ function filesPicked(e){
+   const files=Array.from(e.target.files||[]);
+   e.target.value="";
+   if(!files.length)return;
+   if(files.length>1){toast("Selecione um documento por vez.");return}
+   const file=files[0];
+   session.files=[file];switchView("chat");
+   const card=document.createElement("div");card.className="review";
+   const heading=document.createElement("h3");heading.textContent="Analisar anexo: "+(file.name||"documento");
+   const help=document.createElement("p");help.className="hint";
+   help.textContent="Ao tocar em Analisar, o arquivo será enviado ao serviço de IA para extração. Nenhuma movimentação será registrada sem confirmação individual.";
+   const buttons=document.createElement("div");buttons.className="review-actions";
+   const go=document.createElement("button");go.className="ok";go.textContent="Analisar arquivo";
+   const cancel=document.createElement("button");cancel.textContent="Descartar";
+   buttons.append(go,cancel);card.append(heading,help,buttons);
+   $("chatMessages").insertBefore(card,$("draftMount"));
+   cancel.onclick=()=>{card.remove();session.files=[];eventRow("Arquivo descartado sem envio.")};
+   go.onclick=async()=>{
+     if(!api?.analyzeAttachment){toast("Serviço de análise indisponível.");return}
+     go.disabled=true;go.textContent="Analisando…";
+     try{
+       const result=await api.analyzeAttachment(file);
+       card.remove();session.files=[];
+       if(!result.items?.length){
+         eventRow("Análise concluída, mas nenhuma movimentação foi identificada com segurança. Confira o documento original.");
+         return;
+       }
+       // One review at a time. Do not post statement rows in bulk.
+       session.extractedRows=result.items.map(item=>({...item,sourceType:result.sourceType}));
+       eventRow("Foram identificadas "+result.items.length+" movimentações em "+file.name+
+         ". Os valores são sugestões da IA e precisam de revisão. "+
+         (result.hasMore?"O documento tem mais linhas que o limite desta análise.":""));
+       nextExtractedRow();
+     }catch(err){
+       go.disabled=false;go.textContent="Tentar análise novamente";
+       toast("Análise não concluída: "+(err.code||err.message||"erro"));
+     }
+   };
+ }
+ $("documentFile").onchange=filesPicked;$("photoFile").onchange=filesPicked;
+
+ async function recordVoiceFallback(){
+   if(session.recorder){
+     if(session.recorder.state!=="inactive")session.recorder.stop();
+     return;
+   }
+   if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==="undefined"||!api?.transcribeAudio){
+     toast("Gravação de áudio indisponível neste dispositivo.");
+     return;
+   }
+   let stream;
+   try{stream=await navigator.mediaDevices.getUserMedia({audio:true})}
+   catch{toast("Permissão do microfone não concedida.");return}
+   const mime=["audio/webm","audio/mp4","audio/ogg"].find(m=>MediaRecorder.isTypeSupported?.(m));
+   if(!mime){stream.getTracks().forEach(t=>t.stop());toast("Formato de áudio indisponível.");return}
+   const recorder=new MediaRecorder(stream,{mimeType:mime}),chunks=[];
+   session.recorder=recorder;
+   recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};
+   recorder.onerror=()=>toast("Erro durante a gravação do áudio.");
+   recorder.onstop=async()=>{
+     clearTimeout(session.voiceTimeout);
+     stream.getTracks().forEach(t=>t.stop());
+     session.recorder=null;$("voiceBtn").textContent="♩";
+     const blob=new Blob(chunks,{type:mime});
+     if(blob.size<32){toast("Áudio muito curto ou vazio.");return}
+     if(blob.size>4_000_000){toast("Áudio excedeu 4 MB. Grave uma mensagem mais curta.");return}
+     if(!window.confirm("Enviar este áudio ao serviço de IA para transcrição? Nenhuma despesa será lançada automaticamente.")){
+       toast("Áudio descartado sem envio.");return;
+     }
+     try{
+       toast("Transcrevendo áudio…");
+       const result=await api.transcribeAudio(blob);
+       $("messageInput").value=result.text;
+       switchView("chat");
+       toast("Áudio transcrito. Confira o texto e toque em Enviar.");
+     }catch(e){toast("Transcrição indisponível: "+(e.code||e.message||"erro"))}
+   };
+   try{
+     recorder.start();
+     $("voiceBtn").textContent="■";
+     toast("Gravando áudio. Toque novamente no microfone para finalizar (máximo 60 segundos).");
+     session.voiceTimeout=setTimeout(()=>{if(recorder.state!=="inactive")recorder.stop()},60000);
+   }catch{
+     session.recorder=null;
+     stream.getTracks().forEach(t=>t.stop());
+     toast("Não foi possível iniciar a gravação.");
+   }
+ }
+ function talk(){
+   if(session.recorder){recordVoiceFallback();return}
+   const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+   if(!SpeechRecognition){recordVoiceFallback();return}
+   if(session.recognition){session.recognition.stop();return}
+   const r=new SpeechRecognition();r.lang="pt-BR";r.interimResults=false;
+   r.onresult=event=>{$("messageInput").value=event.results[0][0].transcript;toast("Texto transcrito. Confira e toque em Enviar.")};
+   r.onerror=()=>toast("Não foi possível transcrever pelo navegador. Tente novamente ou use o anexo de áudio.");
+   r.onend=()=>{session.recognition=null;$("voiceBtn").textContent="♩"};
+   session.recognition=r;
+   try{r.start();$("voiceBtn").textContent="■";toast("Ouvindo…")}
+   catch{session.recognition=null;recordVoiceFallback()}
+ }
+ $("voiceBtn").onclick=talk;$("chooseVoice").onclick=()=>{$("addDialog").close();switchView("chat");talk()};
+ function settings(){
+   $("syncKeyField").value="";
+   updateSyncConnectionStatus();
+   $("settingsDialog").showModal();
+ }
+ $("connectFinance").onclick=async()=>{
+   const candidate=$("syncKeyField").value.trim();
+   if(!api?.setSyncKey)return toast("Serviço de sincronização indisponível.");
+   let prior="";
+   try { prior=localStorage.getItem("assessor_cloud_sync_key")||""; }catch(_){}
+   $("connectFinance").disabled=true;
+   try {
+     api.setSyncKey(candidate);
+     const epoch=++session.connectionEpoch;
+     const result=await api.readFinanceState();
+     if(epoch!==session.connectionEpoch)throw new Error("Conexão substituída durante a consulta.");
+     if(!result?.state)throw new Error("Nenhum financeiro sincronizado foi encontrado para esta chave.");
+     session.cloud=result.state;
+     $("syncKeyField").value="";
+     showAmounts();fillAccounts();updateSyncConnectionStatus();
+     $("dataStatus").textContent="Consulta financeira conectada · versão "+result.state.version;
+     toast("Sincronização de leitura conectada. Nenhum valor foi modificado.");
+   }catch(error){
+     try {
+       if(prior)localStorage.setItem("assessor_cloud_sync_key",prior);
+       else localStorage.removeItem("assessor_cloud_sync_key");
+     }catch(_){}
+     updateSyncConnectionStatus();
+     toast("Conexão não concluída: "+(error.code||error.message||"erro"));
+   }finally{$("connectFinance").disabled=false;$("syncKeyField").value=""}
+ };
+ $("disconnectFinance").onclick=()=>{
+   if(!api?.hasSyncKey?.())return toast("O financeiro já está desconectado.");
+   if(!window.confirm("Desconectar esta prévia do Snake Finance? Os saldos exibidos serão ocultados, e os dados do aplicativo principal permanecerão intactos."))return;
+   try{api.disconnectSync();clearCloudView();$("syncKeyField").value="";
+     toast("Sincronização desconectada apenas deste dispositivo.")}
+   catch(error){toast("Falha ao desconectar: "+(error.message||"erro"))}
+ };
+ $("settingsBtn").onclick=settings;$("chatSettings").onclick=settings;$("moreBtn").onclick=settings;
+ $("settingsDismiss").onclick=()=>$("settingsDialog").close();
+ document.querySelectorAll("[data-theme-option]").forEach(b=>b.onclick=()=>{
+   const t=b.dataset.themeOption;document.body.dataset.theme=t;
+   document.querySelectorAll("[data-theme-option]").forEach(x=>x.classList.toggle("selected",x===b));
+   try{localStorage.setItem("snake_assessor_theme",t)}catch(_){}
+ });
+ try{const t=localStorage.getItem("snake_assessor_theme");if(["dourado","limao","branco"].includes(t)){document.body.dataset.theme=t;
+   document.querySelectorAll("[data-theme-option]").forEach(b=>b.classList.toggle("selected",b.dataset.themeOption===t))}}catch(_){}
+ $("refreshState").onclick=refreshState;
+ $("financeBtn").onclick=()=>toast("Financeiro completo: use a tela principal do Snake Finance.");
+ $("alertBtn").onclick=()=>{switchView("chat");scanNativeNotifications(true)};
+ $("alertShortcut").onclick=$("alertBtn").onclick;
+ function agendaDate(){$("dayLabel").textContent=session.agendaDay.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
+ $("dayBack").onclick=()=>{session.agendaDay.setDate(session.agendaDay.getDate()-1);agendaDate()};
+ $("dayForward").onclick=()=>{session.agendaDay.setDate(session.agendaDay.getDate()+1);agendaDate()};
+ $("newMeeting").onclick=()=>toast("Criar reuniões requer conexão e permissão do calendário; nenhuma reunião será criada.");
+ document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("selected",x===b));toast("Integração de agenda pendente.")});
+ document.querySelector(".status span").textContent=new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+ session.month=today().slice(0,7);labelMonth();agendaDate();fillAccounts();
+ // Pull-to-refresh: gesture triggers a read-only cloud update, never a post.
+ let refreshTouchY=null,refreshTouchReady=false,refreshGestureBusy=false;
+ document.addEventListener("touchstart",event=>{
+   refreshTouchY=null;refreshTouchReady=false;
+   if(event.touches?.length!==1||document.querySelector('dialog[open]'))return;
+   if(event.target?.closest?.(".chat-scroll,.compose,.review,dialog,nav"))return;
+   if((document.scrollingElement?.scrollTop||0)>2)return;
+   refreshTouchY=event.touches[0].clientY;
+   refreshTouchReady=true;
+ },{passive:true});
+ document.addEventListener("touchend",async event=>{
+   if(!refreshTouchReady||refreshTouchY===null||refreshGestureBusy)return;
+   refreshTouchReady=false;
+   const endY=event.changedTouches?.[0]?.clientY;
+   if(typeof endY!=="number"||endY-refreshTouchY<90)return;
+   refreshGestureBusy=true;
+   try{await refreshState()}finally{refreshGestureBusy=false}
+ },{passive:true});
+ // Read-only operation: never create, confirm or post a draft on startup.
+ updateSyncConnectionStatus();
+ if(api?.hasSyncKey?.())refreshState();
+ // Native callback only queues an editable review; no financial posting on event.
+ const oldNativeCallback=window.meuAssessorAndroidAutoSync;
+ window.meuAssessorAndroidAutoSync=()=>{
+   if(typeof oldNativeCallback==="function")try{oldNativeCallback()}catch(_){}
+   scanNativeNotifications(false);
+ };
+ if(window.SnakeAssessorNativeNotifications?.available?.())
+   scanNativeNotifications(false);
+})();
+
+</script>
+</body></html>
