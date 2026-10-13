@@ -29,11 +29,30 @@ public class NotificationParserTest {
         assertEquals(Long.valueOf(100), c6.amountCents);
     }
 
-    @Test public void recognizesExpenseAndCreatesStableId() {
-        CapturedNotification first = NotificationParser.parse("com.c6bank.app", "Pix enviado", "R$ 80,00 para Depósito do Latão", 1_000_000L);
-        CapturedNotification repeated = NotificationParser.parse("com.c6bank.app", "Pix enviado", "R$ 80,00 para Depósito do Latão", 1_000_500L);
-        assertEquals(Long.valueOf(8000), first.amountCents);
-        assertEquals("expense", first.direction);
-        assertEquals(first.id, repeated.id);
+    @Test public void preservesTwoLegitimateSameValuePixWithinOneMinute() {
+        CapturedNotification one = NotificationParser.parse(
+                "com.c6bank.app", "Pix enviado", "R$ 15,00 para Loja A", 1_000_000L, "notification-one");
+        CapturedNotification two = NotificationParser.parse(
+                "com.c6bank.app", "Pix enviado", "R$ 15,00 para Loja A", 1_000_500L, "notification-two");
+        assertEquals(Long.valueOf(1500), one.amountCents);
+        assertEquals("expense", one.direction);
+        assertNotEquals(one.id, two.id);
+    }
+
+    @Test public void redeliveryOfSameNotificationHasSameId() {
+        CapturedNotification one = NotificationParser.parse(
+                "com.c6bank.app", "Pix enviado", "R$ 80,00 para Loja B", 1_000_000L, "same-key");
+        CapturedNotification retry = NotificationParser.parse(
+                "com.c6bank.app", "Pix enviado", "R$ 80,00 para Loja B", 1_000_000L, "same-key");
+        CapturedNotification another = NotificationParser.parse(
+                "com.c6bank.app", "Pix enviado", "R$ 80,00 para Loja B", 1_000_000L, "other-key");
+        assertEquals(one.id, retry.id);
+        assertNotEquals(one.id, another.id);
+    }
+
+    @Test public void legacyOverloadAlsoDistinguishesExactPostingTimes() {
+        CapturedNotification first = NotificationParser.parse("com.c6bank.app", "Pix enviado", "R$ 80,00", 1_000_000L);
+        CapturedNotification second = NotificationParser.parse("com.c6bank.app", "Pix enviado", "R$ 80,00", 1_000_500L);
+        assertNotEquals(first.id, second.id);
     }
 }
