@@ -71,8 +71,10 @@ final class WebAppBridge {
                 BankNotificationListener.DIAG_PREFS, android.content.Context.MODE_PRIVATE);
         try {
             JSONObject out = new JSONObject();
-            out.put("packageName", d.getString(BankNotificationListener.KEY_PACKAGE, ""));
-            out.put("allowed", d.getBoolean(BankNotificationListener.KEY_ALLOWED, false));
+            String diagnosticPackage = d.getString(BankNotificationListener.KEY_PACKAGE, "");
+            boolean authorized = BankAllowlist.contains(activity, diagnosticPackage);
+            out.put("packageName", diagnosticPackage);
+            out.put("allowed", authorized && d.getBoolean(BankNotificationListener.KEY_ALLOWED, false));
             out.put("financial", d.getBoolean(BankNotificationListener.KEY_FINANCIAL, false));
             out.put("result", d.getString(BankNotificationListener.KEY_RESULT, ""));
             out.put("timestamp", d.getLong(BankNotificationListener.KEY_TIME, 0L));
@@ -80,8 +82,8 @@ final class WebAppBridge {
             out.put("connected", d.getBoolean(BankNotificationListener.KEY_CONNECTED, false));
             out.put("accessEnabled", isNotificationAccessEnabled());
             out.put("recentPackages", d.getString(BankNotificationListener.KEY_RECENT_PACKAGES, ""));
-            out.put("title", d.getString(BankNotificationListener.KEY_TITLE, ""));
-            out.put("text", d.getString(BankNotificationListener.KEY_TEXT, ""));
+            out.put("title", authorized ? d.getString(BankNotificationListener.KEY_TITLE, "") : "");
+            out.put("text", authorized ? d.getString(BankNotificationListener.KEY_TEXT, "") : "");
             out.put("direction", d.getString(BankNotificationListener.KEY_DIRECTION, ""));
             if (d.contains(BankNotificationListener.KEY_AMOUNT)) out.put("amountCents", d.getLong(BankNotificationListener.KEY_AMOUNT, 0L));
             String pendingJson = getPendingNotifications();
