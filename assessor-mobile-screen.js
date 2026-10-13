@@ -229,8 +229,10 @@
      let added=0,alreadySaved=0;
      for(const row of result.rows){
        if(alreadyLinkedNotification(row.sourceId)){
-         // Only clear a native event when the canonical ledger already references it.
-         if(native.acknowledge(row.sourceId))alreadySaved++;
+         // Production can reconcile an already-posted event by stable source ID.
+         // The read-only preview never changes the Android queue silently.
+         if(window.SNAKE_ASSESSOR_PREVIEW_ONLY!==true&&
+            native.acknowledge(row.sourceId))alreadySaved++;
          continue;
        }
        if(session.nativeSeen.has(row.sourceId))continue;
