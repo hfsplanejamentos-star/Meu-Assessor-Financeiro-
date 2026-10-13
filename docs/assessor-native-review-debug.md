@@ -23,9 +23,10 @@
 - Comandos de compilação em um ambiente Android SDK/Gradle configurado:
   `cd android-capture && gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug`.
 - Artefato **esperado após compilação bem-sucedida**, ainda não verificado: `android-capture/app/build/outputs/apk/debug/app-debug.apk`. Não disponibilizar download antes de o arquivo existir e ser testado.
-- Para baixar após uma execução de CI aprovada: abrir **GitHub → Actions → Assessor IA checks → execução bem-sucedida → Artifacts → Snake-Finance-Assessor-IA-preview-only**. O arquivo resultante deve ser verificado no celular antes de qualquer migração.
+- O workflow está **somente na branch `feature/assessor-ia-mobile`**: a validação é disparada automaticamente por commits nessa branch. O botão manual de execução pode não existir enquanto o workflow não estiver na branch padrão. Para obter o artefato após uma execução aprovada: **GitHub → Actions → Assessor IA checks → execução da branch de desenvolvimento → Artifacts → Snake-Finance-Assessor-IA-preview-only**. Não assuma que o artefato existe sem a confirmação da execução.
 
 - A pipeline `.github/workflows/assessor-ci.yml` foi configurada para verificar módulos, lógica e compilação Android, porém o resultado da execução completa não foi confirmado neste atendimento.
+- Os tipos do Convex em `convex/_generated/` não estão versionados. O job `validate` executa `npx convex dev --once --typecheck disable` com variáveis de deploy vazias, gerando esses tipos em um **backend local efêmero**, antes de `npm run typecheck`. A geração não deve apontar para produção. Falhas de download/configuração local ainda precisam ser verificadas no GitHub Actions.
 
 ## Conexão segura de leitura no APK separado
 - Nas Configurações do Assessor IA, informe **a mesma chave de sincronização do Snake Finance**, nunca uma senha de banco, token de terceiros ou credencial do Teams.
