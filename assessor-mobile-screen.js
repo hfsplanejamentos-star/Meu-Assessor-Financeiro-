@@ -171,6 +171,17 @@
    switchView("chat");reviewPreview();
    return true;
  }
+
+ function preserveNativeReview(){
+   const d=session.draft;
+   if(!d||d.posted||d.sourceType!=="notification")return;
+   const native=window.SnakeAssessorNativeNotifications;
+   const existing=native?.list?.().rows?.find(x=>x.sourceId===d.sourceId);
+   if(existing&&!session.nativeRows.some(x=>x.sourceId===existing.sourceId)){
+     session.nativeRows.unshift(existing);
+     eventRow("Notificação bancária preservada na fila para revisão posterior.");
+   }
+ }
  function advanceReviewQueue(){
    if(session.extractedRows.length){nextExtractedRow();return}
    nextNativeNotification();
@@ -203,6 +214,7 @@
          "Nada foi lançado ou descartado automaticamente.");
        if(!session.draft||session.draft.posted)nextNativeNotification();
      }else if(manual){
+       if((!session.draft||session.draft.posted)&&session.nativeRows.length)nextNativeNotification();
        eventRow(alreadySaved?
          alreadySaved+" notificação(ões) já registradas foram conciliadas e retiradas da fila Android.":
          session.nativeRows.length+" notificação(ões) já presentes na fila desta sessão. Nenhum lançamento novo.");
@@ -240,7 +252,7 @@
       pair.append(a,b);card.append(pair);
    }
    const buttons=document.createElement("div");buttons.className="review-actions";
-   const yes=document.createElement("button");yes.className="ok";yes.textContent="✓ Confirmar";yes.disabled=!!d.posted;
+   const yes=document.createElement("button");yes.className="ok";yes.textContent=d.sourceType==="notification"?(d.direction==="income"?"✓ Salvar receita":"✓ Salvar despesa"):"✓ Confirmar";yes.disabled=!!d.posted;
    const edit=document.createElement("button");edit.textContent="✎ Editar";edit.disabled=!!d.posted;
    const no=document.createElement("button");no.className="stop";no.textContent="✕ Cancelar";no.disabled=!!d.posted;
    buttons.append(yes,edit,no);card.append(buttons);
@@ -426,6 +438,7 @@
  }
  async function send(){
    const input=$("messageInput"),text=input.value.trim();if(!text)return;input.value="";
+   preserveNativeReview();
    if(session.extractedRows.length){
      eventRow("Fila anterior encerrada: "+session.extractedRows.length+" item(ns) não foram lançados.");
      session.extractedRows=[];
@@ -492,7 +505,7 @@
    reviewPreview();
  }
  $("sendBtn").onclick=send;$("messageInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();send()}});
- $("newExpense").onclick=()=>{session.extractedRows=[];session.draft={
+ $("newExpense").onclick=()=>{preserveNativeReview();session.extractedRows=[];session.draft={
    draftId:api?.newDraftId?.()||"demo-"+Date.now(),amount:0,direction:"expense",category:"Outros",
    subcategory:"",account:"",payment:"",installments:1,date:today(),counterparty:"",description:"",
    sourceType:"chat",posted:false};switchView("chat");openEditor()};
@@ -507,6 +520,7 @@
 
  function nextExtractedRow(){
    if(!session.extractedRows.length)return;
+   preserveNativeReview();
    const x=session.extractedRows.shift();
    const hint=norm(x.accountHint||"");
    const accounts=session.cloud?.payload?.accounts||[];
