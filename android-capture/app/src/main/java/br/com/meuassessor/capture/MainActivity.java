@@ -60,6 +60,22 @@ public final class MainActivity extends Activity {
     private static final String OTA_CACHE_FILE = "snake_dashboard_last_good.html";
     private static final String OTA_TEMP_FILE = "snake_dashboard_candidate.html";
 
+    static final int REQUEST_BACKUP_EXPORT = 708;
+    private String pendingBackupJson;
+    void exportBackupDocument(String json, String filename) {
+        runOnUiThread(() -> {
+            pendingBackupJson = json;
+            Intent save = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            save.addCategory(Intent.CATEGORY_OPENABLE);
+            save.setType("application/json");
+            save.putExtra(Intent.EXTRA_TITLE, filename == null ? "Snake_Finance_Backup.json" : filename);
+            try { startActivityForResult(save, REQUEST_BACKUP_EXPORT); }
+            catch (Exception e) {
+                pendingBackupJson = null;
+                android.widget.Toast.makeText(this, "Não foi possível abrir o salvamento do backup", android.widget.Toast.LENGTH_LONG).show();
+            }
+        });
+    }
     private WebView webView;
     private FrameLayout startupSplash;
     private boolean dashboardReady = false;
@@ -543,6 +559,21 @@ public final class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_BACKUP_EXPORT) {
+            String json = pendingBackupJson;
+            pendingBackupJson = null;
+            if (resultCode == RESULT_OK && data != null && data.getData() != null && json != null) {
+                try (java.io.OutputStream out = getContentResolver().openOutputStream(data.getData())) {
+                    if (out == null) throw new java.io.IOException("Destino indisponível");
+                    out.write(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    out.flush();
+                    android.widget.Toast.makeText(this, "Backup JSON salvo com sucesso", android.widget.Toast.LENGTH_LONG).show();
+                } catch (Exception e) {
+                    android.widget.Toast.makeText(this, "Falha ao salvar backup: " + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
+                }
+            }
+            return;
+        }
         if (requestCode == AppLock.REQUEST_DEVICE_CREDENTIAL) {
             if (resultCode == RESULT_OK) unlockApplication();
             else cancelAuthentication();
