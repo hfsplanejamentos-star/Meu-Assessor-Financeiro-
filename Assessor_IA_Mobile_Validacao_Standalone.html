@@ -94,7 +94,7 @@ dialog{background:var(--surface);border:1px solid var(--gold);border-radius:17px
 <input hidden type="file" id="photoFile" accept="image/*" capture="environment">
 <div id="toast" role="status"></div>
 <script>
-/* Validação standalone: nunca permitir gravação no motor financeiro. */
+/* Standalone preview: financial posting and card edits are permanently disabled. */
 Object.defineProperty(window, "SNAKE_ASSESSOR_PREVIEW_ONLY", {
   value: true, writable: false, configurable: false
 });
@@ -146,6 +146,16 @@ Object.defineProperty(window, "SNAKE_ASSESSOR_PREVIEW_ONLY", {
         !previewSafePosts.includes(path)) {
       const error=new Error("preview_read_only");
       error.code="preview_read_only";
+      throw error;
+    }
+    // A downloaded file:// HTML has Origin:null. The Convex IA/media endpoints
+    // deliberately allow only our HTTPS Pages origin, so preflight will fail.
+    // Report a useful explanation without sending attachments or voice bytes.
+    if (root.SNAKE_ASSESSOR_PREVIEW_ONLY===true &&
+        root.location?.protocol==="file:" &&
+        method.toUpperCase()!=="GET") {
+      const error=new Error("A análise com IA precisa da versão hospedada em HTTPS. Este HTML local permite navegar, conferir e editar prévias sem gravar despesas.");
+      error.code="requires_hosted_https";
       throw error;
     }
     const response = await root.fetch(API + path, {
@@ -581,7 +591,7 @@ Object.defineProperty(window, "SNAKE_ASSESSOR_PREVIEW_ONLY", {
      return {amount,direction:Number(d.value)<0?"expense":"income",date:/^\d{4}-\d{2}-\d{2}$/.test(d.date||"")?d.date:today(),
        category:String(d.cat||"Outros"),subcategory:String(d.sub||""),description:String(d.desc||text)};
     }
-  }catch(e){toast("IA online indisponível; interpretação local para revisão.");}
+  }catch(e){toast(e.code==="requires_hosted_https"?"HTML local: análise online exige hospedagem HTTPS; mantendo interpretação local.":"IA online indisponível; interpretação local para revisão.");}
   return null;
  }
 
@@ -1036,7 +1046,7 @@ Object.defineProperty(window, "SNAKE_ASSESSOR_PREVIEW_ONLY", {
        nextExtractedRow();
      }catch(err){
        go.disabled=false;go.textContent="Tentar análise novamente";
-       toast("Análise não concluída: "+(err.code||err.message||"erro"));
+       toast("Análise não concluída: "+(err.code==="requires_hosted_https"?err.message:(err.code||err.message||"erro")));
      }
    };
  }
@@ -1076,7 +1086,7 @@ Object.defineProperty(window, "SNAKE_ASSESSOR_PREVIEW_ONLY", {
        $("messageInput").value=result.text;
        switchView("chat");
        toast("Áudio transcrito. Confira o texto e toque em Enviar.");
-     }catch(e){toast("Transcrição indisponível: "+(e.code||e.message||"erro"))}
+     }catch(e){toast("Transcrição indisponível: "+(e.code==="requires_hosted_https"?e.message:(e.code||e.message||"erro")))}
    };
    try{
      recorder.start();
