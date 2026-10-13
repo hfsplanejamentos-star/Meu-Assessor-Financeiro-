@@ -15,9 +15,17 @@ final class WebAppBridge {
         this.activity = activity;
     }
 
+    // Never expose queued data from apps disabled after a previous installation.
+    // A failed or corrupt encrypted-queue read fails closed.
+    private EncryptedQueueStore authorizedQueue() {
+        EncryptedQueueStore queue = new EncryptedQueueStore(activity);
+        return queue.pruneUnauthorized(activity) < 0 ? null : queue;
+    }
+
     @JavascriptInterface
     public int notificationCount() {
-        return new EncryptedQueueStore(activity).size();
+        EncryptedQueueStore queue = authorizedQueue();
+        return queue == null ? 0 : queue.size();
     }
 
     @JavascriptInterface
@@ -27,7 +35,8 @@ final class WebAppBridge {
 
     @JavascriptInterface
     public String getPendingNotifications() {
-        return new EncryptedQueueStore(activity).snapshotJson();
+        EncryptedQueueStore queue = authorizedQueue();
+        return queue == null ? "[]" : queue.snapshotJson();
     }
 
     @JavascriptInterface
@@ -36,7 +45,8 @@ final class WebAppBridge {
             org.json.JSONArray values = new org.json.JSONArray(idsJson == null ? "[]" : idsJson);
             String[] ids = new String[values.length()];
             for (int i = 0; i < values.length(); i++) ids[i] = values.optString(i, "");
-            return new EncryptedQueueStore(activity).acknowledge(ids);
+            EncryptedQueueStore queue = authorizedQueue();
+            return queue != null && queue.acknowledge(ids);
         } catch (Exception ignored) {
             return false;
         }
@@ -74,7 +84,7 @@ final class WebAppBridge {
             out.put("text", d.getString(BankNotificationListener.KEY_TEXT, ""));
             out.put("direction", d.getString(BankNotificationListener.KEY_DIRECTION, ""));
             if (d.contains(BankNotificationListener.KEY_AMOUNT)) out.put("amountCents", d.getLong(BankNotificationListener.KEY_AMOUNT, 0L));
-            String pendingJson = new EncryptedQueueStore(activity).snapshotJson();
+            String pendingJson = getPendingNotifications();
             org.json.JSONArray pendingItems = new org.json.JSONArray(pendingJson);
             if (pendingItems.length() > 0) {
                 JSONObject latest = pendingItems.getJSONObject(pendingItems.length() - 1);
