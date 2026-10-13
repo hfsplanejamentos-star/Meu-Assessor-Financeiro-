@@ -52,6 +52,14 @@ public final class CaptureSettingsActivity extends Activity {
             String rawPkg = d.getString(BankNotificationListener.KEY_RAW_PACKAGE, "");
             String rawTitle = d.getString(BankNotificationListener.KEY_RAW_TITLE, "");
             String rawText = d.getString(BankNotificationListener.KEY_RAW_TEXT, "");
+            if (!BankAllowlist.contains(this, pkg)) {
+                lastTitle = "";
+                lastText = "";
+            }
+            if (!BankAllowlist.contains(this, rawPkg)) {
+                rawTitle = "";
+                rawText = "";
+            }
             String direction = d.getString(BankNotificationListener.KEY_DIRECTION, "");
             String amount = d.contains(BankNotificationListener.KEY_AMOUNT)
                     ? String.format(java.util.Locale.forLanguageTag("pt-BR"), "R$ %.2f", d.getLong(BankNotificationListener.KEY_AMOUNT,0L)/100.0)
