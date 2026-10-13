@@ -30,6 +30,14 @@ public final class BankNotificationListener extends NotificationListenerService 
     @Override public void onNotificationPosted(StatusBarNotification status) {
         if(status==null)return;
         String pkg=status.getPackageName(); rememberPackage(pkg);
+        // Check package BEFORE accessing notification extras or saving diagnostics.
+        boolean allowed=BankAllowlist.contains(this,pkg);
+        if(!allowed){
+            SharedPreferences.Editor clear=getSharedPreferences(DIAG_PREFS,Context.MODE_PRIVATE).edit();
+            clear.remove(KEY_RAW_TITLE).remove(KEY_RAW_TEXT).apply();
+            saveDiagnostic(pkg,false,false,"Ignorada: aplicativo não autorizado","","",null,null,"");
+            return;
+        }
         Notification n=status.getNotification();
         String title="",body="";
         if(n!=null){
@@ -44,11 +52,9 @@ public final class BankNotificationListener extends NotificationListenerService 
             );
         }
         saveRawDiagnostic(pkg,title,body,status.getPostTime());
-        boolean allowed=BankAllowlist.contains(this,pkg);
-        if(!allowed){saveDiagnostic(pkg,false,false,"Ignorada: aplicativo não autorizado",title,body,null,null,"");return;}
         if(n==null){saveDiagnostic(pkg,true,false,"Ignorada: notificação sem conteúdo",title,body,null,null,"");return;}
         boolean financial=NotificationParser.looksFinancial(title,body);
-        CapturedNotification event=NotificationParser.parse(pkg,title,body,status.getPostTime());
+        CapturedNotification event=NotificationParser.parse(pkg,title,body,status.getPostTime(),status.getKey());
         if(!financial){
             saveDiagnostic(pkg,true,false,"Ignorada: valor/contexto financeiro não reconhecido",title,body,event.amountCents,event.reportedBalanceCents,event.direction);return;
         }
