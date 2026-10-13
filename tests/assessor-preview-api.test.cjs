@@ -36,5 +36,19 @@ const api=window.SnakeAssessorApi;
  assert.equal(calls.length,2,"AI interpretation can be posted as a read-only analysis");
  assert(calls[1].url.includes("/ai/finance"));
  assert.equal(calls[1].method,"POST");
+ const localFileWindow={...window,location:{protocol:"file:"}};
+ vm.runInNewContext(js,{window:localFileWindow});
+ const localApi=localFileWindow.SnakeAssessorApi;
+ const beforeLocal=calls.length;
+ await assert.rejects(
+   ()=>localApi.previewCardPurchase("c6-carbon","2026-10-12",1500,1),
+   error=>error.code==="requires_hosted_https" && /HTTPS/i.test(error.message),
+   "Downloaded local HTML must explain that online analysis needs hosting"
+ );
+ assert.equal(calls.length,beforeLocal,"Do not attempt blocked file-origin POST");
+ const safeRead=await localApi.readFinanceState();
+ assert.equal(safeRead.ok,true,"Legacy finance GET remains available in local preview");
+ assert.equal(calls.length,beforeLocal+1);
+
  console.log("Assessor preview API: all financial mutations blocked, GET and non-ledger analysis permitted PASS");
 })().catch(error=>{console.error(error);process.exitCode=1});
