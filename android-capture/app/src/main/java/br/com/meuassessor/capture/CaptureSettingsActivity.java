@@ -118,18 +118,7 @@ public final class CaptureSettingsActivity extends Activity {
         addBankToggle(root, "XP", "br.com.xp.carteira");
         addBankToggle(root, "Caju", "com.caju.employee");
         addBankToggle(root, "Itaú", "br.com.itau");
-        addBankToggle(root, "Nubank", "com.nu.production");
-        addBankToggle(root, "Banco Inter", "br.com.intermedium");
-        addBankToggle(root, "Santander", "com.santander.app");
-        addBankToggle(root, "Bradesco", "com.bradesco");
-        addBankToggle(root, "Banco do Brasil", "br.com.bb.android");
-        addBankToggle(root, "Caixa", "br.com.gabba.Caixa");
-        addBankToggle(root, "Mercado Pago", "com.mercadopago.wallet");
-        addBankToggle(root, "PicPay", "com.picpay");
-        addBankToggle(root, "PagBank", "br.com.uol.ps.myaccount");
-        addBankToggle(root, "Neon", "br.com.neon");
-        addBankToggle(root, "Google Play", "com.android.vending");
-        addBankToggle(root, "Google Wallet", "com.google.android.apps.walletnfcrel");
+
 
         root.addView(permission, params(18));
         root.addView(privacy, params(18));
