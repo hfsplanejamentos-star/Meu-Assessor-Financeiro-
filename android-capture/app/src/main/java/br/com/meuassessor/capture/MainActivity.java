@@ -591,10 +591,12 @@ public final class MainActivity extends Activity {
                 try {
                     byte[] bytes;
                     java.io.File staged = pendingBackupFile();
-                    if (staged.isFile() && staged.length() >= 20) {
-                        bytes = java.nio.file.Files.readAllBytes(staged.toPath());
-                    } else if (json != null) {
+                    // Prefer the current export payload. A staged file can survive a
+                    // cancelled picker and must never override newer ledger data.
+                    if (json != null && json.getBytes(java.nio.charset.StandardCharsets.UTF_8).length >= 20) {
                         bytes = json.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                    } else if (staged.isFile() && staged.length() >= 20) {
+                        bytes = java.nio.file.Files.readAllBytes(staged.toPath());
                     } else {
                         throw new java.io.IOException("Backup temporário indisponível");
                     }
