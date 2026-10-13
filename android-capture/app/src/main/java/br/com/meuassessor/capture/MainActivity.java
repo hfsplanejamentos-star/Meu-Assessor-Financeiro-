@@ -154,7 +154,9 @@ public final class MainActivity extends Activity {
                 android.graphics.Insets bars = insets.getInsets(
                         android.view.WindowInsets.Type.statusBars()
                                 | android.view.WindowInsets.Type.navigationBars());
-                view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+                // Inset only the dashboard: the startup splash must remain edge-to-edge.
+                // Padding the root also shifts/crops the splash and can expose status-bar artifacts.
+                webView.setPadding(bars.left, bars.top, bars.right, bars.bottom);
                 return insets;
             });
         }
