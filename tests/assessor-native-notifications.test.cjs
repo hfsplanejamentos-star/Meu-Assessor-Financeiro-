@@ -28,7 +28,7 @@ const source=[
  event("event-0000003",{sourcePackage:"com.google.android.apps.walletnfcrel"}),
  event("event-0000004",{sourcePackage:"br.com.itau",title:"Compra aprovada",text:"Crédito de R$ 39,00",amountCents:3900}),
  event("event-0000005",{sourcePackage:"com.caju.employee",title:"Pagamento aprovado",text:"Compra R$ 26,99",amountCents:2699}),
- event("event-0000006",{sourcePackage:"br.com.xp.carteira",title:"Pix recebido",direction:"income",text:"R$ 100,00"})
+ event("event-0000006",{sourcePackage:"br.com.xp.carteira",title:"Pix recebido",direction:"income",text:"R$ 100,00",amountCents:10000})
 ];
 const {api,acknowledged}=load(source);
 const result=api.list();
