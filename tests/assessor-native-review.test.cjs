@@ -98,5 +98,24 @@ async function confirmCurrent(){
  window.meuAssessorAndroidAutoSync();
  await wait();
  assert.equal(posted.length,2,"redelivery must not silently post");
- console.log("Assessor native review: two same-value Pix, edit-required, confirmed once, ACK after posting PASS");
+ // Caju remains a special benefit account, not silently debited as cash.
+ state.payload.cards.push({id:"caju-card",name:"Caju Alimentação",type:"Benefício"});
+ events.push({id:"notification-caju-003",sourcePackage:"com.caju.employee",
+  title:"Compra aprovada",text:"R$ 26,99 na padaria",amountCents:2699,
+  direction:"expense",postedAt:postedAt+2000});
+ window.meuAssessorAndroidAutoSync();
+ await wait();
+ const cajuPreview=get("draftMount").children[0];
+ assert(cajuPreview,"Caju notification must be visible for review");
+ const cajuButtons=cajuPreview.querySelectorAll("button");
+ await cajuButtons[0].onclick();
+ assert.equal(posted.length,2,"benefit must not use a cash account posting");
+ assert.equal(prepared.length,2,"benefit must not prepare a cash draft");
+ assert.equal(ack.includes("notification-caju-003"),false,
+  "unsupported Caju operation stays in encrypted native queue");
+ await cajuButtons[2].onclick(); // explicit discard confirmation
+ assert.equal(ack.includes("notification-caju-003"),true,
+  "only confirmed discard should clear an unposted Caju event");
+ assert.equal(posted.length,2);
+ console.log("Assessor native review: two same-value Pix, guarded Caju, explicit ACK and discard PASS");
 })().catch(error=>{console.error(error);process.exitCode=1});
