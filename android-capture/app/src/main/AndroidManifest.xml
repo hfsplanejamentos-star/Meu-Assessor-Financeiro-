@@ -39,6 +39,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <receiver android:name=".DailyFinanceReminder" android:exported="false" />
         <service
             android:name=".BankNotificationListener"
             android:exported="true"
