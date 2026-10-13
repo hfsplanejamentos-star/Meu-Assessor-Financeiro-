@@ -1179,6 +1179,38 @@ html[data-tema] .settingsPop{top:122px!important;max-height:calc(100dvh - 145px)
 .alertRule{scroll-margin-top:184px}
 @media(max-width:350px){html[data-tema] #fixedTopShell .appHd{padding-inline:8px!important}.headerTop{gap:4px}.headerBrand{gap:6px}.headerBrand .snakeMark{--mark-size:40px}.snakeWordmark strong{font-size:15px}.headerBottom{gap:7px}.noticeHead .snakeWordmark strong{font-size:14px}}
 </style></head><body>
+<script id="snake-early-diagnostics">
+(function(){
+ var caught=[];
+ function show(){
+  if(document.getElementById('snakeSafeRecovery'))return;
+  var v=document.getElementById('v');
+  if(v&&v.textContent.trim().length>35)return;
+  var target=v||document.getElementById('app')||document.body;
+  if(!target)return;
+  var box=document.createElement('section');
+  box.id='snakeSafeRecovery';
+  box.style.cssText='padding:18px;margin:16px;border:1px solid #c6a357;border-radius:16px;background:#16130d;color:#f5e5bc;position:relative;z-index:999';
+  var title=document.createElement('h3');title.textContent='Snake Finance · diagnóstico seguro';box.appendChild(title);
+  var info=document.createElement('p');info.textContent='O painel não terminou de carregar. Não restaure exemplos nem limpe dados. '+(caught.length?'Erro: '+caught[0]:'Falha de inicialização não identificada.');box.appendChild(info);
+  var button=document.createElement('button');button.textContent='Exportar armazenamento original';button.style.cssText='padding:12px;border-radius:8px;background:#e4bc64;color:#17120b';button.onclick=function(){
+   try{
+    if(typeof exportRawRecovery==='function'){exportRawRecovery();return;}
+    var storage={};for(var i=0;i<localStorage.length;i++){var key=localStorage.key(i);if(key&&/^(assessor_|snake_|tema$|lay$)/.test(key))storage[key]=localStorage.getItem(key);}
+    var json=JSON.stringify({schema:'snake-finance-raw-recovery',version:1,createdAt:new Date().toISOString(),storage:storage},null,2);
+    var native=window.AndroidBridge||window.AndroidApp;
+    if(native&&typeof native.exportBackup==='function')native.exportBackup(json,'Snake_Finance_Resgate_Bruto.json');
+    else {var blob=new Blob([json],{type:'application/json'});var link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='Snake_Finance_Resgate_Bruto.json';link.click();}
+   }catch(e){alert('Falha ao exportar: '+e.message);}
+  };box.appendChild(button);
+  target.prepend(box);
+ }
+ window.addEventListener('error',function(e){caught.push(String(e.message||'Erro JavaScript').slice(0,160));},{capture:true});
+ window.addEventListener('unhandledrejection',function(e){caught.push(String(e.reason&&e.reason.message||e.reason||'Falha assíncrona').slice(0,160));});
+ window.addEventListener('load',function(){setTimeout(show,3500);});
+})();
+</script>
+
 <div id="app"><div class="hd appHd"><div class="headerTop"><button class="headerIcon" id="headerMenuButton" type="button" aria-label="Menu de navegação" aria-expanded="false" aria-controls="headerNav" onclick="toggleHeaderNav()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><div class="headerBrand"><span class="snakeMark" aria-hidden="true"></span><div class="snakeWordmark"><strong>SNAKE <em>FINANCE</em></strong><small>ASSESSOR FINANCEIRO IA</small></div></div><button class="headerIcon headerAI" id="advisorAI" type="button" aria-label="Abrir Assessor IA" title="Assessor IA · texto, voz e foto" onclick="AS='chat';goTab('as')"><span class="aiOrb"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11.9 5.2C10.9 3.6 8.2 3.8 7.6 5.8 5.7 5.9 4.8 8.2 5.9 9.5c-1.7 1.1-1.4 3.9.5 4.6-.5 2.1 1.6 3.8 3.4 2.8.6 1.4 2.1 1.2 2.1-.3V5.2Zm.2 0c1-1.6 3.7-1.4 4.3.6 1.9.1 2.8 2.4 1.7 3.7 1.7 1.1 1.4 3.9-.5 4.6.5 2.1-1.6 3.8-3.4 2.8-.6 1.4-2.1 1.2-2.1-.3V5.2Z"/><path d="M8.1 8.1h2.2M7.4 11.2h3.3M8.4 14.1h2.3M15.9 8.1h-2.2M16.6 11.2h-3.3M15.6 14.1h-2.3M8.1 8.1 6.9 6.9M15.9 8.1l1.2-1.2M8.4 14.1l-1.2 1.2M15.6 14.1l1.2 1.2"/></svg></span><span class="aiTag">IA</span></button><button class="headerIcon headerBell" id="advisorBell" type="button" aria-label="Avisos do assessor" title="Avisos do assessor" onclick="openAdvisorNotices()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4M11 2V1h2v1"/></svg><span id="advisorBellDot" class="headerBellDot" hidden></span></button></div><div class="headerBottom"><span class="hdMonth">Painel financeiro</span><div class="themeDock"><button class="o" aria-label="Tema dourado" style="background:linear-gradient(145deg,#ffe59a,#d8a33d,#805015)" onclick="setT('ciano')"></button><button class="o" aria-label="Tema limão" style="background:#b8ff2c" onclick="setT('limao')"></button><button class="o" aria-label="Tema claro" style="background:#f1f4fa" onclick="setT('claro')"></button></div><button class="gearBtn" aria-label="Configurações" title="Configurações" onclick="toggleSettings()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 3-.5 2-2 .9-1.8-.7-2 3.5 1.5 1.5v2.3l-1.5 1.4 2 3.5 2-.6 1.9 1 .5 2.2h4.2l.6-2.2 2-1 1.9.6 2-3.5-1.5-1.4v-2.3L20 8.8l-2-3.5-1.9.7-2-.9-.5-2.1z"/><circle cx="12" cy="11.5" r="3"/></svg></button></div></div><div id="headerNav" class="headerNav" aria-label="Navegação"></div><div id="settingsPop" class="settingsPop"><b>Configurações</b><small>V84 · VISUAL APROVADO</small><button onclick="openOverviewOptions();document.getElementById('settingsPop').classList.remove('on')">☑ Personalizar Visão Geral</button><button onclick="openCatManager();document.getElementById('settingsPop').classList.remove('on')">Categorias e subcategorias</button><button onclick="AS='av';goTab('as');document.getElementById('settingsPop').classList.remove('on')">Avisos e regras de alertas</button><button onclick="captureSettings()">Captura, WhatsApp e IA</button><button onclick="toggleOrganizer()">↕ Organizar cards</button><button onclick="openCajuSettings();toggleSettings()">Saldo e recarga Caju</button><button onclick="restoreLayout()">Restaurar layout</button><button onclick="openBudgetEditor();toggleSettings()">Orçamentos por categoria</button><button onclick="openBackupPanel()">Backup e importar dados</button><button onclick="rst()">Restaurar dados de exemplo</button></div><div id="v"></div></div>
 <div id="md" onclick="if(event.target===this)closeDay()"></div>
 
