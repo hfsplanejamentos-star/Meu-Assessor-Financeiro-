@@ -1,6 +1,5 @@
 name: Assessor IA checks
 on:
-  workflow_dispatch:
   push:
     branches:
       - feature/assessor-ia-mobile
