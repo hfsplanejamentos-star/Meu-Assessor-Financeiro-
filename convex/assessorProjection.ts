@@ -168,7 +168,9 @@ export function previewCarbonInvoices(payload:unknown,cardId:string,startMonth:s
    committedCents:0,plannedCents:0,totalCents:0,transactionCount:0};
   cycles.push(cycle);
  }
- const cycleByMonth=new Map(cycles.map(row=>[row.invoiceMonth,row]));
+ const cycleByMonth = new Map<string, (typeof cycles)[number]>(
+   cycles.map(row => [row.invoiceMonth, row] as const)
+ );
  const seenIDs=new Set<string>(),seenSources=new Set<string>();
  for(const t of db.transactions){
   if(!t||typeof t!=="object")continue;
