@@ -9,10 +9,27 @@
   const KEY = "assessor_cloud_sync_key";
 
   function key() {
-    const value = (root.localStorage?.getItem(KEY) || "").trim();
+    let value="";
+    try { value=(root.localStorage?.getItem(KEY) || "").trim(); } catch (_){}
     if (value.length < 32 || value.length > 256)
       throw new Error("A chave de sincronização do Assessor IA deve ter de 32 a 256 caracteres.");
     return value;
+  }
+  function hasSyncKey() {
+    try { return key().length>=32; } catch (_) { return false; }
+  }
+  function setSyncKey(value) {
+    const candidate=String(value||"").trim();
+    if(candidate.length<32||candidate.length>256 ||
+       /[\\r\\n\\u0000-\\u001f]/.test(candidate))
+      throw new Error("Chave inválida: informe apenas a chave de sincronização do Snake Finance.");
+    if (!root.localStorage) throw new Error("Armazenamento seguro do navegador indisponível.");
+    root.localStorage.setItem(KEY,candidate);
+    return true;
+  }
+  function disconnectSync() {
+    root.localStorage?.removeItem(KEY);
+    return true;
   }
   async function request(path, {method="GET",body}={}) {
     // A preview APK may read and interpret, but MUST NOT prepare drafts,
@@ -143,6 +160,6 @@
 
   root.SnakeAssessorApi = Object.freeze({
     newDraftId,prepare,confirm,reject,postCash,confirmCash,
-    readFinanceState,interpretText,analyzeAttachment,transcribeAudio,previewCardPurchase,previewCajuMonth,listCarbonInvoices,auditCarbonSettings,repairCarbonSettings,listPending,listConfirmed,reconciliation,
+    hasSyncKey,setSyncKey,disconnectSync,readFinanceState,interpretText,analyzeAttachment,transcribeAudio,previewCardPurchase,previewCajuMonth,listCarbonInvoices,auditCarbonSettings,repairCarbonSettings,listPending,listConfirmed,reconciliation,
   });
 })(window);
