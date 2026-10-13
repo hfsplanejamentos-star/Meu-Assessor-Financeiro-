@@ -1831,13 +1831,7 @@ function rst(){alert('Restaurar dados de exemplo está desativado para proteger 
 function rstDisabledLegacy(){if(!confirm('Restaurar a base de exemplo substitui seus lançamentos. Exporte um backup primeiro. Continuar?'))return;saveSafetyBackup();PERSIST_BLOCKED=false;closeDay();L=JSON.parse(JSON.stringify(L0));persistLedger();YM='2026-10';SEL=APP_TODAY.startsWith(YM)?APP_TODAY:`${YM}-01`;OPEN=0;TOAST='';LAST=0;NID=nextId();migrateWorkCategory();CATDB=completeBackupCategories(CATDB,L).categories;wInit();cInit();draw();}
 function boot(){
  try{const raw=localStorage.getItem(LEDGER_KEY)||localStorage.getItem('assessor_tx');
- try {
-   const native=window.AndroidBridge||window.AndroidApp;
-   if(raw&&native&&typeof native.preserveLedgerSnapshot==='function'){
-     const rows=JSON.parse(raw);
-     if(Array.isArray(rows)&&rows.length>0)native.preserveLedgerSnapshot(raw);
-   }
- }catch(ignore){}
+ try{const native=window.AndroidBridge||window.AndroidApp;if(raw&&native&&typeof native.preserveLedgerSnapshot==='function'){const rows=JSON.parse(raw);if(Array.isArray(rows)&&rows.length>0)native.preserveLedgerSnapshot(raw);}}catch(ignore){}
  if(!raw||raw==='[]'){PERSIST_BLOCKED=true;setTimeout(()=>alert('Base vazia: proteção contra gravações ativada. Preserve os dados e exporte a cópia de recuperação.'),100);}
  const saved=raw?JSON.parse(raw):null;if(raw&&!Array.isArray(saved))throw Error('Formato inválido');L=saved===null?JSON.parse(JSON.stringify(L0)):validateLedger(saved);if(OPENING_INVALID||(window.SNAKE_DISTRIBUTABLE&&!localStorage.getItem(OPENING_KEY))){L=[];PERSIST_BLOCKED=true;setTimeout(openBackupPanel,100);}}
  catch(e){L=[];PERSIST_BLOCKED=true;setTimeout(()=>alert('Os dados salvos não puderam ser lidos. Nada foi sobrescrito. Exporte um backup em Configurações e importe uma cópia válida.'),20);}
@@ -2265,11 +2259,7 @@ function completeBackupCategories(categories,ledger){
 function backupState(){const storage={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if((k.startsWith('assessor_')||['lay','tema'].includes(k))&&!/backup|pre_import/.test(k))storage[k]=localStorage.getItem(k);}Object.assign(storage,{[OPENING_KEY]:JSON.stringify(OPENING_CFG),[GOAL_STORE]:JSON.stringify(INVEST_GOALS),assessor_inv_v82:JSON.stringify(INV_CFG),[CATSTORE]:JSON.stringify(completeBackupCategories(CATDB,L).categories),[CAJU_CFG_KEY]:JSON.stringify(CAJU_CFG),[ALERT_KEY]:JSON.stringify(ALERT_CFG),[NOTICE_KEY]:JSON.stringify(ST),[OVERVIEW_KEY]:JSON.stringify(OVERVIEW_VISIBLE),assessor_budgets_v82:JSON.stringify(ORC)});return {schema:'snake-finance-backup',version:2,app:'v82-android',createdAt:new Date().toISOString(),ledger:L,storage};}
 function saveSafetyBackup(){try{localStorage.setItem('assessor_pre_import_v82',JSON.stringify(backupState()))}catch(e){throw Error('Sem espaço para backup de segurança. Exporte um backup antes de continuar.');}}
 function exportBackup(){const native=window.AndroidBridge||window.AndroidApp;if(native&&typeof native.exportBackup==='function'){native.exportBackup(JSON.stringify(backupState(),null,2),'Snake_Finance_Backup_'+localToday()+'.json');return;}const blob=new Blob([JSON.stringify(backupState(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Snake_Finance_Backup_'+localToday()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
-function exportPreservedLedger(){
- const native=window.AndroidBridge||window.AndroidApp;
- if(native&&typeof native.exportPreservedLedger==='function')native.exportPreservedLedger();
- else alert('Cópia interna não disponível nesta versão.');
-}
+function exportPreservedLedger(){const native=window.AndroidBridge||window.AndroidApp;if(native&&typeof native.exportPreservedLedger==='function')native.exportPreservedLedger();else alert('Cópia interna não disponível nesta versão.');}
 function exportRawRecovery(){
  const storage={};
  try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&(/^(assessor_|snake_|tema$|lay$)/.test(k)))storage[k]=localStorage.getItem(k);}}
