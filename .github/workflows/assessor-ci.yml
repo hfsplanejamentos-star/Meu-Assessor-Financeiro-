@@ -9,6 +9,8 @@ on:
       - "assessor-*.js"
       - "assessor-*.html"
       - "tests/assessor-*"
+      - "tests/android-capture-audit.cjs"
+      - "android-capture/**"
       - "index.html"
       - "package.json"
       - "package-lock.json"
