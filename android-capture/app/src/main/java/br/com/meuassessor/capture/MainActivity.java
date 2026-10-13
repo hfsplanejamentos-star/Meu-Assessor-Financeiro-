@@ -136,7 +136,7 @@ public final class MainActivity extends Activity {
                     || !page.contains("SnakeAssessorNativeNotifications")) {
                 throw new IllegalStateException("invalid_assessor_preview");
             }
-            webView.loadDataWithBaseURL(APP_BASE_URL, page, "text/html", "UTF-8", APP_URL);
+            webView.loadDataWithBaseURL(APP_BASE_URL, page, "text/html", "UTF-8", APP_BASE_URL + "assessor-ia-mobile.html");
         } catch (Exception unavailable) {
             webView.loadDataWithBaseURL(APP_BASE_URL,
                     "<!doctype html><html lang='pt-BR'><meta charset='utf-8'>"
@@ -405,11 +405,17 @@ public final class MainActivity extends Activity {
                 Intent files = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 files.addCategory(Intent.CATEGORY_OPENABLE);
                 files.setType("*/*");
-                files.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
-                        "image/*", "application/pdf", "text/csv", "text/plain",
-                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        "application/vnd.ms-excel", "application/x-ofx"
-                });
+                String[] allowedMimeTypes = BuildConfig.DEBUG
+                        ? new String[]{
+                            "image/jpeg", "image/png", "image/webp",
+                            "application/pdf", "text/csv", "text/plain", "application/x-ofx"
+                          }
+                        : new String[]{
+                            "image/*", "application/pdf", "text/csv", "text/plain",
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            "application/vnd.ms-excel", "application/x-ofx"
+                          };
+                files.putExtra(Intent.EXTRA_MIME_TYPES, allowedMimeTypes);
 
                 Intent gallery;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
