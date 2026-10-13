@@ -37,6 +37,7 @@ async function scenario(accountType,duplicate=false){
  let prepares=0,posts=0,reads=0;
  const account={id:accountType==="Benefício"?"caju":"c6",name:accountType==="Benefício"?"Caju Alimentação":"C6 Conta Corrente",type:accountType,balance:500};
  const window={localStorage,scrollTo:()=>{},SnakeAssessorApi:{
+  hasSyncKey:()=>true,
   newDraftId:()=> "draft-00001",readFinanceState:async()=>{reads++;return{state:{version:3,payload:{accounts:[account],transactions:[],cards:[]}}}},
   interpretText:async()=>null,prepare:async()=>{prepares++;return{ok:true,duplicate,draftId:"draft-00001"}},
   confirmCash:async()=>{posts++;return{posted:true,syncPending:false}}
