@@ -1280,7 +1280,8 @@ function vDia(){
  const now=new Date(),localYM=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`,
  today=`${localYM}-${String(now.getDate()).padStart(2,'0')}`,ref=YM===localYM?today:SEL;
  const it=ML().filter(x=>x.d===ref&&x.t==='d'&&x.s==='r'),pv=false,tot=it.reduce((q,x)=>q+x.v,0);
- return `<div class="c"><div class="sp"><p class="h">${pv?'Previsto para ':'Despesas do dia '}${dd(ref)}</p><b style="color:${pv?'var(--a)':'var(--neg)'}">${brl(tot)}</b></div>${it.length?it.map(x=>{const c=x.c&&CAT[x.c]?CAT[x.c]:CAT.out,cc=V35_COLORS[x.c]||c[2];return `<div class="r pr" onclick="openLanc(${x.id})">${tile(c[1],cc)}<div class="f"><p>${escapeHTML(x.n)}</p><p class="m">${escapeHTML(c[0])} · ${AC[x.a]?.[0]||x.a}${x.s==='p'?' · previsto':''}</p></div><b>${brl(x.v)}</b></div>`}).join(''):`<p class="m" style="padding:8px 0">Nenhuma despesa registrada hoje.</p>`}</div>`;
+ return `<div class="c"><div class="sp"><p class="h">${pv?'Previsto para ':'Despesas do dia '}${dd(ref)}</p><b style="color:${pv?'var(--a)':'var(--neg)'}">${brl(tot)}</b></div>${invoiceDue>0?`<div class="r li catClick" onclick="openCarbonInvoice(YM)"><div class="f"><b>Fatura C6 Carbon</b><p class="m">Vencimento 07 · Total bruto de compras e parcelas · Toque para detalhes</p></div><b style="color:var(--warn)">${brl(invoiceDue)}</b></div>`:''}
+ ${it.length?it.map(x=>{const c=x.c&&CAT[x.c]?CAT[x.c]:CAT.out,cc=V35_COLORS[x.c]||c[2];return `<div class="r pr" onclick="openLanc(${x.id})">${tile(c[1],cc)}<div class="f"><p>${escapeHTML(x.n)}</p><p class="m">${escapeHTML(c[0])} · ${AC[x.a]?.[0]||x.a}${x.s==='p'?' · previsto':''}</p></div><b>${brl(x.v)}</b></div>`}).join(''):`<p class="m" style="padding:8px 0">Nenhuma despesa registrada hoje.</p>`}</div>`;
 }
 function pct100(vals){
  const tot=vals.reduce((a,v)=>a+v,0); if(!tot)return vals.map(()=>0);
@@ -1419,6 +1420,7 @@ function openType(t,title){detailModal(title,ML().filter(x=>x.t===t))}
 function carbonInvoiceItems(ym=YM){
  return L.filter(x=>x.a==='carbon'&&x.t==='d'&&(x.comp||carbonInvoiceMonth(x.d)).slice(0,7)===ym);
 }
+function carbonInvoiceGross(ym=YM){return carbonInvoiceItems(ym).reduce((sum,x)=>sum+x.v,0);}
 function openCarbonInvoice(ym=YM){
  const items=carbonInvoiceItems(ym);
  detailModal('Fatura C6 Carbon · '+monthName(ym),items);
@@ -1435,7 +1437,11 @@ function openPending(){
  const items=ML().filter(x=>(x.t==='d'||x.t==='t')&&x.s==='p'&&x.a!=='carbon');
  detailModal('A pagar',items);
  const invoices=carbonInvoiceItems(YM);
- const amount=invoices.reduce((sum,x)=>sum+x.v,0);
+ const baseTotal=items.reduce((sum,x)=>sum+x.v,0);
+ const grossInvoice=carbonInvoiceGross(YM);
+ const headerTotal=$('md')?.querySelector('.mc .sp .m');
+ if(headerTotal)headerTotal.textContent=BR(baseTotal+grossInvoice)+' em compromissos (inclui fatura bruta)';
+ const amount=carbonInvoiceGross(YM);
  const modal=$('md')?.querySelector('.mc');
  if(!modal)return;
  const section=document.createElement('div');
@@ -1447,7 +1453,7 @@ function openPending(){
  value.textContent=BR(amount);
  const description=document.createElement('small');
  description.className='m';
- description.textContent='Total bruto das compras e parcelas da fatura, sem descontar pagamentos. Não incluído nas recorrências acima.';
+ description.textContent='Incluído no total de compromissos acima uma única vez. Total bruto, ainda sem conciliar pagamentos da fatura.';
  const button=document.createElement('button');
  button.className='bt';
  button.textContent='Ver compras e parcelas';
@@ -1495,7 +1501,7 @@ return (k?`<div class="g3"><div class="c s"><p class="m">Realizado</p><p class="
 function vCal(){
  const [yy,mm]=YM.split('-').map(Number),first=new Date(yy,mm-1,1).getDay(),days=new Date(yy,mm,0).getDate();
  let h=['D','S','T','Q','Q','S','S'].map(x=>`<div class="dh">${x}</div>`).join('')+'<div></div>'.repeat(first);
- for(let n=1;n<=days;n++){const iso=`${YM}-${String(n).padStart(2,'0')}`;const dots=L.filter(x=>x.d===iso&&x.t!='r').slice(0,3).map(x=>`<i style="background:${x.s=='p'?'var(--a)':'var(--neg)'}"></i>`).join('');h+=`<div class="dc${iso===SEL?' sel':''}${iso===APP_TODAY?' td':''}" onclick="openDay('${iso}')"><b>${n}</b><div class="dots">${dots}</div></div>`;}
+ for(let n=1;n<=days;n++){const iso=`${YM}-${String(n).padStart(2,'0')}`;const dots=L.filter(x=>x.d===iso&&x.t!='r').slice(0,3).map(x=>`<i style="background:${x.s=='p'?'var(--a)':'var(--neg)'}"></i>`).join('')+(n===7&&carbonInvoiceGross(YM)>0?'<i style="background:var(--warn)"></i>':'');h+=`<div class="dc${iso===SEL?' sel':''}${iso===APP_TODAY?' td':''}" onclick="openDay('${iso}')"><b>${n}</b><div class="dots">${dots}</div></div>`;}
  return `<div class="c"><p class="h">Agenda financeira</p><div class="sp" style="margin-top:8px"><div style="border:1px solid var(--br);border-radius:12px;padding:8px 14px;flex:1">${monthName(YM)}</div><button class="bt" onclick="var n=new Date();YM=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');SEL=YM+'-'+String(n.getDate()).padStart(2,'0');draw()" >Hoje</button></div><div class="cal">${h}</div><p class="m" style="margin-top:10px">Vermelho: realizado · cor de destaque: previsto</p></div>`;
 }
 const vAg=()=>vDia()+vCal();
@@ -1576,7 +1582,7 @@ function vGeral(){
  const d=D();
  return mesNav()+`
  <div class="c v28Hero cardEdit" onclick="openAccount('c6')"><div class="sp"><div><p class="m">Saldo disponível</p><p class="big">${brl(d.c6)}</p></div><span class="ch">Visão consolidada</span></div>
- <div class="v28Metrics"><div onclick="event.stopPropagation();openProjectionDetail()"><span class="m">Previsto</span><b style="color:var(--pos)">${brs(projectedC6(YM))}</b></div><div onclick="event.stopPropagation();detailModal('Despesas realizadas',expenseBase('r'))"><span class="m">Despesas</span><b style="color:var(--neg)">${brs(d.des)}</b></div><div onclick="event.stopPropagation();openPending()"><span class="m">A pagar</span><b style="color:var(--warn)">${brs(d.pd+d.pt)}</b></div></div></div>
+ <div class="v28Metrics"><div onclick="event.stopPropagation();openProjectionDetail()"><span class="m">Previsto</span><b style="color:var(--pos)">${brs(projectedC6(YM))}</b></div><div onclick="event.stopPropagation();detailModal('Despesas realizadas',expenseBase('r'))"><span class="m">Despesas</span><b style="color:var(--neg)">${brs(d.des)}</b></div><div onclick="event.stopPropagation();openPending()"><span class="m">A pagar</span><b style="color:var(--warn)">${brs(d.pd+d.pt+carbonInvoiceGross(YM))}</b></div></div></div>
  <div class="c"><div class="v28Title"><p class="h">Minhas contas</p><span class="m">Toque para detalhes</span></div><div class="v28Accounts">
   <div class="c v28Account cardEdit" onclick="openAccount('c6')">${tile('card',AC.c6[1])}<div><span class="m">C6 Débito</span><b>${brs(d.c6)}</b></div></div>
   <div class="c v28Account cardEdit" onclick="openAccount('carbon')">${tile('card',AC.carbon[1])}<div><span class="m">C6 Carbon · disponível</span><b>${brs(Math.max(0,ALERT_CFG.carbon.limit*100-creditUsed(alertRef(YM),ALERT_CFG.carbon)))}</b><small class="m">Em uso ${brs(creditUsed(alertRef(YM),ALERT_CFG.carbon))} · Limite ${brs(ALERT_CFG.carbon.limit*100)}</small></div></div>
@@ -1777,7 +1783,7 @@ function draw(){ensureRecurrences(YM);updateMonthBar();const AUD=auditEngine();i
 function openDay(n){SEL=n;MD=n;draw();}
 function closeDay(){MD=0;$('md').style.display='none';$('md').innerHTML='';document.querySelector('.catFab')?.classList.remove('modalHidden');}
 function renderMd(){
- const n=MD,it=L.filter(x=>x.d===n).sort((a,b)=>(a.s==b.s?0:a.s=='r'?-1:1)||a.id-b.id),dt=new Date(n+'T12:00:00'),wd=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'][dt.getDay()],S=f=>it.filter(f).reduce((sum,x)=>sum+x.v,0);
+ const n=MD,it=L.filter(x=>x.d===n).sort((a,b)=>(a.s==b.s?0:a.s=='r'?-1:1)||a.id-b.id),invoiceDue=n===YM+'-07'?carbonInvoiceGross(YM):0,dt=new Date(n+'T12:00:00'),wd=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'][dt.getDay()],S=f=>it.filter(f).reduce((sum,x)=>sum+x.v,0);
  $('md').style.display='flex';$('md').innerHTML=`<div class="mc"><div class="sp"><div><p class="h" style="font-size:1.2em;text-transform:capitalize">${wd}</p><p class="m">${dd(n)}${n===APP_TODAY?' · hoje':''}</p></div><button class="bt" onclick="closeDay()">Fechar</button></div>
  <div class="g3" style="margin:12px 0"><div class="c s"><p class="m">Realizado</p><p class="v" style="color:var(--neg)">${brl(S(x=>x.t=='d'&&x.s=='r'))}</p></div><div class="c s"><p class="m">Previsto</p><p class="v" style="color:var(--a)">${brl(S(x=>x.s=='p'&&x.t!='r'))}</p></div><div class="c s"><p class="m">Previsto</p><p class="v" style="color:var(--pos)">${brl(S(x=>x.t=='r'))}</p></div></div>
  ${it.length?it.map(x=>{const c=x.c?(CAT[x.c]||[catName(x.c),'list','#94A3B8']):(x.t=='r'?['Receita','list','#34d399']:['Fatura','card','#8d9ab6']);return `<div class="r li catClick" onclick="openLanc(${x.id})">${tile(c[1],c[2])}<div class="f"><p>${escapeHTML(x.n)}</p><p class="m">${escapeHTML(c[0])} · ${AC[x.a][0]} <span class="cp" style="background:var(--chip);color:${x.s=='p'?'var(--a)':'var(--mu)'}">${x.s=='p'?'previsto':'realizado'}</span></p></div><div style="text-align:right"><b style="color:${x.t=='r'?'var(--pos)':'var(--neg)'}">${x.t=='r'?'+':'-'}${brl(x.v)}</b>${x.s=='p'&&x.t=='d'?`<br><button class="bt p" style="padding:4px 12px;margin-top:4px" onclick="event.stopPropagation();openEfet(${x.id})">Efetivar</button>`:''}</div></div>`}).join(''):'<p class="m" style="padding:14px 0;text-align:center">Nenhum lançamento neste dia.</p>'}</div>`;
