@@ -112,7 +112,13 @@ public final class MainActivity extends Activity {
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         // Hide real Android status icons only while the startup screen is visible.
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN);
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
                 .getString("web_cache_version", "");
