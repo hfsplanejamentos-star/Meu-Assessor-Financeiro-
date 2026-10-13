@@ -160,7 +160,7 @@
      return {amount,direction:Number(d.value)<0?"expense":"income",date:/^\d{4}-\d{2}-\d{2}$/.test(d.date||"")?d.date:today(),
        category:String(d.cat||"Outros"),subcategory:String(d.sub||""),description:String(d.desc||text)};
     }
-  }catch(e){toast("IA online indisponível; interpretação local para revisão.");}
+  }catch(e){toast(e.code==="requires_hosted_https"?"HTML local: análise online exige hospedagem HTTPS; mantendo interpretação local.":"IA online indisponível; interpretação local para revisão.");}
   return null;
  }
 
@@ -615,7 +615,7 @@
        nextExtractedRow();
      }catch(err){
        go.disabled=false;go.textContent="Tentar análise novamente";
-       toast("Análise não concluída: "+(err.code||err.message||"erro"));
+       toast("Análise não concluída: "+(err.code==="requires_hosted_https"?err.message:(err.code||err.message||"erro")));
      }
    };
  }
@@ -655,7 +655,7 @@
        $("messageInput").value=result.text;
        switchView("chat");
        toast("Áudio transcrito. Confira o texto e toque em Enviar.");
-     }catch(e){toast("Transcrição indisponível: "+(e.code||e.message||"erro"))}
+     }catch(e){toast("Transcrição indisponível: "+(e.code==="requires_hosted_https"?e.message:(e.code||e.message||"erro")))}
    };
    try{
      recorder.start();
