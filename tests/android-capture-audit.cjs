@@ -55,6 +55,8 @@ assert.match(queue,/BankAllowlist\.contains\(context, item\.optString\("sourcePa
 assert.match(bridge,/private EncryptedQueueStore authorizedQueue\(\)/);
 assert.match(bridge,/return queue == null \? "\[\]" : queue\.snapshotJson\(\)/);
 assert.match(bridge,/getPendingNotifications\(\)/);
+assert.match(bridge,/public void markNotificationsConsumed\(\) \{[\s\S]*?if \(BuildConfig\.DEBUG\) return;/);
+
 assert.match(bridge,/out\.put\("title", authorized \? d\.getString/);
 assert.match(bridge,/out\.put\("text", authorized \? d\.getString/);
 assert.match(listener,/new EncryptedQueueStore\(this\)\.pruneUnauthorized\(this\)/);
