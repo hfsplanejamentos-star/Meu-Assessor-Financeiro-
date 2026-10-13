@@ -19,9 +19,10 @@
     try { return key().length>=32; } catch (_) { return false; }
   }
   function setSyncKey(value) {
-    const candidate=String(value||"").trim();
+    const raw=String(value||"");
+    const candidate=raw.trim();
     if(candidate.length<32||candidate.length>256 ||
-       /[\u0000-\u001f]/.test(candidate))
+       /[\u0000-\u001f]/.test(raw))
       throw new Error("Chave inválida: informe apenas a chave de sincronização do Snake Finance.");
     if (!root.localStorage) throw new Error("Armazenamento seguro do navegador indisponível.");
     root.localStorage.setItem(KEY,candidate);
