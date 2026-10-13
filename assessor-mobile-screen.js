@@ -307,6 +307,8 @@
  };
  async function postExpense(){
    const d=session.draft;if(!d||session.posting||d.posted)return;
+   if(window.SNAKE_ASSESSOR_PREVIEW_ONLY===true)
+     return toast("Prévia Android: lançamentos reais desativados até a auditoria final.");
    if(!api||!session.cloud)return toast("Conecte a sincronização Cloud antes de lançar valores reais.");
    if(!d.account||!d.payment||!d.direction)return openEditor();
    if(d.installments>1&&!(d.payment==="Crédito"&&String(d.account).startsWith("card:")))
@@ -400,6 +402,10 @@
      button.textContent="Aplicar fechamento dia 5 e vencimento dia 7";
      box.append(message,button);$("chatMessages").insertBefore(box,$("draftMount"));
      button.onclick=async()=>{
+       if(window.SNAKE_ASSESSOR_PREVIEW_ONLY===true){
+         eventRow("Prévia Android: a correção do cartão está desativada neste aplicativo de testes.");
+         return;
+       }
        if(!window.confirm("Confirmar correção APENAS do cadastro do C6 Carbon para fechamento dia 5 e vencimento dia 7? O histórico não será alterado."))return;
        button.disabled=true;
        try{
