@@ -16,7 +16,14 @@ final class NotificationParser {
     private static final Pattern IN = Pattern.compile("(?i)\\b(recebido|recebemos|recebeu(?: um)? pix|voc[eê] recebeu|pix recebido|pix de .{0,80}? recebido|dep[oó]sito recebido|valor recebido|creditado|entrada|transfer[eê]ncia recebida|recebeu|cashback|estorno)\\b");
     private static final Pattern FINANCIAL_CONTEXT = Pattern.compile("(?i)\\b(pix|compra|pagamento|cart[aã]o|d[eé]bito|cr[eé]dito|transfer[eê]ncia|saldo|conta|fatura|cashback|estorno)\\b");
 
+    // Keep the legacy four-argument form for tests and call sites that cannot
+    // provide Android's notification key. Distinct timestamps remain distinct.
     static CapturedNotification parse(String sourcePackage, String title, String text, long postedAt) {
+        return parse(sourcePackage, title, text, postedAt, "");
+    }
+
+    static CapturedNotification parse(String sourcePackage, String title, String text,
+                                      long postedAt, String notificationKey) {
         String safeTitle = clean(title);
         String safeText = clean(text);
         String combined = (safeTitle + " " + safeText).trim();
@@ -38,8 +45,13 @@ final class NotificationParser {
         } else {
             direction = "unknown";
         }
-        long bucket = postedAt / 60_000L;
-        String id = sha256(sourcePackage + "|" + normalize(combined) + "|" + amount + "|" + bucket);
+        // Exact notification identity, not the minute/amount/text fingerprint:
+        // two Pix payments for R$ 15 from the same bank within one minute
+        // are distinct when their key or actual posting timestamp differs.
+        // Re-delivering the exact notification yields the same id.
+        String stableKey = notificationKey == null ? "" : notificationKey;
+        String id = sha256(sourcePackage + "|" + stableKey + "|" + postedAt +
+                "|" + normalize(combined) + "|" + amount + "|" + direction);
         return new CapturedNotification(id, sourcePackage, safeTitle, safeText, amount, reportedBalance, direction, postedAt, System.currentTimeMillis());
     }
 
