@@ -63,6 +63,11 @@
  }
  async function refreshState(){
    if(!api){toast("Serviço do Assessor IA não carregou.");return null}
+   if(!api.hasSyncKey?.()){
+     $("dataStatus").textContent="Sem conexão financeira. Notificações locais podem ser revisadas.";
+     updateSyncConnectionStatus();
+     return null;
+   }
    try{
      const res=await api.readFinanceState();session.cloud=res.state||null;
      $("dataStatus").textContent=res.state?"Conectado em modo de leitura · versão "+res.state.version:"Sincronização sem dados cadastrados.";
@@ -70,6 +75,23 @@
      return session.cloud;
    }catch(err){$("dataStatus").textContent="Financeiro não conectado · configure a chave no Snake Finance.";toast("Leitura da nuvem indisponível: "+(err.code||err.message));return null}
  }
+ function clearCloudView(){
+   session.cloud=null;
+   for(const id of ["balanceC6","balanceItau","balanceCaju","monthIncome","monthExpense","monthNet","donutSum"])
+     $(id).textContent="—";
+   $("dataStatus").textContent="Financeiro desconectado · sem acesso aos saldos.";
+   fillAccounts();
+   updateSyncConnectionStatus();
+ }
+ function updateSyncConnectionStatus(){
+   const connected=!!api?.hasSyncKey?.();
+   $("syncConnectionStatus").textContent=!connected?
+     "Não conectado. A fila Android continua disponível para revisão local.":
+     session.cloud?
+       "Conectado ao Snake Finance para consultas de leitura. Nenhuma despesa será efetivada pelo APK de testes.":
+       "Chave configurada, mas nenhum saldo confirmado. Confira a sincronização.";
+ }
+
  function fillAccounts(){
    const sel=$("fieldAccount"),old=sel.value;sel.replaceChildren(new Option("Selecione a conta sincronizada",""));
    const accounts=session.cloud?.payload?.accounts||[];
@@ -651,7 +673,42 @@
    catch{session.recognition=null;recordVoiceFallback()}
  }
  $("voiceBtn").onclick=talk;$("chooseVoice").onclick=()=>{$("addDialog").close();switchView("chat");talk()};
- function settings(){$("settingsDialog").showModal()}
+ function settings(){
+   $("syncKeyField").value="";
+   updateSyncConnectionStatus();
+   $("settingsDialog").showModal();
+ }
+ $("connectFinance").onclick=async()=>{
+   const candidate=$("syncKeyField").value.trim();
+   if(!api?.setSyncKey)return toast("Serviço de sincronização indisponível.");
+   let prior="";
+   try { prior=localStorage.getItem("assessor_cloud_sync_key")||""; }catch(_){}
+   $("connectFinance").disabled=true;
+   try {
+     api.setSyncKey(candidate);
+     const result=await api.readFinanceState();
+     if(!result?.state)throw new Error("Nenhum financeiro sincronizado foi encontrado para esta chave.");
+     session.cloud=result.state;
+     $("syncKeyField").value="";
+     showAmounts();fillAccounts();updateSyncConnectionStatus();
+     $("dataStatus").textContent="Consulta financeira conectada · versão "+result.state.version;
+     toast("Sincronização de leitura conectada. Nenhum valor foi modificado.");
+   }catch(error){
+     try {
+       if(prior)localStorage.setItem("assessor_cloud_sync_key",prior);
+       else localStorage.removeItem("assessor_cloud_sync_key");
+     }catch(_){}
+     updateSyncConnectionStatus();
+     toast("Conexão não concluída: "+(error.code||error.message||"erro"));
+   }finally{$("connectFinance").disabled=false;$("syncKeyField").value=""}
+ };
+ $("disconnectFinance").onclick=()=>{
+   if(!api?.hasSyncKey?.())return toast("O financeiro já está desconectado.");
+   if(!window.confirm("Desconectar esta prévia do Snake Finance? Os saldos exibidos serão ocultados, e os dados do aplicativo principal permanecerão intactos."))return;
+   try{api.disconnectSync();clearCloudView();$("syncKeyField").value="";
+     toast("Sincronização desconectada apenas deste dispositivo.")}
+   catch(error){toast("Falha ao desconectar: "+(error.message||"erro"))}
+ };
  $("settingsBtn").onclick=settings;$("chatSettings").onclick=settings;$("moreBtn").onclick=settings;
  $("settingsDismiss").onclick=()=>$("settingsDialog").close();
  document.querySelectorAll("[data-theme-option]").forEach(b=>b.onclick=()=>{
@@ -691,7 +748,8 @@
    try{await refreshState()}finally{refreshGestureBusy=false}
  },{passive:true});
  // Read-only operation: never create, confirm or post a draft on startup.
- if(api)refreshState();
+ updateSyncConnectionStatus();
+ if(api?.hasSyncKey?.())refreshState();
  // Native callback only queues an editable review; no financial posting on event.
  const oldNativeCallback=window.meuAssessorAndroidAutoSync;
  window.meuAssessorAndroidAutoSync=()=>{
