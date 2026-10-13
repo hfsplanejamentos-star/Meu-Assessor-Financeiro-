@@ -10,7 +10,7 @@
  const norm=s=>String(s??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
  const today=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-")};
  const moneyCents=n=>{const x=Math.round(Number(n)*100);return Number.isSafeInteger(x)&&x>0?x:null};
- const session={draft:null,posting:false,cloud:null,month:today().slice(0,7),agendaDay:new Date(),recognition:null,files:[],extractedRows:[],nativeRows:[],nativeSeen:new Set(),nativeScanBusy:false};
+ const session={draft:null,posting:false,cloud:null,month:today().slice(0,7),agendaDay:new Date(),recognition:null,files:[],extractedRows:[],nativeRows:[],nativeSeen:new Set(),nativeScanBusy:false,connectionEpoch:0};
  function toast(s){const box=$("toast");box.textContent=s;box.style.display="block";clearTimeout(window.__snakeToast);window.__snakeToast=setTimeout(()=>box.style.display="none",6000)}
  function switchView(name){for(const n of ["home","chat","agenda"])$("screen"+n[0].toUpperCase()+n.slice(1)).classList.toggle("active",n===name);document.querySelectorAll("nav [data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===name));$("topHome").style.display=name==="home"?"flex":"none";if(name==="chat")$("chatMessages").scrollTop=$("chatMessages").scrollHeight;window.scrollTo({top:0,behavior:"instant"})}
  document.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>switchView(b.dataset.view)));
@@ -45,9 +45,9 @@
      $(id).textContent=hits.length===1&&Number.isFinite(Number(hits[0].balance))?brl(hits[0].balance):"—";
    }
    $("balanceCaju").textContent="—"; // Only show a benefit balance when its inputs are verified.
-   const cajuMonth=session.month;
-   if(api?.previewCajuMonth)api.previewCajuMonth(cajuMonth)
-    .then(data=>{if(cajuMonth===session.month&&data.ok&&data.verifiedInputs)
+   const cajuMonth=session.month,epoch=session.connectionEpoch;
+   if(api?.previewCajuMonth&&api?.hasSyncKey?.())api.previewCajuMonth(cajuMonth)
+    .then(data=>{if(epoch===session.connectionEpoch&&api.hasSyncKey()&&session.cloud&&cajuMonth===session.month&&data.ok&&data.verifiedInputs)
       $("balanceCaju").textContent=brl(data.availableCents/100)})
     .catch(()=>{});
    const tx=Array.isArray(state.transactions)?state.transactions:[];
@@ -62,6 +62,7 @@
    $("dataStatus").textContent="Consulta de leitura do financeiro: saldos e transações disponíveis. Caju e gráficos por categoria aguardam auditoria específica.";
  }
  async function refreshState(){
+   const epoch=session.connectionEpoch;
    if(!api){toast("Serviço do Assessor IA não carregou.");return null}
    if(!api.hasSyncKey?.()){
      $("dataStatus").textContent="Sem conexão financeira. Notificações locais podem ser revisadas.";
@@ -69,13 +70,19 @@
      return null;
    }
    try{
-     const res=await api.readFinanceState();session.cloud=res.state||null;
+     const res=await api.readFinanceState();
+     if(epoch!==session.connectionEpoch||!api.hasSyncKey?.())return null;
+     session.cloud=res.state||null;
      $("dataStatus").textContent=res.state?"Conectado em modo de leitura · versão "+res.state.version:"Sincronização sem dados cadastrados.";
      showAmounts();fillAccounts();toast(res.state?"Contas sincronizadas para consulta.":"Sem estado financeiro na nuvem.");
      return session.cloud;
-   }catch(err){$("dataStatus").textContent="Financeiro não conectado · configure a chave no Snake Finance.";toast("Leitura da nuvem indisponível: "+(err.code||err.message));return null}
+   }catch(err){
+     if(epoch!==session.connectionEpoch)return null;
+     $("dataStatus").textContent="Financeiro não conectado · configure a chave no Snake Finance.";
+     updateSyncConnectionStatus();toast("Leitura da nuvem indisponível: "+(err.code||err.message));return null}
  }
  function clearCloudView(){
+   session.connectionEpoch++;
    session.cloud=null;
    for(const id of ["balanceC6","balanceItau","balanceCaju","monthIncome","monthExpense","monthNet","donutSum"])
      $(id).textContent="—";
@@ -686,7 +693,9 @@
    $("connectFinance").disabled=true;
    try {
      api.setSyncKey(candidate);
+     const epoch=++session.connectionEpoch;
      const result=await api.readFinanceState();
+     if(epoch!==session.connectionEpoch)throw new Error("Conexão substituída durante a consulta.");
      if(!result?.state)throw new Error("Nenhum financeiro sincronizado foi encontrado para esta chave.");
      session.cloud=result.state;
      $("syncKeyField").value="";
