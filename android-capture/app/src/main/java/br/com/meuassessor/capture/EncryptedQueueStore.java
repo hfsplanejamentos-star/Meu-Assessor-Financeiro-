@@ -42,7 +42,9 @@ final class EncryptedQueueStore {
 
             for (int i = 0; i < queue.length(); i++) {
                 JSONObject prior = queue.getJSONObject(i);
-                if (event.id.equals(prior.optString("id")) || sameBankEvent(event, prior)) {
+                // Only a repeated event ID is a duplicate. Equal amounts or
+                // descriptions can represent separate legitimate transactions.
+                if (event.id.equals(prior.optString("id"))) {
                     return false;
                 }
             }
@@ -60,34 +62,6 @@ final class EncryptedQueueStore {
         } catch (Exception error) {
             return false;
         }
-    }
-
-    private boolean sameBankEvent(CapturedNotification event, JSONObject prior) {
-        if (event.amountCents == null || prior.isNull("amountCents")) return false;
-        if (event.amountCents.longValue() != prior.optLong("amountCents", Long.MIN_VALUE)) return false;
-        if (!safe(event.sourcePackage).equals(safe(prior.optString("sourcePackage")))) return false;
-        if (!safe(event.direction).equals(safe(prior.optString("direction")))) return false;
-
-        long priorTime = prior.optLong("postedAt", 0L);
-        long delta = Math.abs(event.postedAt - priorTime);
-        if (delta > 120000L) return false;
-
-        String current = fingerprint(event.title + " " + event.text);
-        String previous = fingerprint(prior.optString("title") + " " + prior.optString("text"));
-        return !current.isEmpty() && current.equals(previous);
-    }
-
-    private static String safe(String value) {
-        return value == null ? "" : value.trim().toLowerCase(java.util.Locale.ROOT);
-    }
-
-    private static String fingerprint(String value) {
-        if (value == null) return "";
-        return value.toLowerCase(java.util.Locale.ROOT)
-                .replaceAll("r\\$\\s*\\d+[\\d.]*,\\d{2}", " valor ")
-                .replaceAll("\\s+", " ")
-                .replaceAll("[^a-z0-9áàâãéêíóôõúç ]", "")
-                .trim();
     }
 
     synchronized boolean acknowledge(String[] ids) {
