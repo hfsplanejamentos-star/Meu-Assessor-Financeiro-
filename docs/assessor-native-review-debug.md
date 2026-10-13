@@ -14,10 +14,17 @@
 - O **debug** usa aplicação própria `br.com.snakefinance.app.ia.preview`, instalada ao lado do Snake Finance, sem substituir seu APK e banco local.
 - O pacote debug gera uma cópia embutida do HTML aprovado e dos módulos JS, preservando o tema Dourado e os botões de chat, áudio, foto e PDF.
 - A variável `SNAKE_ASSESSOR_PREVIEW_ONLY=true` bloqueia gravações de despesas e correções de cadastro no aplicativo de testes; somente leitura, prévias e revisão de notificações ficam disponíveis.
+- A proteção agora também é aplicada no `assessor-mobile-api.js`: `prepare`, `confirm`, `reject`, `postCash` e reparos do cartão não acessam as rotas de escrita enquanto a prévia estiver ativa.
+- Links externos abertos a partir da prévia não navegam dentro do WebView que contém a ponte nativa; são encaminhados ao navegador externo.
+- O seletor de arquivos da prévia aceita somente imagens JPG/PNG/WebP, PDF, CSV, TXT e OFX; o app estável conserva sua configuração anterior.
+- No GitHub Actions, após conclusão **bem-sucedida** do job `android-native`, o artefato é salvo como `Snake-Finance-Assessor-IA-preview-only` por até sete dias. Isso não significa que a compilação já tenha ocorrido ou que o APK esteja disponível neste momento.
+
 - O **release** conserva o identificador `br.com.snakefinance.app`, o processo anterior de backup/cache e sua URL estável; não foi alterado para abrir a página de desenvolvimento.
 - Comandos de compilação em um ambiente Android SDK/Gradle configurado:
   `cd android-capture && gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug`.
 - Artefato **esperado após compilação bem-sucedida**, ainda não verificado: `android-capture/app/build/outputs/apk/debug/app-debug.apk`. Não disponibilizar download antes de o arquivo existir e ser testado.
+- Para baixar após uma execução de CI aprovada: abrir **GitHub → Actions → Assessor IA checks → execução bem-sucedida → Artifacts → Snake-Finance-Assessor-IA-preview-only**. O arquivo resultante deve ser verificado no celular antes de qualquer migração.
+
 - A pipeline `.github/workflows/assessor-ci.yml` foi configurada para verificar módulos, lógica e compilação Android, porém o resultado da execução completa não foi confirmado neste atendimento.
 
 ## Checklist de homologação física
