@@ -117,6 +117,35 @@ public final class MainActivity extends Activity {
         }, 3000L);
     }
 
+    /**
+     * Debug-only APK embeds the branch's approved Assessor IA screens.
+     * It is a separate applicationId, read-only for ALL financial writes.
+     * Production continues loading the previously approved Mobile dashboard.
+     */
+    private void loadAssessorPreview() {
+        if (!BuildConfig.DEBUG) return;
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(getAssets().open("assessor-ia-mobile.html"),
+                        StandardCharsets.UTF_8))) {
+            StringBuilder body = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) body.append(line).append('\n');
+            String page = body.toString();
+            if (!page.contains("SNAKE FINANCE")
+                    || !page.contains("SNAKE_ASSESSOR_PREVIEW_ONLY=true")
+                    || !page.contains("SnakeAssessorNativeNotifications")) {
+                throw new IllegalStateException("invalid_assessor_preview");
+            }
+            webView.loadDataWithBaseURL(APP_BASE_URL, page, "text/html", "UTF-8", APP_URL);
+        } catch (Exception unavailable) {
+            webView.loadDataWithBaseURL(APP_BASE_URL,
+                    "<!doctype html><html lang='pt-BR'><meta charset='utf-8'>"
+                    + "<body style='background:#080a08;color:#f3c454;font:16px sans-serif;padding:24px'>"
+                    + "Prévia do Assessor IA indisponível. Nenhum dado foi alterado.</body></html>",
+                    "text/html", "UTF-8", null);
+        }
+    }
+
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
@@ -134,7 +163,10 @@ public final class MainActivity extends Activity {
         webView.setVisibility(View.VISIBLE);
 
         if (pendingState == null) {
-            if (webView.getUrl() == null) loadDashboardHtml();
+            if (webView.getUrl() == null) {
+                if (BuildConfig.DEBUG) loadAssessorPreview();
+                else loadDashboardHtml();
+            }
         } else {
             webView.restoreState(pendingState);
             String savedImageUri = pendingState.getString("captured_image_uri");
@@ -150,7 +182,7 @@ public final class MainActivity extends Activity {
         requestNativePermissions();
         if(!queueReceiverRegistered){android.content.IntentFilter queueFilter=new android.content.IntentFilter("br.com.meuassessor.capture.QUEUE_CHANGED");
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.TIRAMISU) registerReceiver(queueReceiver,queueFilter,RECEIVER_NOT_EXPORTED); else registerReceiver(queueReceiver,queueFilter);queueReceiverRegistered=true;}
-        UpdateChecker.check(this);
+        if (!BuildConfig.DEBUG) UpdateChecker.check(this);
     }
 
     private static final String CACHE_FILE = "snake_finance_dashboard_1_5_1.html";
