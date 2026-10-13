@@ -563,13 +563,32 @@ public final class MainActivity extends Activity {
             String json = pendingBackupJson;
             pendingBackupJson = null;
             if (resultCode == RESULT_OK && data != null && data.getData() != null && json != null) {
-                try (java.io.OutputStream out = getContentResolver().openOutputStream(data.getData())) {
-                    if (out == null) throw new java.io.IOException("Destino indisponível");
-                    out.write(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-                    out.flush();
-                    android.widget.Toast.makeText(this, "Backup JSON salvo com sucesso", android.widget.Toast.LENGTH_LONG).show();
+                try {
+                    byte[] bytes = json.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                    if (bytes.length < 20) throw new java.io.IOException("Conteúdo JSON vazio");
+                    Uri target = data.getData();
+                    try (java.io.OutputStream out = getContentResolver().openOutputStream(target, "wt")) {
+                        if (out == null) throw new java.io.IOException("Destino indisponível");
+                        out.write(bytes);
+                        out.flush();
+                    }
+                    long actual = -1;
+                    try (android.os.ParcelFileDescriptor fd = getContentResolver().openFileDescriptor(target, "r")) {
+                        if (fd != null) actual = fd.getStatSize();
+                    }
+                    if (actual < 0) {
+                        try (android.database.Cursor c = getContentResolver().query(target,
+                            new String[]{android.provider.OpenableColumns.SIZE}, null, null, null)) {
+                            if (c != null && c.moveToFirst() && !c.isNull(0)) actual = c.getLong(0);
+                        }
+                    }
+                    if (actual != bytes.length) throw new java.io.IOException(
+                        "Arquivo não confirmado: esperado " + bytes.length + " B, encontrado " + actual + " B");
+                    android.widget.Toast.makeText(this,
+                        "Backup confirmado: " + actual + " bytes gravados", android.widget.Toast.LENGTH_LONG).show();
                 } catch (Exception e) {
-                    android.widget.Toast.makeText(this, "Falha ao salvar backup: " + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
+                    android.widget.Toast.makeText(this,
+                        "Backup NÃO confirmado: " + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
                 }
             }
             return;
