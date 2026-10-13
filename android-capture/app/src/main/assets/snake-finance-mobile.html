@@ -1836,7 +1836,7 @@ function boot(){
  const saved=raw?JSON.parse(raw):null;if(raw&&!Array.isArray(saved))throw Error('Formato inválido');L=saved===null?JSON.parse(JSON.stringify(L0)):validateLedger(saved);if(OPENING_INVALID||(window.SNAKE_DISTRIBUTABLE&&!localStorage.getItem(OPENING_KEY))){L=[];PERSIST_BLOCKED=true;setTimeout(openBackupPanel,100);}}
  catch(e){L=[];PERSIST_BLOCKED=true;setTimeout(()=>alert('Os dados salvos não puderam ser lidos. Nada foi sobrescrito. Exporte um backup em Configurações e importe uma cópia válida.'),20);}
  YM=APP_TODAY.slice(0,7);if(!L.some(x=>(x.comp||x.d||'').startsWith(YM)))YM='2026-10';
- SEL=APP_TODAY.startsWith(YM)?APP_TODAY:`${YM}-01`;migrateLegacyPayment();NID=nextId();migrateWorkCategory();try{
+ SEL=APP_TODAY.startsWith(YM)?APP_TODAY:`${YM}-01`;try{migrateLegacyPayment();NID=nextId();migrateWorkCategory();
  CATDB=completeBackupCategories(CATDB,L).categories;wInit();cInit();draw();
 }catch(err){
  PERSIST_BLOCKED=true;
