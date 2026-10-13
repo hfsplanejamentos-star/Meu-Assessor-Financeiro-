@@ -1402,7 +1402,7 @@ function openAccount(a){
    const note=document.createElement('p');
    note.className='m';
    note.style.cssText='margin:8px 0 12px;line-height:1.5';
-   note.textContent='Limite: '+brs(cfg.limit*100)+' · Em uso: '+brs(used)+' · Disponível: '+brs(Math.max(0,cfg.limit*100-used))+' · Saldo inicial em uso: '+brs(Math.round(cfg.opening*100))+'.';
+   note.textContent='Limite: '+brs(cfg.limit*100)+' · Em uso (acumulado até '+dd(alertRef(YM))+'): '+brs(used)+' · Disponível: '+brs(Math.max(0,cfg.limit*100-used))+' · Saldo inicial em uso: '+brs(Math.round(cfg.opening*100))+'. Compras de meses anteriores ainda podem comprometer o limite; o indicador Despesas do mês considera somente o período selecionado.';
    if(Math.round(cfg.opening*100)===10000&&!items.some(x=>x.a==='carbon'&&x.t==='d'&&x.v===10000)){
     const info=document.createElement('p');info.className='m';info.style.cssText='margin:4px 0 12px;line-height:1.5';
     info.textContent='Abastecimento para trabalho: R$ 100,00 confirmados no saldo inicial do Carbon. Ainda não há lançamento individual identificado para esta despesa; não foi criado outro gasto para evitar duplicidade.';
@@ -1614,7 +1614,7 @@ function vGeral(){
  const d=D();
  return mesNav()+`
  <div class="c v28Hero cardEdit" onclick="openAccount('c6')"><div class="sp"><div><p class="m">Saldo disponível</p><p class="big">${brl(d.c6)}</p></div><span class="ch">Visão consolidada</span></div>
- <div class="v28Metrics"><div onclick="event.stopPropagation();openProjectionDetail()"><span class="m">Previsto</span><b style="color:var(--pos)">${brs(projectedC6(YM))}</b></div><div onclick="event.stopPropagation();detailModal('Despesas realizadas',expenseBase('r'))"><span class="m">Despesas</span><b style="color:var(--neg)">${brs(d.des)}</b></div><div onclick="event.stopPropagation();openPending()"><span class="m">A pagar</span><b style="color:var(--warn)">${brs(d.pd+d.pt+carbonInvoiceGross(YM))}</b></div></div></div>
+ <div class="v28Metrics"><div onclick="event.stopPropagation();openProjectionDetail()"><span class="m">Previsto</span><b style="color:var(--pos)">${brs(projectedC6(YM))}</b></div><div onclick="event.stopPropagation();detailModal('Despesas realizadas',expenseBase('r'))"><span class="m">Despesas do mês</span><b style="color:var(--neg)">${brs(d.des)}</b></div><div onclick="event.stopPropagation();openPending()"><span class="m">A pagar</span><b style="color:var(--warn)">${brs(d.pd+d.pt+carbonInvoiceGross(YM))}</b></div></div></div>
  <div class="c"><div class="v28Title"><p class="h">Minhas contas</p><span class="m">Toque para detalhes</span></div><div class="v28Accounts">
   <div class="c v28Account cardEdit" onclick="openAccount('c6')">${tile('card',AC.c6[1])}<div><span class="m">C6 Débito</span><b>${brs(d.c6)}</b></div></div>
   <div class="c v28Account cardEdit" onclick="openAccount('carbon')">${tile('card',AC.carbon[1])}<div><span class="m">C6 Carbon · disponível</span><b>${brs(Math.max(0,ALERT_CFG.carbon.limit*100-creditUsed(alertRef(YM),ALERT_CFG.carbon)))}</b><small class="m">Em uso ${brs(creditUsed(alertRef(YM),ALERT_CFG.carbon))} · Limite ${brs(ALERT_CFG.carbon.limit*100)}</small></div></div>
