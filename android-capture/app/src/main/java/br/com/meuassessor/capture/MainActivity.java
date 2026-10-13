@@ -215,6 +215,7 @@ public final class MainActivity extends Activity {
                 != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 703);
         }
+        DailyFinanceReminder.schedule(this);
         requestNativePermissions();
         if(!queueReceiverRegistered){android.content.IntentFilter queueFilter=new android.content.IntentFilter("br.com.meuassessor.capture.QUEUE_CHANGED");
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.TIRAMISU) registerReceiver(queueReceiver,queueFilter,RECEIVER_NOT_EXPORTED); else registerReceiver(queueReceiver,queueFilter);queueReceiverRegistered=true;}
