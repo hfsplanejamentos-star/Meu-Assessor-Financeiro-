@@ -8,6 +8,8 @@ on:
       - "convex/**"
       - "assessor-*.js"
       - "assessor-*.html"
+      - "Assessor_IA_Mobile_Validacao_Standalone.html"
+      - "scripts/build-assessor-standalone.cjs"
       - "tests/assessor-*"
       - "tests/android-capture-audit.cjs"
       - "android-capture/**"
@@ -28,6 +30,17 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
+      - name: Confirm standalone HTML matches current approved UI modules
+        run: npm run check:assessor-html
+      - name: Run Assessor UI and financial regression tests before Convex setup
+        run: npm run test:assessor
+      - name: Upload standalone HTML after successful tests
+        uses: actions/upload-artifact@v4
+        with:
+          name: Snake-Finance-Assessor-IA-HTML-Validacao
+          path: Assessor_IA_Mobile_Validacao_Standalone.html
+          if-no-files-found: error
+          retention-days: 14
       - name: Generate Convex types in ephemeral local backend (never production)
         env:
           CONVEX_DEPLOYMENT: ""
@@ -35,7 +48,6 @@ jobs:
           CI: "true"
         run: npx convex dev --once --typecheck disable
       - run: npm run typecheck
-      - run: npm run test:assessor
 
   android-native:
     name: Android capture validation (debug only)
