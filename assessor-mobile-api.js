@@ -46,6 +46,16 @@
       error.code="preview_read_only";
       throw error;
     }
+    // A downloaded file:// HTML has Origin:null. The Convex IA/media endpoints
+    // deliberately allow only our HTTPS Pages origin, so preflight will fail.
+    // Report a useful explanation without sending attachments or voice bytes.
+    if (root.SNAKE_ASSESSOR_PREVIEW_ONLY===true &&
+        root.location?.protocol==="file:" &&
+        method.toUpperCase()!=="GET") {
+      const error=new Error("A análise com IA precisa da versão hospedada em HTTPS. Este HTML local permite navegar, conferir e editar prévias sem gravar despesas.");
+      error.code="requires_hosted_https";
+      throw error;
+    }
     const response = await root.fetch(API + path, {
       method, cache:"no-store",
       headers: {"Content-Type":"application/json","X-Sync-Key":key()},
