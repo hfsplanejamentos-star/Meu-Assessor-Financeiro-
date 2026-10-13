@@ -19,6 +19,7 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     permissions:
       contents: read
     steps:
@@ -28,6 +29,12 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
+      - name: Generate Convex types in ephemeral local backend (never production)
+        env:
+          CONVEX_DEPLOYMENT: ""
+          CONVEX_DEPLOY_KEY: ""
+          CI: "true"
+        run: npx convex dev --once --typecheck disable
       - run: npm run typecheck
       - run: npm run test:assessor
 
