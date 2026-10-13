@@ -7,7 +7,8 @@ const main=read("android-capture/app/src/main/java/br/com/meuassessor/capture/Ma
 const ui=read("assessor-mobile-screen.js");
 const html=read("assessor-ia-mobile.html");
 const ci=read(".github/workflows/assessor-ci.yml");
-assert.match(ci,/workflow_dispatch:/,"Allow manual workflow execution for APK testing");
+assert.match(ci,/push:\s*\n\s*branches:\s*\n\s*- feature\/assessor-ia-mobile/,"Auto-run CI on development branch pushes");
+assert.doesNotMatch(ci,/workflow_dispatch:/,"Manual workflows require the workflow file in the default branch");
 assert.match(ci,/npx convex dev --once --typecheck disable/,"Generate Convex API types before tsc");
 assert.match(ci,/CONVEX_DEPLOY_KEY: ""/,"Do not use a production Convex key during type generation");
 assert.doesNotMatch(ci,/npx convex deploy/,"CI must not deploy finance functions while building debug APK");
