@@ -25,8 +25,12 @@ assert.match(gradle,/manifestPlaceholders\["snakeAppLabel"\] = "Snake Finance"/)
 assert.match(manifest,/\$\{snakeAppLabel\}/);
 assert.match(gradle,/sourceSets\.getByName\("debug"\)\.assets\.srcDir\(previewAssetsDir\)/);
 assert.match(gradle,/dependsOn\(prepareAssessorPreview\)/);
-assert.match(main,/if \(BuildConfig\.DEBUG\) loadAssessorPreview\(\)/);
-assert.match(main,/else loadDashboardHtml\(\)/);
+assert.match(main,/if \(BuildConfig\.DEBUG\) \{[\s\S]*?loadAssessorPreview\(\)/);
+assert.match(main,/if \(webView\.getUrl\(\) == null\) loadDashboardHtml\(\)/);
+assert.match(main,/previewLogo\.setText\("S"\)/,"Splash must use native vector-like gold text, not old baked phone screenshot");
+assert.match(main,/if \(BuildConfig\.DEBUG\) \{[\s\S]*?TextView previewLogo/);
+assert.match(main,/else \{[\s\S]*?splashLogo\.setImageResource/,"Stable app launcher imagery unchanged");
+assert.match(main,/pendingState = null;\s*loadAssessorPreview\(\)/,"Preview must never restore an old production page");
 assert.match(main,/if \(!BuildConfig\.DEBUG\) UpdateChecker\.check\(this\)/);
 assert.match(main,/SNAKE_ASSESSOR_PREVIEW_ONLY=true/);
 assert.match(main,/APP_BASE_URL \+ "assessor-ia-mobile\.html"/);
