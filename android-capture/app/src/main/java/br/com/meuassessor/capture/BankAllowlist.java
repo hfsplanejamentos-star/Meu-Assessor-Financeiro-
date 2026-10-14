@@ -38,13 +38,20 @@ final class BankAllowlist {
         SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         if (preferences.getStringSet(KEY_DISABLED, new HashSet<>()).contains(packageName)) return false;
         if (DEFAULTS.contains(packageName)) return true;
-        String value = packageName.toLowerCase(java.util.Locale.ROOT);
-        // Bancos alteram packageName entre versões, marcas e módulos de Pix.
-        // A leitura ainda só é persistida quando o parser confirma valor + ação financeira.
-        return value.contains("c6bank") || value.contains("c6.bank")
-                || value.contains("xpinc") || value.contains("xp.invest")
-                || value.startsWith("br.com.xp") || value.startsWith("com.xp")
-                || value.contains("caju") || value.contains("itau");
+        // Apenas namespaces de provedores autorizados. Substrings soltas como
+        // "com.exemplo.falsoitau" não são suficientes para ler uma notificação.
+        return isRecognizedBankNamespace(packageName);
+    }
+
+    static boolean isRecognizedBankNamespace(String packageName) {
+        if (packageName == null) return false;
+        String name = packageName.toLowerCase(java.util.Locale.ROOT);
+        return name.startsWith("com.c6bank.")
+                || name.startsWith("br.com.xp.")
+                || name.startsWith("com.xp.")
+                || name.startsWith("com.caju.")
+                || name.startsWith("br.com.itau.")
+                || name.startsWith("com.itau.");
     }
 
     static boolean isEnabled(Context context, String packageName) {
