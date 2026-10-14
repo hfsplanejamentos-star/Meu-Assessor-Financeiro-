@@ -10,6 +10,12 @@ on:
       - "assessor-*.js"
       - "assessor-ia-mobile.html"
       - ".github/workflows/android.yml"
+  pull_request:
+    paths:
+      - "android-capture/**"
+      - "assessor-*.js"
+      - "assessor-ia-mobile.html"
+      - ".github/workflows/android.yml"
 
 jobs:
   build:
