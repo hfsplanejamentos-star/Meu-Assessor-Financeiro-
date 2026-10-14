@@ -111,8 +111,13 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        // Hide real Android status icons only while the startup screen is visible.
+        // Hide Android's clock/battery indicators during the approved full-screen splash.
+        if (Build.VERSION.SDK_INT >= 35) getWindow().setDecorFitsSystemWindows(false);
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+                && getWindow().getInsetsController() != null) {
+            getWindow().getInsetsController().hide(android.view.WindowInsets.Type.statusBars());
+        }
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
                 .getString("web_cache_version", "");
@@ -122,12 +127,13 @@ public final class MainActivity extends Activity {
                     .putString("web_cache_version", "1.5.7").apply();
         }
         FrameLayout root = new FrameLayout(this);
-        root.setBackgroundColor(Color.BLACK);
+        // Use dark navy, not an unrelated black letterbox while the approved image is decoded.
+        root.setBackgroundColor(Color.rgb(4, 18, 35));
         root.addView(webView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         FrameLayout splash = new FrameLayout(this);
-        splash.setBackgroundColor(Color.BLACK);
+        splash.setBackgroundColor(Color.rgb(4, 18, 35));
         startupSplash = splash;
         // Use the exact user-approved JPG when packaged in assets. Never crop or redraw it.
         // No alternative splash image or generated logo is permitted.
@@ -137,7 +143,12 @@ public final class MainActivity extends Activity {
             if (splashBitmap != null) {
                 ImageView approvedSplash = new ImageView(this);
                 approvedSplash.setImageBitmap(splashBitmap);
-                approvedSplash.setBackgroundColor(Color.BLACK);
+                // Match uncovered space to an edge color from the original approved JPG.
+                // Keep FIT_CENTER: the original image remains intact, uncropped and unedited.
+                int edgeColor = splashBitmap.getPixel(0, Math.max(0, splashBitmap.getHeight() / 2));
+                splash.setBackgroundColor(edgeColor);
+                root.setBackgroundColor(edgeColor);
+                approvedSplash.setBackgroundColor(edgeColor);
                 approvedSplash.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 splash.addView(approvedSplash, new FrameLayout.LayoutParams(-1, -1));
             }
@@ -178,6 +189,10 @@ public final class MainActivity extends Activity {
         if (!authenticatedForDisplay || !dashboardReady || startupSplash == null) return;
         // Restore the system status bar for normal dashboard use.
         getWindow().getDecorView().setSystemUiVisibility(0);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+                && getWindow().getInsetsController() != null) {
+            getWindow().getInsetsController().show(android.view.WindowInsets.Type.statusBars());
+        }
         FrameLayout splash = startupSplash;
         startupSplash = null;
         if (splash.getParent() instanceof ViewGroup) ((ViewGroup) splash.getParent()).removeView(splash);
