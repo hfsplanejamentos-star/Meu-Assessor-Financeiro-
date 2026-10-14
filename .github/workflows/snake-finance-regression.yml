@@ -8,6 +8,13 @@ on:
       - "android-capture/app/src/main/assets/snake-finance-mobile.html"
       - ".github/workflows/snake-finance-regression.yml"
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "tests/snake-finance-regression.cjs"
+      - "snake-finance-mobile.html"
+      - "android-capture/app/src/main/assets/snake-finance-mobile.html"
+      - ".github/workflows/snake-finance-regression.yml"
 permissions:
   contents: read
 jobs:
