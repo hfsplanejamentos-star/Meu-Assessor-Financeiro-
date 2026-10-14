@@ -72,6 +72,13 @@ public final class MainActivity extends Activity {
                 byte[] content = json.getBytes(java.nio.charset.StandardCharsets.UTF_8);
                 if (content.length < 20) throw new java.io.IOException("JSON sem conteúdo");
                 // Reject malformed or incomplete exports before opening Android's file picker.
+                boolean rescue = "Snake_Finance_Lancamentos_Preservados.json".equals(filename);
+                if (rescue) {
+                    org.json.JSONArray rows;
+                    try { rows = new org.json.JSONArray(json); }
+                    catch (org.json.JSONException e) { throw new java.io.IOException("Lista de resgate inválida", e); }
+                    if (rows.length() == 0) throw new java.io.IOException("Lista de resgate vazia");
+                } else {
                 org.json.JSONObject backup;
                 try { backup = new org.json.JSONObject(json); }
                 catch (org.json.JSONException invalid) { throw new java.io.IOException("JSON inválido", invalid); }
@@ -86,6 +93,7 @@ public final class MainActivity extends Activity {
                         throw new java.io.IOException("Resgate bruto sem dados armazenados");
                 } else {
                     throw new java.io.IOException("Formato de backup não reconhecido");
+                }
                 }
                 java.io.File tmp = new java.io.File(getFilesDir(), BACKUP_PENDING_FILE + ".tmp");
                 try (java.io.FileOutputStream out = new java.io.FileOutputStream(tmp)) {
