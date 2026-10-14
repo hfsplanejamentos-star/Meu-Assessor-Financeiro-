@@ -2486,6 +2486,28 @@ html[data-tema] #app{padding-bottom:120px!important}
   function rows(source){return source==='bank'?pending:waItems;}
   function captureKey(e){return e.source+':'+e.id;}
   function recorded(e){return L.find(x=>x.captureId===captureKey(e));}
+
+  function captureMerchant(value){
+    const normalized=String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/r\$\s*\d[\d.,]*/g,' ').replace(/\s+/g,' ');
+    const candidates=[...normalized.matchAll(/\b(?:estabelecimento|loja|merchant|em|no|na|para)\s*[:\-]?\s*([a-z0-9][a-z0-9 &'\-.]{2,50})/g)];
+    for(const found of candidates){
+      const name=found[1].replace(/\b(?:no valor|valor|com|usando|via|pelo|cartao|credito|debito|aprovada|aprovado|confirmada|confirmado)\b.*$/,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+      if(name.length>=4&&!['valor','compra','pagamento'].includes(name))return name;
+    }
+    return '';
+  }
+  function recordedWalletMatch(event,data){
+    if(event.source!=='bank'||event.direction!=='expense'||data.type!=='d'||!Number.isSafeInteger(data.amount))return null;
+    const wallet='com.google.android.apps.walletnfcrel',pkg=String(event.sourcePackage||''),isWallet=pkg===wallet;
+    if(!pkg||/\bpix\b/i.test(String(event.title||'')+' '+String(event.text||'')))return null;
+    const merchant=captureMerchant((event.title||'')+' '+(event.text||'')),when=Number(event.postedAt);
+    if(merchant.length<4||!Number.isFinite(when))return null;
+    return L.find(x=>x.s==='r'&&x.t==='d'&&x.v===data.amount&&x.d===data.day&&
+      typeof x.captureSourcePackage==='string'&&(x.captureSourcePackage===wallet)!==isWallet&&
+      Number.isSafeInteger(x.capturePostedAt)&&Math.abs(x.capturePostedAt-when)<=180000&&
+      x.captureMerchant===merchant&&!/\bpix\b/i.test(x.n||''))||null;
+  }
+
   function normalized(source){return rows(source).map(e=>source==='bank'?{...e,source}:{id:e.messageId,title:e.kind==='audio'?'Áudio do WhatsApp':'Mensagem do WhatsApp',text:e.text,postedAt:e.postedAt,source,connection:e.connection,kind:e.kind,status:e.status||'pending',transcriptionError:e.transcriptionError});}
   function body(source){
     reviewItems=normalized(source);
@@ -2519,6 +2541,10 @@ html[data-tema] #app{padding-bottom:120px!important}
     if(event.source!=='bank'&&!ST.msg){alert('Ative Registrar despesas por mensagem em Avisos para abrir rascunhos.');return;}
     if(recorded(event)){if(confirm('Este evento já está registrado. Concluir a revisão sem criar outro lançamento?'))await complete([event],'recorded');return;}
     draft={event,data:localDraft(event)};
+    const walletExisting=recordedWalletMatch(event,draft.data);
+    if(walletExisting&&confirm('Banco e Google Wallet parecem informar a mesma compra já registrada ('+brl(walletExisting.v)+'). Vincular esta notificação sem descontar novamente?')){
+      await complete([event],'recorded');draft=null;return;
+    }
     if(event.kind==='audio'){
       busy=true;modal('Preparando rascunho do áudio',`<p>${safe(event.text)}</p><p class="m" style="margin-top:12px">A IA está identificando valor, conta e categoria. O lançamento será salvo somente após sua revisão.</p>`);MD='capture-preparing';
       try{const result=await api('/ai/finance','POST',{text:'Interprete como um único rascunho financeiro para revisão. Se houver vários gastos ou ambiguidade, peça esclarecimento: '+event.text,context:{today:draft.data.day,categories:aiContext().categories}});if(MD!=='capture-preparing'||draft?.event!==event)return;draft.data=applyAi(result,draft.data);}
@@ -2540,6 +2566,8 @@ html[data-tema] #app{padding-bottom:120px!important}
     if(event.source==='whatsapp'&&event.connection!==connectionGeneration){alert('A conexão mudou. Atualize a lista antes de continuar.');return;}
     // Mesmo valor não significa duplicidade: Pix, débito e compras distintas podem coincidir.
     // Bloqueio automático só pelo identificador imutável da captura; coincidências financeiras viram aviso de revisão.
+    const walletExisting=recordedWalletMatch(event,d);
+    if(walletExisting&&!confirm('Possível repetição entre banco e Google Wallet: estabelecimento, valor, data e horário são compatíveis. Criar outra despesa mesmo assim?'))return;
     const duplicate=L.filter(x=>x.d===d.day&&x.a===d.account&&x.v===d.amount&&x.t===d.type);
     const exactCapture=recorded(event);
     if(!exactCapture&&duplicate.length){const sameText=duplicate.some(x=>String(x.n||'').trim().toLowerCase()===d.name.trim().toLowerCase());if(sameText&&!confirm(`Existe um lançamento muito semelhante (mesma data, conta, valor e descrição). Registrar mesmo assim?`))return;}
@@ -2549,6 +2577,11 @@ html[data-tema] #app{padding-bottom:120px!important}
         if(PERSIST_BLOCKED)throw Error('Importe um backup válido antes de registrar.');
         const before=L.slice(),oldId=NID;
         const x={id:NID,d:d.day,n:d.name,t:d.type,v:d.amount,a:d.account,s:'r',captureId:captureKey(event)};
+        if(event.source==='bank'&&Number.isSafeInteger(Number(event.postedAt))){
+          x.capturePostedAt=Number(event.postedAt);
+          x.captureSourcePackage=String(event.sourcePackage||'').slice(0,150);
+          x.captureMerchant=captureMerchant((event.title||'')+' '+(event.text||''));
+        }
         if(d.type==='d'){x.c=d.category;x.sub=d.sub;}
         L.push(x);NID=nextId();
         if(!persistLedger()){L=before;NID=oldId;throw Error('O lançamento não foi salvo. A notificação continua pendente.');}
