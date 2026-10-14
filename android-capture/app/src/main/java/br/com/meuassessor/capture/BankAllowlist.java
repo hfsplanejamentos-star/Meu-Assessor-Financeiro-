@@ -21,50 +21,12 @@ final class BankAllowlist {
      * sem armazenar o conteúdo de notificações de apps não autorizados.
      */
     private static final Set<String> DEFAULTS = new HashSet<>(Arrays.asList(
-            // C6
+            // Instituições expressamente autorizadas para uso padrão.
             "com.c6bank.app",
-
-            // XP
             "br.com.xp.carteira",
-
-            // Caju
             "com.caju.employee",
-
-            // Itaú
             "br.com.itau",
-
-            // Nubank
-            "com.nu.production",
-
-            // Banco Inter
-            "br.com.intermedium",
-
-            // Santander
-            "com.santander.app",
-
-            // Bradesco
-            "com.bradesco",
-
-            // Banco do Brasil
-            "br.com.bb.android",
-
-            // Caixa
-            "br.com.gabba.Caixa",
-
-            // Mercado Pago
-            "com.mercadopago.wallet",
-
-            // PicPay
-            "com.picpay",
-
-            // PagBank / PagSeguro
-            "br.com.uol.ps.myaccount",
-
-            // Neon
-            "br.com.neon",
-
-            // Google Wallet/Google Pay: capturar como fonte auxiliar de compra,
-            // sem assumir conta/cartão e sem efetivar qualquer despesa automaticamente.
+            // Google Wallet/Pay: fonte auxiliar; sempre revisar antes de registrar.
             "com.google.android.apps.walletnfcrel"
     ));
 
