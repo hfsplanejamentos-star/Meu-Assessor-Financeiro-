@@ -2254,6 +2254,14 @@ function dateOffset(iso,days){const d=new Date(iso+'T12:00');d.setDate(d.getDate
 function lastMonthDay(ym){return ym+'-'+String(new Date(+ym.slice(0,4),+ym.slice(5),0).getDate()).padStart(2,'0');}
 function alertRef(ym){const today=localToday();return ym===today.slice(0,7)?today:ym<today.slice(0,7)?lastMonthDay(ym):ym+'-01';}
 function fixedExpenseKey(x){const n=String(x.n||'').toLowerCase();if(x.c==='pen'||/pens[aã]o/.test(n))return 'pension';if((x.c==='mor'&&/aluguel/.test(n))||/aluguel/.test(n))return 'rent';if(/conta de luz|\benel\b|energia el[eé]trica/.test(n))return 'power';if(/plano tim/.test(n))return 'tim';if(/internet/.test(n))return 'internet';if(x.rc&&x.t==='d')return recurrenceKey(x);return null;}
+// Read-only diagnostics; never modifies transactions or balances.
+function carbonAudit(ym){
+ const ref=alertRef(ym), rows=L.filter(x=>x.s==='r'&&validISO(x.d)&&x.d<=ref);
+ const buys=rows.filter(x=>x.a==='carbon'&&x.t==='d');
+ const paid=rows.filter(x=>(x.a==='carbon'&&x.t==='r')||(x.t==='t'&&x.to==='carbon'&&x.a!=='carbon'));
+ const total=a=>a.reduce((v,x)=>v+x.v,0);
+ return {reference:ref, purchases:total(buys), payments:total(paid), used:creditUsed(ref,ALERT_CFG.carbon), invoice:carbonInvoiceGross(ym)};
+}
 function creditUsed(ref,cfg){
  let used=Math.round(cfg.opening*100);
  const items=L.filter(x=>x.s==='r'&&validISO(x.d)&&x.d<=ref).slice().sort((a,b)=>a.d.localeCompare(b.d)||((a.t==='d'?0:1)-(b.t==='d'?0:1)));
