@@ -30,6 +30,7 @@ assert.match(main,/if \(webView\.getUrl\(\) == null\) loadDashboardHtml\(\)/);
 assert.match(main,/previewLogo\.setText\("S"\)/,"Splash must use native vector-like gold text, not old baked phone screenshot");
 assert.match(main,/getWindow\(\)\.addFlags\(WindowManager\.LayoutParams\.FLAG_FULLSCREEN\)/,"No OS clock/battery over preview splash");
 assert.match(main,/getWindow\(\)\.clearFlags\(WindowManager\.LayoutParams\.FLAG_FULLSCREEN\)/,"Restore system status bar after unlock");
+assert.match(main,/value\.setBackgroundColor\(Color\.parseColor\("#090A08"\)\)/,"Dark splash-to-WebView transition without white flash");
 
 assert.match(main,/if \(BuildConfig\.DEBUG\) \{[\s\S]*?TextView previewLogo/);
 assert.match(main,/else \{[\s\S]*?splashLogo\.setImageResource/,"Stable app launcher imagery unchanged");
