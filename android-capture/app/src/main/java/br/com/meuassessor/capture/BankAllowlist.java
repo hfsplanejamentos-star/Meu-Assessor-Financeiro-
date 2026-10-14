@@ -37,7 +37,7 @@ final class BankAllowlist {
         if ("com.android.vending".equals(packageName)) return false;
         SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         if (preferences.getStringSet(KEY_DISABLED, new HashSet<>()).contains(packageName)) return false;
-        if (packages(context).contains(packageName)) return true;
+        if (DEFAULTS.contains(packageName)) return true;
         String value = packageName.toLowerCase(java.util.Locale.ROOT);
         // Bancos alteram packageName entre versões, marcas e módulos de Pix.
         // A leitura ainda só é persistida quando o parser confirma valor + ação financeira.
@@ -75,7 +75,9 @@ final class BankAllowlist {
 
         // Migração: mantém escolhas existentes e incorpora os novos padrões.
         Set<String> merged = new HashSet<>(DEFAULTS);
-        merged.addAll(saved);
+        for (String candidate : saved) {
+            if (DEFAULTS.contains(candidate)) merged.add(candidate);
+        }
         Set<String> disabled = preferences.getStringSet(KEY_DISABLED, new HashSet<>());
         merged.removeAll(disabled);
         return merged;
