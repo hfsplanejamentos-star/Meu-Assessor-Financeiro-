@@ -2610,7 +2610,91 @@ html[data-tema] #app{padding-bottom:120px!important}
   setInterval(()=>{if(config.configured&&TAB==='as'&&AS==='wa'&&!MD&&!busy&&!loading&&!document.hidden)window.captureRefresh('whatsapp',true);},15000);
   window.meuAssessorAndroidAutoSync();
 })();
-</script><script id="v84-brand-actions">
+</script><script id="snake-daily-briefing">(function installSnakeBriefing() {
+  'use strict';
+  let briefingPeriod='morning';
+  const sum=xs=>xs.reduce((total,item)=>total+item.v,0);
+  const accountLabel={c6:'C6',caju:'Caju',carbon:'C6 Carbon'};
+  const isActual=x=>x.s==='r'&&validISO(x.d);
+  const dateFor=x=>x.d;
+  const money=v=>ST.hide?'R$ ••••':brl(v);
+  function workDays(ym) {
+    const parts=ym.split('-').map(Number),days=new Date(parts[0],parts[1],0).getDate();
+    let result=0;
+    for(let n=1;n<=days;n++)if([2,3,4].includes(new Date(parts[0],parts[1]-1,n,12).getDay()))result++;
+    return result;
+  }
+  function snapshot(period='morning') {
+    const today=localToday(),ym=today.slice(0,7);
+    if(typeof PERSIST_BLOCKED!=='undefined'&&PERSIST_BLOCKED || !Array.isArray(L)||L.length===0)
+      return {ready:false,message:'Os lançamentos não estão carregados ou a base está bloqueada. Importe e valide um backup antes de emitir um briefing com valores.'};
+    const real=L.filter(isActual),spentToday=real.filter(x=>x.t==='d'&&x.d===today),
+      earnedToday=real.filter(x=>x.t==='r'&&x.d===today&&x.a==='c6'),
+      inMonth=real.filter(x=>x.d.startsWith(ym)),
+      spentMonth=inMonth.filter(x=>x.t==='d'),
+      earningsMonth=inMonth.filter(x=>x.t==='r'&&x.a==='c6'),
+      yesterday=dateOffset(today,-1),oneWeekAgo=dateOffset(today,-6),
+      spentWeek=real.filter(x=>x.t==='d'&&x.d>=oneWeekAgo&&x.d<=today),
+      nextWeek=dateOffset(today,7),
+      due=L.filter(x=>x.s==='p'&&x.t==='d'&&validISO(x.d)&&x.d>=today&&x.d<=nextWeek).sort((a,b)=>a.d.localeCompare(b.d)),
+      c6Balance=accountBalance('c6',today,false),
+      cajuKnown=Boolean(CAJU_CFG[ym]||inMonth.some(x=>x.a==='caju')),
+      cajuAvailable=cajuKnown?cajuBalance(ym):null,
+      c6Due=sum(due.filter(x=>x.a==='c6')),
+      availableWeek=c6Balance-c6Due,
+      workCount=workDays(ym),
+      workPlan={days:workCount,mealCents:Math.max(48000,workCount*4000),fuelCents:Math.max(60000,workCount*5000),parkingCents:workCount*600},
+      spentWork={mealCents:sum(spentMonth.filter(x=>x.a==='caju'&&(x.c==='trab'||x.sub==='Refeição'))),
+        fuelCents:sum(spentMonth.filter(x=>['c6','carbon'].includes(x.a)&&(x.c==='trab'&&/combust|abastec/i.test(x.sub||'')))),
+        parkingCents:sum(spentMonth.filter(x=>['c6','carbon'].includes(x.a)&&x.c==='trab'&&/estacion/i.test(x.sub||'')))},
+      alerts=financialAlerts(ym).slice(0,3).map(a=>a.text);
+    return {ready:true,date:today,period,ym,c6Balance,cajuAvailable,c6Due,
+      availableWeek,spendingPerDay:Math.max(0,Math.floor(availableWeek/7)),
+      earnedToday:sum(earnedToday),spentToday:sum(spentToday),
+      spentMonth:sum(spentMonth),earningsMonth:sum(earningsMonth),spentWeek:sum(spentWeek),
+      due:due.slice(0,5).map(x=>({date:x.d,name:x.n,account:accountLabel[x.a]||x.a,amount:x.v})),
+      workPlan,spentWork,alerts};
+  }
+  function content(mode) {
+    const result=snapshot(mode);
+    if(!result.ready)return '<p class="m">'+escapeHTML(result.message)+'</p>';
+    const period=mode==='evening'?'Fechamento à noite':mode==='weekly'?'Resumo semanal':'Briefing da manhã',
+      periodTotal=mode==='evening'?result.spentToday:mode==='weekly'?result.spentWeek:result.spentMonth,
+      periodLabel=mode==='evening'?'Despesas realizadas hoje':mode==='weekly'?'Despesas realizadas nos últimos 7 dias':'Despesas realizadas no mês',
+      work=result.workPlan, spent=result.spentWork;
+    const lines=[
+      '<div class="sp"><span>Saldo disponível C6</span><b>'+money(result.c6Balance)+'</b></div>',
+      '<div class="sp"><span>Saldo Caju</span><b>'+(result.cajuAvailable===null?'A configurar':money(result.cajuAvailable))+'</b></div>',
+      '<div class="sp"><span>'+periodLabel+'</span><b>'+money(periodTotal)+'</b></div>',
+      '<div class="sp"><span>Compromissos C6, próximos 7 dias</span><b>'+money(result.c6Due)+'</b></div>',
+      '<div class="sp"><span>Saldo estimado C6 após esses compromissos</span><b>'+money(result.availableWeek)+'</b></div>',
+      '<div class="sp"><span>Referência diária para 7 dias (estimativa)</span><b>'+money(result.spendingPerDay)+'</b></div>'
+    ];
+    const commitments=result.due.length?result.due.map(x=>'<p class="m">'+escapeHTML(x.date.slice(8,10)+'/'+x.date.slice(5,7)+' · '+x.name+' · '+x.account)+' · '+money(x.amount)+'</p>').join(''):'<p class="m">Sem despesas previstas cadastradas nos próximos 7 dias.</p>';
+    const alertItems=result.alerts.length?result.alerts.map(a=>'<p class="m">'+escapeHTML(ST.hide?a.replace(/R\$\s*[\d.,]+/g,'R$ ••••'):a)+'</p>').join(''):'<p class="m">Nenhum alerta ativo registrado.</p>';
+    return '<p class="m">'+escapeHTML(period)+' · '+escapeHTML(result.date)+'</p>'+
+      lines.join('')+'<p class="m" style="margin-top:10px">Estimativas não consideram despesas futuras ainda não cadastradas. Nenhum lançamento é criado automaticamente.</p>'+
+      '<div style="margin-top:12px"><b>Próximos vencimentos</b>'+commitments+'</div>'+
+      '<div style="margin-top:12px"><b>Trabalho · terça, quarta e quinta</b>'+
+      '<p class="m">'+work.days+' dias previstos no mês. Refeição Caju: '+money(work.mealCents)+' planejados ('+money(spent.mealCents)+' realizados). Combustível C6/Carbon: '+money(work.fuelCents)+' planejados ('+money(spent.fuelCents)+' realizados). Estacionamento: '+money(work.parkingCents)+' planejados ('+money(spent.parkingCents)+' realizados).</p>'+
+      '<p class="m">Regras: refeição R$ 40/dia (mínimo R$ 480/mês); combustível R$ 50/dia (base R$ 600/mês); estacionamento R$ 6/dia. Apenas transações efetivadas e classificadas corretamente contam como realizadas.</p></div>'+
+      '<div style="margin-top:12px"><b>Alertas do Assessor</b>'+alertItems+'</div>';
+  }
+  window.SnakeDailyBriefing={snapshot,workDays};
+  window.snakeBriefingSelect=function(period){
+    if(!['morning','evening','weekly'].includes(period))return;
+    briefingPeriod=period;draw();
+  };
+  const previous=vAs;
+  vAs=function(){
+    const page=previous();
+    if(AS!=='av')return page;
+    const button=(label,period)=>'<button type="button" class="bt '+(briefingPeriod===period?'p':'')+'" onclick="snakeBriefingSelect(\''+period+'\')">'+label+'</button>';
+    const brief='<div class="c"><div class="sp"><p class="h">Briefing financeiro</p><small>Calculado da base local</small></div>'+
+      '<div class="fl">'+button('Manhã','morning')+button('Noite','evening')+button('Semana','weekly')+'</div>'+content(briefingPeriod)+'</div>';
+    return brief+page;
+  };
+})();</script><script id="v84-brand-actions">
 function closeHeaderNav(){document.getElementById('headerNav')?.classList.remove('on');document.getElementById('headerMenuButton')?.setAttribute('aria-expanded','false');}
 function toggleHeaderNav(){v65CloseQuick();document.getElementById('settingsPop')?.classList.remove('on');closeMore();const menu=document.getElementById('headerNav'),opening=!menu.classList.contains('on');menu.innerHTML=TABS.map(x=>'<button type="button" data-header-tab="'+x[0]+'" onclick="closeHeaderNav();goTab(\''+x[0]+'\')">'+escapeHTML(x[1])+'</button>').join('');menu.classList.toggle('on',opening);document.getElementById('headerMenuButton').setAttribute('aria-expanded',String(opening));}
 function openAdvisorNotices(){closeHeaderNav();document.getElementById('settingsPop')?.classList.remove('on');AS='av';goTab('as');}
