@@ -772,15 +772,25 @@
      toast("Sincronização desconectada apenas deste dispositivo.")}
    catch(error){toast("Falha ao desconectar: "+(error.message||"erro"))}
  };
+ $("menuBtn").onclick=settings;
  $("settingsBtn").onclick=settings;$("chatSettings").onclick=settings;$("moreBtn").onclick=settings;
  $("settingsDismiss").onclick=()=>$("settingsDialog").close();
- document.querySelectorAll("[data-theme-option]").forEach(b=>b.onclick=()=>{
-   const t=b.dataset.themeOption;document.body.dataset.theme=t;
-   document.querySelectorAll("[data-theme-option]").forEach(x=>x.classList.toggle("selected",x===b));
+ function applyTheme(t){
+   if(!["dourado","limao","branco"].includes(t))return;
+   document.body.dataset.theme=t;
+   document.querySelectorAll("[data-theme-option]").forEach(b=>b.classList.toggle("selected",b.dataset.themeOption===t));
+   document.querySelectorAll("[data-theme-shortcut]").forEach(b=>{
+     b.setAttribute("aria-pressed",String(b.dataset.themeShortcut===t));
+   });
+   const metas=document.querySelectorAll('meta[name="theme-color"]');
+   if(metas.length)metas[0].setAttribute("content",t==="branco"?"#eff3f5":"#090a08");
    try{localStorage.setItem("snake_assessor_theme",t)}catch(_){}
- });
- try{const t=localStorage.getItem("snake_assessor_theme");if(["dourado","limao","branco"].includes(t)){document.body.dataset.theme=t;
-   document.querySelectorAll("[data-theme-option]").forEach(b=>b.classList.toggle("selected",b.dataset.themeOption===t))}}catch(_){}
+ }
+ document.querySelectorAll("[data-theme-option]").forEach(b=>b.onclick=()=>applyTheme(b.dataset.themeOption));
+ document.querySelectorAll("[data-theme-shortcut]").forEach(b=>b.onclick=()=>applyTheme(b.dataset.themeShortcut));
+ let theme="dourado";
+ try{const t=localStorage.getItem("snake_assessor_theme");if(["dourado","limao","branco"].includes(t))theme=t}catch(_){}
+ applyTheme(theme);
  $("refreshState").onclick=refreshState;
  $("financeBtn").onclick=()=>toast("Financeiro completo: use a tela principal do Snake Finance.");
  $("alertBtn").onclick=()=>{switchView("chat");scanNativeNotifications(true)};
