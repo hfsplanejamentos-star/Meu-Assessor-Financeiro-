@@ -2630,3 +2630,6 @@ html[data-tema] #app{padding-bottom:120px!important}
 function closeHeaderNav(){document.getElementById('headerNav')?.classList.remove('on');document.getElementById('headerMenuButton')?.setAttribute('aria-expanded','false');}
 function toggleHeaderNav(){v65CloseQuick();document.getElementById('settingsPop')?.classList.remove('on');closeMore();const menu=document.getElementById('headerNav'),opening=!menu.classList.contains('on');menu.innerHTML=TABS.map(x=>'<button type="button" data-header-tab="'+x[0]+'" onclick="closeHeaderNav();goTab(\''+x[0]+'\')">'+escapeHTML(x[1])+'</button>').join('');menu.classList.toggle('on',opening);document.getElementById('headerMenuButton').setAttribute('aria-expanded',String(opening));}
 function openAdvisorNotices(){closeHeaderNav();document.getElementById('settingsPop')?.classList.remove('on');AS='av';goTab('as');}
+</script>
+</body>
+</html>
