@@ -2631,5 +2631,73 @@ function closeHeaderNav(){document.getElementById('headerNav')?.classList.remove
 function toggleHeaderNav(){v65CloseQuick();document.getElementById('settingsPop')?.classList.remove('on');closeMore();const menu=document.getElementById('headerNav'),opening=!menu.classList.contains('on');menu.innerHTML=TABS.map(x=>'<button type="button" data-header-tab="'+x[0]+'" onclick="closeHeaderNav();goTab(\''+x[0]+'\')">'+escapeHTML(x[1])+'</button>').join('');menu.classList.toggle('on',opening);document.getElementById('headerMenuButton').setAttribute('aria-expanded',String(opening));}
 function openAdvisorNotices(){closeHeaderNav();document.getElementById('settingsPop')?.classList.remove('on');AS='av';goTab('as');}
 </script>
+<style id="v85-landscape-responsive">
+/* V85 — Mobile landscape responsive. Portrait remains unchanged. */
+@media screen and (orientation: landscape) and (min-width: 640px) and (max-height: 720px) {
+  html[data-tema] body { overflow-x: hidden!important; }
+  html[data-tema] #app {
+    box-sizing:border-box!important;
+    width:calc(100vw - 24px)!important;
+    max-width:1100px!important;
+    margin:0 auto!important;
+    padding:6px 10px 100px!important;
+  }
+  html[data-tema] #fixedTopShell { height:142px!important; }
+  html[data-tema] #fixedTopShell .appHd {
+    width:calc(100vw - 24px)!important;
+    max-width:1100px!important;
+    box-sizing:border-box!important;
+    height:94px!important;
+    min-height:94px!important;
+    padding:5px 14px!important;
+    border-radius:0 0 18px 18px!important;
+  }
+  html[data-tema] #fixedTopShell .appHd .headerTop {height:45px!important;gap:12px!important;}
+  html[data-tema] #fixedTopShell .appHd .headerBottom {height:32px!important;margin-top:3px!important;padding-top:4px!important;}
+  html[data-tema] #fixedTopShell .appHd .snakeMark {--mark-size:38px!important;}
+  html[data-tema] #fixedTopShell .appHd .snakeWordmark strong {font-size:18px!important;}
+  html[data-tema] #fixedTopShell .monthbar {
+    width:min(740px,calc(100vw - 56px))!important;
+    height:42px!important;
+    top:99px!important;
+    grid-template-columns:40px minmax(0,1fr) 40px!important;
+    gap:10px!important;
+  }
+  html[data-tema] #fixedTopShell .monthbar button {width:40px!important;min-width:40px!important;height:40px!important;}
+  html[data-tema] #fixedTopShell .monthbar .pill {height:40px!important;min-height:40px!important;}
+  html[data-tema] #v {
+    box-sizing:border-box!important;
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    align-items:start!important;
+    gap:12px!important;
+    padding-top:150px!important;
+    padding-bottom:100px!important;
+  }
+  html[data-tema] #v > * {box-sizing:border-box;min-width:0;max-width:100%;}
+  html[data-tema] #v > [data-oid="overview-summary"],
+  html[data-tema] #v > [data-oid="overview-accounts"],
+  html[data-tema] #v > [data-oid="overview-agenda"] {grid-column:1/-1!important;}
+  html[data-tema] #v .bankGrid,
+  html[data-tema] #v .accountGrid {grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  html[data-tema] #nav {
+    width:min(760px,calc(100vw - 32px))!important;
+    height:58px!important;
+    padding:4px 8px!important;
+  }
+  html[data-tema] #nav>button:not(#fabAdd) {height:44px!important;}
+  html[data-tema] #nav #fabAdd,html[data-tema] #nav #fabAdd.open {
+    width:46px!important;height:46px!important;min-width:46px!important;
+  }
+  html[data-tema] #md {align-items:center!important;}
+  html[data-tema] #md .mc {
+    width:min(760px,calc(100vw - 32px))!important;
+    max-height:calc(100dvh - 20px)!important;
+    border-radius:18px!important;
+  }
+  html[data-tema] .settingsPop {top:94px!important;right:24px!important;max-height:calc(100dvh - 108px)!important;}
+  html[data-tema] .headerNav {top:94px!important;left:20px!important;max-height:calc(100dvh - 108px)!important;}
+}
+</style>
 </body>
 </html>
