@@ -54,30 +54,127 @@ dialog{background:var(--surface);border:1px solid var(--gold);border-radius:17px
 .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.upload-grid button{border:1px solid var(--line);border-radius:10px;background:var(--surface2);color:var(--text);padding:15px 6px;font-size:12px}
 .theme-buttons{display:flex;gap:7px}.theme-buttons button{flex:1;border:1px solid var(--line);border-radius:9px;padding:10px 5px;color:var(--text);background:var(--surface2)}.theme-buttons .selected{border-color:var(--gold)}
 #toast{display:none;position:fixed;bottom:91px;left:50%;transform:translateX(-50%);width:min(390px,calc(100% - 28px));background:var(--surface2);border:1px solid var(--gold);border-radius:12px;padding:12px;z-index:30;font-size:12px}
+
+/* Snake Finance IA: identidade visual alinhada ao Mobile, tema Dourado aprovado. */
+:root{--radius:18px;--shadow:0 12px 28px rgba(0,0,0,.21);--track:#35342b}
+body[data-theme=limao]{--gold:#b8ff2c;--track:#282d22}
+body[data-theme=branco]{--gold:#bb8325;--track:#e3e8eb;--shadow:0 7px 24px rgba(34,43,55,.08)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.icon-sprite{position:absolute!important;width:0;height:0;overflow:hidden;pointer-events:none}
+.i{width:1.25em;height:1.25em;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;flex:none}
+main{padding-bottom:108px;background:radial-gradient(circle at 87% 6%,color-mix(in srgb,var(--gold) 12%,transparent),transparent 32%),radial-gradient(circle at 4% 44%,color-mix(in srgb,var(--gold) 4%,transparent),transparent 44%),var(--bg)}
+.top{padding:calc(12px + env(safe-area-inset-top,0px)) 15px 12px;background:linear-gradient(110deg,color-mix(in srgb,var(--gold) 9%,var(--surface)),var(--bg) 79%);box-shadow:0 4px 20px #0002}
+.top strong{font-size:16px;font-weight:800;letter-spacing:.06em}
+.top small{font-weight:600;letter-spacing:.14em}
+.circle{display:grid;place-items:center;font-size:20px;transition:background .2s,border-color .2s}
+.circle:hover,.circle:focus-visible{border-color:var(--gold);background:var(--surface2)}
+section.screen{padding:13px 14px}
+.month{background:var(--surface);border-radius:16px;box-shadow:var(--shadow)}
+.banks{gap:8px;margin:11px 0}
+.bank{min-width:0;border-color:var(--line);border-radius:16px;min-height:110px;padding:10px 8px;background:linear-gradient(155deg,color-mix(in srgb,var(--gold) 9%,var(--surface)),var(--surface) 66%);box-shadow:var(--shadow)}
+.bank:first-child,.bank:nth-child(2){border-color:color-mix(in srgb,var(--gold) 67%,var(--line))}
+.bank .name{display:flex;align-items:center;gap:5px;font-size:11px;white-space:nowrap}
+.bank-mark{width:25px;height:25px;border-radius:8px;display:inline-grid;place-items:center;flex:none;font-weight:900;font-size:11px;letter-spacing:-.6px;background:#080b0e;color:#f3f3f3}
+.bank-mark.caju{font-size:15px;background:#e1c72e;color:#1c251c}
+.bank-mark.itau{background:#1555ae;color:#fff;font-size:14px;font-family:Georgia,serif}
+.bank .value{font-size:14px;letter-spacing:-.3px;margin-top:12px;font-variant-numeric:tabular-nums}
+.bank small{font-size:10px}
+.panel{background:linear-gradient(155deg,color-mix(in srgb,var(--gold) 3%,var(--surface)),var(--surface));border-radius:var(--radius);padding:14px;margin:11px 0;box-shadow:var(--shadow)}
+.fin-sums strong{font-size:18px;font-variant-numeric:tabular-nums}
+.bar{height:9px;background:var(--track);border-radius:7px;margin:15px 0 12px}
+.available{font-variant-numeric:tabular-nums}
+.shortcuts{gap:8px}
+.shortcuts button{border-radius:14px;min-height:89px;background:var(--surface);box-shadow:var(--shadow);transition:transform .15s,border-color .15s}
+.shortcuts button:first-child{background:linear-gradient(145deg,color-mix(in srgb,var(--gold) 16%,var(--surface)),var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 18%,transparent),0 8px 25px #0004}
+.shortcuts button:active{transform:scale(.97)}
+.shortcuts span .i{width:27px;height:27px;color:var(--gold)}
+.donut{background:conic-gradient(var(--track) 0 100%);box-shadow:inset 0 0 12px #0004}
+.donut b{font-variant-numeric:tabular-nums}
+.legend p{margin:9px 0;font-size:11px}
+.legend em{background:var(--track)}
+.legend p:nth-child(1) em{background:#29a5d6}
+.legend p:nth-child(2) em{background:#34cd86}
+.legend p:nth-child(3) em{background:#f4bc41}
+.legend p:nth-child(4) em{background:#e98758}
+.legend p:nth-child(5) em{background:#9e9fa8}
+.bot{color:#231905}
+.bot .i{width:25px;height:25px;stroke-width:2}
+.bubble,.review{border-radius:16px;box-shadow:0 6px 18px #0002}
+.review{margin-left:0;padding:13px}
+.bubble.answer{margin-left:31px}
+.chat-scroll{min-height:340px;height:calc(100dvh - 323px)}
+.compose{bottom:calc(81px + env(safe-area-inset-bottom,0px));padding-top:9px;background:linear-gradient(to bottom,transparent,var(--bg) 25%)}
+.compose-main{border-radius:16px;padding:5px;box-shadow:var(--shadow)}
+.compose-main button .i{width:19px;height:19px}
+.compose-main button.send{min-width:38px;min-height:35px;display:grid;place-items:center}
+.chat-shortcuts button{display:flex;align-items:center;justify-content:center;gap:4px;border-radius:11px}
+.chat-shortcuts .i{width:14px;height:14px;color:var(--gold)}
+.agenda-icon{font-size:26px;color:var(--gold)}
+.agenda-head .i{width:25px;height:25px}
+nav{bottom:max(9px,env(safe-area-inset-bottom,0px));height:74px;width:calc(100% - 20px);max-width:420px;border-radius:22px;padding:0 5px;background:color-mix(in srgb,var(--surface) 92%,var(--gold));box-shadow:0 10px 35px #0009;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+nav button{min-width:0;flex:1;font-size:10px;gap:4px}
+nav button span{font-size:21px}
+nav button .i{width:23px;height:23px}
+nav .center span{width:52px;height:52px;margin-top:-21px}
+nav .center .i{width:29px;height:29px;color:#2b1f0a;stroke-width:2.1}
+nav button:focus-visible,.gold-button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+dialog{border-radius:20px;box-shadow:0 18px 64px #000a}
+#toast{bottom:104px}
+@media(max-width:370px){
+  section.screen{padding:11px 11px}
+  .banks{gap:5px}
+  .bank{padding:9px 6px}
+  .bank .name{font-size:10px}
+  .bank-mark{width:22px;height:22px}
+  .bank .value{font-size:13px}
+  .donut-area{gap:8px}
+  .donut{width:116px;height:116px;flex-basis:116px}
+  .donut b{width:74px;height:74px}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+
 </style>
 </head>
 <body data-theme="dourado">
-<main><div class="status"><span>9:41</span><span>▂▄▆ ◖ ▰</span></div>
-<header class="top" id="topHome"><span class="logo">S</span><div><strong>SNAKE FINANCE</strong><small>MEU ASSESSOR IA</small></div><div class="tools"><button id="alertBtn" class="circle">♧</button><button class="circle" id="settingsBtn">⚙</button></div></header>
+<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" class="icon-sprite"><defs>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><path d="M10 2h4l.6 2.6 2.3 1 2.2-1.4 2.8 2.8-1.4 2.2 1 2.3L24 12l-2.5.5-1 2.3 1.4 2.2-2.8 2.8-2.2-1.4-2.3 1L14 22h-4l-.6-2.6-2.3-1-2.2 1.4-2.8-2.8 1.4-2.2-1-2.3L0 12l2.5-.5 1-2.3-1.4-2.2 2.8-2.8 2.2 1.4 2.3-1Z"/><circle cx="12" cy="12" r="3.3"/></symbol>
+<symbol id="i-bot" viewBox="0 0 24 24"><path d="M12 3v3m-2 0h4m-9 6V10a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2m-14 0v5a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3v-5M3 12h2m14 0h2"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17c2 1.4 4 1.4 6 0"/></symbol>
+<symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18m-14 4h3m-3 3h3m4-3h3"/></symbol>
+<symbol id="i-file" viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm9 0v6h5M8 12h8m-8 4h8"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="m2 11 10-9 10 9M5 9.5V21h14V9.5M9 21v-8h6v8"/></symbol>
+<symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="15" rx="2"/><path d="M3 9V5a2 2 0 0 1 2-2h13m3 9h-7v5h7m-4-2h.1"/></symbol>
+<symbol id="i-paperclip" viewBox="0 0 24 24"><path d="m8 13 6-6a3 3 0 0 1 4 4l-8 8a5 5 0 0 1-7-7L13 2a7 7 0 0 1 10 10l-10 10"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M3 7h4l2-3h6l2 3h4v14H3V7Z"/><circle cx="12" cy="13.5" r="4"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m3 18 5-5 3 3 4-5 6 7"/></symbol>
+<symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4m-4 0h8"/></symbol>
+<symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-9 20-3-8-8-3Z M22 2 10 14"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V4M4 20h17m-14-4 5-5 3 3 5-8"/></symbol>
+<symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24"><path d="m15 4-8 8 8 8"/></symbol>
+</defs></svg>
+<main>
+<header class="top" id="topHome"><span class="logo">S</span><div><strong>SNAKE FINANCE</strong><small>MEU ASSESSOR IA</small></div><div class="tools"><button id="alertBtn" class="circle" aria-label="Notificações"><svg class="i"><use href="#i-bell"></use></svg></button><button class="circle" id="settingsBtn" aria-label="Configurações"><svg class="i"><use href="#i-settings"></use></svg></button></div></header>
 <section class="screen active" id="screenHome">
  <div class="month"><button id="prevMonth">‹</button><b id="monthLabel">Outubro 2026</b><button id="nextMonth">›</button></div>
- <div class="banks"><div class="bank"><div class="name">C6</div><div class="value" id="balanceC6">—</div><small>Disponível</small></div><div class="bank"><div class="name">🟡 CAJU</div><div class="value" id="balanceCaju">—</div><small>Disponível</small></div><div class="bank"><div class="name">Itaú</div><div class="value" id="balanceItau">—</div><small>Disponível</small></div></div>
- <div class="panel"><div class="fin-sums"><div>Receitas<strong id="monthIncome">—</strong></div><div>Despesas<strong id="monthExpense">—</strong></div></div><div class="bar"></div>Saldo do mês<div class="available" id="monthNet">—</div></div>
- <div class="shortcuts"><button data-view="chat"><span>🤖</span>Assessor IA</button><button data-view="agenda"><span>▦</span>Agenda Teams</button><button id="alertShortcut"><span>♧</span>Alertas</button><button id="docShortcut"><span>▤</span>Documentos</button></div>
- <div class="panel"><h3>Despesas por Categoria <small>Ver todas ›</small></h3><div class="donut-area"><div class="donut"><b id="donutSum">—</b></div><div class="legend"><p><em></em><span>Moradia</span><b>—</b></p><p><em></em><span>Alimentação</span><b>—</b></p><p><em></em><span>Transporte</span><b>—</b></p><p><em></em><span>Lazer</span><b>—</b></p><p><em></em><span>Outros</span><b>—</b></p></div></div></div><p class="hint" id="dataStatus">Aguardando dados reais. Não serão exibidos saldos fictícios.</p>
+ <div class="banks"><div class="bank"><div class="name"><span class="bank-mark c6">C6</span> C6</div><div class="value" id="balanceC6">—</div><small>Disponível</small></div><div class="bank"><div class="name"><span class="bank-mark caju">◆</span> CAJU</div><div class="value" id="balanceCaju">—</div><small>Disponível</small></div><div class="bank"><div class="name"><span class="bank-mark itau">I</span> Itaú</div><div class="value" id="balanceItau">—</div><small>Disponível</small></div></div>
+ <div class="panel"><div class="fin-sums"><div>Receitas<strong id="monthIncome">—</strong></div><div>Despesas<strong id="monthExpense">—</strong></div></div><div class="bar" id="cashFlowBar" aria-label="Receitas e despesas do mês"></div>Saldo do mês<div class="available" id="monthNet">—</div></div>
+ <div class="shortcuts"><button data-view="chat"><span><svg class="i"><use href="#i-bot"></use></svg></span>Assessor IA</button><button data-view="agenda"><span><svg class="i"><use href="#i-calendar"></use></svg></span>Agenda Teams</button><button id="alertShortcut"><span><svg class="i"><use href="#i-bell"></use></svg></span>Alertas</button><button id="docShortcut"><span><svg class="i"><use href="#i-file"></use></svg></span>Documentos</button></div>
+ <div class="panel"><h3>Despesas por Categoria <small>Ver todas ›</small></h3><div class="donut-area"><div class="donut" id="categoryDonut"><b id="donutSum">—</b></div><div class="legend"><p><em></em><span>Moradia</span><b data-category-percent="moradia">—</b></p><p><em></em><span>Alimentação</span><b data-category-percent="alimentacao">—</b></p><p><em></em><span>Transporte</span><b data-category-percent="transporte">—</b></p><p><em></em><span>Lazer</span><b data-category-percent="lazer">—</b></p><p><em></em><span>Outros</span><b data-category-percent="outros">—</b></p></div></div></div><p class="hint" id="dataStatus">Aguardando dados reais. Não serão exibidos saldos fictícios.</p>
 </section>
 <section class="screen" id="screenChat">
- <div class="chat-head"><button class="circle" data-view="home">‹</button><div class="bot">🤖</div><div style="flex:1"><h1>Assessor IA</h1><p>Seu assistente financeiro e pessoal</p></div><button class="circle" id="chatSettings">⋯</button></div>
+ <div class="chat-head"><button class="circle" data-view="home" aria-label="Voltar"><svg class="i"><use href="#i-back"></use></svg></button><div class="bot"><svg class="i"><use href="#i-bot"></use></svg></div><div style="flex:1"><h1>Assessor IA</h1><p>Seu assistente financeiro e pessoal</p></div><button class="circle" id="chatSettings" aria-label="Mais opções"><svg class="i"><use href="#i-more"></use></svg></button></div>
  <div class="chat-scroll" id="chatMessages"><div class="bubble">Olá! Você pode enviar um texto, áudio, foto ou extrato. Vou mostrar os dados para confirmação.</div><div id="draftMount"></div></div>
- <div class="compose"><div class="compose-main"><button id="attachBtn" aria-label="Anexos">♧</button><button id="cameraBtn" aria-label="Câmera">▣</button><button id="photoBtn" aria-label="Fotos">▧</button><button id="voiceBtn" aria-label="Áudio">♩</button><input id="messageInput" aria-label="Mensagem" placeholder="Digite sua mensagem..."><button id="sendBtn" class="send" aria-label="Enviar">➤</button></div><div class="chat-shortcuts"><button id="newExpense">▤ Registrar despesa</button><button id="checkSpending">▥ Consultar gastos</button><button data-view="agenda">▦ Ver agenda</button></div></div>
+ <div class="compose"><div class="compose-main"><button id="attachBtn" aria-label="Anexos"><svg class="i"><use href="#i-paperclip"></use></svg></button><button id="cameraBtn" aria-label="Câmera"><svg class="i"><use href="#i-camera"></use></svg></button><button id="photoBtn" aria-label="Fotos"><svg class="i"><use href="#i-image"></use></svg></button><button id="voiceBtn" aria-label="Áudio"><svg class="i"><use href="#i-mic"></use></svg></button><input id="messageInput" aria-label="Mensagem" placeholder="Digite sua mensagem..."><button id="sendBtn" class="send" aria-label="Enviar"><svg class="i"><use href="#i-send"></use></svg></button></div><div class="chat-shortcuts"><button id="newExpense"><svg class="i"><use href="#i-wallet"></use></svg> Registrar despesa</button><button id="checkSpending"><svg class="i"><use href="#i-chart"></use></svg> Consultar gastos</button><button data-view="agenda"><svg class="i"><use href="#i-calendar"></use></svg> Ver agenda</button></div></div>
 </section>
 <section class="screen" id="screenAgenda">
- <div class="agenda-head"><button class="circle" data-view="home">‹</button><span style="font-size:26px;color:var(--gold)">▦</span><div style="flex:1"><h1>Agenda (Teams)</h1><p>Seus compromissos e tarefas</p></div></div>
+ <div class="agenda-head"><button class="circle" data-view="home" aria-label="Voltar"><svg class="i"><use href="#i-back"></use></svg></button><span class="agenda-icon"><svg class="i"><use href="#i-calendar"></use></svg></span><div style="flex:1"><h1>Agenda (Teams)</h1><p>Seus compromissos e tarefas</p></div></div>
  <div class="tabs"><button class="selected">Hoje</button><button>Semana</button><button>Mês</button></div>
  <div class="agenda-day"><button id="dayBack" class="circle">‹</button><b id="dayLabel"></b><button id="dayForward" class="circle">›</button></div>
  <div class="panel"><h3>Compromissos <small>Não conectado</small></h3><div class="agenda-empty">Nenhum compromisso sincronizado.<br>Teams e Google Agenda exigem autorização da conta.</div><button id="newMeeting" class="gold-button">＋ Nova reunião</button></div><div class="panel"><h3>Próximos Compromissos</h3><div class="agenda-empty">Nenhum compromisso carregado.</div></div>
 </section>
-<nav><button data-view="home" class="active"><span>⌂</span>Início</button><button id="financeBtn"><span>▣</span>Financeiro</button><button class="center" data-view="chat"><span>🤖</span>Assessor IA</button><button data-view="agenda"><span>▦</span>Agenda</button><button id="moreBtn"><span>•••</span>Mais</button></nav>
+<nav aria-label="Navegação principal"><button data-view="home" class="active"><span><svg class="i"><use href="#i-home"></use></svg></span>Início</button><button id="financeBtn"><span><svg class="i"><use href="#i-wallet"></use></svg></span>Financeiro</button><button class="center" data-view="chat"><span><svg class="i"><use href="#i-bot"></use></svg></span>Assessor IA</button><button data-view="agenda"><span><svg class="i"><use href="#i-calendar"></use></svg></span>Agenda</button><button id="moreBtn"><span><svg class="i"><use href="#i-more"></use></svg></span>Mais</button></nav>
 </main>
 <dialog id="draftDialog"><h2>Confirmar lançamento</h2><p class="hint">Confira valor, conta e classificação. A efetivação só ocorre após confirmação explícita.</p>
 <form id="draftForm"><label>Valor (R$)<input id="fieldAmount" type="number" min="0.01" step="0.01" required></label>
