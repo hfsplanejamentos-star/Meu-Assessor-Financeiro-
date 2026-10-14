@@ -135,17 +135,26 @@ public final class MainActivity extends Activity {
         FrameLayout splash = new FrameLayout(this);
         splash.setBackgroundColor(Color.rgb(4, 18, 35));
         startupSplash = splash;
-        // Use the exact user-approved JPG when packaged in assets. Never crop or redraw it.
-        // No alternative splash image or generated logo is permitted.
-        try {
-            android.graphics.Bitmap splashBitmap = android.graphics.BitmapFactory.decodeStream(
-                getAssets().open("snake_splash_aprovada.jpg"));
-            if (splashBitmap != null) {
+        // Preserve the approved JPEG (and its logo) as the original asset.
+        // The source JPG unfortunately contains a previously captured phone status bar.
+        // Neutralize only that screenshot artefact on a display copy, never in the stored file.
+        try (InputStream splashStream = getAssets().open("snake_splash_aprovada.jpg")) {
+            android.graphics.Bitmap original = android.graphics.BitmapFactory.decodeStream(splashStream);
+            if (original != null) {
+                int edgeColor = original.getPixel(0, Math.max(0, original.getHeight() / 2));
+                android.graphics.Bitmap cleaned = original.copy(android.graphics.Bitmap.Config.ARGB_8888, true);
+                if (cleaned == null) cleaned = original;
+                else {
+                    android.graphics.Paint cleanPaint = new android.graphics.Paint();
+                    cleanPaint.setColor(edgeColor);
+                    // Embedded clock, signal and battery text occupy the top ~55px of 691x1536 JPEG.
+                    // Top 76px is empty background; the original central illustration is untouched.
+                    float upperBand = cleaned.getHeight() * (76.0f / 1536.0f);
+                    new android.graphics.Canvas(cleaned).drawRect(0f, 0f,
+                            (float) cleaned.getWidth(), upperBand, cleanPaint);
+                }
                 ImageView approvedSplash = new ImageView(this);
-                approvedSplash.setImageBitmap(splashBitmap);
-                // Match uncovered space to an edge color from the original approved JPG.
-                // Keep FIT_CENTER: the original image remains intact, uncropped and unedited.
-                int edgeColor = splashBitmap.getPixel(0, Math.max(0, splashBitmap.getHeight() / 2));
+                approvedSplash.setImageBitmap(cleaned);
                 splash.setBackgroundColor(edgeColor);
                 root.setBackgroundColor(edgeColor);
                 approvedSplash.setBackgroundColor(edgeColor);
@@ -153,7 +162,7 @@ public final class MainActivity extends Activity {
                 splash.addView(approvedSplash, new FrameLayout.LayoutParams(-1, -1));
             }
         } catch (java.io.IOException missingApprovedSplash) {
-            // An absent asset must not crash app startup.
+            // An absent asset must not crash startup; dashboard fallback still works.
         }
         root.addView(splash, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
