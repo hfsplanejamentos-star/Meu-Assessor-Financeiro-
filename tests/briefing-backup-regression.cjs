@@ -25,12 +25,14 @@ function offset(iso,days){const d=new Date(iso+'T12:00:00');d.setDate(d.getDate(
 const state={
   window:{},L:transactions,PERSIST_BLOCKED:false,
   ST:{hide:false},AS:'av',
+  ALERT_CFG:{goal:{enabled:true,amount:3000},carbon:{enabled:true,limit:2500}},
   CAJU_CFG:{'2026-10':{opening:10000,reload:50000}},
   localToday:()=> '2026-10-14',
   validISO:value=>/^\d{4}-\d{2}-\d{2}$/.test(value),
   dateOffset:offset,
   accountBalance:()=>100000,
   cajuBalance:()=>25000,
+  creditUsed:()=>50000,
   financialAlerts:()=>[{text:'Vencimento R$ 100,00'}],
   escapeHTML:t=>String(t).replace(/</g,'&lt;'),
   brl:cents=>'R$ '+(cents/100).toFixed(2),
@@ -49,6 +51,10 @@ assert.equal(snapshot.spendingPerDay,10000);
 assert.equal(snapshot.earnedToday,10000);
 assert.equal(snapshot.spentToday,6500);
 assert.equal(snapshot.spentMonth,11500);
+assert.equal(snapshot.monthlyGoal,300000);
+assert.equal(snapshot.investedMonth,0);
+assert.equal(snapshot.carbonUsed,50000);
+assert.equal(snapshot.carbonLimit,250000);
 assert.equal(snapshot.due.length,1,'future expense outside the seven-day horizon must be excluded');
 assert.equal(snapshot.workPlan.days,13,'October 2026 has 13 Tue/Wed/Thu workdays');
 assert.equal(snapshot.workPlan.mealCents,52000);
