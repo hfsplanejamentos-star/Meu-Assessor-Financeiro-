@@ -63,13 +63,16 @@ final class BankAllowlist {
             // Neon
             "br.com.neon",
 
-            // Google Wallet/Pay é intencionalmente excluído: capturamos apenas
-            // a notificação da instituição financeira autorizada.
-            "com.android.vending"
+            // Google Wallet/Google Pay: capturar como fonte auxiliar de compra,
+            // sem assumir conta/cartão e sem efetivar qualquer despesa automaticamente.
+            "com.google.android.apps.walletnfcrel"
     ));
 
     static boolean contains(Context context, String packageName) {
         if (packageName == null) return false;
+        // Google Play Store não é carteira de pagamentos: nunca capturar.
+        // Também impede que uma instalação antiga a mantenha nos pacotes salvos.
+        if ("com.android.vending".equals(packageName)) return false;
         SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         if (preferences.getStringSet(KEY_DISABLED, new HashSet<>()).contains(packageName)) return false;
         if (packages(context).contains(packageName)) return true;
