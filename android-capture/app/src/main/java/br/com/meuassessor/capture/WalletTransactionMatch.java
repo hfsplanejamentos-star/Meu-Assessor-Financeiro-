@@ -30,7 +30,7 @@ final class WalletTransactionMatch {
         // Google Wallet is card/contactless. A bank Pix event is a distinct payment,
         // even if its amount, recipient/merchant and minute happen to match.
         String bankDescription = firstWallet ? titleB + " " + textB : titleA + " " + textA;
-        if (Pattern.compile("(?iu)\\\\bpix\\\\b").matcher(bankDescription).find()) return false;
+        if (Pattern.compile("(?iu)\\bpix\\b").matcher(bankDescription).find()) return false;
         if (Math.abs(timestampA - timestampB) > MAX_TIME_DIFFERENCE_MS) return false;
         String a = merchant(titleA + " " + textA);
         String b = merchant(titleB + " " + textB);
