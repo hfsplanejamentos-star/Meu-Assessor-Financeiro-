@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - "tests/snake-finance-regression.cjs"
+      - "tests/snake-backup-export-regression.cjs"
       - "snake-finance-mobile.html"
       - "android-capture/app/src/main/assets/snake-finance-mobile.html"
       - ".github/workflows/snake-finance-regression.yml"
@@ -12,6 +13,7 @@ on:
     branches: [main]
     paths:
       - "tests/snake-finance-regression.cjs"
+      - "tests/snake-backup-export-regression.cjs"
       - "snake-finance-mobile.html"
       - "android-capture/app/src/main/assets/snake-finance-mobile.html"
       - ".github/workflows/snake-finance-regression.yml"
@@ -27,3 +29,5 @@ jobs:
           node-version: "22"
       - name: Financial and UI logic regression
         run: node tests/snake-finance-regression.cjs
+      - name: Backup JSON and data isolation regression
+        run: node tests/snake-backup-export-regression.cjs
