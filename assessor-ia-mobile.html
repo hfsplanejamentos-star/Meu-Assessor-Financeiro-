@@ -135,6 +135,7 @@ dialog{border-radius:20px;box-shadow:0 18px 64px #000a}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;transition-duration:.001ms!important}}
 
 </style>
+<link rel="stylesheet" href="./assessor-brand-assets.css">
 </head>
 <body data-theme="dourado">
 <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" class="icon-sprite"><defs>
@@ -155,16 +156,29 @@ dialog{border-radius:20px;box-shadow:0 18px 64px #000a}
 <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 4-8 8 8 8"/></symbol>
 </defs></svg>
 <main>
-<header class="top" id="topHome"><span class="logo">S</span><div><strong>SNAKE FINANCE</strong><small>MEU ASSESSOR IA</small></div><div class="tools"><button id="alertBtn" class="circle" aria-label="Notificações"><svg class="i"><use href="#i-bell"></use></svg></button><button class="circle" id="settingsBtn" aria-label="Configurações"><svg class="i"><use href="#i-settings"></use></svg></button></div></header>
+<header class="top assessor-top" id="topHome">
+ <div class="assessor-top-row">
+  <button id="menuBtn" class="menu-trigger" aria-label="Abrir menu">☰</button>
+  <div class="assessor-brand"><span class="snakeMark assessorLogo" aria-label="Logo original Snake Finance" role="img"></span><div class="assessor-wordmark"><strong>SNAKE <em>FINANCE</em></strong><small>ASSESSOR FINANCEIRO IA</small></div></div>
+  <button id="brainBtn" class="assessor-brain-button" data-view="chat" aria-label="Abrir Assessor IA com cérebro dourado"><span class="orb"><span class="assessor-brain-approved"></span></span><span>IA</span></button>
+  <button id="alertBtn" class="circle" aria-label="Notificações"><svg class="i"><use href="#i-bell"></use></svg></button>
+ </div>
+ <div class="assessor-toolbar"><span class="assessor-toolbar-label">Painel financeiro</span><div class="assessor-theme-dots" role="group" aria-label="Cores do aplicativo">
+  <button class="assessor-theme-dot" data-theme-shortcut="dourado" aria-label="Tema Dourado" aria-pressed="true"></button>
+  <button class="assessor-theme-dot" data-theme-shortcut="limao" aria-label="Tema Limão" aria-pressed="false"></button>
+  <button class="assessor-theme-dot" data-theme-shortcut="branco" aria-label="Tema Branco" aria-pressed="false"></button></div>
+  <button class="circle" id="settingsBtn" aria-label="Configurações"><svg class="i"><use href="#i-settings"></use></svg></button>
+ </div>
+</header>
 <section class="screen active" id="screenHome">
  <div class="month"><button id="prevMonth">‹</button><b id="monthLabel">Outubro 2026</b><button id="nextMonth">›</button></div>
  <div class="banks"><div class="bank"><div class="name"><span class="bank-mark c6">C6</span> C6</div><div class="value" id="balanceC6">—</div><small>Disponível</small></div><div class="bank"><div class="name"><span class="bank-mark caju">◆</span> CAJU</div><div class="value" id="balanceCaju">—</div><small>Disponível</small></div><div class="bank"><div class="name"><span class="bank-mark itau">I</span> Itaú</div><div class="value" id="balanceItau">—</div><small>Disponível</small></div></div>
  <div class="panel"><div class="fin-sums"><div>Receitas<strong id="monthIncome">—</strong></div><div>Despesas<strong id="monthExpense">—</strong></div></div><div class="bar" id="cashFlowBar" aria-label="Receitas e despesas do mês"></div>Saldo do mês<div class="available" id="monthNet">—</div></div>
- <div class="shortcuts"><button data-view="chat"><span><svg class="i"><use href="#i-bot"></use></svg></span>Assessor IA</button><button data-view="agenda"><span><svg class="i"><use href="#i-calendar"></use></svg></span>Agenda Teams</button><button id="alertShortcut"><span><svg class="i"><use href="#i-bell"></use></svg></span>Alertas</button><button id="docShortcut"><span><svg class="i"><use href="#i-file"></use></svg></span>Documentos</button></div>
+ <div class="shortcuts"><button data-view="chat"><span class="assessor-orb-shortcut"><span class="assessor-brain-approved"></span></span>Assessor IA</button><button data-view="agenda"><span><svg class="i"><use href="#i-calendar"></use></svg></span>Agenda Teams</button><button id="alertShortcut"><span><svg class="i"><use href="#i-bell"></use></svg></span>Alertas</button><button id="docShortcut"><span><svg class="i"><use href="#i-file"></use></svg></span>Documentos</button></div>
  <div class="panel"><h3>Despesas por Categoria <small>Ver todas ›</small></h3><div class="donut-area"><div class="donut" id="categoryDonut"><b id="donutSum">—</b></div><div class="legend"><p><em></em><span>Moradia</span><b data-category-percent="moradia">—</b></p><p><em></em><span>Alimentação</span><b data-category-percent="alimentacao">—</b></p><p><em></em><span>Transporte</span><b data-category-percent="transporte">—</b></p><p><em></em><span>Lazer</span><b data-category-percent="lazer">—</b></p><p><em></em><span>Outros</span><b data-category-percent="outros">—</b></p></div></div></div><p class="hint" id="dataStatus">Aguardando dados reais. Não serão exibidos saldos fictícios.</p>
 </section>
 <section class="screen" id="screenChat">
- <div class="chat-head"><button class="circle" data-view="home" aria-label="Voltar"><svg class="i"><use href="#i-back"></use></svg></button><div class="bot"><svg class="i"><use href="#i-bot"></use></svg></div><div style="flex:1"><h1>Assessor IA</h1><p>Seu assistente financeiro e pessoal</p></div><button class="circle" id="chatSettings" aria-label="Mais opções"><svg class="i"><use href="#i-more"></use></svg></button></div>
+ <div class="chat-head"><button class="circle" data-view="home" aria-label="Voltar"><svg class="i"><use href="#i-back"></use></svg></button><div class="bot assessor-orb-chat"><span class="assessor-brain-approved"></span></div><div style="flex:1"><h1>Assessor IA</h1><p>Seu assistente financeiro e pessoal</p></div><button class="circle" id="chatSettings" aria-label="Mais opções"><svg class="i"><use href="#i-more"></use></svg></button></div>
  <div class="chat-scroll" id="chatMessages"><div class="bubble">Olá! Você pode enviar um texto, áudio, foto ou extrato. Vou mostrar os dados para confirmação.</div><div id="draftMount"></div></div>
  <div class="compose"><div class="compose-main"><button id="attachBtn" aria-label="Anexos"><svg class="i"><use href="#i-paperclip"></use></svg></button><button id="cameraBtn" aria-label="Câmera"><svg class="i"><use href="#i-camera"></use></svg></button><button id="photoBtn" aria-label="Fotos"><svg class="i"><use href="#i-image"></use></svg></button><button id="voiceBtn" aria-label="Áudio"><svg class="i"><use href="#i-mic"></use></svg></button><input id="messageInput" aria-label="Mensagem" placeholder="Digite sua mensagem..."><button id="sendBtn" class="send" aria-label="Enviar"><svg class="i"><use href="#i-send"></use></svg></button></div><div class="chat-shortcuts"><button id="newExpense"><svg class="i"><use href="#i-wallet"></use></svg> Registrar despesa</button><button id="checkSpending"><svg class="i"><use href="#i-chart"></use></svg> Consultar gastos</button><button data-view="agenda"><svg class="i"><use href="#i-calendar"></use></svg> Ver agenda</button></div></div>
 </section>
@@ -174,7 +188,7 @@ dialog{border-radius:20px;box-shadow:0 18px 64px #000a}
  <div class="agenda-day"><button id="dayBack" class="circle">‹</button><b id="dayLabel"></b><button id="dayForward" class="circle">›</button></div>
  <div class="panel"><h3>Compromissos <small>Não conectado</small></h3><div class="agenda-empty">Nenhum compromisso sincronizado.<br>Teams e Google Agenda exigem autorização da conta.</div><button id="newMeeting" class="gold-button">＋ Nova reunião</button></div><div class="panel"><h3>Próximos Compromissos</h3><div class="agenda-empty">Nenhum compromisso carregado.</div></div>
 </section>
-<nav aria-label="Navegação principal"><button data-view="home" class="active"><span><svg class="i"><use href="#i-home"></use></svg></span>Início</button><button id="financeBtn"><span><svg class="i"><use href="#i-wallet"></use></svg></span>Financeiro</button><button class="center" data-view="chat"><span><svg class="i"><use href="#i-bot"></use></svg></span>Assessor IA</button><button data-view="agenda"><span><svg class="i"><use href="#i-calendar"></use></svg></span>Agenda</button><button id="moreBtn"><span><svg class="i"><use href="#i-more"></use></svg></span>Mais</button></nav>
+<nav aria-label="Navegação principal"><button data-view="home" class="active"><span><svg class="i"><use href="#i-home"></use></svg></span>Início</button><button id="financeBtn"><span><svg class="i"><use href="#i-wallet"></use></svg></span>Financeiro</button><button class="center" data-view="chat"><span class="assessor-nav-orb"><span class="assessor-brain-approved"></span></span>Assessor IA</button><button data-view="agenda"><span><svg class="i"><use href="#i-calendar"></use></svg></span>Agenda</button><button id="moreBtn"><span><svg class="i"><use href="#i-more"></use></svg></span>Mais</button></nav>
 </main>
 <dialog id="draftDialog"><h2>Confirmar lançamento</h2><p class="hint">Confira valor, conta e classificação. A efetivação só ocorre após confirmação explícita.</p>
 <form id="draftForm"><label>Valor (R$)<input id="fieldAmount" type="number" min="0.01" step="0.01" required></label>
