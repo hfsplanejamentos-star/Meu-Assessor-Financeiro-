@@ -616,6 +616,10 @@ public final class MainActivity extends Activity {
                         throw new java.io.IOException("Backup temporário indisponível");
                     }
                     if (bytes.length < 20) throw new java.io.IOException("Conteúdo JSON vazio");
+                    // Prevent a previous staged export from silently replacing the current backup.
+                    if (json != null && !java.util.Arrays.equals(
+                            bytes, json.getBytes(java.nio.charset.StandardCharsets.UTF_8)))
+                        throw new java.io.IOException("Backup temporário não corresponde à exportação solicitada");
                     Uri target = data.getData();
                     try (java.io.OutputStream out = getContentResolver().openOutputStream(target, "wt")) {
                         if (out == null) throw new java.io.IOException("Destino indisponível");
@@ -648,7 +652,7 @@ public final class MainActivity extends Activity {
                     }
                     staged.delete();
                     android.widget.Toast.makeText(this,
-                        "Backup confirmado e verificado: " + actual + " bytes", android.widget.Toast.LENGTH_LONG).show();
+                        "Backup confirmado e verificado: " + bytes.length + " bytes", android.widget.Toast.LENGTH_LONG).show();
                 } catch (Exception e) {
                     android.widget.Toast.makeText(this,
                         "Backup NÃO confirmado: " + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
