@@ -1,0 +1,38 @@
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const read=p=>fs.readFileSync(p,"utf8");
+const src=read("snake-finance-mobile.html");
+const css=read("assessor-brand-assets.css");
+const html=read("assessor-ia-mobile.html");
+const ui=read("assessor-mobile-screen.js");
+const gradle=read("android-capture/app/build.gradle.kts");
+const builder=read("scripts/build-assessor-standalone.cjs");
+const bundled=read("Assessor_IA_Mobile_Validacao_Standalone.html");
+const match=src.match(/\.snakeMark\{[^}]+\}/);
+assert(match,"Snake Finance source logo sprite not found");
+assert(css.includes(match[0]),"Assessor must reuse EXACT Snake Finance logo sprite; no approximate 'S'");
+assert(css.includes("data:image/webp;base64,"),"Option 1 gold circuit-brain approved screenshot must be embedded");
+assert(css.includes(".assessor-brain-approved"),"Approved brain icon style not installed");
+assert(html.includes("class=\"snakeMark assessorLogo\""),"Header must show original S");
+assert(html.includes("assessor-brain-approved"),"Header, chat and floating nav must show approved brain");
+assert(html.includes('id="menuBtn"'),"Menu button must exist");
+assert(html.includes('id="brainBtn"'),"IA shortcut must be wired");
+for(const t of ["dourado","limao","branco"]){
+ assert(html.includes('data-theme-shortcut="'+t+'"'),"Quick theme missing: "+t);
+ assert(html.includes('data-theme-option="'+t+'"'),"Settings theme missing: "+t);
+}
+assert(ui.includes('document.querySelectorAll("[data-theme-shortcut]")'),"Quick themes must have JS event handlers");
+assert(ui.includes('document.querySelectorAll("[data-theme-option]")'),"Settings themes must share theme state");
+assert(ui.includes('b.setAttribute("aria-pressed"'),"Theme button selection must be accessible");
+assert(ui.includes('localStorage.setItem("snake_assessor_theme",t)'),"Theme preference should persist");
+assert(ui.includes('$("menuBtn").onclick=settings'),"Menu button must open settings");
+assert(!ui.includes('document.querySelector(".status span")'),"Obsolete faux Android clock must not crash app startup");
+assert(html.includes('<link rel="stylesheet" href="./assessor-brand-assets.css">'));
+assert(gradle.includes('previewRoot.resolve("assessor-brand-assets.css")'),"APK must include exact logo CSS");
+assert(gradle.includes('page.replace(cssMarker, "<style>'),"APK must inline branding in offline WebView");
+assert(builder.includes("data:image/webp;base64,"),"Standalone build must verify brain icon");
+assert(bundled.includes('<style data-source="assessor-brand-assets.css">'),"Single HTML must include approved logo and IA image");
+assert(!/<script\b[^>]*\bsrc=/.test(bundled),"Single file cannot require external JS scripts");
+assert(!/<link\b[^>]*\bhref=/.test(bundled),"Single file cannot require external CSS");
+assert(bundled.includes('SNAKE_ASSESSOR_PREVIEW_ONLY'),"Preview-only mode must remain safe");
+console.log("Brand option 1: exact Snake logo, approved circuit brain, 3 themes, offline Android and standalone HTML PASS");
