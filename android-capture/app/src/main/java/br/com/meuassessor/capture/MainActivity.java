@@ -351,6 +351,11 @@ public final class MainActivity extends Activity {
 
     private WebView buildWebView() {
         WebView value = new WebView(this);
+        if (BuildConfig.DEBUG) {
+            // Matches the approved Dourado background while the HTML loads.
+            // Prevents a white flash between biometric unlock and the IA UI.
+            value.setBackgroundColor(Color.parseColor("#090A08"));
+        }
         WebSettings settings = value.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
