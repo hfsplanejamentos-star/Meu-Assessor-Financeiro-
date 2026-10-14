@@ -71,6 +71,22 @@ public final class MainActivity extends Activity {
             try {
                 byte[] content = json.getBytes(java.nio.charset.StandardCharsets.UTF_8);
                 if (content.length < 20) throw new java.io.IOException("JSON sem conteúdo");
+                // Reject malformed or incomplete exports before opening Android's file picker.
+                org.json.JSONObject backup;
+                try { backup = new org.json.JSONObject(json); }
+                catch (org.json.JSONException invalid) { throw new java.io.IOException("JSON inválido", invalid); }
+                String schema = backup.optString("schema", "");
+                if ("snake-finance-backup".equals(schema)) {
+                    if (!(backup.opt("ledger") instanceof org.json.JSONArray)
+                            || !(backup.opt("storage") instanceof org.json.JSONObject))
+                        throw new java.io.IOException("Backup financeiro incompleto: lançamentos ou armazenamento ausentes");
+                } else if ("snake-finance-raw-recovery".equals(schema)) {
+                    org.json.JSONObject storage = backup.optJSONObject("storage");
+                    if (storage == null || storage.length() == 0)
+                        throw new java.io.IOException("Resgate bruto sem dados armazenados");
+                } else {
+                    throw new java.io.IOException("Formato de backup não reconhecido");
+                }
                 java.io.File tmp = new java.io.File(getFilesDir(), BACKUP_PENDING_FILE + ".tmp");
                 try (java.io.FileOutputStream out = new java.io.FileOutputStream(tmp)) {
                     out.write(content);
