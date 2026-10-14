@@ -616,7 +616,9 @@ public final class MainActivity extends Activity {
                             if (c != null && c.moveToFirst() && !c.isNull(0)) actual = c.getLong(0);
                         }
                     }
-                    if (actual != bytes.length) throw new java.io.IOException(
+                    // Some document providers cannot report size (statSize=-1 and SIZE=null).
+                    // A successful SHA-256 readback below remains mandatory for confirmation.
+                    if (actual >= 0 && actual != bytes.length) throw new java.io.IOException(
                         "Arquivo não confirmado: esperado " + bytes.length + " B, encontrado " + actual + " B");
                     try (java.io.InputStream check = getContentResolver().openInputStream(target)) {
                         if (check == null) throw new java.io.IOException("Arquivo exportado não pode ser reaberto");
@@ -630,7 +632,7 @@ public final class MainActivity extends Activity {
                     }
                     staged.delete();
                     android.widget.Toast.makeText(this,
-                        "Backup confirmado e verificado: " + actual + " bytes", android.widget.Toast.LENGTH_LONG).show();
+                        "Backup confirmado e verificado: " + bytes.length + " bytes", android.widget.Toast.LENGTH_LONG).show();
                 } catch (Exception e) {
                     android.widget.Toast.makeText(this,
                         "Backup NÃO confirmado: " + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
