@@ -2315,7 +2315,23 @@ function completeBackupCategories(categories,ledger){
 }
 function backupState(){const storage={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if((k.startsWith('assessor_')||['lay','tema'].includes(k))&&!/backup|pre_import/.test(k))storage[k]=localStorage.getItem(k);}Object.assign(storage,{[OPENING_KEY]:JSON.stringify(OPENING_CFG),[GOAL_STORE]:JSON.stringify(INVEST_GOALS),assessor_inv_v82:JSON.stringify(INV_CFG),[CATSTORE]:JSON.stringify(completeBackupCategories(CATDB,L).categories),[CAJU_CFG_KEY]:JSON.stringify(CAJU_CFG),[ALERT_KEY]:JSON.stringify(ALERT_CFG),[NOTICE_KEY]:JSON.stringify(ST),[OVERVIEW_KEY]:JSON.stringify(OVERVIEW_VISIBLE),assessor_budgets_v82:JSON.stringify(ORC)});return {schema:'snake-finance-backup',version:2,app:'v82-android',createdAt:new Date().toISOString(),ledger:L,storage};}
 function saveSafetyBackup(){try{localStorage.setItem('assessor_pre_import_v82',JSON.stringify(backupState()))}catch(e){throw Error('Sem espaço para backup de segurança. Exporte um backup antes de continuar.');}}
-function exportBackup(){const native=window.AndroidBridge||window.AndroidApp;if(native&&typeof native.exportBackup==='function'){native.exportBackup(JSON.stringify(backupState(),null,2),'Snake_Finance_Backup_'+localToday()+'.json');return;}const blob=new Blob([JSON.stringify(backupState(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Snake_Finance_Backup_'+localToday()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+function exportBackup(){
+ try{
+  const snapshot=backupState();
+  if(!Array.isArray(snapshot.ledger))throw Error('Não foi possível ler os lançamentos.');
+  // Never export a seemingly valid empty ledger without explicitly warning.
+  if(snapshot.ledger.length===0&&!confirm('Este aplicativo está exibindo ZERO lançamentos. Não substitua sua Base Original com este arquivo. Deseja exportar apenas para diagnóstico?'))return;
+  const json=JSON.stringify(snapshot,null,2);
+  const name='Snake_Finance_Backup_'+localToday()+'.json';
+  if(!json||new Blob([json],{type:'application/json'}).size<20)throw Error('Conteúdo de backup vazio. Nenhum arquivo será gerado.');
+  const native=window.AndroidBridge||window.AndroidApp;
+  if(native&&typeof native.exportBackup==='function'){native.exportBackup(json,name);return;}
+  const blob=new Blob([json],{type:'application/json'}),a=document.createElement('a');
+  const url=URL.createObjectURL(blob);
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
+ }catch(e){alert('Falha ao exportar backup: '+e.message);}
+}
 function exportPreservedLedger(){const native=window.AndroidBridge||window.AndroidApp;if(native&&typeof native.exportPreservedLedger==='function')native.exportPreservedLedger();else alert('Cópia interna não disponível nesta versão.');}
 function exportRawRecovery(){
  const storage={};
