@@ -72,6 +72,33 @@ state.PERSIST_BLOCKED=false;
 state.L=[];
 assert.equal(state.window.SnakeDailyBriefing.snapshot().ready,false,'empty database must not render zeroed briefing');
 
+// Reconciliation must continue to work after the original bank notification
+// has been saved and acknowledged (therefore removed from the native queue).
+const begin=web.indexOf('function captureMerchant(value)');
+const finish=web.indexOf('function normalized(source)',begin);
+assert.ok(begin>0&&finish>begin,'Wallet reconciliation helpers must be present');
+const matcherContext={L:[{
+  id:77,d:'2026-10-14',t:'d',s:'r',v:5000,a:'c6',
+  n:'Compra aprovada em Posto Trevo',
+  captureSourcePackage:'com.c6bank.app',capturePostedAt:1000000,
+  captureMerchant:'posto trevo'
+}]};
+vm.createContext(matcherContext);
+vm.runInContext(web.slice(begin,finish),matcherContext);
+const wallet=(text,when=1030000)=>({
+  source:'bank',sourcePackage:'com.google.android.apps.walletnfcrel',
+  direction:'expense',title:'Pagamento realizado',text,postedAt:when
+});
+const draft={type:'d',amount:5000,day:'2026-10-14'};
+assert.equal(matcherContext.recordedWalletMatch(
+  wallet('Você pagou R$ 50,00 em POSTO TREVO'),draft).id,77);
+assert.equal(matcherContext.recordedWalletMatch(
+  wallet('Você pagou R$ 50,00 em OUTRO MERCADO'),draft),null,'different merchant must not match');
+assert.equal(matcherContext.recordedWalletMatch(
+  wallet('Você pagou R$ 50,00 em POSTO TREVO',1500000),draft),null,'different time must not match');
+assert.equal(matcherContext.recordedWalletMatch({
+  ...wallet('Pix de R$ 50,00 para POSTO TREVO'),title:'Pix recebido'},draft),null,'Pix must not match card spending');
+
 const native=fs.readFileSync('android-capture/app/src/main/java/br/com/meuassessor/capture/DailyFinanceReminder.java','utf8');
 assert.match(native,/private static final int MORNING = 1108/);
 assert.match(native,/private static final int EVENING = 1109/);
