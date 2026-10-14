@@ -394,6 +394,17 @@ public final class MainActivity extends Activity {
     protected void onDestroy(){ if(queueReceiverRegistered){try{unregisterReceiver(queueReceiver);}catch(Exception ignored){}queueReceiverRegistered=false;} super.onDestroy(); }
 
     @Override
+    public void onConfigurationChanged(android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // Keep the existing authenticated WebView and its financial UI state.
+        // Android recalculates the viewport without reopening the splash screen.
+        if (webView != null) {
+            webView.requestLayout();
+            webView.invalidate();
+        }
+    }
+
+    @Override
     protected void onStart() {
         super.onStart();
         BankNotificationListener.reconnect(this);
