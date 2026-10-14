@@ -127,7 +127,7 @@ public final class MainActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         FrameLayout splash = new FrameLayout(this);
-        splash.setBackgroundColor(Color.BLACK);
+        splash.setBackgroundColor(Color.parseColor("#071221"));
         startupSplash = splash;
         // Use the exact user-approved JPG when packaged in assets. Never crop or redraw it.
         // No alternative splash image or generated logo is permitted.
@@ -137,7 +137,7 @@ public final class MainActivity extends Activity {
             if (splashBitmap != null) {
                 ImageView approvedSplash = new ImageView(this);
                 approvedSplash.setImageBitmap(splashBitmap);
-                approvedSplash.setBackgroundColor(Color.BLACK);
+                approvedSplash.setBackgroundColor(Color.parseColor("#071221"));
                 approvedSplash.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 splash.addView(approvedSplash, new FrameLayout.LayoutParams(-1, -1));
             }
@@ -558,6 +558,20 @@ public final class MainActivity extends Activity {
             }
         });
         return value;
+    }
+
+    // Keep the existing WebView and authenticated session when the device rotates.
+    // The view relayouts without replaying the startup splash or biometrics.
+    @Override
+    public void onConfigurationChanged(android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (webView != null) {
+            webView.post(() -> {
+                webView.requestLayout();
+                webView.evaluateJavascript(
+                        "window.dispatchEvent(new Event('resize'))", null);
+            });
+        }
     }
 
     @Override

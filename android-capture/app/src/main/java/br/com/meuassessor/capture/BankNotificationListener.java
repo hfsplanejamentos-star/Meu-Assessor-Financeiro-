@@ -43,9 +43,13 @@ public final class BankNotificationListener extends NotificationListenerService 
                     lines(e.getCharSequenceArray(Notification.EXTRA_TEXT_LINES))
             );
         }
-        saveRawDiagnostic(pkg,title,body,status.getPostTime());
         boolean allowed=BankAllowlist.contains(this,pkg);
-        if(!allowed){saveDiagnostic(pkg,false,false,"Ignorada: aplicativo não autorizado",title,body,null,null,"");return;}
+        if(!allowed){
+            // Never persist notification title/body from unauthorized applications.
+            saveDiagnostic(pkg,false,false,"Ignorada: aplicativo não autorizado","","",null,null,"");
+            return;
+        }
+        saveRawDiagnostic(pkg,title,body,status.getPostTime());
         if(n==null){saveDiagnostic(pkg,true,false,"Ignorada: notificação sem conteúdo",title,body,null,null,"");return;}
         boolean financial=NotificationParser.looksFinancial(title,body);
         CapturedNotification event=NotificationParser.parse(pkg,title,body,status.getPostTime());

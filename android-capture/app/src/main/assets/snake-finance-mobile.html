@@ -2315,7 +2315,7 @@ function completeBackupCategories(categories,ledger){
 }
 function backupState(){const storage={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if((k.startsWith('assessor_')||['lay','tema'].includes(k))&&!/backup|pre_import/.test(k))storage[k]=localStorage.getItem(k);}Object.assign(storage,{[OPENING_KEY]:JSON.stringify(OPENING_CFG),[GOAL_STORE]:JSON.stringify(INVEST_GOALS),assessor_inv_v82:JSON.stringify(INV_CFG),[CATSTORE]:JSON.stringify(completeBackupCategories(CATDB,L).categories),[CAJU_CFG_KEY]:JSON.stringify(CAJU_CFG),[ALERT_KEY]:JSON.stringify(ALERT_CFG),[NOTICE_KEY]:JSON.stringify(ST),[OVERVIEW_KEY]:JSON.stringify(OVERVIEW_VISIBLE),assessor_budgets_v82:JSON.stringify(ORC)});return {schema:'snake-finance-backup',version:2,app:'v82-android',createdAt:new Date().toISOString(),ledger:L,storage};}
 function saveSafetyBackup(){try{localStorage.setItem('assessor_pre_import_v82',JSON.stringify(backupState()))}catch(e){throw Error('Sem espaço para backup de segurança. Exporte um backup antes de continuar.');}}
-function exportBackup(){const native=window.AndroidBridge||window.AndroidApp;if(native&&typeof native.exportBackup==='function'){native.exportBackup(JSON.stringify(backupState(),null,2),'Snake_Finance_Backup_'+localToday()+'.json');return;}const blob=new Blob([JSON.stringify(backupState(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Snake_Finance_Backup_'+localToday()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+function exportBackup(){if(!Array.isArray(L)||!L.length){alert('Backup completo indisponível: nenhum lançamento foi carregado. Exporte o resgate bruto ou a cópia interna preservada; não gere um backup vazio sobre seus dados.');openBackupPanel();return;}const native=window.AndroidBridge||window.AndroidApp;if(native&&typeof native.exportBackup==='function'){native.exportBackup(JSON.stringify(backupState(),null,2),'Snake_Finance_Backup_'+localToday()+'.json');return;}const blob=new Blob([JSON.stringify(backupState(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Snake_Finance_Backup_'+localToday()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 function exportPreservedLedger(){const native=window.AndroidBridge||window.AndroidApp;if(native&&typeof native.exportPreservedLedger==='function')native.exportPreservedLedger();else alert('Cópia interna não disponível nesta versão.');}
 function exportRawRecovery(){
  const storage={};
@@ -2332,7 +2332,7 @@ function exportRawRecovery(){
 function openBackupPanel(){document.getElementById('settingsPop')?.classList.remove('on');modal('Backup e importação',`<p class="m">Exporte no arquivo anterior e importe neste. O backup inclui lançamentos, saldos iniciais, categorias, metas, alertas e preferências deste navegador. Guarde o JSON em local privado.</p><button class="bt p" onclick="exportBackup()">Exportar backup completo</button><button class="bt" onclick="exportRawRecovery()">Resgate de emergência · exportar armazenamento original sem alterar dados</button><button class="bt" onclick="exportPreservedLedger()">Exportar cópia interna preservada (se disponível)</button><label class="fm">Importar JSON<input type="file" accept=".json,application/json" onchange="readBackupFile(this.files[0])"></label><p class="m">A importação valida os dados antes de substituir. Uma cópia local de segurança é criada. Bases legadas em lista importam somente lançamentos.</p><button class="bt" onclick="restoreSafetyBackup()">Revisar última cópia de segurança</button>`);}
 let BACKUP_PENDING=null;
 async function readBackupFile(file){if(!file)return;if(file.size>20*1024*1024)return alert('Arquivo maior que 20 MB.');try{previewBackup(JSON.parse(await file.text()))}catch(e){BACKUP_PENDING=null;alert('Importação recusada: '+e.message);}}
-function previewBackup(data){BACKUP_PENDING=null;const isLegacy=Array.isArray(data);const legacyObject=!isLegacy&&data&&typeof data==='object'&&data.schema!=='snake-finance-backup';let legacyLedger=null,legacyStorage={};if(legacyObject){legacyLedger=Array.isArray(data.ledger)?data.ledger:Array.isArray(data.transactions)?data.transactions:Array.isArray(data.lancamentos)?data.lancamentos:Array.isArray(data.data)?data.data:null;const src=data.storage||data.localStorage||data.preferences||data.config||{};if(src&&typeof src==='object'&&!Array.isArray(src))for(const[k,v]of Object.entries(src))legacyStorage[k]=typeof v==='string'?v:JSON.stringify(v);if(!legacyLedger)throw Error('Formato legado reconhecido, mas não encontrei a lista de lançamentos.');}if(!isLegacy&&!legacyObject&&(data?.schema!=='snake-finance-backup'||![1,2].includes(data.version)||!data.storage||typeof data.storage!=='object'||Array.isArray(data.storage)))throw Error('Formato de backup não reconhecido');const ledger=validateLedger(isLegacy?data:legacyObject?legacyLedger:data.ledger),storage=isLegacy?{}:legacyObject?legacyStorage:{...data.storage};for(const [key,value]of Object.entries(storage)){if((!key.startsWith('assessor_')&&!['lay','tema'].includes(key))||typeof value!=='string'||value.length>20000000)throw Error('Preferência inválida');validatePreference(key,value);}if(!isLegacy&&!legacyObject&&data.version===2&&!storage[OPENING_KEY])throw Error('Backup incompleto: faltam saldos iniciais');if(window.SNAKE_DISTRIBUTABLE&&!storage[OPENING_KEY]&&!legacyObject&&!isLegacy)throw Error('Para migrar ao Android, exporte um backup completo no HTML atualizado. Backups antigos não incluem os saldos iniciais.');const resolved=completeBackupCategories(storage[CATSTORE]?JSON.parse(storage[CATSTORE]):CATDB,ledger);
+function previewBackup(data){BACKUP_PENDING=null;const isLegacy=Array.isArray(data);const legacyObject=!isLegacy&&data&&typeof data==='object'&&data.schema!=='snake-finance-backup';let legacyLedger=null,legacyStorage={};if(legacyObject){legacyLedger=Array.isArray(data.ledger)?data.ledger:Array.isArray(data.transactions)?data.transactions:Array.isArray(data.lancamentos)?data.lancamentos:Array.isArray(data.data)?data.data:null;const src=data.storage||data.localStorage||data.preferences||data.config||{};if(src&&typeof src==='object'&&!Array.isArray(src))for(const[k,v]of Object.entries(src))if(k.startsWith('assessor_')||['lay','tema'].includes(k))legacyStorage[k]=typeof v==='string'?v:JSON.stringify(v);if(!legacyLedger&&data.schema==='snake-finance-raw-recovery'){try{const raw=legacyStorage[LEDGER_KEY]||legacyStorage.assessor_tx;const values=JSON.parse(raw||'null');if(Array.isArray(values)&&values.length)legacyLedger=values;}catch(e){throw Error('Resgate bruto contém lançamentos ilegíveis; nenhum dado foi alterado.');}}if(!legacyLedger)throw Error('Formato legado reconhecido, mas não encontrei a lista de lançamentos.');}if(!isLegacy&&!legacyObject&&(data?.schema!=='snake-finance-backup'||![1,2].includes(data.version)||!data.storage||typeof data.storage!=='object'||Array.isArray(data.storage)))throw Error('Formato de backup não reconhecido');const ledger=validateLedger(isLegacy?data:legacyObject?legacyLedger:data.ledger);if(!ledger.length)throw Error('Backup sem lançamentos: importação bloqueada para proteger os valores atuais.');const storage=isLegacy?{}:legacyObject?legacyStorage:{...data.storage};for(const [key,value]of Object.entries(storage)){if((!key.startsWith('assessor_')&&!['lay','tema'].includes(key))||typeof value!=='string'||value.length>20000000)throw Error('Preferência inválida');validatePreference(key,value);}if(!isLegacy&&!legacyObject&&data.version===2&&!storage[OPENING_KEY])throw Error('Backup incompleto: faltam saldos iniciais');if(window.SNAKE_DISTRIBUTABLE&&!storage[OPENING_KEY]&&!legacyObject&&!isLegacy)throw Error('Para migrar ao Android, exporte um backup completo no HTML atualizado. Backups antigos não incluem os saldos iniciais.');const resolved=completeBackupCategories(storage[CATSTORE]?JSON.parse(storage[CATSTORE]):CATDB,ledger);
  if(resolved.missing.length)throw Error('Categorias não encontradas: '+resolved.missing.join(', ')+'. Exporte novamente na versão de origem com essas categorias cadastradas.');
  if(!isLegacy||resolved.recovered.length)storage[CATSTORE]=JSON.stringify(resolved.categories);
  BACKUP_PENDING={ledger,storage};modal('Conferir importação',`<p>${ledger.length} lançamentos validados.</p><p class="m">${(isLegacy||legacyObject)?'Base legada reconhecida: os dados compatíveis serão migrados e as preferências ausentes serão preservadas.':'Backup completo: também substitui as preferências incluídas.'} Confira a origem do arquivo e seus totais após importar.</p>${resolved.recovered.length?'<p>Categorias padrão recuperadas: '+resolved.recovered.map(k=>escapeHTML(resolved.categories[k].name)).join(', ')+'.</p>':''}<button class="bt p" onclick="applyBackup()">Importar dados validados</button><button class="bt" onclick="BACKUP_PENDING=null;closeModal()">Cancelar</button>`);return BACKUP_PENDING;}
@@ -2486,6 +2486,28 @@ html[data-tema] #app{padding-bottom:120px!important}
   function rows(source){return source==='bank'?pending:waItems;}
   function captureKey(e){return e.source+':'+e.id;}
   function recorded(e){return L.find(x=>x.captureId===captureKey(e));}
+
+  function captureMerchant(value){
+    const normalized=String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/r\$\s*\d[\d.,]*/g,' ').replace(/\s+/g,' ');
+    const candidates=[...normalized.matchAll(/\b(?:estabelecimento|loja|merchant|em|no|na|para)\s*[:\-]?\s*([a-z0-9][a-z0-9 &'\-.]{2,50})/g)];
+    for(const found of candidates){
+      const name=found[1].replace(/\b(?:no valor|valor|com|usando|via|pelo|cartao|credito|debito|aprovada|aprovado|confirmada|confirmado)\b.*$/,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+      if(name.length>=4&&!['valor','compra','pagamento'].includes(name))return name;
+    }
+    return '';
+  }
+  function recordedWalletMatch(event,data){
+    if(event.source!=='bank'||event.direction!=='expense'||data.type!=='d'||!Number.isSafeInteger(data.amount))return null;
+    const wallet='com.google.android.apps.walletnfcrel',pkg=String(event.sourcePackage||''),isWallet=pkg===wallet;
+    if(!pkg||/\bpix\b/i.test(String(event.title||'')+' '+String(event.text||'')))return null;
+    const merchant=captureMerchant((event.title||'')+' '+(event.text||'')),when=Number(event.postedAt);
+    if(merchant.length<4||!Number.isFinite(when))return null;
+    return L.find(x=>x.s==='r'&&x.t==='d'&&x.v===data.amount&&x.d===data.day&&
+      typeof x.captureSourcePackage==='string'&&(x.captureSourcePackage===wallet)!==isWallet&&
+      Number.isSafeInteger(x.capturePostedAt)&&Math.abs(x.capturePostedAt-when)<=180000&&
+      x.captureMerchant===merchant&&!/\bpix\b/i.test(x.n||''))||null;
+  }
+
   function normalized(source){return rows(source).map(e=>source==='bank'?{...e,source}:{id:e.messageId,title:e.kind==='audio'?'Áudio do WhatsApp':'Mensagem do WhatsApp',text:e.text,postedAt:e.postedAt,source,connection:e.connection,kind:e.kind,status:e.status||'pending',transcriptionError:e.transcriptionError});}
   function body(source){
     reviewItems=normalized(source);
@@ -2519,6 +2541,10 @@ html[data-tema] #app{padding-bottom:120px!important}
     if(event.source!=='bank'&&!ST.msg){alert('Ative Registrar despesas por mensagem em Avisos para abrir rascunhos.');return;}
     if(recorded(event)){if(confirm('Este evento já está registrado. Concluir a revisão sem criar outro lançamento?'))await complete([event],'recorded');return;}
     draft={event,data:localDraft(event)};
+    const walletExisting=recordedWalletMatch(event,draft.data);
+    if(walletExisting&&confirm('Banco e Google Wallet parecem informar a mesma compra já registrada ('+brl(walletExisting.v)+'). Vincular esta notificação sem descontar novamente?')){
+      await complete([event],'recorded');draft=null;return;
+    }
     if(event.kind==='audio'){
       busy=true;modal('Preparando rascunho do áudio',`<p>${safe(event.text)}</p><p class="m" style="margin-top:12px">A IA está identificando valor, conta e categoria. O lançamento será salvo somente após sua revisão.</p>`);MD='capture-preparing';
       try{const result=await api('/ai/finance','POST',{text:'Interprete como um único rascunho financeiro para revisão. Se houver vários gastos ou ambiguidade, peça esclarecimento: '+event.text,context:{today:draft.data.day,categories:aiContext().categories}});if(MD!=='capture-preparing'||draft?.event!==event)return;draft.data=applyAi(result,draft.data);}
@@ -2540,6 +2566,8 @@ html[data-tema] #app{padding-bottom:120px!important}
     if(event.source==='whatsapp'&&event.connection!==connectionGeneration){alert('A conexão mudou. Atualize a lista antes de continuar.');return;}
     // Mesmo valor não significa duplicidade: Pix, débito e compras distintas podem coincidir.
     // Bloqueio automático só pelo identificador imutável da captura; coincidências financeiras viram aviso de revisão.
+    const walletExisting=recordedWalletMatch(event,d);
+    if(walletExisting&&!confirm('Possível repetição entre banco e Google Wallet: estabelecimento, valor, data e horário são compatíveis. Criar outra despesa mesmo assim?'))return;
     const duplicate=L.filter(x=>x.d===d.day&&x.a===d.account&&x.v===d.amount&&x.t===d.type);
     const exactCapture=recorded(event);
     if(!exactCapture&&duplicate.length){const sameText=duplicate.some(x=>String(x.n||'').trim().toLowerCase()===d.name.trim().toLowerCase());if(sameText&&!confirm(`Existe um lançamento muito semelhante (mesma data, conta, valor e descrição). Registrar mesmo assim?`))return;}
@@ -2549,6 +2577,11 @@ html[data-tema] #app{padding-bottom:120px!important}
         if(PERSIST_BLOCKED)throw Error('Importe um backup válido antes de registrar.');
         const before=L.slice(),oldId=NID;
         const x={id:NID,d:d.day,n:d.name,t:d.type,v:d.amount,a:d.account,s:'r',captureId:captureKey(event)};
+        if(event.source==='bank'&&Number.isSafeInteger(Number(event.postedAt))){
+          x.capturePostedAt=Number(event.postedAt);
+          x.captureSourcePackage=String(event.sourcePackage||'').slice(0,150);
+          x.captureMerchant=captureMerchant((event.title||'')+' '+(event.text||''));
+        }
         if(d.type==='d'){x.c=d.category;x.sub=d.sub;}
         L.push(x);NID=nextId();
         if(!persistLedger()){L=before;NID=oldId;throw Error('O lançamento não foi salvo. A notificação continua pendente.');}
@@ -2610,7 +2643,102 @@ html[data-tema] #app{padding-bottom:120px!important}
   setInterval(()=>{if(config.configured&&TAB==='as'&&AS==='wa'&&!MD&&!busy&&!loading&&!document.hidden)window.captureRefresh('whatsapp',true);},15000);
   window.meuAssessorAndroidAutoSync();
 })();
-</script><script id="v84-brand-actions">
+</script><script id="snake-daily-briefing">(function installSnakeBriefing() {
+  'use strict';
+  let briefingPeriod='morning';
+  const sum=xs=>xs.reduce((total,item)=>total+item.v,0);
+  const accountLabel={c6:'C6',caju:'Caju',carbon:'C6 Carbon'};
+  const isActual=x=>x.s==='r'&&validISO(x.d);
+  const dateFor=x=>x.d;
+  const money=v=>ST.hide?'R$ ••••':brl(v);
+  function workDays(ym) {
+    const parts=ym.split('-').map(Number),days=new Date(parts[0],parts[1],0).getDate();
+    let result=0;
+    for(let n=1;n<=days;n++)if([2,3,4].includes(new Date(parts[0],parts[1]-1,n,12).getDay()))result++;
+    return result;
+  }
+  function snapshot(period='morning') {
+    const today=localToday(),ym=today.slice(0,7);
+    if(typeof PERSIST_BLOCKED!=='undefined'&&PERSIST_BLOCKED || !Array.isArray(L)||L.length===0)
+      return {ready:false,message:'Os lançamentos não estão carregados ou a base está bloqueada. Importe e valide um backup antes de emitir um briefing com valores.'};
+    const real=L.filter(isActual),spentToday=real.filter(x=>x.t==='d'&&x.d===today),
+      earnedToday=real.filter(x=>x.t==='r'&&x.d===today&&x.a==='c6'),
+      inMonth=real.filter(x=>x.d.startsWith(ym)),
+      spentMonth=inMonth.filter(x=>x.t==='d'),
+      earningsMonth=inMonth.filter(x=>x.t==='r'&&x.a==='c6'),
+      investedMonth=inMonth.filter(x=>['i','inv'].includes(x.t)||(x.t==='t'&&x.to==='xp')),
+      monthlyGoal=ALERT_CFG?.goal?.enabled&&Number.isFinite(ALERT_CFG.goal.amount)?Math.round(ALERT_CFG.goal.amount*100):null,
+      creditLimit=ALERT_CFG?.carbon?.enabled&&Number.isFinite(ALERT_CFG.carbon.limit)?Math.round(ALERT_CFG.carbon.limit*100):null,
+      yesterday=dateOffset(today,-1),oneWeekAgo=dateOffset(today,-6),
+      spentWeek=real.filter(x=>x.t==='d'&&x.d>=oneWeekAgo&&x.d<=today),
+      nextWeek=dateOffset(today,7),
+      due=L.filter(x=>x.s==='p'&&x.t==='d'&&validISO(x.d)&&x.d>=today&&x.d<=nextWeek).sort((a,b)=>a.d.localeCompare(b.d)),
+      c6Balance=accountBalance('c6',today,false),
+      cajuKnown=Boolean(CAJU_CFG[ym]||inMonth.some(x=>x.a==='caju')),
+      cajuAvailable=cajuKnown?cajuBalance(ym):null,
+      c6Due=sum(due.filter(x=>x.a==='c6')),
+      availableWeek=c6Balance-c6Due,
+      workCount=workDays(ym),
+      workPlan={days:workCount,mealCents:Math.max(48000,workCount*4000),fuelCents:Math.max(60000,workCount*5000),parkingCents:workCount*600},
+      spentWork={mealCents:sum(spentMonth.filter(x=>x.a==='caju'&&(x.c==='trab'||x.sub==='Refeição'))),
+        fuelCents:sum(spentMonth.filter(x=>['c6','carbon'].includes(x.a)&&(x.c==='trab'&&/combust|abastec/i.test(x.sub||'')))),
+        parkingCents:sum(spentMonth.filter(x=>['c6','carbon'].includes(x.a)&&x.c==='trab'&&/estacion/i.test(x.sub||'')))},
+      alerts=financialAlerts(ym).slice(0,3).map(a=>a.text);
+    return {ready:true,date:today,period,ym,c6Balance,cajuAvailable,c6Due,
+      availableWeek,spendingPerDay:Math.max(0,Math.floor(availableWeek/7)),
+      investedMonth:sum(investedMonth),monthlyGoal,
+      carbonUsed:creditLimit===null?null:creditUsed(today,ALERT_CFG.carbon),
+      carbonLimit:creditLimit,
+      earnedToday:sum(earnedToday),spentToday:sum(spentToday),
+      spentMonth:sum(spentMonth),earningsMonth:sum(earningsMonth),spentWeek:sum(spentWeek),
+      due:due.slice(0,5).map(x=>({date:x.d,name:x.n,account:accountLabel[x.a]||x.a,amount:x.v})),
+      workPlan,spentWork,alerts};
+  }
+  function content(mode) {
+    const result=snapshot(mode);
+    if(!result.ready)return '<p class="m">'+escapeHTML(result.message)+'</p>';
+    const period=mode==='evening'?'Fechamento à noite':mode==='weekly'?'Resumo semanal':'Briefing da manhã',
+      periodTotal=mode==='evening'?result.spentToday:mode==='weekly'?result.spentWeek:result.spentMonth,
+      periodLabel=mode==='evening'?'Despesas realizadas hoje':mode==='weekly'?'Despesas realizadas nos últimos 7 dias':'Despesas realizadas no mês',
+      work=result.workPlan, spent=result.spentWork;
+    const lines=[
+      '<div class="sp"><span>Saldo disponível C6</span><b>'+money(result.c6Balance)+'</b></div>',
+      '<div class="sp"><span>Saldo Caju</span><b>'+(result.cajuAvailable===null?'A configurar':money(result.cajuAvailable))+'</b></div>',
+      '<div class="sp"><span>Receitas recebidas hoje (C6)</span><b>'+money(result.earnedToday)+'</b></div>',
+      '<div class="sp"><span>Receitas recebidas no mês (C6)</span><b>'+money(result.earningsMonth)+'</b></div>',
+      '<div class="sp"><span>Investimentos / aportes realizados no mês</span><b>'+money(result.investedMonth)+'</b></div>',
+      ...(result.monthlyGoal===null?[]:['<div class="sp"><span>Meta de aporte do mês</span><b>'+money(result.monthlyGoal)+'</b></div>']),
+      ...(result.carbonLimit===null?[]:['<div class="sp"><span>Limite disponível C6 Carbon estimado</span><b>'+money(result.carbonLimit-result.carbonUsed)+'</b></div>']),
+      '<div class="sp"><span>'+periodLabel+'</span><b>'+money(periodTotal)+'</b></div>',
+      '<div class="sp"><span>Compromissos C6, próximos 7 dias</span><b>'+money(result.c6Due)+'</b></div>',
+      '<div class="sp"><span>Saldo estimado C6 após esses compromissos</span><b>'+money(result.availableWeek)+'</b></div>',
+      '<div class="sp"><span>Referência diária para 7 dias (estimativa)</span><b>'+money(result.spendingPerDay)+'</b></div>'
+    ];
+    const commitments=result.due.length?result.due.map(x=>'<p class="m">'+escapeHTML(x.date.slice(8,10)+'/'+x.date.slice(5,7)+' · '+x.name+' · '+x.account)+' · '+money(x.amount)+'</p>').join(''):'<p class="m">Sem despesas previstas cadastradas nos próximos 7 dias.</p>';
+    const alertItems=result.alerts.length?result.alerts.map(a=>'<p class="m">'+escapeHTML(ST.hide?a.replace(/R\$\s*[\d.,]+/g,'R$ ••••'):a)+'</p>').join(''):'<p class="m">Nenhum alerta ativo registrado.</p>';
+    return '<p class="m">'+escapeHTML(period)+' · '+escapeHTML(result.date)+'</p>'+
+      lines.join('')+'<p class="m" style="margin-top:10px">Estimativas não consideram despesas futuras ainda não cadastradas. Nenhum lançamento é criado automaticamente.</p>'+
+      '<div style="margin-top:12px"><b>Próximos vencimentos</b>'+commitments+'</div>'+
+      '<div style="margin-top:12px"><b>Trabalho · terça, quarta e quinta</b>'+
+      '<p class="m">'+work.days+' dias previstos no mês. Refeição Caju: '+money(work.mealCents)+' planejados ('+money(spent.mealCents)+' realizados). Combustível C6/Carbon: '+money(work.fuelCents)+' planejados ('+money(spent.fuelCents)+' realizados). Estacionamento: '+money(work.parkingCents)+' planejados ('+money(spent.parkingCents)+' realizados).</p>'+
+      '<p class="m">Regras: refeição R$ 40/dia (mínimo R$ 480/mês); combustível R$ 50/dia (base R$ 600/mês); estacionamento R$ 6/dia. Apenas transações efetivadas e classificadas corretamente contam como realizadas.</p></div>'+
+      '<div style="margin-top:12px"><b>Alertas do Assessor</b>'+alertItems+'</div>';
+  }
+  window.SnakeDailyBriefing={snapshot,workDays};
+  window.snakeBriefingSelect=function(period){
+    if(!['morning','evening','weekly'].includes(period))return;
+    briefingPeriod=period;draw();
+  };
+  const previous=vAs;
+  vAs=function(){
+    const page=previous();
+    if(AS!=='av')return page;
+    const button=(label,period)=>'<button type="button" class="bt '+(briefingPeriod===period?'p':'')+'" onclick="snakeBriefingSelect(\''+period+'\')">'+label+'</button>';
+    const brief='<div class="c"><div class="sp"><p class="h">Briefing financeiro</p><small>Calculado da base local</small></div>'+
+      '<div class="fl">'+button('Manhã','morning')+button('Noite','evening')+button('Semana','weekly')+'</div>'+content(briefingPeriod)+'</div>';
+    return brief+page;
+  };
+})();</script><script id="v84-brand-actions">
 function closeHeaderNav(){document.getElementById('headerNav')?.classList.remove('on');document.getElementById('headerMenuButton')?.setAttribute('aria-expanded','false');}
 function toggleHeaderNav(){v65CloseQuick();document.getElementById('settingsPop')?.classList.remove('on');closeMore();const menu=document.getElementById('headerNav'),opening=!menu.classList.contains('on');menu.innerHTML=TABS.map(x=>'<button type="button" data-header-tab="'+x[0]+'" onclick="closeHeaderNav();goTab(\''+x[0]+'\')">'+escapeHTML(x[1])+'</button>').join('');menu.classList.toggle('on',opening);document.getElementById('headerMenuButton').setAttribute('aria-expanded',String(opening));}
 function openAdvisorNotices(){closeHeaderNav();document.getElementById('settingsPop')?.classList.remove('on');AS='av';goTab('as');}

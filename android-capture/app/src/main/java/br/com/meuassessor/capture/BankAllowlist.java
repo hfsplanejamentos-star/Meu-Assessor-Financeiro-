@@ -63,9 +63,9 @@ final class BankAllowlist {
             // Neon
             "br.com.neon",
 
-            // Google Wallet/Pay é intencionalmente excluído: capturamos apenas
-            // a notificação da instituição financeira autorizada.
-            "com.android.vending"
+            // Google Wallet: fallback para compras não notificadas pelo banco.
+            // O processamento deve deduplicar banco + carteira por valor, loja e horário.
+            "com.google.android.apps.walletnfcrel"
     ));
 
     static boolean contains(Context context, String packageName) {

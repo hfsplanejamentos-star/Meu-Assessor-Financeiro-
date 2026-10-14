@@ -42,7 +42,13 @@ final class EncryptedQueueStore {
 
             for (int i = 0; i < queue.length(); i++) {
                 JSONObject prior = queue.getJSONObject(i);
-                if (event.id.equals(prior.optString("id")) || sameBankEvent(event, prior)) {
+                if (event.id.equals(prior.optString("id")) || sameBankEvent(event, prior)
+                        || WalletTransactionMatch.matches(
+                                event.sourcePackage, prior.optString("sourcePackage"),
+                                event.title, event.text, prior.optString("title"), prior.optString("text"),
+                                event.amountCents, prior.isNull("amountCents") ? null : prior.optLong("amountCents"),
+                                event.direction, prior.optString("direction"),
+                                event.postedAt, prior.optLong("postedAt", 0L))) {
                     return false;
                 }
             }
@@ -70,7 +76,9 @@ final class EncryptedQueueStore {
 
         long priorTime = prior.optLong("postedAt", 0L);
         long delta = Math.abs(event.postedAt - priorTime);
-        if (delta > 120000L) return false;
+        // Notification updates retain postedAt. Two real purchases may have identical
+        // merchant, amount and text within a minute; never merge different post times.
+        if (delta != 0L) return false;
 
         String current = fingerprint(event.title + " " + event.text);
         String previous = fingerprint(prior.optString("title") + " " + prior.optString("text"));
