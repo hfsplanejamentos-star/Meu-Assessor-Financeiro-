@@ -1,0 +1,25 @@
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const html=fs.readFileSync("assessor-ia-mobile.html","utf8");
+const script=fs.readFileSync("assessor-mobile-screen.js","utf8");
+const finance=fs.readFileSync("snake-finance-mobile.html","utf8");
+assert(finance.includes("border-radius:18px"),"Reference Snake Finance Mobile card radius not found");
+assert(html.includes("--radius:18px"),"Use Snake Finance card geometry");
+assert(html.includes("nav{bottom:max(9px,env(safe-area-inset-bottom,0px))"),"Floating bottom nav must respect Android safe inset");
+assert(html.includes('body data-theme="dourado"'),"Keep approved Dourado as default");
+for(const theme of ["dourado","limao","branco"])assert(html.includes('data-theme-option="'+theme+'"'));
+assert(!html.includes("9:41"),"No fake Android status clock in rendered HTML");
+assert(!html.includes("▂▄▆"),"No fake signal/battery bar from old screenshot");
+assert(html.includes('class="icon-sprite"'),"Use embedded vector icons without CDN or image dependencies");
+for(const icon of ["bot","wallet","home","calendar","mic","camera","file","bell"])
+ assert(html.includes('id="i-'+icon+'"'),"Missing important SVG "+icon);
+assert(html.includes('id="categoryDonut"'),"Category chart must be controlled by data");
+assert(html.includes('id="cashFlowBar"'),"Income/expense bar must be controlled by data");
+assert(html.includes('data-category-percent="moradia"'));
+assert(script.includes("function resetCategoryChart()"),"Graphics should reset when financial session is disconnected");
+assert(script.includes("function renderFinanceGraphics(transactions,income,spent)"),"Chart should be generated from confirmed transactions");
+assert(script.includes("const percentages=raw.map(Math.floor)"),"Category legends sum to 100% by largest remainder");
+assert(script.includes('resetCategoryChart();\n   fillAccounts();'),"Disconnect should hide previous graphics");
+assert(script.includes('renderFinanceGraphics(month,income,spent)'),"Only monthly realized transactions feed graphics");
+assert(!/conic-gradient\(#248fcf 0 28%/.test(html),"Remove static fake category percentages");
+console.log("Assessor visual parity: Snake Finance cards, gold/lime/white themes, safe nav, native status, verified charts OK");
