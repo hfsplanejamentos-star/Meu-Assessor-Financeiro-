@@ -777,7 +777,7 @@
  $("settingsDismiss").onclick=()=>$("settingsDialog").close();
  function applyTheme(t){
    if(!["dourado","limao","branco"].includes(t))return;
-   document.body.dataset.theme=t;
+   if(document.body?.dataset)document.body.dataset.theme=t;
    document.querySelectorAll("[data-theme-option]").forEach(b=>b.classList.toggle("selected",b.dataset.themeOption===t));
    document.querySelectorAll("[data-theme-shortcut]").forEach(b=>{
      b.setAttribute("aria-pressed",String(b.dataset.themeShortcut===t));
