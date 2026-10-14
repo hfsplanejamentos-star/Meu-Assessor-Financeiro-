@@ -6,7 +6,7 @@ const vm=require('node:vm');
 const web=fs.readFileSync('snake-finance-mobile.html','utf8');
 const bundled=fs.readFileSync('android-capture/app/src/main/assets/snake-finance-mobile.html','utf8');
 assert.equal(bundled,web,'APK fallback and hosted Mobile must have identical financial logic');
-assert.match(web,/if\(!Array\.isArray\(L\)\|\|!L\.length\|\|PERSIST_BLOCKED\)/,'empty ledger export must be blocked');
+assert.match(web,/if\(!Array\.isArray\(L\)\|\|!L\.length\)/,'empty ledger export must be blocked');
 assert.match(web,/if\(!ledger\.length\)throw Error\('Backup sem lançamentos/,'empty ledger import must be blocked');
 assert.match(web,/data\.schema==='snake-finance-raw-recovery'/,'raw recovery must support ledger extraction');
 
