@@ -301,6 +301,24 @@ public final class MainActivity extends Activity {
     }
 
     private void loadDashboardHtml() {
+        // QA must display the exact dashboard tested in this APK. Do not replace it
+        // with the older production Pages build (which would hide candidate changes).
+        // A debug app uses a distinct Android applicationId; no production data is shared.
+        if (BuildConfig.DEBUG) {
+            try (InputStream bundledInput = getAssets().open("snake-finance-mobile.html")) {
+                java.io.ByteArrayOutputStream bundledBytes = new java.io.ByteArrayOutputStream();
+                byte[] data = new byte[8192];
+                int n;
+                while ((n = bundledInput.read(data)) != -1) bundledBytes.write(data, 0, n);
+                String bundledDashboard = bundledBytes.toString("UTF-8");
+                if (validDashboard(bundledDashboard)) {
+                    showDashboard(bundledDashboard);
+                    return;
+                }
+            } catch (Exception ignored) {
+                // Standard offline/remote fallback below if bundled content is unavailable.
+            }
+        }
         String local = readCachedDashboard();
         if (local == null) {
             try (InputStream input = getAssets().open("snake-finance-mobile.html")) {
