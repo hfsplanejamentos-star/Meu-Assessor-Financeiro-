@@ -94,4 +94,18 @@ val installApprovedSplash = tasks.register("installApprovedSplash") {
         }
     }
 }
-tasks.named("preBuild") { dependsOn(installApprovedSplash) }
+// Fail the build rather than silently shipping the previous screenshot-based splash.
+val verifyCorrectedSplash = tasks.register("verifyCorrectedSplash") {
+    val correctedPng = layout.projectDirectory.file("src/main/assets/snake_splash_aprovada_corrigida.png")
+    doLast {
+        val png = correctedPng.asFile
+        require(png.isFile && png.length() > 100_000) {
+            "Missing approved clean splash PNG: ${png.path}. Copy it from snake_finance_splash_asset_para_android.zip before building."
+        }
+        val signature = png.inputStream().use { it.readNBytes(8) }
+        require(signature.contentEquals(byteArrayOf(
+            0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A
+        ))) { "Approved splash is not a valid PNG file" }
+    }
+}
+tasks.named("preBuild") { dependsOn(installApprovedSplash, verifyCorrectedSplash) }
