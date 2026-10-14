@@ -24,6 +24,14 @@ public class WalletTransactionMatchTest {
         assertFalse(matches("Posto Trevo", "POSTO TREVO", 1_000_000L, 1_200_000L));
     }
 
+    @Test public void pixAndWalletSameValueAreNotDuplicates() {
+        assertFalse(WalletTransactionMatch.matches(
+                "com.c6bank.app", "com.google.android.apps.walletnfcrel",
+                "Pix enviado", "Pix de R$ 50,00 para Posto Trevo",
+                "Pagamento realizado", "Você pagou R$ 50,00 em Posto Trevo",
+                5000L, 5000L, "expense", "expense", 1_000_000L, 1_030_000L));
+    }
+
     @Test public void bankToBankAndIncomesAreNotWalletDuplicates() {
         assertFalse(WalletTransactionMatch.matches(
                 "com.c6bank.app", "com.caju.employee", "", "Compra em Padaria",
