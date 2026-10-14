@@ -6,7 +6,8 @@ const html=fs.readFileSync('snake-finance-mobile.html','utf8');
 const bundled=fs.readFileSync('android-capture/app/src/main/assets/snake-finance-mobile.html','utf8');
 assert.equal(html,bundled,'Android bundled HTML must equal deployed dashboard');
 // A truncated script or missing closing HTML made the APK revert to remote content.
-assert.ok(html.trimEnd().endsWith('</script>\n</body>\n</html>'), 'HTML must finish with closed script and document');
+assert.ok(html.trimEnd().endsWith('</body>\n</html>'), 'HTML must finish with closed document');
+assert.ok(html.includes('</script>\n<style id="v85-landscape-responsive">'), 'Landscape style must follow the last closed script');
 let scriptCount=0;
 let position=0;
 while(true) {
