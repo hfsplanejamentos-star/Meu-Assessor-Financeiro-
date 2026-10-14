@@ -153,11 +153,11 @@ public final class MainActivity extends Activity {
         FrameLayout splash = new FrameLayout(this);
         splash.setBackgroundColor(Color.BLACK);
         startupSplash = splash;
-        // Use the exact user-approved JPG when packaged in assets. Never crop or redraw it.
+        // Use the corrected, approved PNG asset, without screenshot status-bar overlays.
         // No alternative splash image or generated logo is permitted.
         try {
             android.graphics.Bitmap splashBitmap = android.graphics.BitmapFactory.decodeStream(
-                getAssets().open("snake_splash_aprovada.jpg"));
+                getAssets().open("snake_splash_aprovada_corrigida.png"));
             if (splashBitmap != null) {
                 ImageView approvedSplash = new ImageView(this);
                 approvedSplash.setImageBitmap(splashBitmap);
