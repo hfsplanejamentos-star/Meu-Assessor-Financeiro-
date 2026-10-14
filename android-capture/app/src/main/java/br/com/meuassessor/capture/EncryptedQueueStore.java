@@ -42,7 +42,7 @@ final class EncryptedQueueStore {
 
             for (int i = 0; i < queue.length(); i++) {
                 JSONObject prior = queue.getJSONObject(i);
-                if (event.id.equals(prior.optString("id")) || sameBankEvent(event, prior)) {
+                if (event.id.equals(prior.optString("id")) || sameBankEvent(event, prior) || sameWalletBankPurchase(event, prior)) {
                     return false;
                 }
             }
@@ -75,6 +75,34 @@ final class EncryptedQueueStore {
         String current = fingerprint(event.title + " " + event.text);
         String previous = fingerprint(prior.optString("title") + " " + prior.optString("text"));
         return !current.isEmpty() && current.equals(previous);
+    }
+
+    // Cross-app duplicate detection is deliberately conservative: same amount,
+    // direction, merchant and near-identical posting time. Equal amounts alone
+    // must never cause a transaction to disappear.
+    private boolean sameWalletBankPurchase(CapturedNotification event, JSONObject prior) {
+        String source = safe(event.sourcePackage);
+        String previous = safe(prior.optString("sourcePackage"));
+        boolean walletNow = source.equals("com.google.android.apps.walletnfcrel");
+        boolean walletBefore = previous.equals("com.google.android.apps.walletnfcrel");
+        if (walletNow == walletBefore || source.equals(previous)) return false;
+        if (!"expense".equals(event.direction) || !"expense".equals(prior.optString("direction"))) return false;
+        if (event.amountCents == null || event.amountCents.longValue() != prior.optLong("amountCents", -1)) return false;
+        if (Math.abs(event.postedAt - prior.optLong("postedAt", 0)) > 300000L) return false;
+        String merchantNow = merchant(event.title + " " + event.text);
+        String merchantBefore = merchant(prior.optString("title") + " " + prior.optString("text"));
+        return !merchantNow.isEmpty() && merchantNow.equals(merchantBefore);
+    }
+
+    private static String merchant(String content) {
+        if (content == null) return "";
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile(
+            "(?iu)\\b(?:estabelecimento\\s*[:\\-]|loja\\s*[:\\-]|compra\\s+(?:em|no|na)|pagamento\\s+(?:em|no|na))\\s*([\\p{L}0-9][\\p{L}0-9 .&'_-]{2,55})"
+        ).matcher(content);
+        if (!m.find()) return "";
+        return java.text.Normalizer.normalize(m.group(1), java.text.Normalizer.Form.NFD)
+            .replaceAll("\\p{M}", "").toLowerCase(java.util.Locale.ROOT)
+            .replaceAll("\\s+", " ").trim();
     }
 
     private static String safe(String value) {
