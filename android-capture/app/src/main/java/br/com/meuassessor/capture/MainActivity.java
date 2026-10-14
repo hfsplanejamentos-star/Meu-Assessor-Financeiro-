@@ -632,7 +632,9 @@ public final class MainActivity extends Activity {
                             if (c != null && c.moveToFirst() && !c.isNull(0)) actual = c.getLong(0);
                         }
                     }
-                    if (actual != bytes.length) throw new java.io.IOException(
+                    // Some Android document providers report unknown (-1) size.
+                    // Always verify by reading the exported file and comparing its digest.
+                    if (actual >= 0 && actual != bytes.length) throw new java.io.IOException(
                         "Arquivo não confirmado: esperado " + bytes.length + " B, encontrado " + actual + " B");
                     try (java.io.InputStream check = getContentResolver().openInputStream(target)) {
                         if (check == null) throw new java.io.IOException("Arquivo exportado não pode ser reaberto");
