@@ -36,6 +36,56 @@
    const a=session.cloud?.payload?.accounts?.find(a=>String(a.id)===String(id));
    return a?.name || (id?"Conta não sincronizada":"Selecionar conta");
  }
+ // The category chart is driven ONLY by realized transactions from financeState.
+ // Unclassified spending is grouped in "Outros" rather than invented categories.
+ function resetCategoryChart(){
+   $("categoryDonut").style.background="conic-gradient(var(--track) 0 100%)";
+   document.querySelectorAll("[data-category-percent]").forEach(node=>node.textContent="—");
+   $("cashFlowBar").style.background="var(--track)";
+ }
+ function categoryKey(transaction){
+   const source=norm(transaction.category||transaction.categoryName||transaction.group||"");
+   if(/moradia|aluguel|residen|condomin|habitac|energia|luz|saneamento/.test(source))return "moradia";
+   if(/alimenta|mercado|padaria|restaurante|delivery|refeic|acougue|açougue/.test(source))return "alimentacao";
+   if(/transport|combust|estacion|veicul|veícul|c4 cactus|automov/.test(source))return "transporte";
+   if(/lazer|entreten|airsoft|cerveja|pagode|cinema|evento/.test(source))return "lazer";
+   return "outros";
+ }
+ function renderFinanceGraphics(transactions,income,spent){
+   resetCategoryChart();
+   const total=income+spent;
+   if(total>0){
+     const incomePercent=100*income/total;
+     $("cashFlowBar").style.background="linear-gradient(to right,var(--green) 0 "+incomePercent.toFixed(2)+"%,var(--red) "+incomePercent.toFixed(2)+"% 100%)";
+   }
+   const keys=["moradia","alimentacao","transporte","lazer","outros"];
+   const colors=["#29a5d6","#34cd86","#f4bc41","#e98758","#9e9fa8"];
+   const buckets={moradia:0,alimentacao:0,transporte:0,lazer:0,outros:0};
+   for(const t of transactions){
+     const value=Number(t.value);
+     if(Number.isFinite(value)&&value<0)buckets[categoryKey(t)]+=-value;
+   }
+   const totalSpent=keys.reduce((sum,key)=>sum+buckets[key],0);
+   if(totalSpent<=0)return;
+   // Largest-remainder allocation avoids legends totaling 99% or 101%.
+   const raw=keys.map(key=>100*buckets[key]/totalSpent);
+   const percentages=raw.map(Math.floor);
+   let remaining=100-percentages.reduce((a,b)=>a+b,0);
+   const rank=raw.map((value,i)=>({i,remainder:value-Math.floor(value)}))
+     .sort((a,b)=>b.remainder-a.remainder||a.i-b.i);
+   for(let n=0;n<remaining;n++)percentages[rank[n].i]++;
+   const stops=[];let start=0;
+   for(let i=0;i<keys.length;i++){
+     const share=raw[i];
+     const node=document.querySelector('[data-category-percent="'+keys[i]+'"]');
+     if(node)node.textContent=percentages[i]+"%";
+     if(share<=0)continue;
+     const end=start+share;
+     stops.push(colors[i]+" "+start.toFixed(3)+"% "+end.toFixed(3)+"%");
+     start=end;
+   }
+   $("categoryDonut").style.background="conic-gradient("+stops.join(",")+")";
+ }
  function showAmounts(){
    const state=session.cloud?.payload;
    if(!state)return;
@@ -59,7 +109,8 @@
    const spent=-month.reduce((sum,t)=>sum+(Number(t.value)<0?Number(t.value):0),0);
    $("monthIncome").textContent=brl(income);$("monthExpense").textContent=brl(spent);
    $("monthNet").textContent=brl(income-spent);$("donutSum").textContent=brl(spent);
-   $("dataStatus").textContent="Consulta de leitura do financeiro: saldos e transações disponíveis. Caju e gráficos por categoria aguardam auditoria específica.";
+   renderFinanceGraphics(month,income,spent);
+   $("dataStatus").textContent="Consulta de leitura · categorias baseadas nos lançamentos realizados do mês. Valores do Caju exigem conciliação específica.";
  }
  async function refreshState(){
    const epoch=session.connectionEpoch;
@@ -87,6 +138,7 @@
    for(const id of ["balanceC6","balanceItau","balanceCaju","monthIncome","monthExpense","monthNet","donutSum"])
      $(id).textContent="—";
    $("dataStatus").textContent="Financeiro desconectado · sem acesso aos saldos.";
+   resetCategoryChart();
    fillAccounts();
    updateSyncConnectionStatus();
  }
