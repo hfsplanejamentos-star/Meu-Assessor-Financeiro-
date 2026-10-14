@@ -200,7 +200,7 @@ body[data-theme=branco] .assessor-toolbar{border-color:#a8b4c0}
 <header class="top assessor-top" id="topHome">
  <div class="assessor-top-row">
   <button id="menuBtn" class="menu-trigger" aria-label="Abrir menu">☰</button>
-  <div class="assessor-brand"><span class="snakeMark assessorLogo" aria-label="Logo original Snake Finance" role="img"></span><div class="assessor-wordmark"><strong>SNAKE <em>FINANCE</em></strong><small>ASSESSOR FINANCEIRO IA</small></div></div>
+  <div class="assessor-brand" aria-label="SNAKE FINANCE — ASSESSOR FINANCEIRO IA"><span class="snakeMark assessorLogo" aria-label="Logo original Snake Finance" role="img"></span><div class="assessor-wordmark"><strong>SNAKE <em>FINANCE</em></strong><small>ASSESSOR FINANCEIRO IA</small></div></div>
   <button id="brainBtn" class="assessor-brain-button" data-view="chat" aria-label="Abrir Assessor IA com cérebro dourado"><span class="orb"><span class="assessor-brain-approved"></span></span><span>IA</span></button>
   <button id="alertBtn" class="circle" aria-label="Notificações"><svg class="i"><use href="#i-bell"></use></svg></button>
  </div>
@@ -1360,7 +1360,7 @@ Object.defineProperty(window, "SNAKE_ASSESSOR_PREVIEW_ONLY", {
  $("settingsDismiss").onclick=()=>$("settingsDialog").close();
  function applyTheme(t){
    if(!["dourado","limao","branco"].includes(t))return;
-   document.body.dataset.theme=t;
+   if(document.body?.dataset)document.body.dataset.theme=t;
    document.querySelectorAll("[data-theme-option]").forEach(b=>b.classList.toggle("selected",b.dataset.themeOption===t));
    document.querySelectorAll("[data-theme-shortcut]").forEach(b=>{
      b.setAttribute("aria-pressed",String(b.dataset.themeShortcut===t));
