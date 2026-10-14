@@ -9,8 +9,10 @@ val assessorScripts = listOf(
     "assessor-mobile-screen.js"
 )
 val previewRoot = projectDir.resolve("../..").canonicalFile
-val previewSources = listOf(previewRoot.resolve("assessor-ia-mobile.html")) +
-    assessorScripts.map { previewRoot.resolve(it) }
+val previewSources = listOf(
+    previewRoot.resolve("assessor-ia-mobile.html"),
+    previewRoot.resolve("assessor-brand-assets.css")
+) + assessorScripts.map { previewRoot.resolve(it) }
 val previewAssetsDir = layout.buildDirectory.dir("generated/assessorPreviewAssets")
 val prepareAssessorPreview by tasks.registering {
     group = "verification"
@@ -19,6 +21,13 @@ val prepareAssessorPreview by tasks.registering {
     outputs.dir(previewAssetsDir)
     doLast {
         var page = previewSources.first().readText(Charsets.UTF_8)
+        val cssMarker = "<link rel=\"stylesheet\" href=\"./assessor-brand-assets.css\">"
+        check(page.contains(cssMarker)) { "Missing exact Snake Finance branding stylesheet" }
+        val css = previewRoot.resolve("assessor-brand-assets.css").readText(Charsets.UTF_8)
+        check(css.contains("data:image/png;base64,") && css.contains("data:image/webp;base64,")) {
+            "Snake logo or IA brain asset missing"
+        }
+        page = page.replace(cssMarker, "<style>\n$css\n</style>")
         for (script in assessorScripts) {
             val marker = "<script src=\"./$script\"></script>"
             check(page.contains(marker)) { "Missing Assessor preview script marker: $script" }
