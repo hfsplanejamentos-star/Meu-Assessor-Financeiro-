@@ -153,20 +153,26 @@ public final class MainActivity extends Activity {
         FrameLayout splash = new FrameLayout(this);
         splash.setBackgroundColor(Color.BLACK);
         startupSplash = splash;
-        // Use the corrected, approved PNG asset, without screenshot status-bar overlays.
-        // No alternative splash image or generated logo is permitted.
-        try {
-            android.graphics.Bitmap splashBitmap = android.graphics.BitmapFactory.decodeStream(
-                getAssets().open("snake_splash_aprovada_corrigida.png"));
-            if (splashBitmap != null) {
-                ImageView approvedSplash = new ImageView(this);
-                approvedSplash.setImageBitmap(splashBitmap);
-                approvedSplash.setBackgroundColor(Color.BLACK);
-                approvedSplash.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                splash.addView(approvedSplash, new FrameLayout.LayoutParams(-1, -1));
+        // Prefer the approved clean splash PNG; retain the packaged previous asset
+        // as a fallback until the new binary has been included in the APK.
+        android.graphics.Bitmap splashBitmap = null;
+        for (String assetName : new String[] {
+                "snake_splash_aprovada_corrigida.png",
+                "snake_splash_aprovada.jpg"
+        }) {
+            try (java.io.InputStream assetStream = getAssets().open(assetName)) {
+                splashBitmap = android.graphics.BitmapFactory.decodeStream(assetStream);
+                if (splashBitmap != null) break;
+            } catch (java.io.IOException missingAsset) {
+                // Try the next packaged asset; do not crash during startup.
             }
-        } catch (java.io.IOException missingApprovedSplash) {
-            // An absent asset must not crash app startup.
+        }
+        if (splashBitmap != null) {
+            ImageView approvedSplash = new ImageView(this);
+            approvedSplash.setImageBitmap(splashBitmap);
+            approvedSplash.setBackgroundColor(Color.BLACK);
+            approvedSplash.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            splash.addView(approvedSplash, new FrameLayout.LayoutParams(-1, -1));
         }
         root.addView(splash, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
