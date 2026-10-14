@@ -100,7 +100,8 @@ final class EncryptedQueueStore {
             "(?iu)\\b(?:estabelecimento\\s*[:\\-]|loja\\s*[:\\-]|compra\\s+(?:em|no|na)|pagamento\\s+(?:em|no|na))\\s*([\\p{L}0-9][\\p{L}0-9 .&'_-]{2,55})"
         ).matcher(content);
         if (!m.find()) return "";
-        return java.text.Normalizer.normalize(m.group(1), java.text.Normalizer.Form.NFD)
+        String candidate = m.group(1).replaceAll("(?iu)\\\\s+(?:no\\\\s+cart[aã]o|com\\\\s+cart[aã]o|em\\\\s+\\\\d{1,2}[/.-]\\\\d{1,2}|R\\\\$).*", "");
+        return java.text.Normalizer.normalize(candidate, java.text.Normalizer.Form.NFD)
             .replaceAll("\\p{M}", "").toLowerCase(java.util.Locale.ROOT)
             .replaceAll("\\s+", " ").trim();
     }
