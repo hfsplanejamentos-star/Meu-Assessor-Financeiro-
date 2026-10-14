@@ -27,6 +27,13 @@ function build(){
  let html=fs.readFileSync(path.join(root,"assessor-ia-mobile.html"),"utf8");
  if(!/^<!doctype html>/i.test(html)||!html.includes("</body></html>"))
    throw Error("Base HTML is incomplete");
+ const brandCSS="assessor-brand-assets.css";
+ const cssMarker='<link rel="stylesheet" href="./'+brandCSS+'">';
+ if(html.split(cssMarker).length!==2)throw Error("Exact Snake branding stylesheet is missing");
+ const css=fs.readFileSync(path.join(root,brandCSS),"utf8");
+ if(!css.includes("data:image/png;base64,")||!css.includes("data:image/webp;base64,"))
+   throw Error("Approved S logo or circuit-brain icon unavailable");
+ html=html.replace(cssMarker,'<style data-source="'+brandCSS+'">\n'+css+'\n</style>');
  for(const file of scripts){
   const marker='<script src="./'+file+'"></script>';
   if(html.split(marker).length!==2)throw Error("Exactly one script marker expected: "+file);
