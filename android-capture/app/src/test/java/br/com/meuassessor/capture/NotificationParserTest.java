@@ -34,6 +34,8 @@ public class NotificationParserTest {
         CapturedNotification repeated = NotificationParser.parse("com.c6bank.app", "Pix enviado", "R$ 80,00 para Depósito do Latão", 1_000_500L);
         assertEquals(Long.valueOf(8000), first.amountCents);
         assertEquals("expense", first.direction);
-        assertEquals(first.id, repeated.id);
+        assertNotEquals("Dois pagamentos independentes, ainda que com valor igual, têm IDs diferentes", first.id, repeated.id);
+        CapturedNotification repeatExact = NotificationParser.parse("com.c6bank.app", "Pix enviado", "R$ 80,00 para Depósito do Latão", 1_000_000L);
+        assertEquals("A mesma notificação repetida preserva o ID", first.id, repeatExact.id);
     }
 }
