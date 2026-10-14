@@ -9,6 +9,7 @@ on:
       - "android-capture/**"
       - "assessor-*.js"
       - "assessor-ia-mobile.html"
+      - "assessor-brand-assets.css"
       - ".github/workflows/android.yml"
   pull_request:
     paths:
