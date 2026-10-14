@@ -106,6 +106,16 @@ val verifyCorrectedSplash = tasks.register("verifyCorrectedSplash") {
         require(signature.contentEquals(byteArrayOf(
             0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A
         ))) { "Approved splash is not a valid PNG file" }
+        val dimensions = png.inputStream().use { stream ->
+            stream.skipNBytes(16)
+            stream.readNBytes(8)
+        }
+        require(dimensions.size == 8) { "Approved splash PNG has no IHDR dimensions" }
+        val width = java.nio.ByteBuffer.wrap(dimensions, 0, 4).int
+        val height = java.nio.ByteBuffer.wrap(dimensions, 4, 4).int
+        require(width == 727 && height == 1502) {
+            "Wrong splash artwork dimensions: ${width}x${height}; expected approved 727x1502"
+        }
     }
 }
 tasks.named("preBuild") { dependsOn(installApprovedSplash, verifyCorrectedSplash) }
