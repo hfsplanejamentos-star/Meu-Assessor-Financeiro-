@@ -800,7 +800,7 @@
  $("dayForward").onclick=()=>{session.agendaDay.setDate(session.agendaDay.getDate()+1);agendaDate()};
  $("newMeeting").onclick=()=>toast("Criar reuniões requer conexão e permissão do calendário; nenhuma reunião será criada.");
  document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("selected",x===b));toast("Integração de agenda pendente.")});
- document.querySelector(".status span").textContent=new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+ // System clock and battery belong only to Android, never to a fake HTML status bar.
  session.month=today().slice(0,7);labelMonth();agendaDate();fillAccounts();
  // Pull-to-refresh: gesture triggers a read-only cloud update, never a post.
  let refreshTouchY=null,refreshTouchReady=false,refreshGestureBusy=false;
