@@ -86,11 +86,29 @@ public final class MainActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT));
         FrameLayout splash = new FrameLayout(this);
         splash.setBackgroundColor(Color.BLACK);
-        ImageView splashLogo = new ImageView(this);
-        splashLogo.setImageResource(br.com.meuassessor.capture.R.drawable.ic_assessor_launcher);
-        splashLogo.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        FrameLayout.LayoutParams logoParams = new FrameLayout.LayoutParams(dp(220), dp(220), Gravity.CENTER);
-        splash.addView(splashLogo, logoParams);
+        if (BuildConfig.DEBUG) {
+            // Preview splash uses NATIVE text, never a baked screenshot containing
+            // status-bar clock, battery, or other phone UI from an old image.
+            TextView previewLogo = new TextView(this);
+            previewLogo.setText("S");
+            previewLogo.setTextColor(Color.parseColor("#F3C454"));
+            previewLogo.setTextSize(112);
+            previewLogo.setTypeface(android.graphics.Typeface.create("serif",
+                    android.graphics.Typeface.BOLD_ITALIC));
+            previewLogo.setGravity(Gravity.CENTER);
+            previewLogo.setShadowLayer(dp(16), 0, 0, Color.parseColor("#66552B"));
+            FrameLayout.LayoutParams previewLogoParams = new FrameLayout.LayoutParams(
+                    dp(220), dp(220), Gravity.CENTER);
+            splash.addView(previewLogo, previewLogoParams);
+        } else {
+            // Keep the original launcher resource untouched in stable release.
+            ImageView splashLogo = new ImageView(this);
+            splashLogo.setImageResource(br.com.meuassessor.capture.R.drawable.ic_assessor_launcher);
+            splashLogo.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+            FrameLayout.LayoutParams logoParams = new FrameLayout.LayoutParams(
+                    dp(220), dp(220), Gravity.CENTER);
+            splash.addView(splashLogo, logoParams);
+        }
         TextView splashName = new TextView(this);
         splashName.setText("SNAKE FINANCE");
         splashName.setTextColor(Color.parseColor("#D4AF37"));
@@ -162,11 +180,13 @@ public final class MainActivity extends Activity {
         authenticated = true;
         webView.setVisibility(View.VISIBLE);
 
-        if (pendingState == null) {
-            if (webView.getUrl() == null) {
-                if (BuildConfig.DEBUG) loadAssessorPreview();
-                else loadDashboardHtml();
-            }
+        if (BuildConfig.DEBUG) {
+            // Always start on the approved local IA preview after authentication.
+            // Never restore a previous remote/prod WebView page into the preview.
+            pendingState = null;
+            loadAssessorPreview();
+        } else if (pendingState == null) {
+            if (webView.getUrl() == null) loadDashboardHtml();
         } else {
             webView.restoreState(pendingState);
             String savedImageUri = pendingState.getString("captured_image_uri");
