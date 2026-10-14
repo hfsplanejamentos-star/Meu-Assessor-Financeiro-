@@ -5,16 +5,23 @@ const vm=require('node:vm');
 const html=fs.readFileSync('snake-finance-mobile.html','utf8');
 const bundled=fs.readFileSync('android-capture/app/src/main/assets/snake-finance-mobile.html','utf8');
 assert.equal(html,bundled,'Android bundled HTML must equal deployed dashboard');
-// Prevent a truncated page from being embedded into a build that compiles but cannot open.
-assert.match(html,/<\\/script>\\s*<\\/body>\\s*<\\/html>\\s*$/i,'HTML document closes correctly');
-const scriptOpen=(html.match(/<script\\b/gi)||[]).length;
-const scriptClose=(html.match(/<\\/script>/gi)||[]).length;
-assert.equal(scriptOpen,scriptClose,'all inline scripts must be closed');
-for(const [index,match] of [...html.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/gi)].entries()) {
- new vm.Script(match[1],{filename:'embedded-script-'+(index+1)+'.js'});
+// A truncated script or missing closing HTML made the APK revert to remote content.
+assert.ok(html.trimEnd().endsWith('</script>\n</body>\n</html>'), 'HTML must finish with closed script and document');
+let scriptCount=0;
+let position=0;
+while(true) {
+ const open=html.indexOf('<script',position);
+ if(open<0)break;
+ const tagEnd=html.indexOf('>',open);
+ const close=html.indexOf('</script>',tagEnd+1);
+ assert.ok(tagEnd>open && close>tagEnd, 'script #'+(scriptCount+1)+' must close');
+ new vm.Script(html.slice(tagEnd+1,close),{filename:'embedded-script-'+(scriptCount+1)+'.js'});
+ scriptCount++;
+ position=close+'</script>'.length;
 }
+assert.ok(scriptCount>=9, 'all embedded scripts must be parsed');
 const androidActivity=fs.readFileSync('android-capture/app/src/main/java/br/com/meuassessor/capture/MainActivity.java','utf8');
-assert.match(androidActivity,/html\\.contains\\("<\\/html>"\\)/,'Android requires a correctly closed HTML document');
+assert.ok(androidActivity.includes('html.contains("</html>")'), 'Android requires a correctly closed HTML document');
 
 const extract=(start,end)=>{const a=html.indexOf(start);assert.ok(a>=0,'missing '+start);const b=html.indexOf(end,a+start.length);assert.ok(b>a,'missing boundary '+end);return html.slice(a,b);};
 const context={Date,Math,Number,String,Array,Set,Map,JSON,console};
