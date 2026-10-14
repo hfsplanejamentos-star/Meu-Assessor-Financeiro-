@@ -1508,9 +1508,17 @@ function vIni(dia=1){
  const rows=real.map(x=>{const c=x.c&&CAT[x.c]?CAT[x.c]:CAT.out,cc=V35_COLORS[x.c]||c[2];return `<div class="v39row" onclick="openLanc(${x.id})">${tile(c[1],cc)}<div class="v39grow"><b>${escapeHTML(x.n||c[0])}</b><span>${x.d?dd(x.d):''} · ${x.a==='caju'?'Caju':x.a==='carbon'?'C6 Carbon':'C6 Débito'}</span></div><strong class="${x.t==='r'?'ok':'bad'}">${x.t==='r'?'+ ':'- '}${brl(x.v)}</strong></div>`}).join('');
  const prs=pend.map(x=>{const c=x.c&&CAT[x.c]?CAT[x.c]:CAT.out,cc=V35_COLORS[x.c]||c[2];return `<div class="v39row" onclick="openLanc(${x.id})">${tile(c[1],cc)}<div class="v39grow"><b>${escapeHTML(x.n||c[0])}</b><span>Vence ${x.d?dd(x.d):''}</span></div><strong class="warn">${brl(x.v)}</strong></div>`}).join('');
  const alerts=financialAlerts(YM);
+ const wb=workBudget(YM);
+ const workForecast=wb?'<div class="c v39card"><p class="h">Orçamento do trabalho · Previsão</p><p class="m">Terça, quarta e quinta · '+wb.workdays+' dias</p>'+
+ '<div class="v39row"><span>Refeição · Caju</span><strong>'+brl(wb.projected.cajuMeal)+'</strong></div>'+
+ '<div class="v39row"><span>Combustível · C6 / Carbon</span><strong>'+brl(wb.projected.fuel)+'</strong></div>'+
+ '<div class="v39row"><span>Estacionamento · C6 / Carbon</span><strong>'+brl(wb.projected.parking)+'</strong></div>'+
+ '<div class="v39row"><b>Total previsto</b><strong>'+brl(wb.projected.total)+'</strong></div>'+
+ '<p class="m">Valores reservados no planejamento; não são despesas pagas.</p></div>':'';
  return mesNav()+`<div class="v39inicio">
  <div class="v39hero"><div><span class="m">Disponível agora</span><div class="v39saldo">${brl(d.c6)}</div><span class="m">Visão operacional do mês</span></div><div class="v39today"><span>Dia selecionado</span><b>${brl(hoje)}</b><small>${dd(ref)}</small></div></div>
  <div class="v39quick"><button onclick="openAdd&&openAdd('d')">＋<span>Despesa</span></button><button onclick="openAdd&&openAdd('r')">＋<span>Previsto</span></button><button onclick="goTab('inv')">＋<span>Meta</span></button></div>
+ ${workForecast}
  <div class="c v39card"><div class="sp"><div><p class="h">Próximos compromissos</p><p class="m">O que precisa da sua atenção</p></div><span class="m" style="color:var(--a)" onclick="TAB='rec';draw()">Ver todos ›</span></div>${prs||'<p class="m" style="padding-top:10px">Nenhuma despesa pendente.</p>'}</div>
  <div class="c v39card"><div class="sp"><div><p class="h">Últimas transações</p><p class="m">C6 + Caju + C6 Carbon</p></div><span class="m" style="color:var(--a)" onclick="TAB='des';draw()">Ver todas ›</span></div>${rows||'<p class="m" style="padding-top:10px">Nenhuma transação.</p>'}</div>
  <div class="c v39card"><div class="sp"><div><p class="h">Alertas do Assessor</p><p class="m">Somente o que exige atenção</p></div><span class="v39snake">Snake Eyes</span></div>${alerts.length?alerts.map(a=>renderReviewAlert(a,'v39alert')).join(''):'<p class="m">Nenhum alerta ativo para este mês.</p>'}</div>
