@@ -2,6 +2,14 @@ name: Criar APK para Android
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feature/assessor-ia-mobile
+    paths:
+      - "android-capture/**"
+      - "assessor-*.js"
+      - "assessor-ia-mobile.html"
+      - ".github/workflows/android.yml"
 
 jobs:
   build:
@@ -22,9 +30,9 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Compilar APK
+      - name: Testar captura Android e compilar APK de validação
         working-directory: android-capture
-        run: gradle assembleDebug
+        run: gradle --no-daemon :app:testDebugUnitTest :app:assembleDebug
 
       - name: Localizar APK
         run: |
@@ -62,9 +70,9 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/aapt" \
             dump permissions "$APK"
 
-      - name: Disponibilizar APK
+      - name: Disponibilizar APK de validação isolado
         uses: actions/upload-artifact@v4
         with:
-          name: Meu-Assessor-Financeiro-Android
+          name: Snake-Finance-Assessor-IA-Preview-Isolado
           path: android-capture/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
