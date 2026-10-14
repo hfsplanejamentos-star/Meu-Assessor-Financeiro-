@@ -15,6 +15,7 @@ import android.provider.MediaStore;
 import android.speech.RecognizerIntent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.window.OnBackInvokedDispatcher;
 import android.webkit.PermissionRequest;
 import android.webkit.ValueCallback;
@@ -71,6 +72,9 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        // Only on the isolated IA preview splash. Prevent the system status bar
+        // (clock/battery) from appearing over the native loading composition.
+        if (BuildConfig.DEBUG) getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
                 .getString("web_cache_version", "");
@@ -176,6 +180,7 @@ public final class MainActivity extends Activity {
 
     private void unlockApplication() {
         if (isFinishing()) return;
+        if (BuildConfig.DEBUG) getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         authenticationInProgress = false;
         authenticated = true;
         webView.setVisibility(View.VISIBLE);
