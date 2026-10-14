@@ -1,5 +1,11 @@
 name: Snake Finance Regression
 on:
+  pull_request:
+    paths:
+      - "snake-finance-mobile.html"
+      - "android-capture/app/src/main/assets/snake-finance-mobile.html"
+      - "tests/**"
+      - ".github/workflows/snake-finance-regression.yml"
   push:
     branches: [main]
     paths:
@@ -19,4 +25,6 @@ jobs:
         with:
           node-version: "22"
       - name: Financial and UI logic regression
-        run: node tests/snake-finance-regression.cjs
+        run: |
+          node tests/snake-finance-regression.cjs
+          node tests/briefing-backup-regression.cjs
