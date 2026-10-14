@@ -8,6 +8,7 @@ on:
       - "convex/**"
       - "assessor-*.js"
       - "assessor-*.html"
+      - "assessor-brand-assets.css"
       - "Assessor_IA_Mobile_Validacao_Standalone.html"
       - "scripts/build-assessor-standalone.cjs"
       - "tests/assessor-*"
