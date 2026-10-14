@@ -42,7 +42,7 @@ final class EncryptedQueueStore {
 
             for (int i = 0; i < queue.length(); i++) {
                 JSONObject prior = queue.getJSONObject(i);
-                if (event.id.equals(prior.optString("id")) || sameBankEvent(event, prior)) {
+                if (event.id.equals(prior.optString("id"))) {
                     return false;
                 }
             }
@@ -52,7 +52,7 @@ final class EncryptedQueueStore {
             // Coincidências são marcadas para revisão, nunca excluídas automaticamente.
             for (int i = 0; i < queue.length(); i++) {
                 JSONObject prior = queue.getJSONObject(i);
-                if (possibleWalletMirror(event, prior)) {
+                if (possibleWalletMirror(event, prior) || sameBankEvent(event, prior)) {
                     saved.put("possibleDuplicateOf", prior.optString("id"));
                     break;
                 }
