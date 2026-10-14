@@ -30,6 +30,22 @@ async function ownerHash(req: Request) {
   return key.length < 32 || key.length > 256 ? null : await sha256(`meu-assessor:v1:${key}`);
 }
 
+async function whatsappOwnerHash() {
+  const key = process.env.WHATSAPP_OWNER_SYNC_KEY || "";
+  return key.length < 32 || key.length > 256 ? null : await sha256(`meu-assessor:v1:${key}`);
+}
+async function validMetaSignature(raw: string, signature: string | null) {
+  const secret = process.env.META_APP_SECRET || "";
+  if (!secret) return process.env.NODE_ENV !== "production";
+  if (!signature?.startsWith("sha256=")) return false;
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const signed = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(raw));
+  const expected = "sha256=" + Array.from(new Uint8Array(signed), b => b.toString(16).padStart(2, "0")).join("");
+  if (expected.length !== signature.length) return false;
+  let diff = 0; for (let i=0;i<expected.length;i++) diff |= expected.charCodeAt(i) ^ signature.charCodeAt(i);
+  return diff === 0;
+}
+
 type IncomingEvent = { eventId: string; sourcePackage: string; title: string; text: string; amountCents?: number; direction: Direction; postedAt: number };
 function parseEvents(body: unknown): { deviceId: string; appVersion?: string; events: IncomingEvent[] } | null {
   if (!body || typeof body !== "object") return null;
@@ -147,6 +163,64 @@ http.route({ path: "/ai/finance", method: "POST", handler: httpAction(async (ctx
   const data: any = await response.json();
   const output = String(data?.output_text || data?.output?.flatMap((item: any) => item.content || []).map((item: any) => item.text || "").join("") || "").trim();
   try { return json(JSON.parse(output), 200, headers); } catch { return json({ intent: "answer", answer: output }, 200, headers); }
+}) });
+
+
+http.route({ path: "/whatsapp/webhook", method: "GET", handler: httpAction(async (_ctx, req) => {
+  const url = new URL(req.url);
+  const mode = url.searchParams.get("hub.mode");
+  const token = url.searchParams.get("hub.verify_token");
+  const challenge = url.searchParams.get("hub.challenge") || "";
+  const expected = process.env.WHATSAPP_VERIFY_TOKEN || "";
+  if (mode === "subscribe" && expected && token === expected) return new Response(challenge, { status: 200 });
+  return new Response("Forbidden", { status: 403 });
+}) });
+
+http.route({ path: "/whatsapp/webhook", method: "POST", handler: httpAction(async (ctx, req) => {
+  const raw = await req.text();
+  if (!(await validMetaSignature(raw, req.headers.get("X-Hub-Signature-256")))) return new Response("Invalid signature", { status: 401 });
+  let body: any; try { body = JSON.parse(raw); } catch { return new Response("Bad request", { status: 400 }); }
+  const hash = await whatsappOwnerHash();
+  if (!hash) return new Response("WhatsApp owner not configured", { status: 503 });
+  const messages = (body?.entry || []).flatMap((e:any)=>(e?.changes||[]).flatMap((ch:any)=>ch?.value?.messages||[]));
+  const allowedPhone = String(process.env.WHATSAPP_ALLOWED_PHONE || "").replace(/\D/g, "");
+  for (const msg of messages) {
+    const phone = String(msg?.from || "").replace(/\D/g, "");
+    const waMessageId = String(msg?.id || "").slice(0, 200);
+    if (!phone || !waMessageId || (allowedPhone && phone !== allowedPhone)) continue;
+    const textBody = String(msg?.text?.body || "").trim();
+    const decision = textBody.toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+    const messageType = msg?.type === "audio" ? "audio" : "text";
+    const mediaId = messageType === "audio" ? String(msg?.audio?.id || "") : undefined;
+    const receivedAt = Number(msg?.timestamp || 0) > 0 ? Number(msg.timestamp) * 1000 : Date.now();
+    const received = await ctx.runMutation(internal.whatsapp.receive, { ownerHash: hash, waMessageId, phone, messageType, rawText: textBody || undefined, mediaId, receivedAt });
+    if (!received.created) continue;
+    if (decision === "sim" || decision === "s" || decision === "confirmar" || decision === "nao" || decision === "não" || decision === "n" || decision === "cancelar") {
+      const confirm = decision === "sim" || decision === "s" || decision === "confirmar";
+      const resolved = await ctx.runMutation(internal.whatsapp.resolvePending, { ownerHash: hash, phone, decision: confirm ? "confirm" : "cancel", now: Date.now() });
+      await ctx.runMutation(internal.whatsapp.setProcessed, { ownerHash: hash, waMessageId, nextStatus: confirm && resolved.ok ? "confirmed" : "cancelled" });
+      const reply = resolved.ok
+        ? (confirm ? "Confirmado. O lançamento foi liberado para sincronização no Snake Finance." : "Lançamento cancelado. Nada foi registrado.")
+        : "Não encontrei um lançamento pendente para confirmar.";
+      await ctx.scheduler.runAfter(0, internal.whatsappActions.sendText, { phone, body: reply });
+      continue;
+    }
+    if (messageType === "audio" && !mediaId) continue;
+    await ctx.scheduler.runAfter(0, internal.whatsappActions.process, { ownerHash: hash, phone, waMessageId, messageType, rawText: textBody || undefined, mediaId, receivedAt });
+  }
+  return new Response("EVENT_RECEIVED", { status: 200 });
+}) });
+
+http.route({ path: "/whatsapp/messages", method: "OPTIONS", handler: httpAction(async (_ctx, req) => new Response(null, { status: 204, headers: secureCors(req) })) });
+http.route({ path: "/whatsapp/messages", method: "GET", handler: httpAction(async (ctx, req) => {
+  const headers = secureCors(req);
+  const hash = await ownerHash(req);
+  if (!hash) return json({ ok: false, error: "invalid_sync_key" }, 401, headers);
+  const url = new URL(req.url);
+  const since = Math.max(0, Number(url.searchParams.get("since") || 0) || 0);
+  const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit") || 50) || 50));
+  const messages = await ctx.runQuery(internal.whatsapp.listChanges, { ownerHash: hash, since, limit });
+  return json({ ok: true, messages, serverTime: Date.now() }, 200, headers);
 }) });
 
 export default http;
