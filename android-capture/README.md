@@ -7,18 +7,18 @@ Aplicativo Android da **Versão Atual**. A V10 não é carregada.
 - Dashboard publicado aberto em WebView segura.
 - Atualizações do site recebidas sem reinstalar o APK.
 - Cache e armazenamento local do WebView para uso PWA/offline.
-- Captura opcional de notificações bancárias autorizadas.
+- Captura opcional de notificações bancárias autorizadas e Google Wallet.
 - Fila local criptografada com AES-256-GCM e Android Keystore.
 - Ponte Android para comando de voz.
 - Seleção de imagem/arquivo pelo próprio Android.
 - Compartilhamento com WhatsApp.
 - Ponte para entregar as notificações capturadas ao dashboard.
 - Estrutura web existente para Assistente IA; credenciais nunca ficam no APK.
-- Confirmação do usuário antes de gravar sugestões financeiras.
+- Confirmação do usuário antes de gravar sugestões financeiras.\n- Rotação de tela sem recriar a WebView nem reapresentar a tela de inicialização.\n- Deduplicação conservadora Wallet + banco: mesmo valor, estabelecimento e horário próximo; valores iguais em locais diferentes são operações distintas.
 
 ## Privacidade
 
-A captura só funciona depois que o usuário abre **Configurar captura** e concede manualmente o acesso nas configurações do Android. Aplicativos fora da lista autorizada são ignorados. O conteúdo fica criptografado no aparelho até ser tratado pelo dashboard.
+A captura só funciona depois que o usuário abre **Configurar captura** e concede manualmente o acesso nas configurações do Android. Aplicativos fora da lista autorizada são ignorados e seu conteúdo não é armazenado em diagnósticos. O conteúdo de aplicativos autorizados fica criptografado no aparelho até ser tratado pelo dashboard.
 
 ## Gerar o APK automaticamente
 
