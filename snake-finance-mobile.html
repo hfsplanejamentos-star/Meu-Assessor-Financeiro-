@@ -1875,7 +1875,7 @@ function boot(){
 
  try{const native=window.AndroidBridge||window.AndroidApp;if(raw&&native&&typeof native.preserveLedgerSnapshot==='function'){const rows=JSON.parse(raw);if(Array.isArray(rows)&&rows.length>0)native.preserveLedgerSnapshot(raw);}}catch(ignore){}
  if(!raw||raw==='[]'){PERSIST_BLOCKED=true;setTimeout(()=>alert('Base vazia: proteção contra gravações ativada. Preserve os dados e exporte a cópia de recuperação.'),100);}
- const saved=raw?JSON.parse(raw):null;if(raw&&!Array.isArray(saved))throw Error('Formato inválido');L=saved===null?JSON.parse(JSON.stringify(L0)):validateLedger(saved);if(OPENING_INVALID||(window.SNAKE_DISTRIBUTABLE&&!localStorage.getItem(OPENING_KEY))){L=[];PERSIST_BLOCKED=true;setTimeout(openBackupPanel,100);}}
+ const saved=raw?JSON.parse(raw):null;if(raw&&!Array.isArray(saved))throw Error('Formato inválido');L=saved===null?JSON.parse(JSON.stringify(L0)):validateLedger(saved);if(OPENING_INVALID||(window.SNAKE_DISTRIBUTABLE&&!localStorage.getItem(OPENING_KEY))){L=[];PERSIST_BLOCKED=true;setTimeout(openBackupPanel,100);}else if(raw&&isNonemptyLedger(raw))preserveOriginalFullSnapshot(raw);}
  catch(e){L=[];PERSIST_BLOCKED=true;setTimeout(()=>alert('Os dados salvos não puderam ser lidos. Nada foi sobrescrito. Exporte um backup em Configurações e importe uma cópia válida.'),20);}
  YM=APP_TODAY.slice(0,7);if(!L.some(x=>(x.comp||x.d||'').startsWith(YM)))YM='2026-10';
  SEL=APP_TODAY.startsWith(YM)?APP_TODAY:`${YM}-01`;try{migrateLegacyPayment();NID=nextId();migrateWorkCategory();
@@ -2314,6 +2314,24 @@ function completeBackupCategories(categories,ledger){
  return {categories:cats,recovered,missing:[...missing]};
 }
 function backupState(){const storage={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if((k.startsWith('assessor_')||['lay','tema'].includes(k))&&!/backup|pre_import/.test(k))storage[k]=localStorage.getItem(k);}Object.assign(storage,{[OPENING_KEY]:JSON.stringify(OPENING_CFG),[GOAL_STORE]:JSON.stringify(INVEST_GOALS),assessor_inv_v82:JSON.stringify(INV_CFG),[CATSTORE]:JSON.stringify(completeBackupCategories(CATDB,L).categories),[CAJU_CFG_KEY]:JSON.stringify(CAJU_CFG),[ALERT_KEY]:JSON.stringify(ALERT_CFG),[NOTICE_KEY]:JSON.stringify(ST),[OVERVIEW_KEY]:JSON.stringify(OVERVIEW_VISIBLE),assessor_budgets_v82:JSON.stringify(ORC)});return {schema:'snake-finance-backup',version:2,app:'v82-android',createdAt:new Date().toISOString(),ledger:L,storage};}
+/**
+ * Save the original financial state once, before any migration can modify it.
+ * A zero/invalid ledger is never offered as a good original. The native vault
+ * preserves only the first verified complete snapshot.
+ */
+function preserveOriginalFullSnapshot(raw){
+ try{
+  const native=window.AndroidBridge||window.AndroidApp;
+  if(!native||typeof native.preserveFinancialSnapshot!=='function')return false;
+  const original=JSON.parse(raw||'null');
+  if(!Array.isArray(original)||!original.length||!Array.isArray(L)||L.length!==original.length||
+      OPENING_INVALID||!localStorage.getItem(OPENING_KEY))return false;
+  validateLedger(original);
+  const snapshot=backupState();
+  if(snapshot.ledger.length!==original.length)return false;
+  return !!native.preserveFinancialSnapshot(JSON.stringify(snapshot));
+ }catch(error){console.warn('Snapshot financeiro de origem não confirmado',error);return false;}
+}
 function saveSafetyBackup(){try{localStorage.setItem('assessor_pre_import_v82',JSON.stringify(backupState()))}catch(e){throw Error('Sem espaço para backup de segurança. Exporte um backup antes de continuar.');}}
 function exportBackup(){
  try{
@@ -2332,6 +2350,8 @@ function exportBackup(){
   setTimeout(()=>URL.revokeObjectURL(url),30000);
  }catch(e){alert('Falha ao exportar backup: '+e.message);}
 }
+function exportPreservedFinancialSnapshot(){const native=window.AndroidBridge||window.AndroidApp;if(native&&typeof native.exportPreservedFinancialSnapshot==='function')native.exportPreservedFinancialSnapshot();else alert('Cópia completa não disponível nesta versão.');}
+function fullSnapshotStatus(){try{const native=window.AndroidBridge||window.AndroidApp;return native?.preservedFinancialSnapshotStatus?JSON.parse(native.preservedFinancialSnapshotStatus()):null;}catch{return null;}}
 function exportPreservedLedger(){const native=window.AndroidBridge||window.AndroidApp;if(native&&typeof native.exportPreservedLedger==='function')native.exportPreservedLedger();else alert('Cópia interna não disponível nesta versão.');}
 function exportRawRecovery(){
  const storage={};
@@ -2345,7 +2365,7 @@ function exportRawRecovery(){
  a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();
  setTimeout(()=>URL.revokeObjectURL(a.href),30000);
 }
-function openBackupPanel(){document.getElementById('settingsPop')?.classList.remove('on');modal('Backup e importação',`<p class="m">Exporte no arquivo anterior e importe neste. O backup inclui lançamentos, saldos iniciais, categorias, metas, alertas e preferências deste navegador. Guarde o JSON em local privado.</p><button class="bt p" onclick="exportBackup()">Exportar backup completo</button><button class="bt" onclick="exportRawRecovery()">Resgate de emergência · exportar armazenamento original sem alterar dados</button><button class="bt" onclick="exportPreservedLedger()">Exportar cópia interna preservada (se disponível)</button><label class="fm">Importar JSON<input type="file" accept=".json,application/json" onchange="readBackupFile(this.files[0])"></label><p class="m">A importação valida os dados antes de substituir. Uma cópia local de segurança é criada. Bases legadas em lista importam somente lançamentos.</p><button class="bt" onclick="restoreSafetyBackup()">Revisar última cópia de segurança</button>`);}
+function openBackupPanel(){document.getElementById('settingsPop')?.classList.remove('on');const vault=fullSnapshotStatus(),ready=vault&&vault.available&&vault.valid,detail=ready?'Cópia original completa preservada: '+vault.entries+' lançamentos, '+vault.bytes+' bytes.':'Cópia original completa ainda não confirmada neste aparelho.';modal('Backup e importação',`<p class="m">Exporte no arquivo anterior e importe neste. O backup inclui lançamentos, saldos iniciais, categorias, metas, alertas e preferências deste navegador. Guarde o JSON em local privado.</p><button class="bt p" onclick="exportBackup()">Exportar backup completo</button><p class="m">${escapeHTML(detail)}</p><button class="bt" onclick="exportPreservedFinancialSnapshot()" ${ready?'':'disabled'}>Exportar primeira base original completa preservada</button><button class="bt" onclick="exportRawRecovery()">Resgate de emergência · exportar armazenamento original sem alterar dados</button><button class="bt" onclick="exportPreservedLedger()">Exportar cópia interna de lançamentos (se disponível)</button><label class="fm">Importar JSON<input type="file" accept=".json,application/json" onchange="readBackupFile(this.files[0])"></label><p class="m">A importação valida os dados antes de substituir. Uma cópia local de segurança é criada. Bases legadas em lista importam somente lançamentos.</p><button class="bt" onclick="restoreSafetyBackup()">Revisar última cópia de segurança</button>`);}
 let BACKUP_PENDING=null;
 async function readBackupFile(file){if(!file)return;if(file.size>20*1024*1024)return alert('Arquivo maior que 20 MB.');try{previewBackup(JSON.parse(await file.text()))}catch(e){BACKUP_PENDING=null;alert('Importação recusada: '+e.message);}}
 function previewBackup(data){BACKUP_PENDING=null;const isLegacy=Array.isArray(data);const legacyObject=!isLegacy&&data&&typeof data==='object'&&data.schema!=='snake-finance-backup';let legacyLedger=null,legacyStorage={};if(legacyObject){legacyLedger=Array.isArray(data.ledger)?data.ledger:Array.isArray(data.transactions)?data.transactions:Array.isArray(data.lancamentos)?data.lancamentos:Array.isArray(data.data)?data.data:null;const src=data.storage||data.localStorage||data.preferences||data.config||{};if(src&&typeof src==='object'&&!Array.isArray(src))for(const[k,v]of Object.entries(src))legacyStorage[k]=typeof v==='string'?v:JSON.stringify(v);if(!legacyLedger)throw Error('Formato legado reconhecido, mas não encontrei a lista de lançamentos.');}if(!isLegacy&&!legacyObject&&(data?.schema!=='snake-finance-backup'||![1,2].includes(data.version)||!data.storage||typeof data.storage!=='object'||Array.isArray(data.storage)))throw Error('Formato de backup não reconhecido');const ledger=validateLedger(isLegacy?data:legacyObject?legacyLedger:data.ledger),storage=isLegacy?{}:legacyObject?legacyStorage:{...data.storage};for(const [key,value]of Object.entries(storage)){if((!key.startsWith('assessor_')&&!['lay','tema'].includes(key))||typeof value!=='string'||value.length>20000000)throw Error('Preferência inválida');validatePreference(key,value);}if(!isLegacy&&!legacyObject&&data.version===2&&!storage[OPENING_KEY])throw Error('Backup incompleto: faltam saldos iniciais');if(window.SNAKE_DISTRIBUTABLE&&!storage[OPENING_KEY]&&!legacyObject&&!isLegacy)throw Error('Para migrar ao Android, exporte um backup completo no HTML atualizado. Backups antigos não incluem os saldos iniciais.');const resolved=completeBackupCategories(storage[CATSTORE]?JSON.parse(storage[CATSTORE]):CATDB,ledger);
