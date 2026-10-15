@@ -65,11 +65,11 @@ final class WebAppBridge {
     }
 
     @JavascriptInterface
-    public void showFinancialAlert(String key, String title, String body, int severity) {
-        if (key == null || !key.matches("[a-zA-Z0-9_-]{1,80}")) return;
+    public boolean showFinancialAlert(String key, String title, String body, int severity) {
+        if (key == null || !key.matches("[a-zA-Z0-9_-]{1,80}")) return false;
         android.app.NotificationManager manager =
             (android.app.NotificationManager) activity.getSystemService(android.content.Context.NOTIFICATION_SERVICE);
-        if (manager == null) return;
+        if (manager == null) return false;
         final String channelId = "snake_financial_alerts";
         if (android.os.Build.VERSION.SDK_INT >= 26) {
             android.app.NotificationChannel channel = new android.app.NotificationChannel(
@@ -80,7 +80,7 @@ final class WebAppBridge {
         if (android.os.Build.VERSION.SDK_INT >= 33 &&
             activity.checkSelfPermission(
                 android.Manifest.permission.POST_NOTIFICATIONS)
-                != android.content.pm.PackageManager.PERMISSION_GRANTED) return;
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) return false;
         String safeTitle = title == null ? "Snake Finance" : title.substring(0, Math.min(90, title.length()));
         String safeBody = body == null ? "" : body.substring(0, Math.min(250, body.length()));
         android.content.Intent launch = new android.content.Intent(activity, MainActivity.class);
@@ -97,6 +97,7 @@ final class WebAppBridge {
             .setVisibility(android.app.Notification.VISIBILITY_PRIVATE)
             .build();
         manager.notify("snake_" + key, 1101, notification);
+        return true;
     }
 
     @JavascriptInterface
