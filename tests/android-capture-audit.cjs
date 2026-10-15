@@ -45,7 +45,7 @@ assert.match(bridge,/integrationRequest/);
 assert.match(main,/path\.startsWith\("\/Meu-Assessor-Financeiro-\/"\)/);
 assert.match(main,/new Intent\(Intent\.ACTION_VIEW, uri\)/);
 assert.match(main,/bundledDashboard\.contains\("v85-landscape-responsive"\)/);
-assert.match(gradle,/applicationIdSuffix = "\.qa(?:\.landscape)?"/);
+assert.match(gradle,/applicationIdSuffix = "\.qa(?:\.[a-z0-9]+)*"/);
 assert.match(gradle,/applicationId = "br\.com\.snakefinance\.app"/);
 
 // A third QA installation must neither fetch production's older UI nor issue
