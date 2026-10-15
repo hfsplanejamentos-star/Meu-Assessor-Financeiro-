@@ -1811,7 +1811,23 @@ function v64ToggleQuick(){
  if(f) f.classList.toggle('open',q.classList.contains('open'));
 }
 
-function draw(){ensureRecurrences(YM);updateMonthBar();const AUD=auditEngine();if(!AUD.ok)console.error('AUDITORIA FINANCEIRA',AUD);const t=TABS.find(x=>x[0]==TAB)||TABS[0];$('v').innerHTML=t[3]();const main=TABS.filter(x=>MAIN_TABS.includes(x[0]));$('nav').innerHTML=main.map(x=>`<button class="${x[0]==TAB?'on':''}" onclick="TAB='${x[0]}';closeMore();draw();window.scrollTo(0,0)">${x[0]==='inv'?v62InvestmentIcon():I(x[2],'currentColor',22)}${x[1]}</button>`).join('')+`<button class="${['rec','as'].includes(TAB)?'on':''}" onclick="toggleMore()">${I('dots','currentColor',22)}Mais</button><div id="moreMenu" class="moreMenu"><button onclick="TAB='rec';closeMore();draw()">↻ Recorrentes</button><button onclick="TAB='as';closeMore();draw()">▢ Assessor</button></div><button id="fabAdd" aria-label="Adicionar receita ou despesa" onclick="v64ToggleQuick()"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 4v16M4 12h16"/></svg></button>`;if(MD&&/^\d{4}-\d{2}-\d{2}$/.test(String(MD)))renderMd();setTimeout(()=>{bindGraphs();applyLayout();bindCardNavigation();v64CleanMore();},0);}
+function syncNativeFinancialAlerts(){
+ const bridge=window.AndroidBridge||window.AndroidApp;
+ if(!bridge||typeof bridge.showFinancialAlert!=='function'||PERSIST_BLOCKED)return;
+ if(YM!==APP_TODAY.slice(0,7))return;
+ let alerts=[];try{alerts=financialAlerts(YM)}catch(e){console.warn('Alertas indisponíveis',e);return;}
+ for(const a of alerts){
+  if(!a||!a.key||a.severity!=='critical')continue;
+  const key='snake_native_'+APP_TODAY+'_'+a.key;
+  try{
+   if(localStorage.getItem(key)==='sent')continue;
+   const text=ST.hide?'Existe um alerta financeiro importante. Abra o Snake Finance para conferir.':String(a.text||'');
+   bridge.showFinancialAlert(String(a.key), 'Snake Finance · Atenção', text, 2);
+   localStorage.setItem(key,'sent');
+  }catch(e){console.warn('Falha ao solicitar aviso Android',e);}
+ }
+}
+function draw(){ensureRecurrences(YM);updateMonthBar();const AUD=auditEngine();if(!AUD.ok)console.error('AUDITORIA FINANCEIRA',AUD);syncNativeFinancialAlerts();const t=TABS.find(x=>x[0]==TAB)||TABS[0];$('v').innerHTML=t[3]();const main=TABS.filter(x=>MAIN_TABS.includes(x[0]));$('nav').innerHTML=main.map(x=>`<button class="${x[0]==TAB?'on':''}" onclick="TAB='${x[0]}';closeMore();draw();window.scrollTo(0,0)">${x[0]==='inv'?v62InvestmentIcon():I(x[2],'currentColor',22)}${x[1]}</button>`).join('')+`<button class="${['rec','as'].includes(TAB)?'on':''}" onclick="toggleMore()">${I('dots','currentColor',22)}Mais</button><div id="moreMenu" class="moreMenu"><button onclick="TAB='rec';closeMore();draw()">↻ Recorrentes</button><button onclick="TAB='as';closeMore();draw()">▢ Assessor</button></div><button id="fabAdd" aria-label="Adicionar receita ou despesa" onclick="v64ToggleQuick()"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 4v16M4 12h16"/></svg></button>`;if(MD&&/^\d{4}-\d{2}-\d{2}$/.test(String(MD)))renderMd();setTimeout(()=>{bindGraphs();applyLayout();bindCardNavigation();v64CleanMore();},0);}
 function openDay(n){SEL=n;MD=n;draw();}
 function closeDay(){MD=0;$('md').style.display='none';$('md').innerHTML='';document.querySelector('.catFab')?.classList.remove('modalHidden');}
 function renderMd(){
