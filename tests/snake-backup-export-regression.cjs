@@ -106,6 +106,36 @@ app.exportBackup();
 assert.equal(captures.length,2,'explicit diagnostic export of empty ledger remains possible');
 assert.equal(JSON.parse(captures[1].json).ledger.length,0);
 assert.equal(alerts.length,0);
+// An explicitly exported empty diagnostic file must NEVER be restorable as a real ledger.
+const previewStart=html.indexOf('function previewBackup(');
+const previewEnd=html.indexOf('function reloadDashboardView(){',previewStart);
+assert.ok(previewStart>0&&previewEnd>previewStart,'import preview source must exist');
+const importErrors=[];
+const importSandbox={
+  JSON,Array,Object,
+  window:{SNAKE_DISTRIBUTABLE:true},
+  validateLedger:(data)=>{if(!Array.isArray(data))throw Error('invalid list');return data;},
+  OPENING_KEY:'assessor_openings_v83',
+  CATSTORE:'assessor_categories_v82',CATDB:{},
+  completeBackupCategories:(cats,data)=>({categories:cats,missing:[],recovered:[]}),
+  validatePreference:()=>{},escapeHTML:String,
+  modal:()=>{},alert:(msg)=>importErrors.push(msg),
+  localStorage:{get length(){throw Error('An empty import must not reach storage');}}
+};
+vm.createContext(importSandbox);
+vm.runInContext(html.slice(previewStart,previewEnd),importSandbox);
+assert.throws(()=>importSandbox.previewBackup([]),/Backup sem lançamentos/,'empty legacy ledger cannot import');
+assert.throws(()=>importSandbox.previewBackup({
+  schema:'snake-finance-backup',version:2,ledger:[],storage:{assessor_openings_v83:entries.assessor_openings_v83}
+}),/Backup sem lançamentos/,'zero-entry full backup cannot replace saved data');
+const applyStart=html.indexOf('function applyBackup(){');
+const applyEnd=html.indexOf('// Independent consistency checks',applyStart);
+assert.ok(applyStart>0&&applyEnd>applyStart,'import confirmation source must exist');
+vm.runInContext(html.slice(applyStart,applyEnd),importSandbox);
+importSandbox.BACKUP_PENDING={ledger:[],storage:{}};
+importSandbox.applyBackup();
+assert.ok(importErrors.some(x=>x.includes('não contém lançamentos')),'confirmation must also reject empty ledger');
+assert.equal(importSandbox.BACKUP_PENDING,null,'empty import must be discarded');
 const vault=fs.readFileSync('android-capture/app/src/main/java/br/com/meuassessor/capture/FinancialRecoveryVault.java','utf8');
 assert.match(vault,/first verified nonempty snapshot/i);
 assert.match(vault,/if \(target\.isFile\(\)\)/);
