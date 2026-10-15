@@ -111,8 +111,13 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        // Hide real Android status icons only while the startup screen is visible.
+        // Hide Android's clock/battery indicators during the approved full-screen splash.
+        if (Build.VERSION.SDK_INT >= 35) getWindow().setDecorFitsSystemWindows(false);
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+                && getWindow().getInsetsController() != null) {
+            getWindow().getInsetsController().hide(android.view.WindowInsets.Type.statusBars());
+        }
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
                 .getString("web_cache_version", "");
@@ -122,27 +127,42 @@ public final class MainActivity extends Activity {
                     .putString("web_cache_version", "1.5.7").apply();
         }
         FrameLayout root = new FrameLayout(this);
-        root.setBackgroundColor(Color.BLACK);
+        // Use dark navy, not an unrelated black letterbox while the approved image is decoded.
+        root.setBackgroundColor(Color.rgb(4, 18, 35));
         root.addView(webView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         FrameLayout splash = new FrameLayout(this);
-        splash.setBackgroundColor(Color.BLACK);
+        splash.setBackgroundColor(Color.rgb(4, 18, 35));
         startupSplash = splash;
-        // Use the exact user-approved JPG when packaged in assets. Never crop or redraw it.
-        // No alternative splash image or generated logo is permitted.
-        try {
-            android.graphics.Bitmap splashBitmap = android.graphics.BitmapFactory.decodeStream(
-                getAssets().open("snake_splash_aprovada.jpg"));
-            if (splashBitmap != null) {
+        // Preserve the approved JPEG (and its logo) as the original asset.
+        // The source JPG unfortunately contains a previously captured phone status bar.
+        // Neutralize only that screenshot artefact on a display copy, never in the stored file.
+        try (InputStream splashStream = getAssets().open("snake_splash_aprovada.jpg")) {
+            android.graphics.Bitmap original = android.graphics.BitmapFactory.decodeStream(splashStream);
+            if (original != null) {
+                int edgeColor = original.getPixel(0, Math.max(0, original.getHeight() / 2));
+                android.graphics.Bitmap cleaned = original.copy(android.graphics.Bitmap.Config.ARGB_8888, true);
+                if (cleaned == null) cleaned = original;
+                else {
+                    android.graphics.Paint cleanPaint = new android.graphics.Paint();
+                    cleanPaint.setColor(edgeColor);
+                    // Embedded clock, signal and battery text occupy the top ~55px of 691x1536 JPEG.
+                    // Top 76px is empty background; the original central illustration is untouched.
+                    float upperBand = cleaned.getHeight() * (76.0f / 1536.0f);
+                    new android.graphics.Canvas(cleaned).drawRect(0f, 0f,
+                            (float) cleaned.getWidth(), upperBand, cleanPaint);
+                }
                 ImageView approvedSplash = new ImageView(this);
-                approvedSplash.setImageBitmap(splashBitmap);
-                approvedSplash.setBackgroundColor(Color.BLACK);
+                approvedSplash.setImageBitmap(cleaned);
+                splash.setBackgroundColor(edgeColor);
+                root.setBackgroundColor(edgeColor);
+                approvedSplash.setBackgroundColor(edgeColor);
                 approvedSplash.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 splash.addView(approvedSplash, new FrameLayout.LayoutParams(-1, -1));
             }
         } catch (java.io.IOException missingApprovedSplash) {
-            // An absent asset must not crash app startup.
+            // An absent asset must not crash startup; dashboard fallback still works.
         }
         root.addView(splash, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -178,6 +198,10 @@ public final class MainActivity extends Activity {
         if (!authenticatedForDisplay || !dashboardReady || startupSplash == null) return;
         // Restore the system status bar for normal dashboard use.
         getWindow().getDecorView().setSystemUiVisibility(0);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+                && getWindow().getInsetsController() != null) {
+            getWindow().getInsetsController().show(android.view.WindowInsets.Type.statusBars());
+        }
         FrameLayout splash = startupSplash;
         startupSplash = null;
         if (splash.getParent() instanceof ViewGroup) ((ViewGroup) splash.getParent()).removeView(splash);
@@ -220,6 +244,17 @@ public final class MainActivity extends Activity {
         if(!queueReceiverRegistered){android.content.IntentFilter queueFilter=new android.content.IntentFilter("br.com.meuassessor.capture.QUEUE_CHANGED");
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.TIRAMISU) registerReceiver(queueReceiver,queueFilter,RECEIVER_NOT_EXPORTED); else registerReceiver(queueReceiver,queueFilter);queueReceiverRegistered=true;}
         UpdateChecker.check(this);
+    }
+
+    /** Deliver HTTPS responses to the already-authenticated WebView without exposing the access key. */
+    void dispatchIntegrationResult(String resultJson) {
+        runOnUiThread(() -> {
+            if (isFinishing() || webView == null || !authenticatedForDisplay) return;
+            String safeJson = org.json.JSONObject.quote(resultJson);
+            webView.evaluateJavascript(
+                "window.dispatchEvent(new CustomEvent('snake-integration-result',{detail:JSON.parse("
+                    + safeJson + ")}))", null);
+        });
     }
 
     private static final String CACHE_FILE = "snake_finance_dashboard_1_5_1.html";
@@ -277,6 +312,27 @@ public final class MainActivity extends Activity {
     }
 
     private void loadDashboardHtml() {
+        // Both QA and future signed releases must prefer the *audited V85* HTML
+        // bundled with their own APK. Never allow an older Pages build or stale
+        // cache to replace this version and disguise a failed data migration.
+        // This preserves the same WebView base origin and financial localStorage.
+        if (getPackageName().equals("br.com.snakefinance.app")
+                || getPackageName().equals("br.com.snakefinance.app.qa")) {
+            try (InputStream bundledInput = getAssets().open("snake-finance-mobile.html")) {
+                java.io.ByteArrayOutputStream bundledBytes = new java.io.ByteArrayOutputStream();
+                byte[] data = new byte[8192];
+                int n;
+                while ((n = bundledInput.read(data)) != -1) bundledBytes.write(data, 0, n);
+                String bundledDashboard = bundledBytes.toString("UTF-8");
+                if (validDashboard(bundledDashboard)
+                        && bundledDashboard.contains("v85-landscape-responsive")) {
+                    showDashboard(bundledDashboard);
+                    return;
+                }
+            } catch (Exception ignored) {
+                // Standard offline/remote fallback below if bundled content is unavailable.
+            }
+        }
         String local = readCachedDashboard();
         if (local == null) {
             try (InputStream input = getAssets().open("snake-finance-mobile.html")) {
@@ -470,10 +526,30 @@ public final class MainActivity extends Activity {
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                if (!request.isForMainFrame()) return false;
                 Uri uri = request.getUrl();
+                String scheme = uri.getScheme() == null ? "" : uri.getScheme();
                 String host = uri.getHost() == null ? "" : uri.getHost();
-                if ("hfsplanejamentos-star.github.io".equalsIgnoreCase(host)) return false;
-                startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                String path = uri.getPath() == null ? "" : uri.getPath();
+                // The JavaScript-to-Android finance bridge is only intended for
+                // the original HTTPS project origin. Never navigate with it to
+                // other hosts, userinfo URLs, insecure origins, or other projects.
+                if ("https".equalsIgnoreCase(scheme)
+                        && "hfsplanejamentos-star.github.io".equalsIgnoreCase(host)
+                        && uri.getUserInfo() == null
+                        && path.startsWith("/Meu-Assessor-Financeiro-/")) return false;
+                if ("https".equalsIgnoreCase(scheme) || "http".equalsIgnoreCase(scheme)) {
+                    try {
+                        Intent external = new Intent(Intent.ACTION_VIEW, uri);
+                        external.addCategory(Intent.CATEGORY_BROWSABLE);
+                        startActivity(external);
+                    } catch (android.content.ActivityNotFoundException ignored) {
+                        android.widget.Toast.makeText(MainActivity.this,
+                                "Não foi possível abrir o link externo", android.widget.Toast.LENGTH_SHORT).show();
+                    }
+                }
+                // Block file:, javascript:, intent: and other external schemes
+                // inside the authenticated WebView.
                 return true;
             }
         });
@@ -616,7 +692,9 @@ public final class MainActivity extends Activity {
                             if (c != null && c.moveToFirst() && !c.isNull(0)) actual = c.getLong(0);
                         }
                     }
-                    if (actual != bytes.length) throw new java.io.IOException(
+                    // Some document providers cannot report size (statSize=-1 and SIZE=null).
+                    // A successful SHA-256 readback below remains mandatory for confirmation.
+                    if (actual >= 0 && actual != bytes.length) throw new java.io.IOException(
                         "Arquivo não confirmado: esperado " + bytes.length + " B, encontrado " + actual + " B");
                     try (java.io.InputStream check = getContentResolver().openInputStream(target)) {
                         if (check == null) throw new java.io.IOException("Arquivo exportado não pode ser reaberto");
@@ -630,7 +708,7 @@ public final class MainActivity extends Activity {
                     }
                     staged.delete();
                     android.widget.Toast.makeText(this,
-                        "Backup confirmado e verificado: " + actual + " bytes", android.widget.Toast.LENGTH_LONG).show();
+                        "Backup confirmado e verificado: " + bytes.length + " bytes", android.widget.Toast.LENGTH_LONG).show();
                 } catch (Exception e) {
                     android.widget.Toast.makeText(this,
                         "Backup NÃO confirmado: " + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();

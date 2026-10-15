@@ -35,6 +35,22 @@ final class WebAppBridge {
         } catch (Exception ignored) { }
     }
 
+    /** Preserve original balances, categories, investments and ledger before migration. */
+    @JavascriptInterface
+    public boolean preserveFinancialSnapshot(String fullJson) {
+        return FinancialRecoveryVault.preserve(activity, fullJson);
+    }
+
+    @JavascriptInterface
+    public String preservedFinancialSnapshotStatus() {
+        return FinancialRecoveryVault.status(activity);
+    }
+
+    @JavascriptInterface
+    public void exportPreservedFinancialSnapshot() {
+        FinancialRecoveryVault.export(activity);
+    }
+
     @JavascriptInterface
     public void exportPreservedLedger() {
         try {
@@ -155,6 +171,26 @@ final class WebAppBridge {
     public void openCaptureSettings() {
         activity.runOnUiThread(() ->
                 activity.startActivity(new Intent(activity, CaptureSettingsActivity.class)));
+    }
+
+    @JavascriptInterface
+    public String getIntegrationConfig() {
+        return SecureIntegration.config(activity);
+    }
+
+    @JavascriptInterface
+    public boolean saveIntegrationConfig(String serviceUrl, String accessKey) {
+        return SecureIntegration.save(activity, serviceUrl, accessKey);
+    }
+
+    @JavascriptInterface
+    public boolean clearIntegrationConfig() {
+        return SecureIntegration.clear(activity);
+    }
+
+    @JavascriptInterface
+    public void integrationRequest(String requestId, String path, String method, String payload) {
+        SecureIntegration.request(activity, requestId, path, method, payload);
     }
 
     @JavascriptInterface

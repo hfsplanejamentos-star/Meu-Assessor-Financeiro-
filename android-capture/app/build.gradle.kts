@@ -22,6 +22,7 @@ android {
         targetSdk = 35
         versionCode = 31
         versionName = "1.5.7"
+        manifestPlaceholders["appLabel"] = "Snake Finance"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -46,6 +47,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Side-by-side QA install. Never replace the signed production package or ledger.
+            applicationIdSuffix = ".qa"
+            versionNameSuffix = "-qa"
+            manifestPlaceholders["appLabel"] = "Snake Finance (Teste)"
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true

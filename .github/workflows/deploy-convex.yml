@@ -1,40 +1,43 @@
-name: Implantar Backend Convex
+name: Deploy Convex Backend (manual review)
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - principal
-    paths:
-      - "convexo/**"
-      - "convex.json"
-      - ".github/workflows/deploy-convex.yml"
 
 permissions:
   contents: read
 
 concurrency:
   group: deploy-convex-production
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
-    name: Implantar no Convex Production
     runs-on: ubuntu-latest
-
     steps:
-      - name: Baixar código do repositório
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configurar Node.js
+      - name: Node 24
         uses: actions/setup-node@v4
         with:
           node-version: "24"
+          cache: npm
 
-      - name: Instalar Convex SDK
-        run: npm install --no-save convex@latest
+      - name: Install pinned dependencies
+        run: npm ci
 
-      - name: Implantar funções no Convex
+      - name: Audit backend and types before any deployment
+        run: |
+          set -euo pipefail
+          npm run typecheck
+          npm run test:backend
+          node tests/snake-finance-regression.cjs
+          node tests/snake-backup-export-regression.cjs
+
+      - name: Deploy only with explicit server secret
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
-        run: npx convex deploy
+        run: |
+          set -euo pipefail
+          test -n "$CONVEX_DEPLOY_KEY" || { echo "Missing server deployment credential"; exit 1; }
+          npx convex deploy
