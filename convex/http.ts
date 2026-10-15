@@ -6,10 +6,9 @@ import { classifyByRules, redactForAi, type Classification, type Direction } fro
 const http = httpRouter();
 const legacyCors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type, X-Sync-Key", "Access-Control-Allow-Methods": "GET, POST, OPTIONS" };
 const allowedPackages = new Set([
+  // Only user-authorized sources. Google Wallet is corroborating evidence,
+  // not automatic proof of account/card or an instruction to post a ledger entry.
   "com.c6bank.app", "br.com.xp.carteira", "com.caju.employee", "br.com.itau",
-  "com.nu.production", "br.com.intermedium", "com.santander.app", "com.bradesco",
-  "br.com.bb.android", "br.com.gabba.Caixa", "com.mercadopago.wallet", "com.picpay",
-  "br.com.uol.ps.myaccount", "br.com.neon", 
   "com.google.android.apps.walletnfcrel"
 ]);
 const allowedCategories = new Set(["Alimentação", "Cerveja", "Comunicação", "Educação", "Entretenimento", "Moradia", "Outros", "Receitas", "Saúde", "Serviços", "Transporte", "C4 Cactus"]);
