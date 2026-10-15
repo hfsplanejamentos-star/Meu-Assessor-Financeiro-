@@ -273,7 +273,7 @@ console.log('PASS Snake Finance: Carbon billing cycle, installments and cent rou
  vm.createContext(b);
  vm.runInContext(snippet,b);
  for(const k of ['c6','carbon','caju','xpone']){
-  const logo=b.BANK_LOGOS?.[k];
+  const logo=vm.runInContext('BANK_LOGOS['+JSON.stringify(k)+']',b);
   assert.ok(logo&&logo.startsWith('data:image/svg+xml,'),k+' must have offline SVG');
   const svg=decodeURIComponent(logo.split(',').slice(1).join(','));
   assert.match(svg,/<svg[\s>]/,'valid '+k+' svg root');
