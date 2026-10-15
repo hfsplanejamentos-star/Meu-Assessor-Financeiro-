@@ -1,24 +1,67 @@
-const assert = require('assert');
-const fs = require('fs');
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const read=path=>fs.readFileSync(path,'utf8');
 
-const read = path => fs.readFileSync(path, 'utf8');
-const manifest = read('android-capture/app/src/main/AndroidManifest.xml');
-const listener = read('android-capture/app/src/main/java/br/com/meuassessor/capture/BankNotificationListener.java');
-const parser = read('android-capture/app/src/main/java/br/com/meuassessor/capture/NotificationParser.java');
-const queue = read('android-capture/app/src/main/java/br/com/meuassessor/capture/EncryptedQueueStore.java');
-const allowlist = read('android-capture/app/src/main/java/br/com/meuassessor/capture/BankAllowlist.java');
+const manifest=read('android-capture/app/src/main/AndroidManifest.xml');
+const main=read('android-capture/app/src/main/java/br/com/meuassessor/capture/MainActivity.java');
+const listener=read('android-capture/app/src/main/java/br/com/meuassessor/capture/BankNotificationListener.java');
+const parser=read('android-capture/app/src/main/java/br/com/meuassessor/capture/NotificationParser.java');
+const queue=read('android-capture/app/src/main/java/br/com/meuassessor/capture/EncryptedQueueStore.java');
+const allowlist=read('android-capture/app/src/main/java/br/com/meuassessor/capture/BankAllowlist.java');
+const secure=read('android-capture/app/src/main/java/br/com/meuassessor/capture/SecureIntegration.java');
+const bridge=read('android-capture/app/src/main/java/br/com/meuassessor/capture/WebAppBridge.java');
+const gradle=read('android-capture/app/build.gradle.kts');
+const daily=read('android-capture/app/src/main/java/br/com/meuassessor/capture/DailyFinanceReminder.java');
+const boot=read('android-capture/app/src/main/java/br/com/meuassessor/capture/ReminderBootReceiver.java');
 
-assert.match(manifest, /BIND_NOTIFICATION_LISTENER_SERVICE/);
-assert.doesNotMatch(manifest, /android\.permission\.INTERNET/);
-assert.match(listener, /BankAllowlist\.contains/);
-assert.match(listener, /NotificationParser\.looksFinancial/);
-assert.match(parser, /SHA-256/);
-assert.match(parser, /postedAt \/ 60_000L/);
-assert.match(queue, /AES\/GCM\/NoPadding/);
-assert.match(queue, /AndroidKeyStore/);
-assert.match(queue, /MAX_ITEMS = 500/);
-['com.c6bank.app', 'br.com.itau', 'br.com.xp.carteira', 'com.caju.employee'].forEach(pkg =>
-  assert.ok(allowlist.includes(`"${pkg}"`), `pacote autorizado ausente: ${pkg}`)
-);
+assert.match(manifest,/BIND_NOTIFICATION_LISTENER_SERVICE/);
+assert.match(manifest,/android\.permission\.INTERNET/);
+assert.match(manifest,/android:usesCleartextTraffic="false"/);
+assert.match(manifest,/android:allowBackup="false"/);
+assert.match(listener,/BankAllowlist\.contains/);
+assert.match(listener,/NotificationParser\.looksFinancial/);
+assert.ok(listener.indexOf('boolean allowed=BankAllowlist.contains') <
+  listener.indexOf('saveRawDiagnostic(pkg,title,body'),'Unauthorized notification content must not be saved');
+assert.match(parser,/SHA-256/);
+assert.match(parser,/\+ postedAt\)/);
+assert.doesNotMatch(parser,/postedAt \/ 60_000L/);
+assert.match(queue,/AES\/GCM\/NoPadding/);
+assert.match(queue,/AndroidKeyStore/);
+assert.match(queue,/MAX_ITEMS = 500/);
+assert.match(queue,/possibleDuplicateOf/);
+['com.c6bank.app','br.com.itau','br.com.xp.carteira','com.caju.employee',
+ 'com.google.android.apps.walletnfcrel'].forEach(pkg=>{
+  assert.ok(allowlist.includes('"' + pkg + '"'),'Missing approved source: '+pkg);
+});
+assert.match(allowlist,/com\.android\.vending/);
+assert.match(secure,/AndroidKeyStore/);
+assert.match(secure,/HttpsURLConnection/);
+assert.match(secure,/setInstanceFollowRedirects\(false\)/);
+assert.match(secure,/AES\/GCM\/NoPadding/);
+assert.match(secure,/PATHS = Set\.of/);
+assert.match(bridge,/saveIntegrationConfig/);
+assert.match(bridge,/integrationRequest/);
+assert.match(main,/path\.startsWith\("\/Meu-Assessor-Financeiro-\/"\)/);
+assert.match(main,/new Intent\(Intent\.ACTION_VIEW, uri\)/);
+assert.match(main,/bundledDashboard\.contains\("v85-landscape-responsive"\)/);
+assert.match(gradle,/applicationIdSuffix = "\.qa(?:\.[a-z0-9]+)*"/);
+assert.match(gradle,/applicationId = "br\.com\.snakefinance\.app"/);
 
-console.log('AUDITORIA CAPTURA ANDROID: APROVADA');
+// A third QA installation must neither fetch production's older UI nor issue
+// duplicate daily reminders. Portrait/landscape use the same WebView instance.
+assert.match(main,/if \(BuildConfig\.DEBUG \|\| getPackageName\(\)\.equals\("br\.com\.snakefinance\.app"\)\)/,
+  'Any debug variant must use its bundled V85 dashboard');
+const qaHtml=main.indexOf('if (BuildConfig.DEBUG || getPackageName().equals("br.com.snakefinance.app"))');
+const failClosed=main.indexOf('if (BuildConfig.DEBUG) {',qaHtml);
+const remoteFallback=main.indexOf('String local = readCachedDashboard();',qaHtml);
+assert.ok(qaHtml>0 && failClosed>qaHtml && remoteFallback>failClosed,
+  'QA must fail closed before any offline cache or remote OTA fallback');
+assert.match(main,/if \(!BuildConfig\.DEBUG\) DailyFinanceReminder\.schedule\(this\)/);
+assert.match(main,/if \(!BuildConfig\.DEBUG\) UpdateChecker\.check\(this\)/);
+assert.match(daily,/if \(BuildConfig\.DEBUG\) return;/);
+assert.match(boot,/if \(BuildConfig\.DEBUG \|\| intent == null\) return;/);
+assert.match(manifest,/android:configChanges="orientation\|screenSize\|smallestScreenSize\|keyboardHidden"/,
+  'Rotating V85 must retain the Activity and finance WebView');
+assert.doesNotMatch(main,/setRequestedOrientation\(/);
+console.log('PASS Android: bank allowlist, privacy, exact event identity, secure integration, app origin and QA isolation');

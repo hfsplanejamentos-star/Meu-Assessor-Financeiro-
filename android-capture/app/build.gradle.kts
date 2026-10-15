@@ -20,8 +20,9 @@ android {
         applicationId = "br.com.snakefinance.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 31
-        versionName = "1.5.7"
+        versionCode = 32
+        versionName = "1.5.8"
+        manifestPlaceholders["appLabel"] = "Snake Finance"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -46,6 +47,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Side-by-side QA install. Never replace the signed production package or ledger.
+            applicationIdSuffix = ".qa.rc158"
+            versionNameSuffix = "-qa-rc158"
+            manifestPlaceholders["appLabel"] = "Snake Finance (RC 1.5.8)"
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true

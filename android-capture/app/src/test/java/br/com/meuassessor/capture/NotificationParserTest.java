@@ -29,11 +29,29 @@ public class NotificationParserTest {
         assertEquals(Long.valueOf(100), c6.amountCents);
     }
 
+    @Test public void identifiesMatchingWalletAndBankMerchantConservatively() {
+        String bankMerchant = NotificationParser.merchantKey("Compra aprovada",
+                "R$ 50,00 no Posto Shell, cartão final 1234");
+        String walletMerchant = NotificationParser.merchantKey("Google Wallet",
+                "Você pagou R$ 50,00 em Posto Shell");
+        assertEquals("posto shell", bankMerchant);
+        assertEquals(bankMerchant, walletMerchant);
+        assertEquals("", NotificationParser.merchantKey("Pix enviado",
+                "No valor de R$ 50,00 para Pedro"));
+        assertEquals("mercado central", NotificationParser.merchantKey(
+                "Compra", "R$ 50,00 no Mercado Central"));
+        assertNotEquals(bankMerchant, NotificationParser.merchantKey(
+                "Compra", "R$ 50,00 no Mercado Central"));
+    }
+
     @Test public void recognizesExpenseAndCreatesStableId() {
         CapturedNotification first = NotificationParser.parse("com.c6bank.app", "Pix enviado", "R$ 80,00 para Depósito do Latão", 1_000_000L);
         CapturedNotification repeated = NotificationParser.parse("com.c6bank.app", "Pix enviado", "R$ 80,00 para Depósito do Latão", 1_000_500L);
         assertEquals(Long.valueOf(8000), first.amountCents);
         assertEquals("expense", first.direction);
-        assertEquals(first.id, repeated.id);
+        assertNotEquals(first.id, repeated.id);
+        CapturedNotification sameDelivery = NotificationParser.parse(
+                "com.c6bank.app", "Pix enviado", "R$ 80,00 para Depósito do Latão", 1_000_000L);
+        assertEquals(first.id, sameDelivery.id);
     }
 }

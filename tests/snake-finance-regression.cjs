@@ -5,6 +5,25 @@ const vm=require('node:vm');
 const html=fs.readFileSync('snake-finance-mobile.html','utf8');
 const bundled=fs.readFileSync('android-capture/app/src/main/assets/snake-finance-mobile.html','utf8');
 assert.equal(html,bundled,'Android bundled HTML must equal deployed dashboard');
+// A truncated script or missing closing HTML made the APK revert to remote content.
+assert.ok(html.trimEnd().endsWith('</body>\n</html>'), 'HTML must finish with closed document');
+assert.ok(html.includes('</script>\n<style id="v85-landscape-responsive">'), 'Landscape style must follow the last closed script');
+let scriptCount=0;
+let position=0;
+while(true) {
+ const open=html.indexOf('<script',position);
+ if(open<0)break;
+ const tagEnd=html.indexOf('>',open);
+ const close=html.indexOf('</script>',tagEnd+1);
+ assert.ok(tagEnd>open && close>tagEnd, 'script #'+(scriptCount+1)+' must close');
+ new vm.Script(html.slice(tagEnd+1,close),{filename:'embedded-script-'+(scriptCount+1)+'.js'});
+ scriptCount++;
+ position=close+'</script>'.length;
+}
+assert.ok(scriptCount>=9, 'all embedded scripts must be parsed');
+const androidActivity=fs.readFileSync('android-capture/app/src/main/java/br/com/meuassessor/capture/MainActivity.java','utf8');
+assert.ok(androidActivity.includes('html.contains("</html>")'), 'Android requires a correctly closed HTML document');
+
 const extract=(start,end)=>{const a=html.indexOf(start);assert.ok(a>=0,'missing '+start);const b=html.indexOf(end,a+start.length);assert.ok(b>a,'missing boundary '+end);return html.slice(a,b);};
 const context={Date,Math,Number,String,Array,Set,Map,JSON,console};
 vm.createContext(context);
@@ -38,8 +57,8 @@ assert.match(html,/function cajuBalance\(/,'Caju balance');
 assert.match(html,/function creditUsed\(/,'Carbon balance');
 assert.match(html,/function localFinancialAnswer\(/,'local financial query');
 const gradle=fs.readFileSync('android-capture/app/build.gradle.kts','utf8');
-assert.match(gradle,/versionCode = 31/);
-assert.match(gradle,/versionName = "1\.5\.7"/);
+assert.match(gradle,/versionCode = 32/);
+assert.match(gradle,/versionName = "1\.5\.8"/);
 console.log('PASS Snake Finance: web/Android parity, dates, 7-day window, links, finance entry points and build version');
 
 
@@ -49,7 +68,7 @@ vm.runInContext(extract('function cajuCompetence(','function openCajuSettings(')
 vm.runInContext(extract('function accountDelta(','function setInvParam('),context);
 vm.runInContext(extract('function creditUsed(','function financialAlerts('),context);
 vm.runInContext(extract('function validateLedger(','function completeBackupCategories('),context);
-vm.runInContext("var L=[];var ACC={c6:10000,caju:0,carbon:0,xp:0};var CAJU_CFG={'2026-10':{opening:10000,reload:150000},'2026-11':{reload:150000}};var ORIGINAL_FUNDS=0;var AC={c6:['C6'],caju:['Caju'],carbon:['Carbon'],xp:['XP']};",context);
+vm.runInContext("var L=[];var ACC={c6:10000,caju:0,carbon:0,xp:0};var XP_DEBIT={opening:null};var CAJU_CFG={'2026-10':{opening:10000,reload:150000},'2026-11':{reload:150000}};var ORIGINAL_FUNDS=0;var AC={c6:['C6'],caju:['Caju'],carbon:['Carbon'],xp:['XP Metas'],xpone:['XP Infinite One Débito']};",context);
 const fixture=[
  {id:1,d:'2026-10-02',a:'c6',t:'r',s:'r',v:50000,n:'Salário'},
  {id:2,d:'2026-10-03',a:'c6',t:'d',s:'r',v:12000,n:'Mercado'},
@@ -65,6 +84,33 @@ context.L=fixture;
 assert.equal(context.accountBalance('c6','2026-10-10'),43000,'C6 real balance: opening + salary - expense - transfer');
 assert.equal(context.accountBalance('c6','2026-10-10',true),34000,'C6 projected includes pending');
 assert.equal(context.accountBalance('xp','2026-10-10'),5000,'XP transfer credited once');
+// "xp" remains historical investment transfer destination; "xpone" is the only
+// new XP debit bank account. Existing investment transfers must not enter debit.
+const originalLedger=context.L;
+context.XP_DEBIT={opening:15000};
+context.L=[...originalLedger,
+ {id:21,d:'2026-10-08',a:'xpone',t:'d',s:'r',v:700,n:'XP One debit purchase'},
+ {id:22,d:'2026-10-09',a:'xpone',t:'r',s:'r',v:2500,n:'XP Pix received'},
+ {id:23,d:'2026-10-10',a:'c6',to:'xpone',t:'t',s:'r',v:1000,n:'C6 to XP debit'}];
+assert.equal(context.accountBalance('xpone','2026-10-10'),17800,'XP debit = opening - purchase + income + transfer');
+assert.equal(context.accountBalance('c6','2026-10-10'),42000,'transfer to XP debit leaves C6 and XP isolated');
+assert.equal(context.accountBalance('xp','2026-10-10'),5000,'legacy XP goals target is not XP debit balance');
+assert.equal(context.validateLedger(context.L).length,context.L.length,'XP One debit accepted in audited ledger');
+assert.ok(html.includes("['bank_xp','XP Infinite One Débito','Contas',true]"),'former XP Goals card becomes debit');
+assert.ok(!html.includes('XP · Metas</span><b>Metas'),'old XP Goals card removed, investment section remains');
+assert.ok(!html.includes('XP Infinite One · Crédito'),'card must not be treated as credit');
+assert.ok(html.includes('o.available=o.c6+o.xpone'),'combined available cash totals both debit accounts');
+assert.ok(html.includes("a==='xpone'?(XP_DEBIT.opening||0)"),'XP opening separate from C6');
+assert.ok(html.includes('XP_DEBIT_KEY'),'XP opening saved separately and backed up');
+assert.ok(html.includes('<option value="xpone">XP Infinite One Débito</option>'),'XP One in expense/income entry');
+assert.ok(html.includes("<option value=\"xpone\" \${x.a=='xpone'?'selected':''}>"),'XP One in recurrence confirmation');
+assert.ok(html.includes("['c6','caju','carbon','xpone']"),'XP One in expense reports and filters');
+assert.ok(html.includes("const source=String(e.sourcePackage||'').toLowerCase()"),'XP notification review/source routing');
+assert.match(html,/function monthExpensesC6\(ym\)[\s\S]*?x\.a!=='xpone'/,
+ 'C6-only expense totals must not charge XP transactions');
+assert.match(html,/function monthInvestmentsC6\(ym\)[\s\S]*?x\.a!=='xpone'/,
+ 'C6-only investment reports must not reattribute XP transactions');
+context.XP_DEBIT={opening:null};context.L=originalLedger;
 assert.equal(context.cajuBalance('2026-10'),159250,'Caju October: opening + reload - actual only');
 assert.equal(context.cajuBalance('2026-11'),308250,'Caju November: previous closing + new reload - actual');
 assert.equal(context.creditUsed('2026-10-10',{opening:0}),8000,'Carbon charges less payments');
@@ -215,3 +261,29 @@ console.log('PASS Snake Finance: recurring actualization, undo, persistence and 
  assert.match(html,/const carbon=tipo==='d'&&a==='carbon'/);
 }
 console.log('PASS Snake Finance: Carbon billing cycle, installments and cent rounding');
+
+
+/* Branding regression: official-looking institution assets stay embedded offline. */
+{
+ const pos=html.indexOf('const BANK_LOGOS=');
+ const limit=html.indexOf('const ICO=',pos);
+ assert.ok(pos>0&&limit>pos,'bank logo data must exist before icon definitions');
+ const snippet=html.slice(pos,limit);
+ const b={tile:()=>'',AC:{c6:['C6','#fff'],carbon:['Carbon','#fff'],caju:['Caju','#fff'],xpone:['XP','#fff']},$:(id)=>null};
+ vm.createContext(b);
+ vm.runInContext(snippet,b);
+ for(const k of ['c6','carbon','caju','xpone']){
+  const logo=vm.runInContext('BANK_LOGOS['+JSON.stringify(k)+']',b);
+  assert.ok(logo&&logo.startsWith('data:image/svg+xml,'),k+' must have offline SVG');
+  const svg=decodeURIComponent(logo.split(',').slice(1).join(','));
+  assert.match(svg,/<svg[\s>]/,'valid '+k+' svg root');
+  assert.match(svg,/<\/svg>/,'valid '+k+' closing tag');
+  assert.match(b.bankLogo(k),new RegExp('data-bank-logo="'+k+'"'),'bank mark rendered for '+k);
+ }
+ assert.match(html,/onclick="openAccount\('xpone'\)"[^>]*>\$\{bankLogo\('xpone'\)\}/,'XP debit card uses XP logo');
+ assert.match(html,/onclick="openAccount\('carbon'\)"[^>]*>\$\{bankLogo\('carbon'\)\}/,'Carbon uses distinct logo');
+ assert.match(html,/onchange="updateBankPicker\('aa'\)"/,'new transaction selector previews bank logo');
+ assert.match(html,/onchange="updateBankPicker\('lx_a'\)"/,'edit transaction selector previews bank logo');
+ assert.match(html,/\$\{bankLogo\(a,'tiny'\)\}\$\{AC\[a\]\[0\]\}/,'expense chips use exact bank mark');
+}
+console.log('PASS Snake Finance: all four original account logos embedded offline, cards and account selectors wired');

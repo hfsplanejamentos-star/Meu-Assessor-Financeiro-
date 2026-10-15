@@ -61,19 +61,24 @@ export const ingest = internalMutation({
         .query("notificationEvents")
         .withIndex("by_owner_and_event_id", (q) => q.eq("ownerHash", args.ownerHash).eq("eventId", event.eventId))
         .unique();
-      const byFingerprint = await ctx.db
-        .query("notificationEvents")
-        .withIndex("by_owner_and_fingerprint", (q) => q.eq("ownerHash", args.ownerHash).eq("fingerprint", event.fingerprint))
-        .unique();
-      if (byId || byFingerprint) {
+      // A matching amount, merchant and minute is NOT proof of a duplicate.
+      // Keep two genuine purchases (even on the same card) as separate events.
+      // Only the exact provider eventId is silently idempotent.
+      if (byId) {
         duplicates += 1;
         continue;
       }
+      const similar = await ctx.db
+        .query("notificationEvents")
+        .withIndex("by_owner_and_fingerprint", (q) => q.eq("ownerHash", args.ownerHash).eq("fingerprint", event.fingerprint))
+        .first();
       await ctx.db.insert("notificationEvents", {
         ownerHash: args.ownerHash,
         deviceId: args.deviceId,
         receivedAt: args.receivedAt,
         ...event,
+        ...(similar && similar.eventId !== event.eventId
+          ? { possibleDuplicateOf: similar.eventId } : {}),
       });
       accepted += 1;
       acceptedEventIds.push(event.eventId);
@@ -93,6 +98,7 @@ export const listChanges = internalQuery({
   args: { ownerHash: v.string(), since: v.number(), limit: v.number() },
   returns: v.array(v.object({
     eventId: v.string(),
+    possibleDuplicateOf: v.optional(v.string()),
     sourcePackage: v.string(),
     title: v.string(),
     text: v.string(),
@@ -112,8 +118,9 @@ export const listChanges = internalQuery({
       .withIndex("by_owner_and_received_at", (q) => q.eq("ownerHash", args.ownerHash).gt("receivedAt", args.since))
       .order("asc")
       .take(Math.min(Math.max(args.limit, 1), 100));
-    return rows.map(({ eventId, sourcePackage, title, text, amountCents, direction: eventDirection, postedAt, receivedAt, status, category, subcategory, confidence, classifier: eventClassifier }) => ({
+    return rows.map(({ eventId, possibleDuplicateOf, sourcePackage, title, text, amountCents, direction: eventDirection, postedAt, receivedAt, status, category, subcategory, confidence, classifier: eventClassifier }) => ({
       eventId,
+      ...(possibleDuplicateOf === undefined ? {} : { possibleDuplicateOf }),
       sourcePackage,
       title,
       text,

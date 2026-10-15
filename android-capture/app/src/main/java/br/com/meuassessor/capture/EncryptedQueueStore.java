@@ -42,12 +42,22 @@ final class EncryptedQueueStore {
 
             for (int i = 0; i < queue.length(); i++) {
                 JSONObject prior = queue.getJSONObject(i);
-                if (event.id.equals(prior.optString("id")) || sameBankEvent(event, prior)) {
+                if (event.id.equals(prior.optString("id"))) {
                     return false;
                 }
             }
 
-            queue.put(event.toJson());
+            JSONObject saved = event.toJson();
+            // Banco e Google Wallet podem avisar sobre a mesma compra.
+            // Coincidências são marcadas para revisão, nunca excluídas automaticamente.
+            for (int i = 0; i < queue.length(); i++) {
+                JSONObject prior = queue.getJSONObject(i);
+                if (possibleWalletMirror(event, prior) || sameBankEvent(event, prior)) {
+                    saved.put("possibleDuplicateOf", prior.optString("id"));
+                    break;
+                }
+            }
+            queue.put(saved);
 
             while (queue.length() > MAX_ITEMS) {
                 queue.remove(0);
@@ -60,6 +70,25 @@ final class EncryptedQueueStore {
         } catch (Exception error) {
             return false;
         }
+    }
+
+    private static boolean walletSource(String pkg) {
+        return "com.google.android.apps.walletnfcrel".equals(pkg);
+    }
+
+    /** Compare merchant, value and timestamp without treating every equal amount as duplicate. */
+    private boolean possibleWalletMirror(CapturedNotification current, JSONObject previous) {
+        String earlierPackage = previous.optString("sourcePackage", "");
+        if (walletSource(current.sourcePackage) == walletSource(earlierPackage)) return false;
+        if (!"expense".equals(current.direction) || !"expense".equals(previous.optString("direction"))) return false;
+        if (current.amountCents == null || current.amountCents.longValue() <= 0L
+                || current.amountCents.longValue() != previous.optLong("amountCents", -1L)) return false;
+        long previousTime = previous.optLong("postedAt", 0L);
+        if (previousTime <= 0L || Math.abs(current.postedAt - previousTime) > 180_000L) return false;
+        String merchant = NotificationParser.merchantKey(current.title, current.text);
+        String earlierMerchant = NotificationParser.merchantKey(
+                previous.optString("title"), previous.optString("text"));
+        return merchant.length() >= 4 && merchant.equals(earlierMerchant);
     }
 
     private boolean sameBankEvent(CapturedNotification event, JSONObject prior) {

@@ -13,6 +13,8 @@ export default defineSchema({
     ownerHash: v.string(),
     eventId: v.string(),
     fingerprint: v.string(),
+    // Similar payment is surfaced for confirmation; not deleted automatically.
+    possibleDuplicateOf: v.optional(v.string()),
     deviceId: v.string(),
     sourcePackage: v.string(),
     title: v.string(),
@@ -43,6 +45,22 @@ export default defineSchema({
   })
     .index("by_owner_and_payer_key", ["ownerHash", "payerKey"])
     .index("by_owner", ["ownerHash"]),
+
+  whatsappMessages: defineTable({
+    ownerHash: v.string(),
+    messageId: v.string(),
+    sender: v.string(),
+    kind: v.union(v.literal("text"), v.literal("audio")),
+    text: v.string(),
+    postedAt: v.number(),
+    receivedAt: v.number(),
+    status: v.union(v.literal("pending"), v.literal("processing"), v.literal("failed"), v.literal("resolved")),
+    audioMediaId: v.optional(v.string()),
+    transcriptionError: v.optional(v.string()),
+    resolution: v.optional(v.union(v.literal("recorded"), v.literal("discarded"))),
+  })
+    .index("by_owner_and_message_id", ["ownerHash", "messageId"])
+    .index("by_owner_and_received_at", ["ownerHash", "receivedAt"]),
 
   notificationDevices: defineTable({
     ownerHash: v.string(),
