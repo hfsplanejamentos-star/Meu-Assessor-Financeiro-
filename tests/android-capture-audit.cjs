@@ -35,6 +35,7 @@ assert.match(queue,/possibleDuplicateOf/);
 assert.match(allowlist,/com\.android\.vending/);
 assert.match(secure,/AndroidKeyStore/);
 assert.match(secure,/HttpsURLConnection/);
+assert.match(secure,/setInstanceFollowRedirects\(false\)/);
 assert.match(secure,/AES\/GCM\/NoPadding/);
 assert.match(secure,/PATHS = Set\.of/);
 assert.match(bridge,/saveIntegrationConfig/);
