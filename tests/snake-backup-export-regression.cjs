@@ -12,10 +12,12 @@ assert.ok(start>0 && end>start,'backup functions must be present');
 
 const source=html.slice(start,end);
 const captures=[];
+const preservedFull=[];
 const alerts=[];
 const confirmations=[];
 let acceptEmpty=false;
 const entries={
+ assessor_opening_v82:JSON.stringify({c6:39870,caju:123578,cajuFunds:123578}),
  assessor_ledger_v82:'[{"id":11}]',
  assessor_tema_v82:'ouro',
  assessor_pre_import_v82:'DO_NOT_EXPORT',
@@ -36,13 +38,17 @@ const original=JSON.stringify(ledger);
 const app={
  L:ledger,
  localStorage:storage,
- window:{AndroidBridge:{exportBackup(json,name){captures.push({json,name});}}},
+ window:{AndroidBridge:{exportBackup(json,name){captures.push({json,name});},
+  preserveFinancialSnapshot(json){preservedFull.push(JSON.parse(json));return true;},
+  preservedFinancialSnapshotStatus(){return JSON.stringify({available:true,valid:true,entries:2,bytes:500});}}},
  confirm(msg){confirmations.push(msg);return acceptEmpty;},
  alert(msg){alerts.push(msg);},
  localToday:()=> '2026-10-14',
  completeBackupCategories:(cats)=>({categories:cats}),
  OPENING_KEY:'assessor_opening_v82',
- OPENING_CFG:{c6:39870,caju:123578},
+ OPENING_CFG:{c6:39870,caju:123578,cajuFunds:123578},
+ OPENING_INVALID:false,
+ validateLedger:(rows)=>rows,
  GOAL_STORE:'assessor_goals_v82',
  INVEST_GOALS:[],
  INV_CFG:{aporte:3000},
@@ -66,6 +72,11 @@ const app={
 };
 vm.createContext(app);
 vm.runInContext(source,app,{filename:'snake-finance-backup.js'});
+assert.equal(app.preserveOriginalFullSnapshot(original),true,'nonempty verified original must be staged');
+assert.equal(preservedFull.length,1);
+assert.equal(preservedFull[0].ledger.length,2);
+assert.equal(preservedFull[0].storage.assessor_opening_v82,entries.assessor_opening_v82);
+assert.equal(JSON.stringify(app.L),original,'staging must never rewrite source ledger');
 app.exportBackup();
 assert.equal(captures.length,1,'nonempty ledger must export directly to Android bridge');
 assert.match(captures[0].name,/Snake_Finance_Backup_2026-10-14\.json/);
@@ -84,6 +95,8 @@ assert.equal(confirmations.length,0,'valid ledger must not trigger empty warning
 assert.equal(alerts.length,0,'valid export should not report an error');
 
 app.L=[];
+assert.equal(app.preserveOriginalFullSnapshot('[]'),false,'empty original must never be stamped as valid');
+assert.equal(preservedFull.length,1);
 app.exportBackup();
 assert.equal(captures.length,1,'empty ledger must not be exported without explicit warning');
 assert.equal(confirmations.length,1);
@@ -93,6 +106,15 @@ app.exportBackup();
 assert.equal(captures.length,2,'explicit diagnostic export of empty ledger remains possible');
 assert.equal(JSON.parse(captures[1].json).ledger.length,0);
 assert.equal(alerts.length,0);
+const vault=fs.readFileSync('android-capture/app/src/main/java/br/com/meuassessor/capture/FinancialRecoveryVault.java','utf8');
+assert.match(vault,/first verified nonempty snapshot/);
+assert.match(vault,/if \(target\.isFile\(\)\)/);
+assert.match(vault,/MessageDigest\.isEqual/);
+assert.match(vault,/stream\.getFD\(\)\.sync\(\)/);
+assert.match(vault,/ledger\.length\(\) < 1/);
+const nativeBridge=fs.readFileSync('android-capture/app/src/main/java/br/com/meuassessor/capture/WebAppBridge.java','utf8');
+assert.match(nativeBridge,/preserveFinancialSnapshot/);
+assert.match(nativeBridge,/exportPreservedFinancialSnapshot/);
 const gradle=fs.readFileSync('android-capture/app/build.gradle.kts','utf8');
 assert.match(gradle,/applicationIdSuffix\s*=\s*"\.qa"/,'QA APK must not overwrite production package');
 const main=fs.readFileSync('android-capture/app/src/main/java/br/com/meuassessor/capture/MainActivity.java','utf8');
