@@ -5,6 +5,10 @@ on:
     paths:
       - "tests/snake-finance-regression.cjs"
       - "tests/snake-backup-export-regression.cjs"
+      - "convex/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tests/backend-*"
       - "snake-finance-mobile.html"
       - "android-capture/app/src/main/assets/snake-finance-mobile.html"
       - ".github/workflows/snake-finance-regression.yml"
@@ -14,6 +18,10 @@ on:
     paths:
       - "tests/snake-finance-regression.cjs"
       - "tests/snake-backup-export-regression.cjs"
+      - "convex/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tests/backend-*"
       - "snake-finance-mobile.html"
       - "android-capture/app/src/main/assets/snake-finance-mobile.html"
       - ".github/workflows/snake-finance-regression.yml"
@@ -27,6 +35,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Install pinned backend dependencies
+        run: npm ci
+      - name: Validate backend types and Meta webhook security
+        run: npm run typecheck && npm run test:backend
       - name: Financial and UI logic regression
         run: node tests/snake-finance-regression.cjs
       - name: Backup JSON and data isolation regression
