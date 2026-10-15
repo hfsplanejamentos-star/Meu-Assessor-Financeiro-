@@ -49,9 +49,9 @@ android {
     buildTypes {
         debug {
             // Side-by-side QA install. Never replace the signed production package or ledger.
-            applicationIdSuffix = ".qa.landscape"
-            versionNameSuffix = "-qa-landscape"
-            manifestPlaceholders["appLabel"] = "Snake Finance (Teste V85)"
+            applicationIdSuffix = ".qa.landscape.rev2"
+            versionNameSuffix = "-qa-landscape-rev2"
+            manifestPlaceholders["appLabel"] = "Snake Finance (Teste V85 Revisão)"
         }
         release {
             isMinifyEnabled = true
