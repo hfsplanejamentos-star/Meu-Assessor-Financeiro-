@@ -1822,8 +1822,8 @@ function syncNativeFinancialAlerts(){
   try{
    if(localStorage.getItem(key)==='sent')continue;
    const text=ST.hide?'Existe um alerta financeiro importante. Abra o Snake Finance para conferir.':String(a.text||'');
-   bridge.showFinancialAlert(String(a.key), 'Snake Finance · Atenção', text, 2);
-   localStorage.setItem(key,'sent');
+   const delivered=bridge.showFinancialAlert(String(a.key), 'Snake Finance · Atenção', text, 2);
+   if(delivered===true)localStorage.setItem(key,'sent');
   }catch(e){console.warn('Falha ao solicitar aviso Android',e);}
  }
 }
