@@ -40,7 +40,12 @@ final class FinancialRecoveryVault {
             JSONObject settings = root.optJSONObject("storage");
             if (ledger == null || ledger.length() < 1 || ledger.length() > 100000
                     || settings == null) return false;
-            String opening = settings.optString("assessor_opening_v82", "");
+            // The V85 ledger uses the plural "assessor_openings_v83" key.
+            // Accept the legacy v82 key only if the current key is absent, never
+            // let a stale legacy setting override a present current opening.
+            String opening = settings.has("assessor_openings_v83")
+                    ? settings.optString("assessor_openings_v83", "")
+                    : settings.optString("assessor_opening_v82", "");
             JSONObject balances = new JSONObject(opening);
             if (!balances.has("c6") || !balances.has("caju")
                     || !balances.has("cajuFunds")
