@@ -65,6 +65,41 @@ final class WebAppBridge {
     }
 
     @JavascriptInterface
+    public void showFinancialAlert(String key, String title, String body, int severity) {
+        if (key == null || !key.matches("[a-zA-Z0-9_-]{1,80}")) return;
+        android.app.NotificationManager manager =
+            (android.app.NotificationManager) activity.getSystemService(android.content.Context.NOTIFICATION_SERVICE);
+        if (manager == null) return;
+        final String channelId = "snake_financial_alerts";
+        if (android.os.Build.VERSION.SDK_INT >= 26) {
+            android.app.NotificationChannel channel = new android.app.NotificationChannel(
+                channelId, "Alertas financeiros", android.app.NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setDescription("Vencimentos, saldos e avisos do Snake Finance");
+            manager.createNotificationChannel(channel);
+        }
+        if (android.os.Build.VERSION.SDK_INT >= 33 &&
+            androidx.core.content.ContextCompat.checkSelfPermission(activity,
+                android.Manifest.permission.POST_NOTIFICATIONS)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) return;
+        String safeTitle = title == null ? "Snake Finance" : title.substring(0, Math.min(90, title.length()));
+        String safeBody = body == null ? "" : body.substring(0, Math.min(250, body.length()));
+        android.content.Intent launch = new android.content.Intent(activity, MainActivity.class);
+        launch.addFlags(android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        android.app.PendingIntent action = android.app.PendingIntent.getActivity(
+            activity, 0, launch, android.app.PendingIntent.FLAG_UPDATE_CURRENT |
+                android.app.PendingIntent.FLAG_IMMUTABLE);
+        android.app.Notification notification = new android.app.Notification.Builder(activity, channelId)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle(safeTitle)
+            .setContentText(safeBody)
+            .setContentIntent(action)
+            .setAutoCancel(true)
+            .setVisibility(android.app.Notification.VISIBILITY_PRIVATE)
+            .build();
+        manager.notify("snake_" + key, 1101, notification);
+    }
+
+    @JavascriptInterface
     public int notificationCount() {
         return new EncryptedQueueStore(activity).size();
     }
