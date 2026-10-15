@@ -75,10 +75,17 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Financial and backup regression
+      - name: Install pinned backend dependencies
+        working-directory: .
+        run: npm ci
+
+      - name: Complete pre-release security and financial audit
         working-directory: .
         run: |
           set -euo pipefail
+          npm run typecheck
+          npm run test:backend
+          node tests/android-capture-audit.cjs
           node tests/snake-finance-regression.cjs
           node tests/snake-backup-export-regression.cjs
 
