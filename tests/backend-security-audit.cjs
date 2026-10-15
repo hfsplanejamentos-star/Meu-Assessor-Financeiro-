@@ -23,6 +23,8 @@ assert.doesNotMatch(events, /\.filter\(/);
 assert.doesNotMatch(events, /\.collect\(/);
 assert.match(finance, /internalQuery/);
 assert.match(finance, /internalMutation/);
+assert.match(finance, /args\.baseVersion === undefined/);
+assert.match(finance, /current\.version !== args\.baseVersion/);
 assert.doesNotMatch(finance, /export const \w+ = query\(/);
 assert.doesNotMatch(finance, /export const \w+ = mutation\(/);
 
