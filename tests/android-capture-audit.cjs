@@ -12,6 +12,8 @@ const allowlist=read('android-capture/app/src/main/java/br/com/meuassessor/captu
 const secure=read('android-capture/app/src/main/java/br/com/meuassessor/capture/SecureIntegration.java');
 const bridge=read('android-capture/app/src/main/java/br/com/meuassessor/capture/WebAppBridge.java');
 const gradle=read('android-capture/app/build.gradle.kts');
+const daily=read('android-capture/app/src/main/java/br/com/meuassessor/capture/DailyFinanceReminder.java');
+const boot=read('android-capture/app/src/main/java/br/com/meuassessor/capture/ReminderBootReceiver.java');
 
 assert.match(manifest,/BIND_NOTIFICATION_LISTENER_SERVICE/);
 assert.match(manifest,/android\.permission\.INTERNET/);
@@ -46,4 +48,20 @@ assert.match(main,/bundledDashboard\.contains\("v85-landscape-responsive"\)/);
 assert.match(gradle,/applicationIdSuffix = "\.qa(?:\.landscape)?"/);
 assert.match(gradle,/applicationId = "br\.com\.snakefinance\.app"/);
 
+// A third QA installation must neither fetch production's older UI nor issue
+// duplicate daily reminders. Portrait/landscape use the same WebView instance.
+assert.match(main,/if \(BuildConfig\.DEBUG \|\| getPackageName\(\)\.equals\("br\.com\.snakefinance\.app"\)\)/,
+  'Any debug variant must use its bundled V85 dashboard');
+const qaHtml=main.indexOf('if (BuildConfig.DEBUG || getPackageName().equals("br.com.snakefinance.app"))');
+const failClosed=main.indexOf('if (BuildConfig.DEBUG) {',qaHtml);
+const remoteFallback=main.indexOf('String local = readCachedDashboard();',qaHtml);
+assert.ok(qaHtml>0 && failClosed>qaHtml && remoteFallback>failClosed,
+  'QA must fail closed before any offline cache or remote OTA fallback');
+assert.match(main,/if \(!BuildConfig\.DEBUG\) DailyFinanceReminder\.schedule\(this\)/);
+assert.match(main,/if \(!BuildConfig\.DEBUG\) UpdateChecker\.check\(this\)/);
+assert.match(daily,/if \(BuildConfig\.DEBUG\) return;/);
+assert.match(boot,/if \(BuildConfig\.DEBUG \|\| intent == null\) return;/);
+assert.match(manifest,/android:configChanges="orientation\|screenSize\|smallestScreenSize\|keyboardHidden"/,
+  'Rotating V85 must retain the Activity and finance WebView');
+assert.doesNotMatch(main,/setRequestedOrientation\(/);
 console.log('PASS Android: bank allowlist, privacy, exact event identity, secure integration, app origin and QA isolation');
