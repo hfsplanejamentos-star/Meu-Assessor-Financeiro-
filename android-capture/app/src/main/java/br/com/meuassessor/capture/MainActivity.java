@@ -276,6 +276,8 @@ public final class MainActivity extends Activity {
         webView.loadDataWithBaseURL(APP_BASE_URL, html, "text/html", "UTF-8", APP_URL);
     }
 
+    private boolean useBundledValidationDashboard() { return true; }
+
     private void loadDashboardHtml() {
         String local = readCachedDashboard();
         if (local == null) {
@@ -293,7 +295,7 @@ public final class MainActivity extends Activity {
 
         // Validation APK is intentionally pinned to its bundled dashboard.
         // Do not replace it with the production Pages version during testing.
-        if (true) return;
+        if (useBundledValidationDashboard()) return;
         Executors.newSingleThreadExecutor().execute(() -> {
             HttpURLConnection connection = null;
             try {
