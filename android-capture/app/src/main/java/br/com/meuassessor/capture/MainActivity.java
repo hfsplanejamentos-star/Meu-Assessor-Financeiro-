@@ -54,7 +54,7 @@ public final class MainActivity extends Activity {
     static final int REQUEST_VOICE = 701;
     private static final int REQUEST_FILE = 702;
     private static final String APP_URL =
-            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/snake-finance-mobile.html?android=1.5.7";
+            "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/snake-finance-mobile.html?android=1.5.8";
     private static final String APP_BASE_URL =
             "https://hfsplanejamentos-star.github.io/Meu-Assessor-Financeiro-/";
     private static final String OTA_CACHE_FILE = "snake_dashboard_last_good.html";
@@ -121,10 +121,10 @@ public final class MainActivity extends Activity {
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
                 .getString("web_cache_version", "");
-        if (!"1.5.7".equals(nativeVersion)) {
+        if (!"1.5.8".equals(nativeVersion)) {
             webView.clearCache(true);
             getSharedPreferences("native_runtime", MODE_PRIVATE).edit()
-                    .putString("web_cache_version", "1.5.7").apply();
+                    .putString("web_cache_version", "1.5.8").apply();
         }
         FrameLayout root = new FrameLayout(this);
         // Use dark navy, not an unrelated black letterbox while the approved image is decoded.
