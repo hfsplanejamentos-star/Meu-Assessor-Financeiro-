@@ -9,7 +9,7 @@ const allowedPackages = new Set([
   "com.c6bank.app", "br.com.xp.carteira", "com.caju.employee", "br.com.itau",
   "com.nu.production", "br.com.intermedium", "com.santander.app", "com.bradesco",
   "br.com.bb.android", "br.com.gabba.Caixa", "com.mercadopago.wallet", "com.picpay",
-  "br.com.uol.ps.myaccount", "br.com.neon", "com.android.vending",
+  "br.com.uol.ps.myaccount", "br.com.neon", 
   "com.google.android.apps.walletnfcrel"
 ]);
 const allowedCategories = new Set(["Alimentação", "Cerveja", "Comunicação", "Educação", "Entretenimento", "Moradia", "Outros", "Receitas", "Saúde", "Serviços", "Transporte", "C4 Cactus"]);
@@ -27,7 +27,12 @@ async function sha256(value: string) {
 }
 async function ownerHash(req: Request) {
   const key = syncKey(req);
-  return key.length < 32 || key.length > 256 ? null : await sha256(`meu-assessor:v1:${key}`);
+  const expected = process.env.SNAKE_ACCESS_KEY;
+  // Any arbitrary 32-character string is not authentication. Disable API until
+  // its unique owner credential has been provisioned on the server.
+  if (key.length < 32 || key.length > 256 || !expected || expected.length < 32
+      || key !== expected) return null;
+  return await sha256(`meu-assessor:v1:${key}`);
 }
 
 type IncomingEvent = { eventId: string; sourcePackage: string; title: string; text: string; amountCents?: number; direction: Direction; postedAt: number };
@@ -81,12 +86,12 @@ async function classifyWithAi(events: IncomingEvent[]): Promise<Map<string, Clas
 
 http.route({ path: "/finance/state", method: "OPTIONS", handler: httpAction(async () => new Response(null, { status: 204, headers: legacyCors })) });
 http.route({ path: "/finance/state", method: "GET", handler: httpAction(async (ctx, req) => {
-  const key = syncKey(req); if (!key) return json({ ok: false, error: "missing_sync_key" }, 401);
+  const key = syncKey(req); if (!(await ownerHash(req))) return json({ ok: false, error: "invalid_sync_key" }, 401);
   const row = await ctx.runQuery(internal.financeState.get, { ownerKey: key });
   return json({ ok: true, state: row ?? null });
 }) });
 http.route({ path: "/finance/state", method: "POST", handler: httpAction(async (ctx, req) => {
-  const key = syncKey(req); if (!key) return json({ ok: false, error: "missing_sync_key" }, 401);
+  const key = syncKey(req); if (!(await ownerHash(req))) return json({ ok: false, error: "invalid_sync_key" }, 401);
   const body = await req.json();
   const result = await ctx.runMutation(internal.financeState.save, { ownerKey: key, payload: body.payload, baseVersion: body.baseVersion, deviceId: body.deviceId });
   return json(result, result.ok ? 200 : 409);
@@ -147,6 +152,130 @@ http.route({ path: "/ai/finance", method: "POST", handler: httpAction(async (ctx
   const data: any = await response.json();
   const output = String(data?.output_text || data?.output?.flatMap((item: any) => item.content || []).map((item: any) => item.text || "").join("") || "").trim();
   try { return json(JSON.parse(output), 200, headers); } catch { return json({ intent: "answer", answer: output }, 200, headers); }
+}) });
+
+
+/* WhatsApp Cloud API: signed inbound webhooks, owner-bound review, no auto-ledger write. */
+function whatsappReady() {
+  return !!(process.env.WHATSAPP_APP_SECRET && process.env.WHATSAPP_VERIFY_TOKEN
+    && process.env.WHATSAPP_ALLOWED_FROM && process.env.SNAKE_ACCESS_KEY);
+}
+async function whatsappOwner() {
+  const key = process.env.SNAKE_ACCESS_KEY || "";
+  return key.length >= 32 ? await sha256(`meu-assessor:v1:${key}`) : null;
+}
+async function validMetaSignature(req: Request, raw: string) {
+  const secret = process.env.WHATSAPP_APP_SECRET;
+  const received = req.headers.get("x-hub-signature-256") || "";
+  if (!secret || !/^sha256=[a-f0-9]{64}$/i.test(received)) return false;
+  const key = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" },
+    false, ["sign"]);
+  const bytes = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(raw)));
+  const expected = "sha256=" + Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+  // Constant-time comparison for equal-length hexadecimal MACs.
+  let mismatch = 0;
+  for (let i = 0; i < expected.length; i++) mismatch |= expected.charCodeAt(i) ^ received.toLowerCase().charCodeAt(i);
+  return mismatch === 0;
+}
+
+http.route({ path: "/integrations/status", method: "OPTIONS", handler: httpAction(async (_ctx, req) =>
+  new Response(null, { status: 204, headers: secureCors(req) })) });
+http.route({ path: "/integrations/status", method: "GET", handler: httpAction(async (_ctx, req) => {
+  const headers = secureCors(req);
+  if (!(await ownerHash(req))) return json({ ok: false, error: "invalid_sync_key" }, 401, headers);
+  const whatsapp = whatsappReady();
+  const ai = !!process.env.OPENAI_API_KEY;
+  return json({ ok: true, whatsapp, ai, audio: whatsapp && ai && !!process.env.WHATSAPP_ACCESS_TOKEN }, 200, headers);
+}) });
+
+http.route({ path: "/whatsapp/webhook", method: "GET", handler: httpAction(async (_ctx, req) => {
+  const url = new URL(req.url);
+  const verify = process.env.WHATSAPP_VERIFY_TOKEN;
+  if (!verify || url.searchParams.get("hub.mode") !== "subscribe"
+      || url.searchParams.get("hub.verify_token") !== verify)
+    return new Response("Forbidden", { status: 403 });
+  const challenge = url.searchParams.get("hub.challenge") || "";
+  return new Response(challenge, { status: 200, headers: { "Content-Type": "text/plain" } });
+}) });
+
+http.route({ path: "/whatsapp/webhook", method: "POST", handler: httpAction(async (ctx, req) => {
+  // Never store or process Meta payloads before verifying their HMAC signature.
+  const raw = await req.text();
+  if (raw.length > 128_000) return new Response("Payload too large", { status: 413 });
+  if (!(await validMetaSignature(req, raw))) return new Response("Forbidden", { status: 403 });
+  const hash = await whatsappOwner();
+  const sender = (process.env.WHATSAPP_ALLOWED_FROM || "").replace(/\D/g, "");
+  if (!hash || !sender || !whatsappReady()) return new Response("Unavailable", { status: 503 });
+  try {
+    const payload = JSON.parse(raw) as any;
+    if (payload?.object !== "whatsapp_business_account") return new Response("OK", { status: 200 });
+    for (const entry of (payload.entry || []).slice(0, 5)) {
+      for (const change of (entry.changes || []).slice(0, 5)) {
+        for (const msg of (change.value?.messages || []).slice(0, 20)) {
+          if (String(msg.from || "").replace(/\D/g, "") !== sender) continue;
+          const messageId = String(msg.id || "");
+          if (!/^wamid\.[A-Za-z0-9_\-:.]+$/.test(messageId) || messageId.length > 200) continue;
+          const kind = msg.type === "audio" ? "audio" : msg.type === "text" ? "text" : null;
+          if (!kind) continue;
+          const mediaId = kind === "audio" ? String(msg.audio?.id || "") : undefined;
+          const text = kind === "text" ? String(msg.text?.body || "").trim().slice(0, 3500) : "";
+          if (kind === "text" && !text || kind === "audio" && !mediaId) continue;
+          const postedAt = Number(msg.timestamp || 0) * 1000;
+          if (!Number.isFinite(postedAt) || postedAt <= 0) continue;
+          await ctx.runMutation(internal.whatsapp.receive, {
+            ownerHash: hash, sender, messageId, kind, text, postedAt,
+            ...(mediaId ? { mediaId } : {}),
+          });
+        }
+      }
+    }
+    return new Response("OK", { status: 200 });
+  } catch {
+    return new Response("Invalid payload", { status: 400 });
+  }
+}) });
+
+for (const path of ["/whatsapp/messages", "/whatsapp/resolve", "/whatsapp/retry"] as const) {
+  http.route({ path, method: "OPTIONS", handler: httpAction(async (_ctx, req) =>
+    new Response(null, { status: 204, headers: secureCors(req) })) });
+}
+http.route({ path: "/whatsapp/messages", method: "GET", handler: httpAction(async (ctx, req) => {
+  const headers = secureCors(req);
+  const hash = await ownerHash(req);
+  if (!hash) return json({ ok: false, error: "invalid_sync_key" }, 401, headers);
+  const messages = await ctx.runQuery(internal.whatsapp.pending, { ownerHash: hash });
+  return json({ ok: true, messages }, 200, headers);
+}) });
+
+http.route({ path: "/whatsapp/resolve", method: "POST", handler: httpAction(async (ctx, req) => {
+  const headers = secureCors(req);
+  const hash = await ownerHash(req);
+  if (!hash) return json({ ok: false, error: "invalid_sync_key" }, 401, headers);
+  const body = await req.json().catch(() => null);
+  const ids: unknown[] = body?.messageIds;
+  const resolution = body?.status;
+  if (!Array.isArray(ids) || ids.length < 1 || ids.length > 50
+      || ids.some(id => typeof id !== "string" || id.length > 200)
+      || !["recorded", "discarded"].includes(resolution))
+    return json({ ok: false, error: "invalid_payload" }, 400, headers);
+  const resolved = await ctx.runMutation(internal.whatsapp.resolve, {
+    ownerHash: hash, messageIds: ids as string[], resolution,
+  });
+  return json({ ok: true, resolved }, 200, headers);
+}) });
+
+http.route({ path: "/whatsapp/retry", method: "POST", handler: httpAction(async (ctx, req) => {
+  const headers = secureCors(req);
+  const hash = await ownerHash(req);
+  if (!hash) return json({ ok: false, error: "invalid_sync_key" }, 401, headers);
+  const body = await req.json().catch(() => null);
+  const messageId = body?.messageId;
+  if (typeof messageId !== "string" || messageId.length > 200)
+    return json({ ok: false, error: "invalid_payload" }, 400, headers);
+  const found = await ctx.runMutation(internal.whatsapp.retryAudio, { ownerHash: hash, messageId });
+  return json(found ? { ok: true } : { ok: false, error: "message_not_found" },
+    found ? 200 : 404, headers);
 }) });
 
 export default http;
