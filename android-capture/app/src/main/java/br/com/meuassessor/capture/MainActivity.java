@@ -312,17 +312,19 @@ public final class MainActivity extends Activity {
     }
 
     private void loadDashboardHtml() {
-        // QA must display the exact dashboard tested in this APK. Do not replace it
-        // with the older production Pages build (which would hide candidate changes).
-        // A debug app uses a distinct Android applicationId; no production data is shared.
-        if (BuildConfig.DEBUG) {
+        // Both QA and future signed releases must prefer the *audited V85* HTML
+        // bundled with their own APK. Never allow an older Pages build or stale
+        // cache to replace this version and disguise a failed data migration.
+        // This preserves the same WebView base origin and financial localStorage.
+        if (true) {
             try (InputStream bundledInput = getAssets().open("snake-finance-mobile.html")) {
                 java.io.ByteArrayOutputStream bundledBytes = new java.io.ByteArrayOutputStream();
                 byte[] data = new byte[8192];
                 int n;
                 while ((n = bundledInput.read(data)) != -1) bundledBytes.write(data, 0, n);
                 String bundledDashboard = bundledBytes.toString("UTF-8");
-                if (validDashboard(bundledDashboard)) {
+                if (validDashboard(bundledDashboard)
+                        && bundledDashboard.contains("v85-landscape-responsive")) {
                     showDashboard(bundledDashboard);
                     return;
                 }
