@@ -26,6 +26,8 @@ public final class DailyFinanceReminder extends BroadcastReceiver {
     private static final int EVENING_REQUEST = 1109;
 
     public static void schedule(Context context) {
+        // QA and official app can coexist; only the signed production build prompts twice daily.
+        if (BuildConfig.DEBUG) return;
         AlarmManager alarms = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarms == null) return;
         schedulePeriod(context, alarms, MORNING, MORNING_REQUEST, 8, 0);
