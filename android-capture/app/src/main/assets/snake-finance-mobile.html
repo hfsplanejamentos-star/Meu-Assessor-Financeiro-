@@ -1228,41 +1228,22 @@ function nextId(){return L.reduce((max,x)=>Math.max(max,Number(x.id)||0),100)+1}
 const CAT={mor:['Moradia','home','#168BFF'],mer:['Mercado','cart','#FF7A00'],tra:['Transporte','car','#00C48C'],ali:['Alimentação','fork','#FFD000'],laz:['Lazer','game','#FF4FA3'],sau:['Saúde','heart','#00D68F'],con:['Contas','bulb','#8B5CFF'],out:['Outros','list','#E85D75'],mov:['Móveis','home','#9C6ADE'],pen:['Pensão','money','#00B8D9'],lav:['Lavanderia','shirt','#35C2FF'],abs:['Abastecimento','fuel','#FF4D4D'],cer:['Cerveja','beer','#F59E0B'],est:['Estacionamento','parking','#5B8CFF'],trab:['Trabalho','briefcase','#22D3EE']};
 const ORC={};
 const GR={Padaria:['#2a78d6','bread'],Mercado:['#eb6834','cart'],Restaurante:['#1baf7a','fork'],Delivery:['#6250d6','bag'],Cerveja:['#e87ba4','beer']};
-const AC={c6:['C6','#4a95ea'],caju:['Caju','#e87ba4'],carbon:['Carbon','#8b7cf0'],xp:['XP Débito','#e5bd68'],xpone:['XP Infinite One · crédito','#c8cdd8']};
-const XP_CONFIG_KEY='assessor_xp_accounts_v1';
-const XP_DEFAULTS={debitOpening:null,creditLimit:null,creditOpening:null};
-function validXPConfig(raw){
- if(!raw||typeof raw!=='object'||Array.isArray(raw))throw Error('Configuração XP inválida');
- const out={...XP_DEFAULTS};
- for(const field of Object.keys(XP_DEFAULTS)){
-  const value=raw[field];
-  if(value===undefined||value===null)continue;
-  if(!Number.isSafeInteger(value)||value<0||value>100000000000)throw Error('Valor XP inválido: '+field);
-  out[field]=value;
- }
- return out;
+const AC={c6:['C6','#4a95ea'],caju:['Caju','#e87ba4'],carbon:['Carbon','#8b7cf0'],xpone:['XP Infinite One Débito','#e9b84d']};
+const XP_DEBIT_KEY='assessor_xp_infinite_one_debit_v1';
+function validXPDebitConfig(o){if(!o||typeof o!=='object'||Array.isArray(o)||!(o.opening===null||(Number.isSafeInteger(o.opening)&&Math.abs(o.opening)<=100000000000)))throw Error('Saldo inicial XP inválido');return {opening:o.opening};}
+let XP_DEBIT={opening:null};
+try{const raw=localStorage.getItem(XP_DEBIT_KEY);if(raw)XP_DEBIT=validXPDebitConfig(JSON.parse(raw));}catch(e){console.warn('Saldo inicial XP não pode ser lido; backup preservado.',e);}
+function openXPDebitSettings(){
+ modal('XP Infinite One · saldo inicial',`<p class="m">Conta XP Infinite One Débito, independente do C6 e das Metas XP. Informe seu saldo inicial real conforme extrato.</p><div class="fm"><label>Saldo inicial XP (R$)<input id="xponeOpening" inputmode="decimal" placeholder="Ainda não informado" value="${XP_DEBIT.opening===null?'':(XP_DEBIT.opening/100).toFixed(2).replace('.',',')}"></label><button class="bt p" onclick="saveXPDebitSettings()">Salvar saldo XP</button></div>`);
 }
-let XP_CFG={...XP_DEFAULTS};
-try{const saved=localStorage.getItem(XP_CONFIG_KEY);if(saved)XP_CFG=validXPConfig(JSON.parse(saved));}catch(e){console.warn('Configuração XP inválida; dados preservados',e);}
-function xpOneOutstanding(ref){
- let balance=XP_CFG.creditOpening||0;
- for(const x of L.filter(x=>x.s==='r'&&validISO(x.d)&&x.d<=ref)){
-  if(x.a==='xpone'&&(x.t==='d'||x.t==='i'||x.t==='inv'))balance+=x.v;
-  else if(x.a==='xpone'&&x.t==='r')balance-=x.v;
-  else if(x.t==='t'&&x.to==='xpone'&&x.a!=='xpone')balance-=x.v;
- }
- return Math.max(0,balance);
+function saveXPDebitSettings(){
+ if(PERSIST_BLOCKED)return alert('Gravações bloqueadas até confirmar o backup original.');
+ const val=$('xponeOpening').value.trim();
+ try{const next=validXPDebitConfig({opening:val===''?null:moneyInput(val)});
+  localStorage.setItem(XP_DEBIT_KEY,JSON.stringify(next));XP_DEBIT=next;closeModal();draw();
+ }catch(e){alert('Falha ao salvar saldo XP: '+e.message);}
 }
-function openXPSettings(){
- modal('XP · configurar contas',`<p class="m">XP Débito tem saldo próprio. O XP Infinite One é crédito e não reduz o saldo da conta ao registrar uma compra. Não foi informado limite nem data da fatura.</p><div class="fm"><label>Saldo inicial XP Débito (R$)<input id="xp_open" inputmode="decimal" placeholder="Não informado" value="${XP_CFG.debitOpening===null?'':(XP_CFG.debitOpening/100).toFixed(2).replace('.',',')}"></label><label>Limite XP Infinite One (R$)<input id="xp_limit" inputmode="decimal" placeholder="Não informado" value="${XP_CFG.creditLimit===null?'':(XP_CFG.creditLimit/100).toFixed(2).replace('.',',')}"></label><label>Valor já utilizado no cartão antes dos lançamentos (R$)<input id="xp_used" inputmode="decimal" placeholder="Não informado" value="${XP_CFG.creditOpening===null?'':(XP_CFG.creditOpening/100).toFixed(2).replace('.',',')}"></label><button class="bt p" onclick="saveXPSettings()">Salvar configuração XP</button></div>`);
-}
-function saveXPSettings(){
- if(PERSIST_BLOCKED){alert('Gravação bloqueada: confirme o backup da base original primeiro.');return;}
- const money=(id)=>{const input=$(id).value.trim();return !input?null:moneyInput(input);};
- const candidate={debitOpening:money('xp_open'),creditLimit:money('xp_limit'),creditOpening:money('xp_used')};
- try{const parsed=validXPConfig(candidate);localStorage.setItem(XP_CONFIG_KEY,JSON.stringify(parsed));XP_CFG=parsed;closeModal();draw();}
- catch(e){alert('Não foi possível salvar XP: '+e.message);}
-}
+function openAvailableDebitDetail(){const d=D();modal('Saldo disponível · C6 + XP',`<div class="li"><span>C6 Débito</span><b>${brl(d.c6)}</b></div><div class="li"><span>XP Infinite One Débito</span><b>${XP_DEBIT.opening===null?'Saldo inicial não informado':brl(d.xpone)}</b></div><div class="li"><strong>Total registrado</strong><b>${brl(d.available)}</b></div><p class="m">Não inclui Caju, limite de crédito nem investimentos XP. Confira o saldo inicial da XP com extrato.</p><button class="bt" onclick="openXPDebitSettings()">Configurar saldo XP</button>`);}
 const ICO={home:'M3 11l9-8 9 8M5 10v10h14V10',cart:'M3 4h2l2 11h11l2-8H6M9 20h.01M17 20h.01',car:'M5 16l1-6h12l1 6M4 16h16v3H4zM7 19v1M17 19v1',fork:'M7 3v8M4 3v5a3 3 0 006 0V3M17 3c-2 2-2 6 0 8v10',heart:'M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z',game:'M6 8h12a4 4 0 014 4v2a3 3 0 01-5 2l-1-1H8l-1 1a3 3 0 01-5-2v-2a4 4 0 014-4zM8 11v3M6.5 12.5h3',bulb:'M9 18h6M10 21h4M12 3a6 6 0 00-3 11v2h6v-2a6 6 0 00-3-11z',dots:'M5 12h.01M12 12h.01M19 12h.01',bread:'M4 10a4 4 0 014-4h8a4 4 0 014 4v8H4z',bag:'M6 8h12l1 12H5zM9 8a3 3 0 016 0',beer:'M6 6h9v14H6zM15 9h3v6h-3M9 6V4h3v2',list:'M5 6h14M5 12h14M5 18h14',rep:'M4 12a8 8 0 0114-5l2 2M20 12a8 8 0 01-14 5l-2-2M18 4v5h-5M6 20v-5h5',cal:'M5 5h14v15H5zM5 10h14M9 3v4M15 3v4',chat:'M4 5h16v11H9l-5 4z',grid:'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',card:'M3 6h18v12H3zM3 10h18',shirt:'M8 4l4 2 4-2 4 3-3 2v11H7V9L4 7z',fuel:'M5 3h10v18H5zM7 6h6v5H7zM15 8h2l2 2v7a2 2 0 01-2 2h-2',parking:'M7 20V4h6a5 5 0 010 10H7M7 14h6',briefcase:'M4 7h16v12H4zM9 7V5h6v2M4 12h16',money:'M4 7h16v10H4zM8 12h.01M16 12h.01M12 9a3 3 0 100 6 3 3 0 000-6z'};
 const L0=[];
 let L,TAB='ger',F='todas',AS='chat',SEL='2026-10-03',OPEN=0,TOAST='',LAST=0,CH,W,ST={fat:true,rec:true,hide:false,msg:true,res:true,dias:3},NID=100,MD=0;
@@ -1329,12 +1310,12 @@ function catMeta(k){const c=CAT[k];if(c)return {name:c[0],icon:c[1],color:(typeo
 function pct(a){const t=a.reduce((s,x)=>s+x,0)||1,e=a.map(x=>x*100/t),f=e.map(Math.floor),r=100-f.reduce((s,x)=>s+x,0);e.map((x,i)=>[x-Math.floor(x),i]).sort((a,b)=>b[0]-a[0]).slice(0,r).forEach(o=>f[o[1]]++);return f;}
 function D(){const o={},cut=YM+'-31';
  o.c6=accountBalance('c6',cut,false);
- o.xp=XP_CFG.debitOpening===null?null:accountBalance('xp',cut,false);
- o.xpOneUsed=xpOneOutstanding(lastMonthDay(YM));
+ o.xpone=accountBalance('xpone',cut,false);
+ o.available=o.c6+o.xpone;
  const cajuFunds=cajuBalance(YM);
  o.cj=cajuFunds;
- o.tot=o.c6+o.cj+(o.xp===null?0:o.xp);
- o.rec=smm(x=>x.s=='r'&&x.t=='r'&&x.a=='c6');o.des=smm(x=>x.s=='r'&&x.t=='d');o.pd=smm(x=>x.s=='p'&&x.t=='d');o.pt=smm(x=>x.s=='p'&&x.t=='t');o.pr=smm(x=>x.s=='p'&&x.t=='r');o.fim=projectedC6(YM);
+ o.tot=o.available+o.cj;
+ o.rec=smm(x=>x.s=='r'&&x.t=='r'&&(x.a=='c6'||x.a=='xpone'));o.des=smm(x=>x.s=='r'&&x.t=='d');o.pd=smm(x=>x.s=='p'&&x.t=='d');o.pt=smm(x=>x.s=='p'&&x.t=='t');o.pr=smm(x=>x.s=='p'&&x.t=='r');o.fim=projectedC6(YM)+accountBalance('xpone',cut,true);
  o.cg=smm(x=>x.a=='caju'&&x.s=='r'&&x.t=='d');o.rc=smm(x=>x.a=='caju'&&x.t=='r'&&x.s=='r');const recent=L.filter(x=>x.a==='caju'&&x.t==='d'&&x.s==='r'&&x.d>=dateOffset(alertRef(YM),-13)&&x.d<=alertRef(YM)).reduce((q,x)=>q+x.v,0);o.dura=recent>0?Math.max(0,Math.floor(o.cj/(recent/14))):null;
  o.fat=creditUsed(lastMonthDay(YM),ALERT_CFG.carbon);o.fp=smm(x=>x.ft&&x.s=='p');return o;}
 const cs=st=>{const o={};[...new Set([...Object.keys(CAT),...Object.keys(CATDB)])].forEach(k=>o[k]=0);expenseBase(st||'').forEach(x=>{const k=x.c||'out';o[k]=(o[k]||0)+x.v});return o;};
@@ -1380,7 +1361,7 @@ function graf7(){
  const dots=a.map((z,i)=>`<circle cx="${xx(i)}" cy="${yy(smooth[i])}" r="3.7" fill="var(--card)" stroke="var(--a)" stroke-width="2.2" onclick="openDay('${z.d}')"/>`).join('');
  const values=a.map((z,i)=>z.v>0?`<text x="${xx(i)}" y="${Math.max(14,yy(smooth[i])-11)}" text-anchor="middle" font-size="9" font-weight="700" fill="var(--tx)">${brs(z.v)}</text>`:'').join('');
  const labels=a.map((z,i)=>`<text x="${xx(i)}" y="${H-8}" text-anchor="middle" font-size="10" fill="var(--mu)">${String(z.day).padStart(2,'0')}</text>`).join('');
- return `<div class="c"><div class="sp"><div><p class="h">Gastos por dia</p><p class="m">${YM===localToday().slice(0,7)?'Semana atual · segunda a domingo':'Semana final do mês · segunda a domingo'} · C6 + Caju + cartões + XP</p></div><button class="bt" onclick="graphDetail('daily')" style="color:var(--a)">Ver detalhes ›</button></div><svg viewBox="0 0 ${W} ${H}" style="width:100%"><defs><linearGradient id="v40fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--a)" stop-opacity=".32"/><stop offset="75%" stop-color="var(--a)" stop-opacity=".07"/><stop offset="100%" stop-color="var(--a)" stop-opacity="0"/></linearGradient></defs>${grid}<path d="${area}" fill="url(#v40fade)" stroke="none"/><path d="${p}" fill="none" stroke="var(--a)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>${dots}${values}${labels}</svg></div>`;
+ return `<div class="c"><div class="sp"><div><p class="h">Gastos por dia</p><p class="m">${YM===localToday().slice(0,7)?'Semana atual · segunda a domingo':'Semana final do mês · segunda a domingo'} · C6 + Caju + C6 Carbon</p></div><button class="bt" onclick="graphDetail('daily')" style="color:var(--a)">Ver detalhes ›</button></div><svg viewBox="0 0 ${W} ${H}" style="width:100%"><defs><linearGradient id="v40fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--a)" stop-opacity=".32"/><stop offset="75%" stop-color="var(--a)" stop-opacity=".07"/><stop offset="100%" stop-color="var(--a)" stop-opacity="0"/></linearGradient></defs>${grid}<path d="${area}" fill="url(#v40fade)" stroke="none"/><path d="${p}" fill="none" stroke="var(--a)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>${dots}${values}${labels}</svg></div>`;
 }
 function orcCard(){
  const t=cs('r'),ks=Object.keys(ORC).filter(k=>CAT[k]).sort((a,b)=>(t[b]/ORC[b])-(t[a]/ORC[a]));
@@ -1431,18 +1412,6 @@ function openAccount(a){
  const items=L.filter(x=>(x.a===a||(x.t==='t'&&x.to===a))&&validISO(x.d)&&x.d<=cutoff);
  const title=(AC[a]?.[0]||a)+' · histórico até '+monthName(YM);
  detailModal(title,items);
- if(a==='xp'||a==='xpone'){
-  const header=$('md')?.querySelector('.mc .sp');
-  if(header){
-   const panel=document.createElement('div');panel.className='m';
-   panel.style.cssText='margin:8px 0 14px;line-height:1.5';
-   panel.textContent=a==='xp'
-     ?('XP Débito · '+(XP_CFG.debitOpening===null?'saldo inicial não informado; configure antes de conciliar.':'saldo até '+cutoff+': '+brs(accountBalance('xp',cutoff,false)))+'.')
-     :('XP Infinite One · compras/pagamentos registrados: '+brs(xpOneOutstanding(cutoff))+'. '+(XP_CFG.creditLimit===null?'Limite ainda não informado.':'Limite configurado: '+brs(XP_CFG.creditLimit)+'.')+' Datas de fechamento e vencimento ainda não informadas.');
-   const btn=document.createElement('button');btn.className='bt';btn.textContent='Configurar contas XP';btn.onclick=openXPSettings;
-   header.insertAdjacentElement('afterend',panel);panel.insertAdjacentElement('afterend',btn);
-  }
- }
  if(a==='carbon'){
   const cfg=ALERT_CFG.carbon,used=creditUsed(alertRef(YM),cfg);
   const header=$('md')?.querySelector('.mc .sp');
@@ -1553,23 +1522,23 @@ function vIni(dia=1){
  const pend=ML().filter(x=>x.s==='p'&&x.t==='d').slice().sort((a,b)=>(a.d||'').localeCompare(b.d||'')).slice(0,4);
  const ref=SEL&&SEL.startsWith(YM)?SEL:(YM+'-01');
  const hoje=ML().filter(x=>x.s==='r'&&x.t==='d'&&x.d===ref).reduce((a,x)=>a+x.v,0);
- const rows=real.map(x=>{const c=x.c&&CAT[x.c]?CAT[x.c]:CAT.out,cc=V35_COLORS[x.c]||c[2];return `<div class="v39row" onclick="openLanc(${x.id})">${tile(c[1],cc)}<div class="v39grow"><b>${escapeHTML(x.n||c[0])}</b><span>${x.d?dd(x.d):''} · ${AC[x.a]?.[0]||'Conta não identificada'}</span></div><strong class="${x.t==='r'?'ok':'bad'}">${x.t==='r'?'+ ':'- '}${brl(x.v)}</strong></div>`}).join('');
+ const rows=real.map(x=>{const c=x.c&&CAT[x.c]?CAT[x.c]:CAT.out,cc=V35_COLORS[x.c]||c[2];return `<div class="v39row" onclick="openLanc(${x.id})">${tile(c[1],cc)}<div class="v39grow"><b>${escapeHTML(x.n||c[0])}</b><span>${x.d?dd(x.d):''} · ${x.a==='caju'?'Caju':x.a==='carbon'?'C6 Carbon':'C6 Débito'}</span></div><strong class="${x.t==='r'?'ok':'bad'}">${x.t==='r'?'+ ':'- '}${brl(x.v)}</strong></div>`}).join('');
  const prs=pend.map(x=>{const c=x.c&&CAT[x.c]?CAT[x.c]:CAT.out,cc=V35_COLORS[x.c]||c[2];return `<div class="v39row" onclick="openLanc(${x.id})">${tile(c[1],cc)}<div class="v39grow"><b>${escapeHTML(x.n||c[0])}</b><span>Vence ${x.d?dd(x.d):''}</span></div><strong class="warn">${brl(x.v)}</strong></div>`}).join('');
  const alerts=financialAlerts(YM);
  return mesNav()+`<div class="v39inicio">
- <div class="v39hero"><div><span class="m">C6 Débito · disponível</span><div class="v39saldo">${brl(d.c6)}</div><span class="m">Visão operacional do mês</span></div><div class="v39today"><span>Dia selecionado</span><b>${brl(hoje)}</b><small>${dd(ref)}</small></div></div>
+ <div class="v39hero"><div><span class="m">Disponível agora</span><div class="v39saldo">${brl(d.c6)}</div><span class="m">Visão operacional do mês</span></div><div class="v39today"><span>Dia selecionado</span><b>${brl(hoje)}</b><small>${dd(ref)}</small></div></div>
  <div class="v39quick"><button onclick="openAdd&&openAdd('d')">＋<span>Despesa</span></button><button onclick="openAdd&&openAdd('r')">＋<span>Previsto</span></button><button onclick="goTab('inv')">＋<span>Meta</span></button></div>
  <div class="c v39card"><div class="sp"><div><p class="h">Próximos compromissos</p><p class="m">O que precisa da sua atenção</p></div><span class="m" style="color:var(--a)" onclick="TAB='rec';draw()">Ver todos ›</span></div>${prs||'<p class="m" style="padding-top:10px">Nenhuma despesa pendente.</p>'}</div>
- <div class="c v39card"><div class="sp"><div><p class="h">Últimas transações</p><p class="m">C6 + Caju + C6 Carbon + XP Débito + XP Infinite One</p></div><span class="m" style="color:var(--a)" onclick="TAB='des';draw()">Ver todas ›</span></div>${rows||'<p class="m" style="padding-top:10px">Nenhuma transação.</p>'}</div>
+ <div class="c v39card"><div class="sp"><div><p class="h">Últimas transações</p><p class="m">C6 + Caju + C6 Carbon</p></div><span class="m" style="color:var(--a)" onclick="TAB='des';draw()">Ver todas ›</span></div>${rows||'<p class="m" style="padding-top:10px">Nenhuma transação.</p>'}</div>
  <div class="c v39card"><div class="sp"><div><p class="h">Alertas do Assessor</p><p class="m">Somente o que exige atenção</p></div><span class="v39snake">Snake Eyes</span></div>${alerts.length?alerts.map(a=>renderReviewAlert(a,'v39alert')).join(''):'<p class="m">Nenhum alerta ativo para este mês.</p>'}</div>
  </div>`;
 }
 function vDesp(){
- const cj=ML().filter(x=>x.a=='caju'&&x.s=='r'&&x.t=='d'),expenseAccounts=['c6','caju','carbon','xp','xpone'],ac=expenseAccounts.map(a=>smm(x=>x.a==a&&x.s=='r'&&x.t=='d')),tot=ac.reduce((s,x)=>s+x,0),po=pct(ac);
+ const cj=ML().filter(x=>x.a=='caju'&&x.s=='r'&&x.t=='d'),ac=['c6','caju','carbon'].map(a=>smm(x=>x.a==a&&x.s=='r'&&x.t=='d')),tot=ac.reduce((s,x)=>s+x,0),po=pct(ac);
  const gs=Object.keys(CAT).map(k=>[k,cj.filter(x=>x.c==k).reduce((sum,x)=>sum+x.v,0)]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
  const cgt=gs.reduce((sum,x)=>sum+x[1],0),pg=pct100(gs.map(x=>x[1])),rows=ML().filter(x=>x.s=='r'&&x.t=='d'&&(F=='todas'||x.a==F)).sort((a,b)=>String(b.d).localeCompare(String(a.d))||b.id-a.id).slice(0,7);let s2=0;
- return `<div class="c"><div class="sp"><p class="h">Despesas totais</p><p class="m">Realizado em ${monthName(YM)}</p></div><p class="big2">${brl(tot)}</p><div class="stk" style="margin-bottom:8px">${expenseAccounts.map((a,i)=>`<span style="width:${po[i]}%;background:${AC[a][1]}"></span>`).join('')}</div><div class="sp m" style="flex-wrap:wrap">${expenseAccounts.map((a,i)=>`<span>${AC[a][0]} ${brl(ac[i])} · ${po[i]}%</span>`).join('')}</div>
- <div class="fl">${['todas',...expenseAccounts].map(f=>`<button class="${F==f?'on':''}" onclick="F='${f}';draw()">${f=='todas'?'Todas':AC[f][0]}</button>`).join('')}</div>${rows.map(x=>`<div class="r li"><div class="f"><p>${escapeHTML(x.n)}</p><p class="m">${dd(x.d)} · ${(CAT[x.c]||CAT.out)[0]} ${chip(x.a)}</p></div><b style="color:var(--neg)">-${brl(x.v)}</b></div>`).join('')}</div>
+ return `<div class="c"><div class="sp"><p class="h">Despesas totais</p><p class="m">Realizado em ${monthName(YM)}</p></div><p class="big2">${brl(tot)}</p><div class="stk" style="margin-bottom:8px">${['c6','caju','carbon'].map((a,i)=>`<span style="width:${po[i]}%;background:${AC[a][1]}"></span>`).join('')}</div><div class="sp m" style="flex-wrap:wrap">${['c6','caju','carbon'].map((a,i)=>`<span>${AC[a][0]} ${brl(ac[i])} · ${po[i]}%</span>`).join('')}</div>
+ <div class="fl">${['todas','c6','caju','carbon'].map(f=>`<button class="${F==f?'on':''}" onclick="F='${f}';draw()">${f=='todas'?'Todas':AC[f][0]}</button>`).join('')}</div>${rows.map(x=>`<div class="r li"><div class="f"><p>${escapeHTML(x.n)}</p><p class="m">${dd(x.d)} · ${(CAT[x.c]||CAT.out)[0]} ${chip(x.a)}</p></div><b style="color:var(--neg)">-${brl(x.v)}</b></div>`).join('')}</div>
  ${orcCard()}<div class="c"><div class="sp"><p class="h">Despesas Caju</p><p class="m">${monthName(YM)}</p></div><p class="m">Alimentação e benefício · ${brl(cgt)}</p><svg viewBox="0 0 240 240" style="width:min(100%,260px);aspect-ratio:1;display:block;margin:8px auto 12px" role="img" aria-label="Rosca das despesas do Caju por categoria">${ring(120,120,86,30,gs.map(x=>[catMeta(x[0]).color,x[1],`event.stopPropagation();openSlice('cajuCat','${x[0]}')`]),1)}<text x="120" y="118" text-anchor="middle" font-size="17" font-weight="600" fill="var(--tx)">${brl(cgt)}</text><text x="120" y="142" text-anchor="middle" font-size="13" fill="var(--mu)">Caju</text></svg>${gs.length?gs.map((x,i)=>{s2+=pg[i];const c=CAT[x[0]]||[catName(x[0]),'list','#94A3B8'];return `<div class="r pr catClick" onclick="openSlice('cajuCat','${x[0]}')">${tile(c[1],c[2])}<div class="f"><div class="sp"><span>${escapeHTML(c[0])}</span><b>${pg[i]}%</b></div><div class="bar"><i style="width:${pg[i]}%;background:${c[2]}"></i></div></div><span class="m w70">${brl(x[1])}</span></div>`}).join(''):'<p class="m" style="text-align:center;padding:12px 0">Sem despesas do Caju neste mês.</p>'}<div class="sp tot"><span class="h">Total</span><span><b>${s2}%</b> <span class="m">· ${brl(cgt)}</span></span></div></div>`;
 }
 function efet(id){const x=L.find(y=>y.id==id);if(!x)return;x.s='r';x.d=`${YM}-${String(HJ).padStart(2,'0')}`;persistLedger();LAST=id;OPEN=0;TOAST=`${escapeHTML(x.n)} efetivado · ${brl(x.v)}`;draw();}
@@ -1601,8 +1570,8 @@ function v29ExpenseGroups(mode=V29_EXP_VIEW){
    let k,n,col;
    if(mode==='acc'){
      k=x.a||'out';
-     const names={c6:'C6 Débito',caju:'Caju',carbon:'C6 Carbon',xp:'XP Débito',xpone:'XP Infinite One',out:'Outros'};
-     const colors={c6:'#b8ff2c',caju:'#ff405b',carbon:'#00a8ff',xp:'#f2b705',xpone:'#b7bdd5',out:'#94a3b8'};
+     const names={c6:'C6 Débito',caju:'Caju',carbon:'C6 Carbon',xp:'Metas XP',xpone:'XP Infinite One Débito',out:'Outros'};
+     const colors={c6:'#b8ff2c',caju:'#ff405b',carbon:'#00a8ff',xp:'#f2b705',xpone:'#e9b84d',out:'#94a3b8'};
      n=names[k]||k; col=colors[k]||'#94a3b8';
    }else if(mode==='ctx'){
      k=isWork(x)?'work':'personal';
@@ -1661,14 +1630,12 @@ function v28Agenda(){
 function vGeral(){
  const d=D();
  return mesNav()+`
- <div class="c v28Hero cardEdit" onclick="openAccount('c6')"><div class="sp"><div><p class="m">Saldo C6 disponível</p><p class="big">${brl(d.c6)}</p></div><span class="ch">Contas separadas</span></div>
+ <div class="c v28Hero cardEdit" onclick="openAccount('c6')"><div class="sp"><div><p class="m">Saldo disponível</p><p class="big">${brl(d.c6)}</p></div><span class="ch">Visão consolidada</span></div>
  <div class="v28Metrics"><div onclick="event.stopPropagation();openProjectionDetail()"><span class="m">Previsto</span><b style="color:var(--pos)">${brs(projectedC6(YM))}</b></div><div onclick="event.stopPropagation();detailModal('Despesas realizadas',expenseBase('r'))"><span class="m">Despesas do mês</span><b style="color:var(--neg)">${brs(d.des)}</b></div><div onclick="event.stopPropagation();openPending()"><span class="m">A pagar</span><b style="color:var(--warn)">${brs(d.pd+d.pt+carbonInvoiceGross(YM))}</b></div></div></div>
  <div class="c"><div class="v28Title"><p class="h">Minhas contas</p><span class="m">Toque para detalhes</span></div><div class="v28Accounts">
   <div class="c v28Account cardEdit" onclick="openAccount('c6')">${tile('card',AC.c6[1])}<div><span class="m">C6 Débito</span><b>${brs(d.c6)}</b></div></div>
   <div class="c v28Account cardEdit" onclick="openAccount('carbon')">${tile('card',AC.carbon[1])}<div><span class="m">C6 Carbon · disponível</span><b>${brs(Math.max(0,ALERT_CFG.carbon.limit*100-creditUsed(alertRef(YM),ALERT_CFG.carbon)))}</b><small class="m">Em uso ${brs(creditUsed(alertRef(YM),ALERT_CFG.carbon))} · Limite ${brs(ALERT_CFG.carbon.limit*100)}</small></div></div>
   <div class="c v28Account cardEdit" onclick="openAccount('caju')">${tile('card',AC.caju[1])}<div><span class="m">Caju</span><b>${brs(d.cj)}</b></div></div>
-  <div class="c v28Account cardEdit" onclick="openAccount('xp')">${tile('card',AC.xp[1])}<div><span class="m">XP Débito</span><b>${d.xp===null?'Configurar saldo':brs(d.xp)}</b><small class="m">Conta XP · débito e Pix</small></div></div>
-  <div class="c v28Account cardEdit" onclick="openAccount('xpone')">${tile('card',AC.xpone[1])}<div><span class="m">XP Infinite One · Crédito</span><b>${XP_CFG.creditOpening===null&&!L.some(x=>x.a==='xpone')?'Sem movimentações':brs(d.xpOneUsed)}</b><small class="m">${XP_CFG.creditLimit===null?'Limite não informado':('Limite '+brs(XP_CFG.creditLimit))} · não desconta do débito</small></div></div>
   <div class="c v28Account cardEdit" onclick="goTab('inv')"><div class="tl" style="background:#F2B705;color:#111;font-weight:800">XP</div><div><span class="m">XP · Metas</span><b>Metas</b></div></div>
  </div></div>
  <div class="v30DailyShell">${graf7()}</div>
@@ -1878,13 +1845,12 @@ function openAdd(tipo){
  <label>Descrição<input id="an" placeholder="${desp?'Ex.: Combustível':'Ex.: Salário'}"></label>
  <label>Valor (R$)<input id="av" inputmode="decimal" placeholder="0,00"></label>
  <label>Data<input id="ad" type="date" value="${YM}-${String(YM==='2026-10'?HJ:1).padStart(2,'0')}"></label>
- <label>Conta<select id="aa">${desp?'<option value="c6">C6 Débito</option><option value="caju">Caju</option><option value="carbon">C6 Carbon · Crédito</option><option value="xp">XP Débito</option><option value="xpone">XP Infinite One · Crédito</option>':'<option value="c6">C6 Débito</option><option value="caju">Caju</option><option value="xp">XP Débito</option>'}</select></label>
+ <label>Conta<select id="aa">${desp?'<option value="c6">C6</option><option value="caju">Caju</option><option value="carbon">C6 Carbon</option>':'<option value="c6">C6</option><option value="caju">Caju</option>'}</select></label>
  ${desp?`<label>Categoria<select id="ac" onchange="if($('asub'))$('asub').innerHTML=subOptions(this.value)">${cats}</select></label><label>Subcategoria<select id="asub">${subOptions(Object.keys(CAT)[0])}</select></label>`:''}
  ${desp?'<div id="carbonParcelBox" style="display:none"><label>Quantidade de parcelas<input id="carbonInstallments" type="number" min="1" max="120" step="1" value="1"></label><p class="m">C6 Carbon: fechamento dia 5 · vencimento dia 7. O valor informado é o total da compra; as parcelas aparecem nos meses das respectivas faturas.</p></div>':''}
- ${desp?'<p id="xpOneNotice" class="m" style="display:none">XP Infinite One: compra lançada no cartão de crédito, sem descontar do saldo XP Débito. Configure fechamento e vencimento quando souber as datas.</p>':''}
  <label>Status<select id="as2"><option value="r">Realizado</option><option value="p">Previsto</option></select></label>
  <button class="bt p" onclick="saveAdd('${tipo}')">Salvar ${desp?'despesa':'receita'}</button></div></div>`;
- if(desp){const account=$('aa'),box=$('carbonParcelBox');const toggle=()=>{box.style.display=account.value==='carbon'?'block':'none';const xpNote=$('xpOneNotice');if(xpNote)xpNote.style.display=account.value==='xpone'?'block':'none';};account.addEventListener('change',toggle);toggle();}
+ if(desp){const account=$('aa'),box=$('carbonParcelBox');const toggle=()=>{box.style.display=account.value==='carbon'?'block':'none'};account.addEventListener('change',toggle);toggle();}
 }
 function carbonInvoiceMonth(date){const ym=date.slice(0,7),day=Number(date.slice(8,10));const [year,month]=ym.split('-').map(Number);const offset=day>=5?1:0;const dt=new Date(Date.UTC(year,month-1+offset,1));return dt.toISOString().slice(0,7);}
 function addInvoiceMonths(ym,n){const [year,month]=ym.split('-').map(Number);return new Date(Date.UTC(year,month-1+n,1)).toISOString().slice(0,7);}
@@ -2222,7 +2188,7 @@ detailModal=function(title,items){originalDetailModal(title,items);const mc=$('m
 const OVERVIEW_KEY='assessor_overview_v77';
 const OVERVIEW_ITEMS=[
  ['balance','Saldo disponível','Indicadores',true],['forecast','Saldo previsto','Indicadores',true],['expenses','Despesas realizadas','Indicadores',true],['pending','A pagar','Indicadores',true],
- ['bank_c6','C6 Débito','Contas',true],['bank_carbon','C6 Carbon','Contas',true],['bank_caju','Caju','Contas',true],['bank_xp_debit','XP Débito','Contas',true],['bank_xp_one','XP Infinite One','Contas',true],['bank_xp','XP · Metas','Contas',true],
+ ['bank_c6','C6 Débito','Contas',true],['bank_carbon','C6 Carbon','Contas',true],['bank_caju','Caju','Contas',true],['bank_xp','XP Infinite One Débito','Contas',true],
  ['daily','Gastos por dia','Cards e gráficos',true],['categories','Gastos por categoria / conta / trabalho','Cards e gráficos',true],['distribution','Despesas do mês','Cards e gráficos',true],['caju_chart','Gastos Caju (mês atual)','Cards e gráficos',true],['recurring','Atuais e recorrentes','Cards e gráficos',true],['day','Despesas do dia','Cards e gráficos',true],['agenda','Agenda financeira','Cards e gráficos',true],['transactions','Últimas transações','Cards e gráficos',false],['commitments','Próximos compromissos','Cards e gráficos',false]
 ];
 OVERVIEW_ITEMS.push(['alerts','Alertas do assessor','Cards e gráficos',false],['invest_goals','Minhas metas','Investimentos',false],['invest_deposits','Total aportado','Investimentos',false],['invest_yield','Rendimento estimado','Investimentos',false],['invest_goaldate','Data da meta','Investimentos',false],['invest_chart','Projeção de investimentos','Investimentos',false],['invest_parameters','Parâmetros da projeção','Investimentos',false],['invest_monthly','Detalhamento mensal','Investimentos',false]);
@@ -2251,7 +2217,7 @@ vGeral=function(){
  const t=document.createElement('template');t.innerHTML=overviewOriginal();
  const root=t.content,hero=root.querySelector('.v28Hero'),accounts=root.querySelector('.v28Accounts');
  if(hero){hero.dataset.oid='overview-summary';const main=hero.querySelector(':scope>.sp');if(!OVERVIEW_VISIBLE.balance)main?.remove();['forecast','expenses','pending'].forEach((key,i)=>{const item=hero.querySelector('.v28Metrics')?.children[i];if(item)item.dataset.overview=key;});hero.querySelectorAll('[data-overview]').forEach(x=>{if(!OVERVIEW_VISIBLE[x.dataset.overview])x.remove();});const metrics=hero.querySelector('.v28Metrics');if(metrics&&!metrics.children.length)metrics.remove();if(!OVERVIEW_VISIBLE.balance&&!hero.querySelector('.v28Metrics'))hero.remove();}
- if(accounts){const host=accounts.closest('.c');host.dataset.oid='overview-accounts';[...accounts.children].forEach((x,i)=>{const key=['bank_c6','bank_carbon','bank_caju','bank_xp_debit','bank_xp_one','bank_xp'][i];x.dataset.overview=key;if(!OVERVIEW_VISIBLE[key])x.remove();});if(!accounts.children.length)host.remove();}
+ if(accounts){const host=accounts.closest('.c');host.dataset.oid='overview-accounts';[...accounts.children].forEach((x,i)=>{const key=['bank_c6','bank_carbon','bank_caju','bank_xp'][i];x.dataset.overview=key;if(!OVERVIEW_VISIBLE[key])x.remove();});if(!accounts.children.length)host.remove();}
  const tags=[['daily','.v30DailyShell'],['categories','#v29ExpenseCard'],['distribution','.v41month'],['caju_chart','.v29Caju']];
  tags.forEach(([key,selector])=>{const card=root.querySelector(selector);if(card){card.dataset.overview=key;card.dataset.oid='overview-'+key;if(!OVERVIEW_VISIBLE[key])card.remove();}});
  for(const card of [...root.children]){if(card===hero||card.querySelector('.v28Accounts')||card.dataset.overview)continue;const title=card.querySelector('.h')?.textContent||'';const key=title==='Atuais e recorrentes'?'recurring':title.startsWith('Despesas do dia')||title.startsWith('Previsto para')?'day':title==='Agenda financeira'?'agenda':null;if(key){card.dataset.overview=key;card.dataset.oid='overview-'+key;if(!OVERVIEW_VISIBLE[key])card.remove();}}
@@ -2349,7 +2315,7 @@ TABS.find(x=>x[0]==='as')[3]=vAs;
 let PERSIST_BLOCKED=false;
 function escapeHTML(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function accountDelta(x,a){if(x.bal===false)return 0;let v=0;if(x.a===a)v+=x.t==='r'?x.v:-x.v;if(x.t==='t'&&x.to===a&&x.a!==a)v+=x.v;return v;}
-function accountBalance(a,cut,planned=false){return (a==='xp'?(XP_CFG.debitOpening||0):(ACC[a]||0))+L.filter(x=>validISO(x.d)&&x.d<=cut&&(x.s==='r'||planned&&x.s==='p')).reduce((s,x)=>s+accountDelta(x,a),0);}
+function accountBalance(a,cut,planned=false){return (a==='xpone'?(XP_DEBIT.opening||0):(ACC[a]||0))+L.filter(x=>validISO(x.d)&&x.d<=cut&&(x.s==='r'||planned&&x.s==='p')).reduce((s,x)=>s+accountDelta(x,a),0);}
 function setInvParam(key,value){if(!['aporte','meses','taxa','inflacao','goalId'].includes(key))return;INV_CFG[key]=value;try{localStorage.setItem('assessor_inv_v82',JSON.stringify(INV_CFG))}catch(e){alert('Parâmetros não salvos. Exporte um backup.')}draw();}
 function validateLedger(data){if(!Array.isArray(data)||data.length>100000)throw Error('Lista de lançamentos inválida');const ids=new Set();let gross=0;for(const x of data){if(!x||typeof x!=='object'||!/^\d+$/.test(String(x.id))||!Number.isSafeInteger(Number(x.id))||Number(x.id)>=Number.MAX_SAFE_INTEGER||ids.has(String(x.id)))throw Error('ID ausente, inválido ou duplicado');ids.add(String(x.id));gross+=x.v;if(!Number.isSafeInteger(gross))throw Error('Total excede a precisão do motor');if(!validISO(x.d)||(x.comp&&!validISO(x.comp))||!Number.isSafeInteger(x.v)||x.v<0||!['r','d','t','i','inv'].includes(x.t)||!['r','p'].includes(x.s)||!AC[x.a]||typeof x.n!=='string'||x.n.length>1000||(x.c&&!/^[a-zA-Z0-9_-]+$/.test(x.c))||(x.sub&&typeof x.sub!=='string')||(x.series&&typeof x.series!=='string'))throw Error('Lançamento inválido: '+x.id);if((['rc','ft'].some(k=>x[k]!==undefined&&![true,false,0,1].includes(x[k]))||(x.bal!==undefined&&typeof x.bal!=='boolean')))throw Error('Sinalizador inválido: '+x.id);if(x.captureId!==undefined&&(typeof x.captureId!=='string'||x.captureId.length>300||! /^(bank|whatsapp|manual):.+$/.test(x.captureId)))throw Error('Origem de captura inválida: '+x.id);if(x.dv!==undefined&&(!Number.isInteger(x.dv)||x.dv<1||x.dv>31))throw Error('Dia de recorrência inválido');if(x.to&&(!['c6','caju','carbon','xp','xpone'].includes(x.to)||x.to===x.a))throw Error('Destino de transferência inválido');}return JSON.parse(JSON.stringify(data));}
 function completeBackupCategories(categories,ledger){
@@ -2480,7 +2446,7 @@ function validatePreference(key,value){
  if(key==='tema'){if(!['claro','ciano','limao'].includes(value))throw Error('Tema inválido');return;}
  // Historical backups also contain opaque runtime/version markers (plain text).
  // Parse only structured preferences consumed by this app; preserve inert legacy values.
- const structured=[CATSTORE,GOAL_STORE,CAJU_CFG_KEY,ALERT_KEY,NOTICE_KEY,OVERVIEW_KEY,XP_CONFIG_KEY,'assessor_inv_v82','assessor_budgets_v82',OPENING_KEY,LEDGER_KEY,'assessor_tx',LAYOUT_V82,LAYOUT_KEY,'lay'];
+ const structured=[CATSTORE,GOAL_STORE,CAJU_CFG_KEY,ALERT_KEY,NOTICE_KEY,OVERVIEW_KEY,XP_DEBIT_KEY,'assessor_inv_v82','assessor_budgets_v82',OPENING_KEY,LEDGER_KEY,'assessor_tx',LAYOUT_V82,LAYOUT_KEY,'lay'];
  if(!structured.includes(key))return;
  let v;try{v=JSON.parse(value)}catch(e){throw Error('Preferência inválida ('+key+'): JSON malformado');}
  const object=v&&typeof v==='object'&&!Array.isArray(v),safeKey=k=>/^[a-zA-Z0-9_-]+$/.test(k);
@@ -2492,7 +2458,7 @@ function validatePreference(key,value){
  else if(key===OVERVIEW_KEY){if(!object||!Object.values(v).every(x=>typeof x==='boolean'))throw Error('Seleção de cards inválida');}
  else if(key==='assessor_inv_v82'){if(!object||!Number.isSafeInteger(v.aporte)||v.aporte<0||v.aporte>100000000||!Number.isInteger(v.meses)||v.meses<1||v.meses>120||!Number.isFinite(v.taxa)||v.taxa<0||v.taxa>100||typeof v.inflacao!=='boolean'||typeof v.goalId!=='string')throw Error('Projeção inválida');}
  else if(key==='assessor_budgets_v82'){if(!object||!Object.entries(v).every(([k,n])=>safeKey(k)&&Number.isSafeInteger(n)&&n>0))throw Error('Orçamentos inválidos');}
- else if(key===XP_CONFIG_KEY){validXPConfig(v);}
+ else if(key===XP_DEBIT_KEY){validXPDebitConfig(v);}
  else if(key===OPENING_KEY){validateOpenings(v);}
  else if(key===LEDGER_KEY||key==='assessor_tx')validateLedger(v);
  else if(key===LAYOUT_V82){if(!object||!Object.values(v).every(a=>Array.isArray(a)&&a.every(x=>x&&typeof x.id==='string'&&typeof x.h==='string')))throw Error('Layout inválido');}
@@ -2609,14 +2575,7 @@ html[data-tema] #app{padding-bottom:120px!important}
     const text=String(e.text||''),full=(e.title+' '+text).toLowerCase();let amount=e.amountCents;
     if(!Number.isSafeInteger(amount)){const match=[...text.matchAll(/(?:R\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2}|\d+,\d{2})(?!\d)/g)];if(match.length===1)amount=Math.round(Number(match[0][1].replace(/\./g,'').replace(',','.'))*100);}
     const direction=['expense','income'].includes(e.direction)?e.direction:/\b(recebi|recebido|salário|salario|entrada)\b/.test(full)?'income':/\b(gastei|paguei|compra|comprou|pagamento|despesa|débito|debito)\b/.test(full)?'expense':'unknown';
-    const accountText=full+' '+(e.sourcePackage||'');
-    // Infer XP only from an XP bank notification or explicit XP name.
-    // Generic Wallet alerts need manual account selection to avoid misclassification.
-    const account=/caju/.test(accountText)?'caju'
-      :/c6/.test(accountText)?(/carbon|cart[aã]o|cr[eé]dito/.test(full)?'carbon':'c6')
-      :/(?:^|[^a-z])xp(?:[^a-z]|$)|br\.com\.xp\.|com\.xp\./.test(accountText)
-        ?(/infinite|infiniti|one|cr[eé]dito|cart[aã]o/.test(full)?'xpone':'xp')
-        :'';
+    const account=/caju/.test(full+' '+(e.sourcePackage||''))?'caju':/c6/.test(full+' '+(e.sourcePackage||''))?(/carbon|cart[aã]o|cr[eé]dito/.test(full)?'carbon':'c6'):'';
     const date=new Date(e.postedAt),day=Number.isFinite(date.getTime())?`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`:APP_TODAY;
     return {type:direction==='income'?'r':direction==='expense'?'d':'',amount:Number.isSafeInteger(amount)&&amount>0?amount:null,account,day,name:(text||e.title||'Gasto capturado').slice(0,250),category:'out',sub:''};
   }
