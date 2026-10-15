@@ -526,10 +526,30 @@ public final class MainActivity extends Activity {
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                if (!request.isForMainFrame()) return false;
                 Uri uri = request.getUrl();
+                String scheme = uri.getScheme() == null ? "" : uri.getScheme();
                 String host = uri.getHost() == null ? "" : uri.getHost();
-                if ("hfsplanejamentos-star.github.io".equalsIgnoreCase(host)) return false;
-                startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                String path = uri.getPath() == null ? "" : uri.getPath();
+                // The JavaScript-to-Android finance bridge is only intended for
+                // the original HTTPS project origin. Never navigate with it to
+                // other hosts, userinfo URLs, insecure origins, or other projects.
+                if ("https".equalsIgnoreCase(scheme)
+                        && "hfsplanejamentos-star.github.io".equalsIgnoreCase(host)
+                        && uri.getUserInfo() == null
+                        && path.startsWith("/Meu-Assessor-Financeiro-/")) return false;
+                if ("https".equalsIgnoreCase(scheme) || "http".equalsIgnoreCase(scheme)) {
+                    try {
+                        Intent external = new Intent(Intent.ACTION_VIEW, uri);
+                        external.addCategory(Intent.CATEGORY_BROWSABLE);
+                        startActivity(external);
+                    } catch (android.content.ActivityNotFoundException ignored) {
+                        android.widget.Toast.makeText(MainActivity.this,
+                                "Não foi possível abrir o link externo", android.widget.Toast.LENGTH_SHORT).show();
+                    }
+                }
+                // Block file:, javascript:, intent: and other external schemes
+                // inside the authenticated WebView.
                 return true;
             }
         });
