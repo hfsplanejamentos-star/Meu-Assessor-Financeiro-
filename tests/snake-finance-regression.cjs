@@ -261,3 +261,29 @@ console.log('PASS Snake Finance: recurring actualization, undo, persistence and 
  assert.match(html,/const carbon=tipo==='d'&&a==='carbon'/);
 }
 console.log('PASS Snake Finance: Carbon billing cycle, installments and cent rounding');
+
+
+/* Branding regression: official-looking institution assets stay embedded offline. */
+{
+ const pos=html.indexOf('const BANK_LOGOS=');
+ const limit=html.indexOf('const ICO=',pos);
+ assert.ok(pos>0&&limit>pos,'bank logo data must exist before icon definitions');
+ const snippet=html.slice(pos,limit);
+ const b={tile:()=>'',AC:{c6:['C6','#fff'],carbon:['Carbon','#fff'],caju:['Caju','#fff'],xpone:['XP','#fff']},$:(id)=>null};
+ vm.createContext(b);
+ vm.runInContext(snippet,b);
+ for(const k of ['c6','carbon','caju','xpone']){
+  const logo=b.BANK_LOGOS?.[k];
+  assert.ok(logo&&logo.startsWith('data:image/svg+xml,'),k+' must have offline SVG');
+  const svg=decodeURIComponent(logo.split(',').slice(1).join(','));
+  assert.match(svg,/<svg[\s>]/,'valid '+k+' svg root');
+  assert.match(svg,/<\/svg>/,'valid '+k+' closing tag');
+  assert.match(b.bankLogo(k),new RegExp('data-bank-logo="'+k+'"'),'bank mark rendered for '+k);
+ }
+ assert.match(html,/onclick="openAccount\('xpone'\)"[^>]*>\$\{bankLogo\('xpone'\)\}/,'XP debit card uses XP logo');
+ assert.match(html,/onclick="openAccount\('carbon'\)"[^>]*>\$\{bankLogo\('carbon'\)\}/,'Carbon uses distinct logo');
+ assert.match(html,/onchange="updateBankPicker\('aa'\)"/,'new transaction selector previews bank logo');
+ assert.match(html,/onchange="updateBankPicker\('lx_a'\)"/,'edit transaction selector previews bank logo');
+ assert.match(html,/\$\{bankLogo\(a,'tiny'\)\}\$\{AC\[a\]\[0\]\}/,'expense chips use exact bank mark');
+}
+console.log('PASS Snake Finance: all four original account logos embedded offline, cards and account selectors wired');
