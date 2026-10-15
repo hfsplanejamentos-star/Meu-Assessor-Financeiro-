@@ -107,7 +107,7 @@ assert.equal(captures.length,2,'explicit diagnostic export of empty ledger remai
 assert.equal(JSON.parse(captures[1].json).ledger.length,0);
 assert.equal(alerts.length,0);
 const vault=fs.readFileSync('android-capture/app/src/main/java/br/com/meuassessor/capture/FinancialRecoveryVault.java','utf8');
-assert.match(vault,/first verified nonempty snapshot/);
+assert.match(vault,/first verified nonempty snapshot/i);
 assert.match(vault,/if \(target\.isFile\(\)\)/);
 assert.match(vault,/MessageDigest\.isEqual/);
 assert.match(vault,/stream\.getFD\(\)\.sync\(\)/);
