@@ -1619,7 +1619,7 @@ function vGeral(){
   <div class="c v28Account cardEdit" onclick="openAccount('c6')">${tile('card',AC.c6[1])}<div><span class="m">C6 Débito</span><b>${brs(d.c6)}</b></div></div><div class="c v28Account cardEdit" onclick="openAccount('xp')">${tile('card',AC.xp[1])}<div><span class="m">XP Infinite One Débito</span><b>${brs(d.xp)}</b></div></div>
   <div class="c v28Account cardEdit" onclick="openAccount('carbon')">${tile('card',AC.carbon[1])}<div><span class="m">C6 Carbon · disponível</span><b>${brs(Math.max(0,ALERT_CFG.carbon.limit*100-creditUsed(alertRef(YM),ALERT_CFG.carbon)))}</b><small class="m">Em uso ${brs(creditUsed(alertRef(YM),ALERT_CFG.carbon))} · Limite ${brs(ALERT_CFG.carbon.limit*100)}</small></div></div>
   <div class="c v28Account cardEdit" onclick="openAccount('caju')">${tile('card',AC.caju[1])}<div><span class="m">Caju</span><b>${brs(d.cj)}</b></div></div>
-  <div class="c v28Account cardEdit" onclick="openAccount('xp')"><div class="tl" style="background:#F2B705;color:#111;font-weight:800">XP</div><div><span class="m">XP Infinite One · Débito</span><b>Metas</b></div></div>
+  <div class="c v28Account cardEdit" onclick="openAccount('xp')"><div class="tl" style="background:#F2B705;color:#111;font-weight:800">XP</div><div><span class="m">XP Infinite One Débito</span><b>${brs(d.xp)}</b></div></div>
  </div></div>
  <div class="v30DailyShell">${graf7()}</div>
  ${v28CatDonut()}
