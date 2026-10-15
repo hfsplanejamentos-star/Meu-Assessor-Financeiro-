@@ -316,7 +316,8 @@ public final class MainActivity extends Activity {
         // bundled with their own APK. Never allow an older Pages build or stale
         // cache to replace this version and disguise a failed data migration.
         // This preserves the same WebView base origin and financial localStorage.
-        if (true) {
+        if (getPackageName().equals("br.com.snakefinance.app")
+                || getPackageName().equals("br.com.snakefinance.app.qa")) {
             try (InputStream bundledInput = getAssets().open("snake-finance-mobile.html")) {
                 java.io.ByteArrayOutputStream bundledBytes = new java.io.ByteArrayOutputStream();
                 byte[] data = new byte[8192];
