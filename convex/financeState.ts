@@ -30,7 +30,9 @@ export const save = internalMutation({
   ),
   handler: async (ctx, args) => {
     const current = await ctx.db.query("financeState").withIndex("by_owner", q => q.eq("ownerKey", args.ownerKey)).unique();
-    if (current && args.baseVersion !== undefined && current.version !== args.baseVersion) {
+    // A previously synchronized finance state must never be overwritten blindly.
+    // Every writer (Desktop/Mobile) must include the last server version it observed.
+    if (current && (args.baseVersion === undefined || current.version !== args.baseVersion)) {
       return { ok: false as const, conflict: true as const, version: current.version, updatedAt: current.updatedAt };
     }
     const version = (current?.version ?? 0) + 1;
