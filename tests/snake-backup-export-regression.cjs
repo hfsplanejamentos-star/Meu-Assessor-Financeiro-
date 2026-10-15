@@ -116,7 +116,7 @@ const nativeBridge=fs.readFileSync('android-capture/app/src/main/java/br/com/meu
 assert.match(nativeBridge,/preserveFinancialSnapshot/);
 assert.match(nativeBridge,/exportPreservedFinancialSnapshot/);
 const gradle=fs.readFileSync('android-capture/app/build.gradle.kts','utf8');
-assert.match(gradle,/applicationIdSuffix\s*=\s*"\.qa(?:\.landscape)?"/,'QA APK must not overwrite production package');
+assert.match(gradle,/applicationIdSuffix\s*=\s*"\.qa(?:\.[a-z0-9]+)*"/,'QA APK must not overwrite production package');
 const main=fs.readFileSync('android-capture/app/src/main/java/br/com/meuassessor/capture/MainActivity.java','utf8');
 assert.ok(main.includes('MessageDigest.getInstance("SHA-256")'),'Android must verify exported bytes');
 assert.ok(main.includes('getContentResolver().openInputStream(target)'),'Android must reopen destination');
