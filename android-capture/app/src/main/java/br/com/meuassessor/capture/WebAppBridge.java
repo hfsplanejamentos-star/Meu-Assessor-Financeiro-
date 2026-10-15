@@ -158,6 +158,26 @@ final class WebAppBridge {
     }
 
     @JavascriptInterface
+    public String getIntegrationConfig() {
+        return SecureIntegration.config(activity);
+    }
+
+    @JavascriptInterface
+    public boolean saveIntegrationConfig(String serviceUrl, String accessKey) {
+        return SecureIntegration.save(activity, serviceUrl, accessKey);
+    }
+
+    @JavascriptInterface
+    public boolean clearIntegrationConfig() {
+        return SecureIntegration.clear(activity);
+    }
+
+    @JavascriptInterface
+    public void integrationRequest(String requestId, String path, String method, String payload) {
+        SecureIntegration.request(activity, requestId, path, method, payload);
+    }
+
+    @JavascriptInterface
     public void startVoiceInput() {
         activity.runOnUiThread(() -> {
             Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
