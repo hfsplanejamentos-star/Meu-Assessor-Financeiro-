@@ -246,6 +246,17 @@ public final class MainActivity extends Activity {
         UpdateChecker.check(this);
     }
 
+    /** Deliver HTTPS responses to the already-authenticated WebView without exposing the access key. */
+    void dispatchIntegrationResult(String resultJson) {
+        runOnUiThread(() -> {
+            if (isFinishing() || webView == null || !authenticatedForDisplay) return;
+            String safeJson = org.json.JSONObject.quote(resultJson);
+            webView.evaluateJavascript(
+                "window.dispatchEvent(new CustomEvent('snake-integration-result',{detail:JSON.parse("
+                    + safeJson + ")}))", null);
+        });
+    }
+
     private static final String CACHE_FILE = "snake_finance_dashboard_1_5_1.html";
     private static final String CACHE_BACKUP_FILE = "snake_finance_dashboard_1_5_1.backup.html";
 
