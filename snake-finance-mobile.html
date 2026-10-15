@@ -1557,7 +1557,7 @@ function vIni(dia=1){
  const prs=pend.map(x=>{const c=x.c&&CAT[x.c]?CAT[x.c]:CAT.out,cc=V35_COLORS[x.c]||c[2];return `<div class="v39row" onclick="openLanc(${x.id})">${tile(c[1],cc)}<div class="v39grow"><b>${escapeHTML(x.n||c[0])}</b><span>Vence ${x.d?dd(x.d):''}</span></div><strong class="warn">${brl(x.v)}</strong></div>`}).join('');
  const alerts=financialAlerts(YM);
  return mesNav()+`<div class="v39inicio">
- <div class="v39hero"><div><span class="m">Disponível agora</span><div class="v39saldo">${brl(d.c6)}</div><span class="m">Visão operacional do mês</span></div><div class="v39today"><span>Dia selecionado</span><b>${brl(hoje)}</b><small>${dd(ref)}</small></div></div>
+ <div class="v39hero"><div><span class="m">C6 Débito · disponível</span><div class="v39saldo">${brl(d.c6)}</div><span class="m">Visão operacional do mês</span></div><div class="v39today"><span>Dia selecionado</span><b>${brl(hoje)}</b><small>${dd(ref)}</small></div></div>
  <div class="v39quick"><button onclick="openAdd&&openAdd('d')">＋<span>Despesa</span></button><button onclick="openAdd&&openAdd('r')">＋<span>Previsto</span></button><button onclick="goTab('inv')">＋<span>Meta</span></button></div>
  <div class="c v39card"><div class="sp"><div><p class="h">Próximos compromissos</p><p class="m">O que precisa da sua atenção</p></div><span class="m" style="color:var(--a)" onclick="TAB='rec';draw()">Ver todos ›</span></div>${prs||'<p class="m" style="padding-top:10px">Nenhuma despesa pendente.</p>'}</div>
  <div class="c v39card"><div class="sp"><div><p class="h">Últimas transações</p><p class="m">C6 + Caju + C6 Carbon + XP Débito + XP Infinite One</p></div><span class="m" style="color:var(--a)" onclick="TAB='des';draw()">Ver todas ›</span></div>${rows||'<p class="m" style="padding-top:10px">Nenhuma transação.</p>'}</div>
@@ -1661,7 +1661,7 @@ function v28Agenda(){
 function vGeral(){
  const d=D();
  return mesNav()+`
- <div class="c v28Hero cardEdit" onclick="openAccount('c6')"><div class="sp"><div><p class="m">Saldo disponível</p><p class="big">${brl(d.c6)}</p></div><span class="ch">Visão consolidada</span></div>
+ <div class="c v28Hero cardEdit" onclick="openAccount('c6')"><div class="sp"><div><p class="m">Saldo C6 disponível</p><p class="big">${brl(d.c6)}</p></div><span class="ch">Contas separadas</span></div>
  <div class="v28Metrics"><div onclick="event.stopPropagation();openProjectionDetail()"><span class="m">Previsto</span><b style="color:var(--pos)">${brs(projectedC6(YM))}</b></div><div onclick="event.stopPropagation();detailModal('Despesas realizadas',expenseBase('r'))"><span class="m">Despesas do mês</span><b style="color:var(--neg)">${brs(d.des)}</b></div><div onclick="event.stopPropagation();openPending()"><span class="m">A pagar</span><b style="color:var(--warn)">${brs(d.pd+d.pt+carbonInvoiceGross(YM))}</b></div></div></div>
  <div class="c"><div class="v28Title"><p class="h">Minhas contas</p><span class="m">Toque para detalhes</span></div><div class="v28Accounts">
   <div class="c v28Account cardEdit" onclick="openAccount('c6')">${tile('card',AC.c6[1])}<div><span class="m">C6 Débito</span><b>${brs(d.c6)}</b></div></div>
@@ -2609,7 +2609,14 @@ html[data-tema] #app{padding-bottom:120px!important}
     const text=String(e.text||''),full=(e.title+' '+text).toLowerCase();let amount=e.amountCents;
     if(!Number.isSafeInteger(amount)){const match=[...text.matchAll(/(?:R\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2}|\d+,\d{2})(?!\d)/g)];if(match.length===1)amount=Math.round(Number(match[0][1].replace(/\./g,'').replace(',','.'))*100);}
     const direction=['expense','income'].includes(e.direction)?e.direction:/\b(recebi|recebido|salário|salario|entrada)\b/.test(full)?'income':/\b(gastei|paguei|compra|comprou|pagamento|despesa|débito|debito)\b/.test(full)?'expense':'unknown';
-    const account=/caju/.test(full+' '+(e.sourcePackage||''))?'caju':/c6/.test(full+' '+(e.sourcePackage||''))?(/carbon|cart[aã]o|cr[eé]dito/.test(full)?'carbon':'c6'):'';
+    const accountText=full+' '+(e.sourcePackage||'');
+    // Infer XP only from an XP bank notification or explicit XP name.
+    // Generic Wallet alerts need manual account selection to avoid misclassification.
+    const account=/caju/.test(accountText)?'caju'
+      :/c6/.test(accountText)?(/carbon|cart[aã]o|cr[eé]dito/.test(full)?'carbon':'c6')
+      :/(?:^|[^a-z])xp(?:[^a-z]|$)|br\.com\.xp\.|com\.xp\./.test(accountText)
+        ?(/infinite|infiniti|one|cr[eé]dito|cart[aã]o/.test(full)?'xpone':'xp')
+        :'';
     const date=new Date(e.postedAt),day=Number.isFinite(date.getTime())?`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`:APP_TODAY;
     return {type:direction==='income'?'r':direction==='expense'?'d':'',amount:Number.isSafeInteger(amount)&&amount>0?amount:null,account,day,name:(text||e.title||'Gasto capturado').slice(0,250),category:'out',sub:''};
   }
