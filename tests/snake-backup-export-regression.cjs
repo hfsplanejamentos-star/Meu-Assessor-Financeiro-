@@ -17,7 +17,7 @@ const alerts=[];
 const confirmations=[];
 let acceptEmpty=false;
 const entries={
- assessor_opening_v82:JSON.stringify({c6:39870,caju:123578,cajuFunds:123578}),
+ assessor_openings_v83:JSON.stringify({c6:39870,caju:123578,cajuFunds:123578}),
  assessor_ledger_v82:'[{"id":11}]',
  assessor_tema_v82:'ouro',
  assessor_pre_import_v82:'DO_NOT_EXPORT',
@@ -45,7 +45,7 @@ const app={
  alert(msg){alerts.push(msg);},
  localToday:()=> '2026-10-14',
  completeBackupCategories:(cats)=>({categories:cats}),
- OPENING_KEY:'assessor_opening_v82',
+ OPENING_KEY:'assessor_openings_v83',
  OPENING_CFG:{c6:39870,caju:123578,cajuFunds:123578},
  OPENING_INVALID:false,
  validateLedger:(rows)=>rows,
@@ -75,7 +75,7 @@ vm.runInContext(source,app,{filename:'snake-finance-backup.js'});
 assert.equal(app.preserveOriginalFullSnapshot(original),true,'nonempty verified original must be staged');
 assert.equal(preservedFull.length,1);
 assert.equal(preservedFull[0].ledger.length,2);
-assert.equal(preservedFull[0].storage.assessor_opening_v82,entries.assessor_opening_v82);
+assert.equal(preservedFull[0].storage.assessor_openings_v83,entries.assessor_openings_v83);
 assert.equal(JSON.stringify(app.L),original,'staging must never rewrite source ledger');
 app.exportBackup();
 assert.equal(captures.length,1,'nonempty ledger must export directly to Android bridge');
@@ -89,7 +89,7 @@ assert.equal(payload.ledger[1].id,12);
 assert.ok(Buffer.byteLength(captures[0].json,'utf8')>20,'JSON must not be 0 KB');
 assert.equal(payload.storage.assessor_pre_import_v82,undefined,'temporary backups must not be recursively exported');
 assert.equal(payload.storage.tema,'gold');
-assert.ok(payload.storage.assessor_opening_v82,'opening balances must be included');
+assert.ok(payload.storage.assessor_openings_v83,'opening balances must be included');
 assert.equal(JSON.stringify(app.L),original,'export must never mutate ledger');
 assert.equal(confirmations.length,0,'valid ledger must not trigger empty warning');
 assert.equal(alerts.length,0,'valid export should not report an error');
@@ -112,6 +112,15 @@ assert.match(vault,/if \(target\.isFile\(\)\)/);
 assert.match(vault,/MessageDigest\.isEqual/);
 assert.match(vault,/stream\.getFD\(\)\.sync\(\)/);
 assert.match(vault,/ledger\.length\(\) < 1/);
+const realOpeningKey=html.match(/const OPENING_KEY='([^']+)'/)?.[1];
+assert.equal(realOpeningKey,'assessor_openings_v83','backup fixture must match actual financial balance storage key');
+assert.equal(app.OPENING_KEY,realOpeningKey,'backup tests must exercise the production opening key');
+assert.ok(vault.includes('settings.has("assessor_openings_v83")'),
+  'native vault must prefer active account balances over a stale legacy copy');
+assert.ok(vault.includes('settings.optString("assessor_openings_v83", "")'),
+  'native vault must validate the same balance key exported by the UI');
+assert.ok(vault.includes('settings.optString("assessor_opening_v82", "")'),
+  'legacy v82 snapshots remain recoverable when current key is absent');
 const nativeBridge=fs.readFileSync('android-capture/app/src/main/java/br/com/meuassessor/capture/WebAppBridge.java','utf8');
 assert.match(nativeBridge,/preserveFinancialSnapshot/);
 assert.match(nativeBridge,/exportPreservedFinancialSnapshot/);
