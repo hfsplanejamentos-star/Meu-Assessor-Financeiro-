@@ -57,8 +57,8 @@ assert.match(html,/function cajuBalance\(/,'Caju balance');
 assert.match(html,/function creditUsed\(/,'Carbon balance');
 assert.match(html,/function localFinancialAnswer\(/,'local financial query');
 const gradle=fs.readFileSync('android-capture/app/build.gradle.kts','utf8');
-assert.match(gradle,/versionCode = 31/);
-assert.match(gradle,/versionName = "1\.5\.7"/);
+assert.match(gradle,/versionCode = 32/);
+assert.match(gradle,/versionName = "1\.5\.8"/);
 console.log('PASS Snake Finance: web/Android parity, dates, 7-day window, links, finance entry points and build version');
 
 
