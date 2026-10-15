@@ -106,6 +106,10 @@ assert.ok(html.includes('<option value="xpone">XP Infinite One Débito</option>'
 assert.ok(html.includes("<option value=\"xpone\" \${x.a=='xpone'?'selected':''}>"),'XP One in recurrence confirmation');
 assert.ok(html.includes("['c6','caju','carbon','xpone']"),'XP One in expense reports and filters');
 assert.ok(html.includes("const source=String(e.sourcePackage||'').toLowerCase()"),'XP notification review/source routing');
+assert.match(html,/function monthExpensesC6\(ym\)[\s\S]*?x\.a!=='xpone'/,
+ 'C6-only expense totals must not charge XP transactions');
+assert.match(html,/function monthInvestmentsC6\(ym\)[\s\S]*?x\.a!=='xpone'/,
+ 'C6-only investment reports must not reattribute XP transactions');
 context.XP_DEBIT={opening:null};context.L=originalLedger;
 assert.equal(context.cajuBalance('2026-10'),159250,'Caju October: opening + reload - actual only');
 assert.equal(context.cajuBalance('2026-11'),308250,'Caju November: previous closing + new reload - actual');
