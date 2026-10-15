@@ -21,65 +21,37 @@ final class BankAllowlist {
      * sem armazenar o conteúdo de notificações de apps não autorizados.
      */
     private static final Set<String> DEFAULTS = new HashSet<>(Arrays.asList(
-            // C6
+            // Instituições expressamente autorizadas para uso padrão.
             "com.c6bank.app",
-
-            // XP
             "br.com.xp.carteira",
-
-            // Caju
             "com.caju.employee",
-
-            // Itaú
             "br.com.itau",
-
-            // Nubank
-            "com.nu.production",
-
-            // Banco Inter
-            "br.com.intermedium",
-
-            // Santander
-            "com.santander.app",
-
-            // Bradesco
-            "com.bradesco",
-
-            // Banco do Brasil
-            "br.com.bb.android",
-
-            // Caixa
-            "br.com.gabba.Caixa",
-
-            // Mercado Pago
-            "com.mercadopago.wallet",
-
-            // PicPay
-            "com.picpay",
-
-            // PagBank / PagSeguro
-            "br.com.uol.ps.myaccount",
-
-            // Neon
-            "br.com.neon",
-
-            // Google Wallet/Pay é intencionalmente excluído: capturamos apenas
-            // a notificação da instituição financeira autorizada.
-            "com.android.vending"
+            // Google Wallet/Pay: fonte auxiliar; sempre revisar antes de registrar.
+            "com.google.android.apps.walletnfcrel"
     ));
 
     static boolean contains(Context context, String packageName) {
         if (packageName == null) return false;
+        // Google Play Store não é carteira de pagamentos: nunca capturar.
+        // Também impede que uma instalação antiga a mantenha nos pacotes salvos.
+        if ("com.android.vending".equals(packageName)) return false;
         SharedPreferences preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         if (preferences.getStringSet(KEY_DISABLED, new HashSet<>()).contains(packageName)) return false;
-        if (packages(context).contains(packageName)) return true;
-        String value = packageName.toLowerCase(java.util.Locale.ROOT);
-        // Bancos alteram packageName entre versões, marcas e módulos de Pix.
-        // A leitura ainda só é persistida quando o parser confirma valor + ação financeira.
-        return value.contains("c6bank") || value.contains("c6.bank")
-                || value.contains("xpinc") || value.contains("xp.invest")
-                || value.startsWith("br.com.xp") || value.startsWith("com.xp")
-                || value.contains("caju") || value.contains("itau");
+        if (DEFAULTS.contains(packageName)) return true;
+        // Apenas namespaces de provedores autorizados. Substrings soltas como
+        // "com.exemplo.falsoitau" não são suficientes para ler uma notificação.
+        return isRecognizedBankNamespace(packageName);
+    }
+
+    static boolean isRecognizedBankNamespace(String packageName) {
+        if (packageName == null) return false;
+        String name = packageName.toLowerCase(java.util.Locale.ROOT);
+        return name.startsWith("com.c6bank.")
+                || name.startsWith("br.com.xp.")
+                || name.startsWith("com.xp.")
+                || name.startsWith("com.caju.")
+                || name.startsWith("br.com.itau.")
+                || name.startsWith("com.itau.");
     }
 
     static boolean isEnabled(Context context, String packageName) {
@@ -110,7 +82,9 @@ final class BankAllowlist {
 
         // Migração: mantém escolhas existentes e incorpora os novos padrões.
         Set<String> merged = new HashSet<>(DEFAULTS);
-        merged.addAll(saved);
+        for (String candidate : saved) {
+            if (DEFAULTS.contains(candidate)) merged.add(candidate);
+        }
         Set<String> disabled = preferences.getStringSet(KEY_DISABLED, new HashSet<>());
         merged.removeAll(disabled);
         return merged;

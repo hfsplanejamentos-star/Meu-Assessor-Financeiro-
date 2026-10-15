@@ -38,9 +38,29 @@ final class NotificationParser {
         } else {
             direction = "unknown";
         }
-        long bucket = postedAt / 60_000L;
-        String id = sha256(sourcePackage + "|" + normalize(combined) + "|" + amount + "|" + bucket);
+        String id = sha256(sourcePackage + "|" + normalize(combined) + "|" + amount + "|" + postedAt);
         return new CapturedNotification(id, sourcePackage, safeTitle, safeText, amount, reportedBalance, direction, postedAt, System.currentTimeMillis());
+    }
+
+    /**
+     * Conservative store/payee key for notifying reviewers about mirrored bank/Wallet events.
+     * Do not derive a merchant from "no valor" or generic card text.
+     */
+    static String merchantKey(String title, String text) {
+        String raw = normalize(clean(title) + " " + clean(text));
+        Matcher matcher = Pattern.compile(
+                "(?iu)\\b(?:em|no|na|at)\\s+([\\p{L}\\p{N}][\\p{L}\\p{N} .&'-]{2,65})").matcher(raw);
+        while (matcher.find()) {
+            String candidate = matcher.group(1)
+                    .replaceFirst("(?iu)\\s+(?:com|via|cartao|final|terminado|saldo|as)\\b.*$", "")
+                    .replaceFirst("[.,].*$", "")
+                    .replaceAll("\\s+", " ").trim();
+            if (candidate.length() >= 4 && !candidate.matches(
+                    "(?iu)(?:valor|valor de|cartao|credito|debito|saldo|conta|app|google wallet)(?:\\s.*)?")) {
+                return candidate;
+            }
+        }
+        return "";
     }
 
     static boolean looksFinancial(String title, String text) {
