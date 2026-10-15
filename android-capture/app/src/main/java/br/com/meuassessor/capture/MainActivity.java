@@ -239,11 +239,13 @@ public final class MainActivity extends Activity {
                 != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 703);
         }
-        DailyFinanceReminder.schedule(this);
+        // Landscape QA coexists with production: never schedule duplicate bank
+        // briefings or claim an official update while testing the screen.
+        if (!BuildConfig.DEBUG) DailyFinanceReminder.schedule(this);
         requestNativePermissions();
         if(!queueReceiverRegistered){android.content.IntentFilter queueFilter=new android.content.IntentFilter("br.com.meuassessor.capture.QUEUE_CHANGED");
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.TIRAMISU) registerReceiver(queueReceiver,queueFilter,RECEIVER_NOT_EXPORTED); else registerReceiver(queueReceiver,queueFilter);queueReceiverRegistered=true;}
-        UpdateChecker.check(this);
+        if (!BuildConfig.DEBUG) UpdateChecker.check(this);
     }
 
     /** Deliver HTTPS responses to the already-authenticated WebView without exposing the access key. */
@@ -316,8 +318,7 @@ public final class MainActivity extends Activity {
         // bundled with their own APK. Never allow an older Pages build or stale
         // cache to replace this version and disguise a failed data migration.
         // This preserves the same WebView base origin and financial localStorage.
-        if (getPackageName().equals("br.com.snakefinance.app")
-                || getPackageName().equals("br.com.snakefinance.app.qa")) {
+        if (BuildConfig.DEBUG || getPackageName().equals("br.com.snakefinance.app")) {
             try (InputStream bundledInput = getAssets().open("snake-finance-mobile.html")) {
                 java.io.ByteArrayOutputStream bundledBytes = new java.io.ByteArrayOutputStream();
                 byte[] data = new byte[8192];
@@ -330,7 +331,20 @@ public final class MainActivity extends Activity {
                     return;
                 }
             } catch (Exception ignored) {
-                // Standard offline/remote fallback below if bundled content is unavailable.
+                // Do not silently substitute a remote production page in QA.
+            }
+            if (BuildConfig.DEBUG) {
+                // QA failure is explicit and never loads an older remote dashboard
+                // that could impersonate a working financial migration.
+                webView.loadDataWithBaseURL(APP_BASE_URL,
+                        "<!DOCTYPE html><html lang=\"pt-BR\"><meta charset=\"utf-8\">"
+                        + "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
+                        + "<body style=\"font:16px sans-serif;background:#060b19;color:#f1d188;padding:24px\">"
+                        + "<h2>Snake Finance (Teste)</h2>"
+                        + "<p>Não foi possível carregar o painel embarcado deste APK.</p>"
+                        + "<p>O aplicativo oficial permanece separado e não foi alterado.</p></body></html>",
+                        "text/html", "UTF-8", null);
+                return;
             }
         }
         String local = readCachedDashboard();
