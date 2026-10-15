@@ -13,6 +13,8 @@ export default defineSchema({
     ownerHash: v.string(),
     eventId: v.string(),
     fingerprint: v.string(),
+    // Similar payment is surfaced for confirmation; not deleted automatically.
+    possibleDuplicateOf: v.optional(v.string()),
     deviceId: v.string(),
     sourcePackage: v.string(),
     title: v.string(),
