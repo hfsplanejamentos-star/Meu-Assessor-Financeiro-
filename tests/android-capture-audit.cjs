@@ -43,7 +43,7 @@ assert.match(bridge,/integrationRequest/);
 assert.match(main,/path\.startsWith\("\/Meu-Assessor-Financeiro-\/"\)/);
 assert.match(main,/new Intent\(Intent\.ACTION_VIEW, uri\)/);
 assert.match(main,/bundledDashboard\.contains\("v85-landscape-responsive"\)/);
-assert.match(gradle,/applicationIdSuffix = "\.qa"/);
+assert.match(gradle,/applicationIdSuffix = "\.qa(?:\.landscape)?"/);
 assert.match(gradle,/applicationId = "br\.com\.snakefinance\.app"/);
 
 console.log('PASS Android: bank allowlist, privacy, exact event identity, secure integration, app origin and QA isolation');
