@@ -46,6 +46,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix = ".validation"
+            versionNameSuffix = "-xp-validation"
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
