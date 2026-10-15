@@ -270,7 +270,8 @@ public final class MainActivity extends Activity {
 
     private void showDashboard(String html) {
         if (!validDashboard(html)) {
-            webView.loadUrl(APP_URL);
+            // Validation package must never silently open the production dashboard.
+            android.widget.Toast.makeText(this, "Painel de validação inválido. Dados preservados.", android.widget.Toast.LENGTH_LONG).show();
             return;
         }
         webView.loadDataWithBaseURL(APP_BASE_URL, html, "text/html", "UTF-8", APP_URL);
