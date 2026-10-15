@@ -1401,10 +1401,11 @@ function openLanc(id){
   <div class="editrow"><button class="bt" type="button" onclick="newCategory()">+ Categoria</button><button class="bt" type="button" onclick="renameCategory()">Editar categoria</button></div>
   <label>Subcategoria<select id="lx_sub">${subOptions(x.c,x.sub||'')}</select></label>
   <div class="editrow"><button class="bt" type="button" onclick="newSubcategory()">+ Subcategoria</button><button class="bt" type="button" onclick="renameSubcategory()">Editar subcategoria</button></div>
-  <label>Conta/cartão<select id="lx_a">${accs}</select></label>
+  <label>Conta/cartão<select id="lx_a" onchange="updateBankPicker('lx_a')">${accs}</select><span class="snakeAccountPicker" id="lx_aLogo"></span></label>
   <label>Status<select id="lx_s"><option value="r" ${x.s=='r'?'selected':''}>Realizado</option><option value="p" ${x.s=='p'?'selected':''}>A efetivar</option></select></label>
   <button class="bt p" onclick="saveLanc(${id})">Salvar alterações</button>
  </div></div>`;
+ updateBankPicker('lx_a');
 }function saveLanc(id){
  const x=L.find(y=>y.id==id);if(!x)return;
  const raw=$('lx_v').value.trim().replace(/\./g,'').replace(',','.');
@@ -1532,7 +1533,7 @@ function openPending(){
  if(header)header.after(section);else modal.prepend(section);
 }
 
-function openEfet(id){const x=L.find(y=>y.id==id);MD='efet';$('md').style.display='flex';$('md').innerHTML=`<div class="mc"><div class="sp"><div><p class="h" style="font-size:1.2em">Efetivar recorrência</p><p class="m">${escapeHTML(x.n)}</p></div><button class="bt" onclick="closeDay()">Fechar</button></div><div class="fm"><label>Valor pago (R$)<input id="ev" inputmode="decimal" value="${(x.v/100).toFixed(2).replace('.',',')}"></label><label>Data de pagamento<input id="ed" type="number" min="1" max="31" value="${HJ}"></label><label>Conta / cartão<select id="ea"><option value="c6" ${x.a=='c6'?'selected':''}>C6</option><option value="caju" ${x.a=='caju'?'selected':''}>Caju</option><option value="carbon" ${x.a=='carbon'?'selected':''}>C6 Carbon</option><option value="xpone" ${x.a=='xpone'?'selected':''}>XP Infinite One Débito</option></select></label><button class="bt p" onclick="confirmEfet(${id})">Confirmar efetivação</button></div></div>`;}
+function openEfet(id){const x=L.find(y=>y.id==id);MD='efet';$('md').style.display='flex';$('md').innerHTML=`<div class="mc"><div class="sp"><div><p class="h" style="font-size:1.2em">Efetivar recorrência</p><p class="m">${escapeHTML(x.n)}</p></div><button class="bt" onclick="closeDay()">Fechar</button></div><div class="fm"><label>Valor pago (R$)<input id="ev" inputmode="decimal" value="${(x.v/100).toFixed(2).replace('.',',')}"></label><label>Data de pagamento<input id="ed" type="number" min="1" max="31" value="${HJ}"></label><label>Conta / cartão<select id="ea" onchange="updateBankPicker('ea')"><option value="c6" ${x.a=='c6'?'selected':''}>C6</option><option value="caju" ${x.a=='caju'?'selected':''}>Caju</option><option value="carbon" ${x.a=='carbon'?'selected':''}>C6 Carbon</option><option value="xpone" ${x.a=='xpone'?'selected':''}>XP Infinite One Débito</option></select><span class="snakeAccountPicker" id="eaLogo"></span></label><button class="bt p" onclick="confirmEfet(${id})">Confirmar efetivação</button></div></div>`;}
 
 function toggleFab(){const e=$('fabMenu');if(e)e.classList.toggle('on');}
 
@@ -1864,11 +1865,12 @@ function openAdd(tipo){
  <label>Descrição<input id="an" placeholder="${desp?'Ex.: Combustível':'Ex.: Salário'}"></label>
  <label>Valor (R$)<input id="av" inputmode="decimal" placeholder="0,00"></label>
  <label>Data<input id="ad" type="date" value="${YM}-${String(YM==='2026-10'?HJ:1).padStart(2,'0')}"></label>
- <label>Conta<select id="aa">${desp?'<option value="c6">C6 Débito</option><option value="caju">Caju</option><option value="carbon">C6 Carbon</option><option value="xpone">XP Infinite One Débito</option>':'<option value="c6">C6 Débito</option><option value="caju">Caju</option><option value="xpone">XP Infinite One Débito</option>'}</select></label>
+ <label>Conta<select id="aa" onchange="updateBankPicker('aa')">${desp?'<option value="c6">C6 Débito</option><option value="caju">Caju</option><option value="carbon">C6 Carbon</option><option value="xpone">XP Infinite One Débito</option>':'<option value="c6">C6 Débito</option><option value="caju">Caju</option><option value="xpone">XP Infinite One Débito</option>'}</select><span class="snakeAccountPicker" id="aaLogo"></span></label>
  ${desp?`<label>Categoria<select id="ac" onchange="if($('asub'))$('asub').innerHTML=subOptions(this.value)">${cats}</select></label><label>Subcategoria<select id="asub">${subOptions(Object.keys(CAT)[0])}</select></label>`:''}
  ${desp?'<div id="carbonParcelBox" style="display:none"><label>Quantidade de parcelas<input id="carbonInstallments" type="number" min="1" max="120" step="1" value="1"></label><p class="m">C6 Carbon: fechamento dia 5 · vencimento dia 7. O valor informado é o total da compra; as parcelas aparecem nos meses das respectivas faturas.</p></div>':''}
  <label>Status<select id="as2"><option value="r">Realizado</option><option value="p">Previsto</option></select></label>
  <button class="bt p" onclick="saveAdd('${tipo}')">Salvar ${desp?'despesa':'receita'}</button></div></div>`;
+ updateBankPicker('aa');
  if(desp){const account=$('aa'),box=$('carbonParcelBox');const toggle=()=>{box.style.display=account.value==='carbon'?'block':'none'};account.addEventListener('change',toggle);toggle();}
 }
 function carbonInvoiceMonth(date){const ym=date.slice(0,7),day=Number(date.slice(8,10));const [year,month]=ym.split('-').map(Number);const offset=day>=5?1:0;const dt=new Date(Date.UTC(year,month-1+offset,1));return dt.toISOString().slice(0,7);}
