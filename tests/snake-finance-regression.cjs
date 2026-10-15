@@ -68,7 +68,8 @@ vm.runInContext(extract('function cajuCompetence(','function openCajuSettings(')
 vm.runInContext(extract('function accountDelta(','function setInvParam('),context);
 vm.runInContext(extract('function creditUsed(','function financialAlerts('),context);
 vm.runInContext(extract('function validateLedger(','function completeBackupCategories('),context);
-vm.runInContext("var L=[];var ACC={c6:10000,caju:0,carbon:0,xp:0};var CAJU_CFG={'2026-10':{opening:10000,reload:150000},'2026-11':{reload:150000}};var ORIGINAL_FUNDS=0;var AC={c6:['C6'],caju:['Caju'],carbon:['Carbon'],xp:['XP']};",context);
+vm.runInContext("var L=[];var ACC={c6:10000,caju:0,carbon:0};var XP_CFG={debitOpening:0,creditLimit:null,creditOpening:0};var CAJU_CFG={'2026-10':{opening:10000,reload:150000},'2026-11':{reload:150000}};var ORIGINAL_FUNDS=0;var AC={c6:['C6'],caju:['Caju'],carbon:['Carbon'],xp:['XP Débito'],xpone:['XP Infinite One']};",context);
+vm.runInContext(extract('function xpOneOutstanding(','function openXPSettings('),context);
 const fixture=[
  {id:1,d:'2026-10-02',a:'c6',t:'r',s:'r',v:50000,n:'Salário'},
  {id:2,d:'2026-10-03',a:'c6',t:'d',s:'r',v:12000,n:'Mercado'},
@@ -84,6 +85,28 @@ context.L=fixture;
 assert.equal(context.accountBalance('c6','2026-10-10'),43000,'C6 real balance: opening + salary - expense - transfer');
 assert.equal(context.accountBalance('c6','2026-10-10',true),34000,'C6 projected includes pending');
 assert.equal(context.accountBalance('xp','2026-10-10'),5000,'XP transfer credited once');
+// XP debit, XP One credit and XP investment goals must remain separate ledgers.
+const xpRows=[
+ {id:21,d:'2026-10-08',a:'xp',t:'d',s:'r',v:700,n:'Compra via XP débito'},
+ {id:22,d:'2026-10-09',a:'xpone',t:'d',s:'r',v:3000,n:'Compra no XP One'},
+ {id:23,d:'2026-10-10',a:'xp',to:'xpone',t:'t',s:'r',v:1000,n:'Pagamento cartão XP One'}
+];
+const normalLedger=context.L;
+context.XP_CFG={debitOpening:15000,creditLimit:80000,creditOpening:2000};
+context.L=[...normalLedger,...xpRows];
+assert.equal(context.accountBalance('xp','2026-10-10'),18300,'XP current balance: opening + transfer - debit purchase - card payment');
+assert.equal(context.xpOneOutstanding('2026-10-10'),4000,'XP One usage: prior bill + purchase - card payment');
+assert.equal(context.accountBalance('c6','2026-10-10'),43000,'new XP accounts must never alter C6 current balance');
+assert.equal(context.validateLedger(xpRows).length,3,'new XP accounts are valid financial ledger entries');
+assert.ok(html.includes("XP_CONFIG_KEY='assessor_xp_accounts_v1'"),'XP account settings use separate backup-safe namespace');
+assert.ok(html.includes("XP Débito"),'XP debit account displayed');
+assert.ok(html.includes("XP Infinite One"),'XP One card displayed separately');
+assert.ok(html.includes("['bank_xp_one','XP Infinite One'"),'XP One card customizable in overview');
+assert.ok(html.includes("['bank_xp_debit','XP Débito'"),'XP debit card customizable in overview');
+assert.ok(html.includes("const key=['bank_c6','bank_carbon','bank_caju','bank_xp_debit','bank_xp_one','bank_xp'][i]"),'overview cards map to all six account cards');
+assert.ok(html.includes("key===XP_CONFIG_KEY"),'XP settings must be checked when restoring a backup');
+assert.ok(html.includes("const accountText=full+' '+(e.sourcePackage||'')"),'XP notifications distinguished from generic Google Wallet alerts');
+context.L=normalLedger;context.XP_CFG={debitOpening:0,creditLimit:null,creditOpening:0};
 assert.equal(context.cajuBalance('2026-10'),159250,'Caju October: opening + reload - actual only');
 assert.equal(context.cajuBalance('2026-11'),308250,'Caju November: previous closing + new reload - actual');
 assert.equal(context.creditUsed('2026-10-10',{opening:0}),8000,'Carbon charges less payments');
