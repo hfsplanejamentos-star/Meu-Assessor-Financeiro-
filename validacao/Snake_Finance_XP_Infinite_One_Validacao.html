@@ -1861,6 +1861,40 @@ function saveAdd(tipo){
 document.addEventListener('keydown',e=>{if(e.key=='Escape')closeDay();});
 function rst(){alert('Restaurar dados de exemplo está desativado para proteger seus lançamentos.');return;}
 function rstDisabledLegacy(){if(!confirm('Restaurar a base de exemplo substitui seus lançamentos. Exporte um backup primeiro. Continuar?'))return;saveSafetyBackup();PERSIST_BLOCKED=false;closeDay();L=JSON.parse(JSON.stringify(L0));persistLedger();YM='2026-10';SEL=APP_TODAY.startsWith(YM)?APP_TODAY:`${YM}-01`;OPEN=0;TOAST='';LAST=0;NID=nextId();migrateWorkCategory();CATDB=completeBackupCategories(CATDB,L).categories;wInit();cInit();draw();}
+
+function seedConfirmedSchedule(){
+ if(PERSIST_BLOCKED||!Array.isArray(L))return false;
+ const specs=[
+ ['Salário','r',1010450,1,'out','salario'],
+ ['Pensão','d',150000,5,'pen','pensao'],
+ ['Aluguel','d',125000,5,'mor','aluguel'],
+ ['Móveis','d',36800,5,'mov','moveis'],
+ ['C4 Cactus','d',100000,10,'tra','c4cactus'],
+ ['Plano TIM','d',7990,10,'con','tim'],
+ ['Conta de Luz','d',15000,10,'con','luz'],
+ ['Internet','d',8000,20,'con','internet']
+ ];
+ const norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+ const aliases={salario:['salario'],pensao:['pensao'],aluguel:['aluguel'],moveis:['moveis','emprestimo'],c4cactus:['c4cactus','prestacaodocarro'],tim:['planotim','tim'],luz:['contadeluz','luz','enel'],internet:['internet']};
+ const present=(ym,type,key,amount)=>L.some(x=>String(x.comp||x.d||'').startsWith(ym)&&x.a==='c6'&&x.t===type&&(aliases[key]||[key]).some(a=>norm(x.n).startsWith(a))&&(type==='d'||!norm(x.n).includes('13')));
+ const entries=[];
+ for(let ym='2026-11';ym<='2027-06';ym=addMonthsYM(ym,1)){
+   for(const [n,t,v,day,c,key] of specs){
+     if(key==='moveis'&&ym>'2027-05')continue;
+     if(present(ym,t,key,v))continue;
+     entries.push({d:ym+'-'+String(day).padStart(2,'0'),comp:ym+'-01',n,t,v,a:'c6',s:'p',c,rc:true,dv:day,series:'confirmed-'+key});
+   }
+ }
+ for(const [d,v,part] of [['2026-11-30',226667,1],['2026-12-20',157843,2]]){
+   const ym=d.slice(0,7);
+   if(L.some(x=>x.t==='r'&&x.a==='c6'&&String(x.comp||x.d||'').startsWith(ym)&&(/13[ºo°]?|decimo terceiro/i.test(x.n||'')||x.series==='confirmed-13-'+part)&&x.v===v))continue;
+   entries.push({d,comp:ym+'-01',n:'13º salário — '+part+'ª parcela',t:'r',v,a:'c6',s:'p',c:'out',rc:false,series:'confirmed-13-'+part});
+ }
+ if(!entries.length)return false;
+ const before=L.slice();let id=nextId();for(const x of entries)L.push({id:id++,...x});
+ if(!persistLedger()){L=before;return false;}NID=nextId();return true;
+}
+
 function boot(){
  try{
  const currentRaw=localStorage.getItem(LEDGER_KEY);
@@ -1879,7 +1913,7 @@ function boot(){
  catch(e){L=[];PERSIST_BLOCKED=true;setTimeout(()=>alert('Os dados salvos não puderam ser lidos. Nada foi sobrescrito. Exporte um backup em Configurações e importe uma cópia válida.'),20);}
  YM=APP_TODAY.slice(0,7);if(!L.some(x=>(x.comp||x.d||'').startsWith(YM)))YM='2026-10';
  SEL=APP_TODAY.startsWith(YM)?APP_TODAY:`${YM}-01`;try{migrateLegacyPayment();NID=nextId();migrateWorkCategory();
- CATDB=completeBackupCategories(CATDB,L).categories;wInit();cInit();draw();
+ CATDB=completeBackupCategories(CATDB,L).categories;seedConfirmedSchedule();wInit();cInit();draw();
 }catch(err){
  PERSIST_BLOCKED=true;
  console.error('Snake Finance: falha de montagem; nenhuma gravação financeira autorizada',err);
