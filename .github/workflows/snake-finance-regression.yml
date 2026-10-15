@@ -5,6 +5,9 @@ on:
     paths:
       - "tests/snake-finance-regression.cjs"
       - "tests/snake-backup-export-regression.cjs"
+      - "tests/android-capture-audit.cjs"
+      - "tests/notification-ingest-safety.cjs"
+      - "android-capture/app/src/main/java/**"
       - "convex/**"
       - "package.json"
       - "package-lock.json"
@@ -18,6 +21,9 @@ on:
     paths:
       - "tests/snake-finance-regression.cjs"
       - "tests/snake-backup-export-regression.cjs"
+      - "tests/android-capture-audit.cjs"
+      - "tests/notification-ingest-safety.cjs"
+      - "android-capture/app/src/main/java/**"
       - "convex/**"
       - "package.json"
       - "package-lock.json"
@@ -43,3 +49,5 @@ jobs:
         run: node tests/snake-finance-regression.cjs
       - name: Backup JSON and data isolation regression
         run: node tests/snake-backup-export-regression.cjs
+      - name: Android capture and integration security audit
+        run: node tests/android-capture-audit.cjs
