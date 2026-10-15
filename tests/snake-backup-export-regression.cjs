@@ -128,6 +128,28 @@ assert.throws(()=>importSandbox.previewBackup([]),/Backup sem lançamentos/,'emp
 assert.throws(()=>importSandbox.previewBackup({
   schema:'snake-finance-backup',version:2,ledger:[],storage:{assessor_openings_v83:entries.assessor_openings_v83}
 }),/Backup sem lançamentos/,'zero-entry full backup cannot replace saved data');
+// The original v1.5.7 app exports emergency recovery as raw localStorage,
+// not as a top-level ledger. A full, coherent raw file must be recoverable.
+const rawRecovery={
+ schema:'snake-finance-raw-recovery',version:1,
+ storage:{assessor_openings_v83:entries.assessor_openings_v83,
+  assessor_tx_v43:original,assessor_tx:original,tema:'ciano'}
+};
+const recovered=importSandbox.previewBackup(rawRecovery);
+assert.equal(recovered.ledger.length,2,'raw emergency backup must recover nonempty ledger');
+assert.equal(recovered.ledger[0].id,11);
+assert.equal(recovered.ledger[1].id,12);
+assert.equal(recovered.storage.assessor_openings_v83,entries.assessor_openings_v83);
+const inconsistent={...rawRecovery,
+ storage:{...rawRecovery.storage,assessor_tx:JSON.stringify([ledger[0]])}};
+assert.throws(()=>importSandbox.previewBackup(inconsistent),
+ /bases financeiras divergentes/,'conflicting raw ledger copies must not be silently merged');
+assert.throws(()=>importSandbox.previewBackup({
+ ...rawRecovery,storage:{assessor_tx_v43:original,assessor_tx:original}
+}),/sem saldos iniciais/,'raw imports without balances must fail closed');
+assert.throws(()=>importSandbox.previewBackup({
+ ...rawRecovery,storage:{assessor_tx_v43:'[]',assessor_tx:'[]',assessor_openings_v83:entries.assessor_openings_v83}
+}),/Resgate bruto sem lançamentos válidos/,'empty emergency backup must never restore');
 const applyStart=html.indexOf('function applyBackup(){');
 const applyEnd=html.indexOf('// Independent consistency checks',applyStart);
 assert.ok(applyStart>0&&applyEnd>applyStart,'import confirmation source must exist');
