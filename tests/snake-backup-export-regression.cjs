@@ -115,6 +115,12 @@ assert.match(vault,/ledger\.length\(\) < 1/);
 const realOpeningKey=html.match(/const OPENING_KEY='([^']+)'/)?.[1];
 assert.equal(realOpeningKey,'assessor_openings_v83','backup fixture must match actual financial balance storage key');
 assert.equal(app.OPENING_KEY,realOpeningKey,'backup tests must exercise the production opening key');
+assert.ok(html.includes('isNonemptyLedger(raw)&&(window.AndroidBridge||window.AndroidApp)&&!preserveOriginalFullSnapshot(raw)'),
+  'Android must block data writes when the original full snapshot cannot be verified');
+assert.ok(html.includes("if(!PERSIST_BLOCKED)migrateWorkCategory()"),
+  'boot must not migrate categories before a verified original snapshot');
+assert.ok(html.includes("function draw(){if(!PERSIST_BLOCKED)ensureRecurrences(YM)"),
+  'repaint must not create recurring ledger entries in recovery-only mode');
 assert.ok(vault.includes('settings.has("assessor_openings_v83")'),
   'native vault must prefer active account balances over a stale legacy copy');
 assert.ok(vault.includes('settings.optString("assessor_openings_v83", "")'),
