@@ -78,7 +78,7 @@ final class WebAppBridge {
             manager.createNotificationChannel(channel);
         }
         if (android.os.Build.VERSION.SDK_INT >= 33 &&
-            androidx.core.content.ContextCompat.checkSelfPermission(activity,
+            activity.checkSelfPermission(
                 android.Manifest.permission.POST_NOTIFICATIONS)
                 != android.content.pm.PackageManager.PERMISSION_GRANTED) return;
         String safeTitle = title == null ? "Snake Finance" : title.substring(0, Math.min(90, title.length()));
