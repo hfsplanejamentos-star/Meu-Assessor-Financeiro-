@@ -1693,10 +1693,10 @@ function monthIncomeC6(ym){
  return L.filter(x=>(x.comp||x.d||'').startsWith(ym)&&x.t==='r'&&x.a==='c6').reduce((q,x)=>q+x.v,0);
 }
 function monthExpensesC6(ym){
- return L.filter(x=>(x.comp||x.d||'').startsWith(ym)&&x.t==='d'&&x.a!=='caju').reduce((q,x)=>q+x.v,0);
+ return L.filter(x=>(x.comp||x.d||'').startsWith(ym)&&x.t==='d'&&x.a!=='caju'&&x.a!=='xpone').reduce((q,x)=>q+x.v,0);
 }
 function monthInvestmentsC6(ym){
- return L.filter(x=>(x.comp||x.d||'').startsWith(ym)&&(x.t==='i'||x.t==='inv')&&x.a!=='caju').reduce((q,x)=>q+x.v,0);
+ return L.filter(x=>(x.comp||x.d||'').startsWith(ym)&&(x.t==='i'||x.t==='inv')&&x.a!=='caju'&&x.a!=='xpone').reduce((q,x)=>q+x.v,0);
 }
 
 
