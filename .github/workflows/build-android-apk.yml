@@ -3,7 +3,7 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [main, snake-finance-ota-1.4.12]
+    branches: [main, snake-finance-ota-1.4.12, validacao-xp-infinite-one-20261015]
     paths:
       - "android-capture/**"
       - ".github/workflows/build-android-apk.yml"
@@ -39,12 +39,12 @@ jobs:
         run: gradle assembleDebug --stacktrace
 
       - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Meu-Assessor-Financeiro-IA.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/Snake-Finance-XP-Validacao.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Meu-Assessor-Financeiro-IA-APK
+          name: Snake-Finance-XP-Validacao-APK
           path: android-capture/app/build/outputs/apk/debug/Meu-Assessor-Financeiro-IA.apk
           if-no-files-found: error
           retention-days: 30
