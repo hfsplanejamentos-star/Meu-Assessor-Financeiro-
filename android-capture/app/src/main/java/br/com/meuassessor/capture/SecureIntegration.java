@@ -135,6 +135,9 @@ final class SecureIntegration {
                 if (cfg == null) throw new IllegalStateException("No secured integration");
                 URL url = new URL(cfg[0] + path);
                 connection = (HttpsURLConnection) url.openConnection();
+                // Never forward the owner's X-Sync-Key through HTTP redirects to
+                // another host or an unexpected endpoint.
+                connection.setInstanceFollowRedirects(false);
                 connection.setConnectTimeout(8000);
                 connection.setReadTimeout(30000);
                 connection.setRequestMethod(method);
