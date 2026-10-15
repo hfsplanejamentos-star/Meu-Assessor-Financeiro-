@@ -35,6 +35,22 @@ final class WebAppBridge {
         } catch (Exception ignored) { }
     }
 
+    /** Preserve original balances, categories, investments and ledger before migration. */
+    @JavascriptInterface
+    public boolean preserveFinancialSnapshot(String fullJson) {
+        return FinancialRecoveryVault.preserve(activity, fullJson);
+    }
+
+    @JavascriptInterface
+    public String preservedFinancialSnapshotStatus() {
+        return FinancialRecoveryVault.status(activity);
+    }
+
+    @JavascriptInterface
+    public void exportPreservedFinancialSnapshot() {
+        FinancialRecoveryVault.export(activity);
+    }
+
     @JavascriptInterface
     public void exportPreservedLedger() {
         try {
