@@ -222,12 +222,12 @@ public final class MainActivity extends Activity {
         UpdateChecker.check(this);
     }
 
-    private static final String CACHE_FILE = "snake_finance_dashboard_1_5_1.html";
-    private static final String CACHE_BACKUP_FILE = "snake_finance_dashboard_1_5_1.backup.html";
+    private static final String CACHE_FILE = "snake_finance_dashboard_xp_validation_v1.html";
+    private static final String CACHE_BACKUP_FILE = "snake_finance_dashboard_xp_validation_v1.backup.html";
 
     private boolean validDashboard(String html) {
         if (html == null || html.length() < 50000) return false;
-        return html.contains("Snake Finance Mobile — V84 · Visual aprovado")
+        return html.contains("Snake Finance Mobile — XP Infinite One · Validação")
                 && html.contains("SNAKE FINANCE")
                 && html.contains("window.SNAKE_DISTRIBUTABLE")
                 && html.contains("</html>");
@@ -291,6 +291,9 @@ public final class MainActivity extends Activity {
         final String cached = local;
         if (cached != null) showDashboard(cached);
 
+        // Validation APK is intentionally pinned to its bundled dashboard.
+        // Do not replace it with the production Pages version during testing.
+        if (true) return;
         Executors.newSingleThreadExecutor().execute(() -> {
             HttpURLConnection connection = null;
             try {
