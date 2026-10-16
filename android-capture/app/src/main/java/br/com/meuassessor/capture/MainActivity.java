@@ -634,9 +634,14 @@ public final class MainActivity extends Activity {
                         if (total != bytes.length || !java.util.Arrays.equals(expected, digest.digest()))
                             throw new java.io.IOException("Falha na conferência de integridade do arquivo exportado");
                     }
-                    staged.delete();
+                    // Preserve staged backup until the user confirms the destination file exists.
+                    // Some document providers may report successful writes before final cloud synchronization.
+                    getSharedPreferences("backup_export_diagnostics", MODE_PRIVATE).edit()
+                        .putString("last_destination_uri", target.toString())
+                        .putLong("last_verified_bytes", actual)
+                        .putLong("last_verified_at", System.currentTimeMillis()).apply();
                     android.widget.Toast.makeText(this,
-                        "Backup confirmado e verificado: " + actual + " bytes", android.widget.Toast.LENGTH_LONG).show();
+                        "JSON gravado e lido: " + actual + " B. Confira o arquivo no destino; cópia interna preservada.", android.widget.Toast.LENGTH_LONG).show();
                 } catch (Exception e) {
                     android.widget.Toast.makeText(this,
                         "Backup NÃO confirmado: " + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
