@@ -133,7 +133,7 @@ public final class MainActivity extends Activity {
         // No alternative splash image or generated logo is permitted.
         try {
             android.graphics.Bitmap splashBitmap = android.graphics.BitmapFactory.decodeStream(
-                getAssets().open("snake_splash_aprovada.jpg"));
+                getAssets().open("IMG_20261016_185636.jpg"));
             if (splashBitmap != null) {
                 ImageView approvedSplash = new ImageView(this);
                 approvedSplash.setImageBitmap(splashBitmap);
