@@ -101,6 +101,54 @@ final class WebAppBridge {
     }
 
     @JavascriptInterface
+    public String backupExportDiagnostics() {
+        try {
+            android.content.SharedPreferences p = activity.getSharedPreferences(
+                "backup_export_diagnostics", android.content.Context.MODE_PRIVATE);
+            org.json.JSONObject result = new org.json.JSONObject();
+            result.put("savedBytes", p.getLong("last_verified_bytes", -1));
+            result.put("savedAt", p.getLong("last_verified_at", 0));
+            java.io.File staged = new java.io.File(activity.getFilesDir(), "snake_backup_pending.json");
+            result.put("internalBytes", staged.isFile() ? staged.length() : -1);
+            String location = p.getString("last_destination_uri", "");
+            if (!location.isEmpty()) {
+                try {
+                    android.net.Uri uri = android.net.Uri.parse(location);
+                    long actual = 0;
+                    try (java.io.InputStream in = activity.getContentResolver().openInputStream(uri)) {
+                        if (in == null) throw new java.io.IOException("Destino não acessível");
+                        byte[] buffer = new byte[8192];
+                        int count;
+                        while ((count = in.read(buffer)) != -1) actual += count;
+                    }
+                    result.put("destinationBytesNow", actual);
+                } catch (Exception e) {
+                    result.put("destinationError", "Não foi possível reabrir o arquivo salvo.");
+                }
+            }
+            return result.toString();
+        } catch (Exception e) { return "{\"error\":\"Diagnóstico indisponível\"}"; }
+    }
+
+    @JavascriptInterface
+    public void exportStagedBackupAgain() {
+        java.io.File staged = new java.io.File(activity.getFilesDir(), "snake_backup_pending.json");
+        if (!staged.isFile() || staged.length() < 20) {
+            activity.runOnUiThread(() -> android.widget.Toast.makeText(activity,
+                "Nenhum backup interno preservado", android.widget.Toast.LENGTH_LONG).show());
+            return;
+        }
+        try {
+            byte[] data = java.nio.file.Files.readAllBytes(staged.toPath());
+            activity.exportBackupDocument(new String(data, java.nio.charset.StandardCharsets.UTF_8),
+                "Snake_Finance_Resgate_Confirmado.json");
+        } catch (Exception e) {
+            activity.runOnUiThread(() -> android.widget.Toast.makeText(activity,
+                "Não foi possível recuperar a cópia interna", android.widget.Toast.LENGTH_LONG).show());
+        }
+    }
+
+    @JavascriptInterface
     public int notificationCount() {
         return new EncryptedQueueStore(activity).size();
     }
