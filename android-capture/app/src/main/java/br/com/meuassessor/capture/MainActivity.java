@@ -142,7 +142,33 @@ public final class MainActivity extends Activity {
                 splash.addView(approvedSplash, new FrameLayout.LayoutParams(-1, -1));
             }
         } catch (java.io.IOException missingApprovedSplash) {
-            // An absent asset must not crash app startup.
+            // Older packages keep the user-approved splash image inside the original assets ZIP.
+            // Decode it directly without replacing the approved art with a generic splash.
+            try (java.util.zip.ZipInputStream archive = new java.util.zip.ZipInputStream(
+                    getAssets().open("Snake_Finance_Splash_Original_Android.zip"))) {
+                java.util.zip.ZipEntry item;
+                while ((item = archive.getNextEntry()) != null) {
+                    String name = item.getName().toLowerCase(java.util.Locale.ROOT);
+                    if (!item.isDirectory() && (name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png"))) {
+                        java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+                        byte[] chunk = new byte[8192];
+                        int n;
+                        while ((n = archive.read(chunk)) != -1 && bytes.size() < 5_000_000) bytes.write(chunk, 0, n);
+                        if (bytes.size() > 5_000_000) break;
+                        android.graphics.Bitmap image = android.graphics.BitmapFactory.decodeByteArray(
+                                bytes.toByteArray(), 0, bytes.size());
+                        if (image == null) continue;
+                        ImageView approvedSplash = new ImageView(this);
+                        approvedSplash.setImageBitmap(image);
+                        approvedSplash.setBackgroundColor(Color.BLACK);
+                        approvedSplash.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                        splash.addView(approvedSplash, new FrameLayout.LayoutParams(-1, -1));
+                        break;
+                    }
+                }
+            } catch (Exception ignoredMissingSplashZip) {
+                // Leave the screen plain rather than displaying unrelated or stale screenshots.
+            }
         }
         root.addView(splash, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
