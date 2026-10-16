@@ -2403,6 +2403,12 @@ function applyBackup(){
   saveSafetyBackup();written.add('assessor_pre_import_v82');
   for(const[k,v]of Object.entries(pending.storage))if(!['assessor_tx','assessor_tx_v43','assessor_pre_import_v82'].includes(k))write(k,v);
   if(pending.storage[XP_OPENING_KEY]===undefined)write(XP_OPENING_KEY,'0');write(LEDGER_KEY,JSON.stringify(pending.ledger));write('assessor_tx',JSON.stringify(pending.ledger));
+  // Reopen the actual persisted data before authorizing any financial writes.
+  const verified=validateLedger(JSON.parse(localStorage.getItem(LEDGER_KEY)||'null'));
+  if(verified.length!==pending.ledger.length||verified.some((x,i)=>JSON.stringify(x)!==JSON.stringify(pending.ledger[i])))throw Error('Os lançamentos gravados não conferem com o backup importado');
+  const storedOpenings=localStorage.getItem(OPENING_KEY);
+  if(!storedOpenings)throw Error('Saldos iniciais não foram gravados');
+  validateOpenings(JSON.parse(storedOpenings));
   PERSIST_BLOCKED=false;reloadDashboardView();BACKUP_PENDING=null;
  }catch(e){
   for(const k of written)try{if(Object.hasOwn(before,k))localStorage.setItem(k,before[k]);else localStorage.removeItem(k);}catch(_){}
