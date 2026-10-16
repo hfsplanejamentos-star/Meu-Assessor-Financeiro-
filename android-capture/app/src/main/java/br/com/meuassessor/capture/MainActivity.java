@@ -156,7 +156,11 @@ public final class MainActivity extends Activity {
                                 | android.view.WindowInsets.Type.navigationBars());
                 // Inset only the dashboard: the startup splash must remain edge-to-edge.
                 // Padding the root also shifts/crops the splash and can expose status-bar artifacts.
-                webView.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+                FrameLayout.LayoutParams layout = (FrameLayout.LayoutParams) webView.getLayoutParams();
+                if (layout != null && (layout.topMargin != bars.top || layout.bottomMargin != bars.bottom)) {
+                    layout.setMargins(bars.left, bars.top, bars.right, bars.bottom);
+                    webView.setLayoutParams(layout);
+                }
                 return insets;
             });
         }
@@ -280,7 +284,8 @@ public final class MainActivity extends Activity {
     private boolean useBundledValidationDashboard() { return true; }
 
     private void loadDashboardHtml() {
-        String local = readCachedDashboard();
+        // Validation builds must use their packaged HTML, never a cached historical dashboard.
+        String local = useBundledValidationDashboard() ? null : readCachedDashboard();
         if (local == null) {
             try (InputStream input = getAssets().open("snake-finance-mobile.html")) {
                 java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
