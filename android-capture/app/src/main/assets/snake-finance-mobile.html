@@ -117,6 +117,12 @@ svg.pie,svg.donut,.pieChart,.donutChart,.pieLegend,.legendResponsive [data-cat],
   .bankGrid .big,.accountGrid .big,.balanceValue{font-size:1.55rem!important}
 }
 
+
+/* Bank identifiers embedded locally for offline use; not downloaded at runtime. */
+.snBankMark{display:inline-flex;justify-content:center;align-items:center;flex-shrink:0;width:36px;height:36px;border-radius:11px;font:900 13px/1 system-ui,-apple-system,sans-serif;letter-spacing:-.5px;background:#242424;color:#fbfbfb;box-shadow:inset 0 0 0 1px #ffffff29}
+.snBankMark[data-bank="caju"]{background:#f45135;color:white;font-weight:900;font-size:15px;letter-spacing:-1px}
+.snBankMark[data-bank="xp"]{background:#101010;color:#f2b705;font-size:18px;letter-spacing:-1.4px}
+.snBankMark[data-bank="carbon"]{background:#303030;color:#f5f5f5}
 </style><style>
 .addbar{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .addbar .bt{width:100%;font-weight:600}.addbar .inc{border-color:var(--pos);color:var(--pos)}.addbar .out{border-color:var(--neg);color:var(--neg)}
@@ -1228,6 +1234,7 @@ function nextId(){return L.reduce((max,x)=>Math.max(max,Number(x.id)||0),100)+1}
 const CAT={mor:['Moradia','home','#168BFF'],mer:['Mercado','cart','#FF7A00'],tra:['Transporte','car','#00C48C'],ali:['Alimentação','fork','#FFD000'],laz:['Lazer','game','#FF4FA3'],sau:['Saúde','heart','#00D68F'],con:['Contas','bulb','#8B5CFF'],out:['Outros','list','#E85D75'],mov:['Móveis','home','#9C6ADE'],pen:['Pensão','money','#00B8D9'],lav:['Lavanderia','shirt','#35C2FF'],abs:['Abastecimento','fuel','#FF4D4D'],cer:['Cerveja','beer','#F59E0B'],est:['Estacionamento','parking','#5B8CFF'],trab:['Trabalho','briefcase','#22D3EE']};
 const ORC={};
 const GR={Padaria:['#2a78d6','bread'],Mercado:['#eb6834','cart'],Restaurante:['#1baf7a','fork'],Delivery:['#6250d6','bag'],Cerveja:['#e87ba4','beer']};
+function bankMark(a){const name=a==='caju'?'caju':a==='xp'?'XP':a==='carbon'?'C6':'C6';return '<span class="snBankMark" data-bank="'+a+'" role="img" aria-label="'+({c6:'C6 Bank',carbon:'C6 Carbon',caju:'Caju',xp:'XP'}[a]||'Banco')+'">'+name+'</span>';}
 const AC={c6:['C6','#4a95ea'],caju:['Caju','#e87ba4'],carbon:['Carbon','#8b7cf0'],xp:['XP Infinite One Débito','#dedede']};
 const ICO={home:'M3 11l9-8 9 8M5 10v10h14V10',cart:'M3 4h2l2 11h11l2-8H6M9 20h.01M17 20h.01',car:'M5 16l1-6h12l1 6M4 16h16v3H4zM7 19v1M17 19v1',fork:'M7 3v8M4 3v5a3 3 0 006 0V3M17 3c-2 2-2 6 0 8v10',heart:'M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z',game:'M6 8h12a4 4 0 014 4v2a3 3 0 01-5 2l-1-1H8l-1 1a3 3 0 01-5-2v-2a4 4 0 014-4zM8 11v3M6.5 12.5h3',bulb:'M9 18h6M10 21h4M12 3a6 6 0 00-3 11v2h6v-2a6 6 0 00-3-11z',dots:'M5 12h.01M12 12h.01M19 12h.01',bread:'M4 10a4 4 0 014-4h8a4 4 0 014 4v8H4z',bag:'M6 8h12l1 12H5zM9 8a3 3 0 016 0',beer:'M6 6h9v14H6zM15 9h3v6h-3M9 6V4h3v2',list:'M5 6h14M5 12h14M5 18h14',rep:'M4 12a8 8 0 0114-5l2 2M20 12a8 8 0 01-14 5l-2-2M18 4v5h-5M6 20v-5h5',cal:'M5 5h14v15H5zM5 10h14M9 3v4M15 3v4',chat:'M4 5h16v11H9l-5 4z',grid:'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',card:'M3 6h18v12H3zM3 10h18',shirt:'M8 4l4 2 4-2 4 3-3 2v11H7V9L4 7z',fuel:'M5 3h10v18H5zM7 6h6v5H7zM15 8h2l2 2v7a2 2 0 01-2 2h-2',parking:'M7 20V4h6a5 5 0 010 10H7M7 14h6',briefcase:'M4 7h16v12H4zM9 7V5h6v2M4 12h16',money:'M4 7h16v10H4zM8 12h.01M16 12h.01M12 9a3 3 0 100 6 3 3 0 000-6z'};
 const L0=[];
@@ -1616,10 +1623,10 @@ function vGeral(){
  <div class="c v28Hero cardEdit" onclick="openAccount('c6')"><div class="sp"><div><p class="m">Saldo disponível C6 + XP</p><p class="big">${brl(d.availableDebit)}</p></div><span class="ch">Visão consolidada</span></div>
  <div class="v28Metrics"><div onclick="event.stopPropagation();openProjectionDetail()"><span class="m">Previsto</span><b style="color:var(--pos)">${brs(projectedC6(YM))}</b></div><div onclick="event.stopPropagation();detailModal('Despesas realizadas',expenseBase('r'))"><span class="m">Despesas do mês</span><b style="color:var(--neg)">${brs(d.des)}</b></div><div onclick="event.stopPropagation();openPending()"><span class="m">A pagar</span><b style="color:var(--warn)">${brs(d.pd+d.pt+carbonInvoiceGross(YM))}</b></div></div></div>
  <div class="c"><div class="v28Title"><p class="h">Minhas contas</p><span class="m">Toque para detalhes</span></div><div class="v28Accounts">
-  <div class="c v28Account cardEdit" onclick="openAccount('c6')">${tile('card',AC.c6[1])}<div><span class="m">C6 Débito</span><b>${brs(d.c6)}</b></div></div><div class="c v28Account cardEdit" onclick="openAccount('xp')">${tile('card',AC.xp[1])}<div><span class="m">XP Infinite One Débito</span><b>${brs(d.xp)}</b><small class="m" onclick="event.stopPropagation();setXPInitialBalance()" style="text-decoration:underline;cursor:pointer">Definir saldo inicial</small></div></div>
-  <div class="c v28Account cardEdit" onclick="openAccount('carbon')">${tile('card',AC.carbon[1])}<div><span class="m">C6 Carbon · disponível</span><b>${brs(Math.max(0,ALERT_CFG.carbon.limit*100-creditUsed(alertRef(YM),ALERT_CFG.carbon)))}</b><small class="m">Em uso ${brs(creditUsed(alertRef(YM),ALERT_CFG.carbon))} · Limite ${brs(ALERT_CFG.carbon.limit*100)}</small></div></div>
-  <div class="c v28Account cardEdit" onclick="openAccount('caju')">${tile('card',AC.caju[1])}<div><span class="m">Caju</span><b>${brs(d.cj)}</b></div></div>
-  <div class="c v28Account cardEdit" onclick="openAccount('xp')"><div class="tl" style="background:#F2B705;color:#111;font-weight:800">XP</div><div><span class="m">XP Infinite One Débito</span><b>${brs(d.xp)}</b><small class="m" onclick="event.stopPropagation();setXPInitialBalance()" style="text-decoration:underline;cursor:pointer">Definir saldo inicial</small></div></div>
+  <div class="c v28Account cardEdit" onclick="openAccount('c6')">${bankMark('c6')}<div><span class="m">C6 Débito</span><b>${brs(d.c6)}</b></div></div><div class="c v28Account cardEdit" onclick="openAccount('xp')">${bankMark('xp')}<div><span class="m">XP Infinite One Débito</span><b>${brs(d.xp)}</b><small class="m" onclick="event.stopPropagation();setXPInitialBalance()" style="text-decoration:underline;cursor:pointer">Definir saldo inicial</small></div></div>
+  <div class="c v28Account cardEdit" onclick="openAccount('carbon')">${bankMark('carbon')}<div><span class="m">C6 Carbon · disponível</span><b>${brs(Math.max(0,ALERT_CFG.carbon.limit*100-creditUsed(alertRef(YM),ALERT_CFG.carbon)))}</b><small class="m">Em uso ${brs(creditUsed(alertRef(YM),ALERT_CFG.carbon))} · Limite ${brs(ALERT_CFG.carbon.limit*100)}</small></div></div>
+  <div class="c v28Account cardEdit" onclick="openAccount('caju')">${bankMark('caju')}<div><span class="m">Caju</span><b>${brs(d.cj)}</b></div></div>
+  <div class="c v28Account cardEdit" onclick="openAccount('xp')">${bankMark('xp')}<div><span class="m">XP Infinite One Débito</span><b>${brs(d.xp)}</b><small class="m" onclick="event.stopPropagation();setXPInitialBalance()" style="text-decoration:underline;cursor:pointer">Definir saldo inicial</small></div></div>
  </div></div>
  <div class="v30DailyShell">${graf7()}</div>
  ${v28CatDonut()}
