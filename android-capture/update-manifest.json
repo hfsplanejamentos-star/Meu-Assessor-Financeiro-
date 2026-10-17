@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "channel": "xp-validation",
+  "enabled": false,
+  "versionCode": 31,
+  "versionName": "1.5.7-xp-validation",
+  "apkUrl": "",
+  "sha256": "",
+  "notes": "Atualizações do APK serão ativadas após publicação assinada e validação de integridade."
+}
