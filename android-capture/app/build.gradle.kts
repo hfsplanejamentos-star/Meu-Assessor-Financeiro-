@@ -69,33 +69,26 @@ dependencies {
 }
 
 /**
- * Install the exact user-approved splash from the ZIP uploaded to the repository.
- * The original JPG is copied byte-for-byte; no image generation or transformation.
+ * The uploaded, user-approved JPG takes priority over legacy ZIP artwork.
+ * Never overwrite it with an unrelated archived screenshot.
  */
 val installApprovedSplash = tasks.register("installApprovedSplash") {
-    val sourceZip = layout.projectDirectory.file("src/main/assets/Snake_Finance_Splash_Original_Android.zip")
-    val targetJpg = layout.projectDirectory.file("src/main/assets/snake_splash_aprovada.jpg")
-    inputs.file(sourceZip)
-    outputs.file(targetJpg)
+    val uploaded = layout.projectDirectory.file("src/main/assets/IMG_20261016_185636.jpg")
+    val target = layout.projectDirectory.file("src/main/assets/snake_splash_aprovada.jpg")
+    inputs.file(uploaded)
+    outputs.file(target)
     doLast {
-        val zipFile = sourceZip.asFile
-        require(zipFile.isFile) { "Missing approved splash archive: $zipFile" }
-        ZipFile(zipFile).use { archive ->
-            val entry = archive.entries().asSequence().firstOrNull {
-                !it.isDirectory && it.name.substringAfterLast('/') == "snake_splash_aprovada.jpg"
-            } ?: error("Approved splash JPG not found inside archive")
-            val destination = targetJpg.asFile
-            destination.parentFile.mkdirs()
-            archive.getInputStream(entry).use { input ->
-                destination.outputStream().use { output -> input.copyTo(output) }
-            }
-            require(destination.length() > 0) { "Approved splash JPG is empty" }
-            val header = destination.inputStream().use { it.readNBytes(3) }
-            require(header.size == 3 && header[0] == 0xFF.toByte() &&
-                header[1] == 0xD8.toByte() && header[2] == 0xFF.toByte()) {
-                "Approved splash is not a JPEG"
-            }
+        val source = uploaded.asFile
+        require(source.isFile) { "Approved JPG not found: $source" }
+        val header = source.inputStream().use { it.readNBytes(3) }
+        require(header.size == 3 && header[0] == 0xFF.toByte() &&
+            header[1] == 0xD8.toByte() && header[2] == 0xFF.toByte()) {
+            "Approved splash JPG is not valid JPEG"
         }
+        val destination = target.asFile
+        destination.parentFile.mkdirs()
+        source.copyTo(destination, overwrite = true)
+        require(destination.length() == source.length()) { "Approved splash copy incomplete" }
     }
 }
 tasks.named("preBuild") { dependsOn(installApprovedSplash) }
