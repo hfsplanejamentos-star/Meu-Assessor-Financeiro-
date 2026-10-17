@@ -284,17 +284,18 @@ public final class MainActivity extends Activity {
         authenticationInProgress = false;
         authenticated = true;
         authenticatedForDisplay = true;
-        webView.setVisibility(View.VISIBLE);
-        revealDashboardWhenReady();
-
-        if (pendingState == null) {
-            if (webView.getUrl() == null) loadDashboardHtml();
-        } else {
-            webView.restoreState(pendingState);
+        // Never restore a historical WebView page in XP validation.
+        // The user ledger is in persistent app storage, not WebView navigation state.
+        webView.setVisibility(View.INVISIBLE);
+        dashboardReady = false;
+        if (pendingState != null) {
             String savedImageUri = pendingState.getString("captured_image_uri");
             if (savedImageUri != null) capturedImageUri = Uri.parse(savedImageUri);
             pendingState = null;
         }
+        webView.stopLoading();
+        webView.clearHistory();
+        loadDashboardHtml();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
                 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
@@ -305,7 +306,8 @@ public final class MainActivity extends Activity {
         requestNativePermissions();
         if(!queueReceiverRegistered){android.content.IntentFilter queueFilter=new android.content.IntentFilter("br.com.meuassessor.capture.QUEUE_CHANGED");
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.TIRAMISU) registerReceiver(queueReceiver,queueFilter,RECEIVER_NOT_EXPORTED); else registerReceiver(queueReceiver,queueFilter);queueReceiverRegistered=true;}
-        UpdateChecker.check(this);
+        // Production update feed is not applicable to the isolated XP validation APK.
+        if (!useBundledValidationDashboard()) UpdateChecker.check(this);
     }
 
     private static final String CACHE_FILE = "snake_finance_dashboard_xp_validation_v1.html";
