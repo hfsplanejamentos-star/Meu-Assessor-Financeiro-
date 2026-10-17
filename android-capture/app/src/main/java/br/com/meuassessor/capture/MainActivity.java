@@ -111,7 +111,10 @@ public final class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        // Hide real Android status icons only while the startup screen is visible.
+        // Keep the actual Android status bar hidden for the entire approved splash.
+        // A window flag is more robust than only setting decor flags on Android 12+.
+        getWindow().setFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN);
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
@@ -250,11 +253,14 @@ public final class MainActivity extends Activity {
 
     private void revealDashboardWhenReady() {
         if (!authenticatedForDisplay || !dashboardReady || startupSplash == null) return;
-        // Restore the system status bar for normal dashboard use.
-        getWindow().getDecorView().setSystemUiVisibility(0);
+        // Remove the splash before revealing Android clock/battery on the dashboard.
+        // Make the dashboard visible first to avoid a frame with status icons over splash.
+        webView.setVisibility(View.VISIBLE);
         FrameLayout splash = startupSplash;
         startupSplash = null;
         if (splash.getParent() instanceof ViewGroup) ((ViewGroup) splash.getParent()).removeView(splash);
+        getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().getDecorView().setSystemUiVisibility(0);
     }
 
     private int dp(int value) {
