@@ -2623,7 +2623,7 @@ html[data-tema] #app{padding-bottom:120px!important}
     if(busy)return;const event=reviewItems[index];if(!event)return;
     if(event.kind==='audio'&&event.status!=='pending'){alert('Aguarde a transcrição ou tente novamente antes de registrar.');return;}
     if(event.source!=='bank'&&!ST.msg){alert('Ative Registrar despesas por mensagem em Avisos para abrir rascunhos.');return;}
-    if(recorded(event)){const entry=recorded(event);if(entry.reviewPending){if(confirm('Esta despesa já foi registrada provisoriamente e afetou o saldo. Confirmar os dados como estão? Para corrigir, edite o lançamento existente no histórico.')){entry.reviewPending=false;if(!persistLedger()){entry.reviewPending=true;alert('Não foi possível salvar a validação.');return;}await complete([event],'recorded');draw();}return;}if(confirm('Este evento já está registrado. Concluir a revisão sem criar outro lançamento?'))await complete([event],'recorded');return;}
+    if(recorded(event)){const entry=recorded(event);if(entry.reviewPending){draft={event,data:{type:entry.t,amount:entry.v,account:entry.a,day:entry.d,name:entry.n,category:entry.c||'out',sub:entry.sub||'',to:entry.to||''}};showDraft();return;}if(confirm('Este evento já está registrado. Concluir a revisão sem criar outro lançamento?'))await complete([event],'recorded');return;}
     draft={event,data:localDraft(event)};
     if(event.kind==='audio'){
       busy=true;modal('Preparando rascunho do áudio',`<p>${safe(event.text)}</p><p class="m" style="margin-top:12px">A IA está identificando valor, conta e categoria. O lançamento será salvo somente após sua revisão.</p>`);MD='capture-preparing';
@@ -2652,7 +2652,15 @@ html[data-tema] #app{padding-bottom:120px!important}
     if(!exactCapture&&crossSourceMatch.length&&event.source==='bank'&&String(event.sourcePackage||'').includes('walletnfcrel')){if(!confirm('Existe movimentação bancária de mesmo valor e data. Confira estabelecimento e cartão antes de registrar o evento do Google Wallet. Continuar?'))return;}if(!exactCapture&&duplicate.length){const sameText=duplicate.some(x=>String(x.n||'').trim().toLowerCase()===d.name.trim().toLowerCase());if(sameText&&!confirm(`Existe um lançamento muito semelhante (mesma data, conta, valor e descrição). Registrar mesmo assim?`))return;}
     busy=true;const button=document.getElementById('capture-save');if(button)button.disabled=true;
     try{
-      if(!recorded(event)){
+      const existing=recorded(event);
+      if(existing&&existing.reviewPending){
+        if(PERSIST_BLOCKED)throw Error('Importe um backup válido antes de confirmar.');
+        const snapshot={...existing};
+        Object.assign(existing,{d:d.day,n:d.name,t:d.type,v:d.amount,a:d.account,s:'r',c:d.type==='d'?d.category:'out',sub:d.type==='d'?d.sub:'',reviewPending:false});
+        if(d.type==='t'){existing.to=d.to;existing.ctx='Transferência';}else{delete existing.to;delete existing.ctx;}
+        if(!persistLedger()){Object.keys(existing).forEach(k=>delete existing[k]);Object.assign(existing,snapshot);throw Error('A correção não foi salva. A revisão permanece pendente.');}
+        YM=d.day.slice(0,7);SEL=d.day;
+      } else if(!recorded(event)){
         if(PERSIST_BLOCKED)throw Error('Importe um backup válido antes de registrar.');
         const before=L.slice(),oldId=NID;
         const x={id:NID,d:d.day,n:d.name,t:d.type,v:d.amount,a:d.account,s:'r',captureId:captureKey(event)};
