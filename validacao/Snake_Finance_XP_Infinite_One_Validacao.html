@@ -2151,7 +2151,7 @@ function cajuBalance(ym){
 // Internal benefit allocation only: never increases Caju's account balance.
 const CAJU_FUEL_TARGET_CENTS=50000;
 function cajuFuelSpent(ym){return L.filter(x=>x.a==='caju'&&x.t==='d'&&x.s==='r'&&cajuCompetence(x)<=ym&&(x.c==='abs'||x.cajuMode==='fuel')).reduce((a,x)=>a+x.v,0);}
-function cajuModalBalances(ym){const total=cajuBalance(ym);const reserved=Math.min(CAJU_FUEL_TARGET_CENTS,Math.max(0,total+cajuFuelSpent(ym)));
+function cajuModalBalances(ym){const total=cajuBalance(ym);const reserved=total+cajuFuelSpent(ym)>=CAJU_FUEL_TARGET_CENTS?CAJU_FUEL_TARGET_CENTS:0; // No partial diversion of food benefits while below the full R$500 target.
  const fuel=Math.max(0,reserved-cajuFuelSpent(ym));return {total,food:total-fuel,fuel,target:CAJU_FUEL_TARGET_CENTS,unallocated:CAJU_FUEL_TARGET_CENTS-reserved};}
 function openCajuSettings(){
  const cfg=CAJU_CFG[YM];const prev=cfg&&Number.isInteger(cfg.opening)?cfg.opening:(YM==='2026-10'?ORIGINAL_FUNDS:YM<'2026-10'?0:cajuBalance(monthBefore(YM)));
