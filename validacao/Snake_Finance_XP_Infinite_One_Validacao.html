@@ -2563,6 +2563,7 @@ html[data-tema] #app{padding-bottom:120px!important}
   function safeAutoRegisterBankExpenses(){
     if(!autoSafeEnabled||!native||PERSIST_BLOCKED||busy||!Array.isArray(pending))return;
     let changed=false;
+    const previousLedger=L.slice(),previousId=NID;
     for(const e of pending.slice(0,50)){
       if(!e||typeof e.id!=='string'||!e.id||L.some(x=>x.captureId==='bank:'+e.id))continue;
       const source=String(e.sourcePackage||'').toLowerCase();
@@ -2580,8 +2581,8 @@ html[data-tema] #app{padding-bottom:120px!important}
     }
     if(changed){
       if(!persistLedger()){ // No successful persistence means no automatic debit.
-        L=L.filter(x=>!(x.autoSource==='bank'&&x.reviewPending&&pending.some(e=>x.captureId==='bank:'+e.id)));
-        NID=nextId();
+        L=previousLedger;
+        NID=previousId;
         return;
       }
       draw();
