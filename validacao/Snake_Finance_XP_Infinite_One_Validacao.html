@@ -2576,8 +2576,18 @@ html[data-tema] #app{padding-bottom:120px!important}
       if(!/compra|pagamento realizado|pix enviado|d[eé]bito realizado|voc[eê] pagou|transa[cç][aã]o aprovada/.test(full))continue;
       if(d.account==='carbon'&&!/cart[aã]o|cr[eé]dito|carbon/.test(full))continue;
       if(d.account==='caju'&&!/compra|pagamento realizado|d[eé]bito realizado|transa[cç][aã]o aprovada/.test(full))continue;
+      // Context is a suggestion only; the original transaction stays reviewable.
+      const posted=new Date(e.postedAt);
+      const workday=Number.isFinite(posted.getTime())&&posted.getDay()>=2&&posted.getDay()<=4;
+      const hour=posted.getHours();
+      let category='out',context='Pessoal (provisório)';
+      if(['c6','xp'].includes(d.account)&&e.amountCents===600&&workday&&hour>=5&&hour<12&&/pix enviado|pagamento realizado/.test(full)){category='est';context='Trabalho · Estacionamento (sugerido)';}
+      if(d.account==='caju'){
+        if(/abastec|combust[ií]vel|posto de gasolina/.test(full)){category='abs';context='Benefício Abastecimento';}
+        else {category='ali';context=workday&&hour>=11&&hour<=15?'Trabalho · Refeição (sugerido)':'Alimentação pessoal (sugerida)';}
+      }
       // Never deduplicate independent purchases solely by amount or calendar day.
-      const entry={id:NID,d:d.day,n:d.name,t:'d',v:e.amountCents,a:d.account,s:'r',c:'out',sub:'',captureId:'bank:'+e.id,reviewPending:true,autoSource:'bank'};
+      const entry={id:NID,d:d.day,n:d.name,t:'d',v:e.amountCents,a:d.account,s:'r',c:category,sub:'',ctx:context,captureId:'bank:'+e.id,reviewPending:true,autoSource:'bank'};
       L.push(entry);NID=nextId();changed=true;
     }
     if(changed){
