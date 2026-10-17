@@ -115,7 +115,12 @@ public final class MainActivity extends Activity {
         // A window flag is more robust than only setting decor flags on Android 12+.
         getWindow().setFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN);
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
                 .getString("web_cache_version", "");
@@ -261,6 +266,7 @@ public final class MainActivity extends Activity {
         if (splash.getParent() instanceof ViewGroup) ((ViewGroup) splash.getParent()).removeView(splash);
         getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().getDecorView().setSystemUiVisibility(0);
+        if (Build.VERSION.SDK_INT >= 35) getWindow().getDecorView().requestApplyInsets();
     }
 
     private int dp(int value) {
