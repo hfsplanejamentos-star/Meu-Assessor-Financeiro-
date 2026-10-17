@@ -2582,9 +2582,11 @@ html[data-tema] #app{padding-bottom:120px!important}
       const hour=posted.getHours();
       let category='out',context='Pessoal (provisório)';
       if(['c6','xp'].includes(d.account)&&e.amountCents===600&&workday&&hour>=5&&hour<12&&/pix enviado|pagamento realizado/.test(full)){category='est';context='Trabalho · Estacionamento (sugerido)';}
-      if(d.account==='caju'){
-        if(/abastec|combust[ií]vel|posto de gasolina/.test(full)){category='abs';context='Benefício Abastecimento';}
-        else {category='ali';context=workday&&hour>=11&&hour<=15?'Trabalho · Refeição (sugerido)':'Alimentação pessoal (sugerida)';}
+      if(/abastec|combust[ií]vel|posto de gasolina/.test(full)){
+        category='abs';
+        context=d.account==='caju'?'Trabalho · Combustível (Caju Abastecimento)':'Pessoal · Combustível';
+      }else if(d.account==='caju'){
+        category='ali';context=workday&&hour>=11&&hour<=15?'Trabalho · Refeição (sugerido)':'Alimentação pessoal (sugerida)';
       }
       // Never deduplicate independent purchases solely by amount or calendar day.
       const entry={id:NID,d:d.day,n:d.name,t:'d',v:e.amountCents,a:d.account,s:'r',c:category,sub:'',ctx:context,captureId:'bank:'+e.id,reviewPending:true,autoSource:'bank'};
