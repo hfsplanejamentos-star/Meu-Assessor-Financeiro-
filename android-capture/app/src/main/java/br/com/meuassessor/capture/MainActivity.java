@@ -191,6 +191,61 @@ public final class MainActivity extends Activity {
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             requestAuthentication();
         }, 3000L);
+        checkNativeUpdateInBackground();
+    }
+
+
+    // Opt-in version notification only. Android must approve native APK updates;
+    // the existing data directory is preserved by same-package, same-signature upgrades.
+    private void checkNativeUpdateInBackground() {
+        final android.content.SharedPreferences prefs =
+                getSharedPreferences("snake_update_check", MODE_PRIVATE);
+        long now = System.currentTimeMillis();
+        if (now - prefs.getLong("last_check", 0L) < 24L * 60 * 60 * 1000) return;
+        prefs.edit().putLong("last_check", now).apply();
+        Executors.newSingleThreadExecutor().execute(() -> {
+            HttpURLConnection c = null;
+            try {
+                String manifest = "https://raw.githubusercontent.com/hfsplanejamentos-star/"
+                        + "Meu-Assessor-Financeiro-/validacao-xp-infinite-one-20261015/"
+                        + "android-capture/update-manifest.json";
+                c = (HttpURLConnection) new URL(manifest).openConnection();
+                c.setConnectTimeout(5000);
+                c.setReadTimeout(5000);
+                if (c.getResponseCode() != HttpURLConnection.HTTP_OK) return;
+                if (c.getContentLengthLong() > 8192L) return;
+                java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+                try (InputStream in = c.getInputStream()) {
+                    byte[] buffer = new byte[1024];
+                    int n;
+                    while ((n = in.read(buffer)) != -1) {
+                        bytes.write(buffer, 0, n);
+                        if (bytes.size() > 8192) return;
+                    }
+                }
+                org.json.JSONObject info = new org.json.JSONObject(bytes.toString("UTF-8"));
+                int remoteCode = info.optInt("versionCode", 0);
+                if (!info.optBoolean("enabled", false) || remoteCode <= 31
+                        || !"xp-validation".equals(info.optString("channel"))) return;
+                String link = info.optString("apkUrl", "");
+                String digest = info.optString("sha256", "");
+                if (!link.startsWith("https://github.com/hfsplanejamentos-star/Meu-Assessor-Financeiro-/")
+                        || !digest.matches("(?i)^[0-9a-f]{64}$")) return;
+                String name = info.optString("versionName", "nova versão");
+                runOnUiThread(() -> new android.app.AlertDialog.Builder(this)
+                        .setTitle("Atualização Snake Finance disponível")
+                        .setMessage("Versão " + name + " disponível. Seus dados não serão apagados. "
+                                + "O Android solicitará confirmação para instalar uma atualização nativa.")
+                        .setNegativeButton("Depois", (d, which) -> {})
+                        .setPositiveButton("Ver atualização", (d, which) -> {
+                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(link)));
+                        }).show());
+            } catch (Exception ignored) {
+                // Offline operation must never be blocked by update checks.
+            } finally {
+                if (c != null) c.disconnect();
+            }
+        });
     }
 
     private void revealDashboardWhenReady() {
