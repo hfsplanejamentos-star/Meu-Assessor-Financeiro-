@@ -2548,18 +2548,52 @@ html[data-tema] #app{padding-bottom:120px!important}
   };
   window.meuAssessorAndroidAutoSync=function(){
     if(native)try{const rows=JSON.parse(bridge.getPendingNotifications());pending=Array.isArray(rows)?rows.filter(e=>e&&typeof e.id==='string'&&e.id.length<=256).slice(0,500):[];}catch{connectionMessage='Não foi possível ler as notificações.';}
+    safeAutoRegisterBankExpenses();
     let button=document.getElementById('native-review');
     if(native&&!button){button=document.createElement('button');button.id='native-review';button.className='bt';button.style.cssText='position:fixed;right:12px;bottom:105px;z-index:40;max-width:220px';button.onclick=window.reviewNativeNotifications;document.body.appendChild(button);}
     if(button){button.textContent='Revisar notificações ('+pending.length+')';button.hidden=!pending.length||TAB==='as'||!!MD;}
     window.dispatchEvent(new CustomEvent('assessor-native-pending',{detail:{count:pending.length}}));
   };
+  // High-confidence opt-in rules for automatic provisional expenses.
+  // Wallet, transfers, credits and ambiguous text remain in the manual review queue.
+  const AUTO_SAFE_KEY='snake_auto_safe_v1';
+  let autoSafeEnabled=true;
+  try{autoSafeEnabled=localStorage.getItem(AUTO_SAFE_KEY)!=='off';}catch(e){autoSafeEnabled=false;}
+  window.setSafeAutoCapture=function(enabled){autoSafeEnabled=!!enabled;try{localStorage.setItem(AUTO_SAFE_KEY,autoSafeEnabled?'on':'off');}catch(e){alert('Não foi possível salvar a preferência.');return;}window.meuAssessorAndroidAutoSync();};
+  function safeAutoRegisterBankExpenses(){
+    if(!autoSafeEnabled||!native||PERSIST_BLOCKED||busy||!Array.isArray(pending))return;
+    let changed=false;
+    for(const e of pending.slice(0,50)){
+      if(!e||typeof e.id!=='string'||!e.id||L.some(x=>x.captureId==='bank:'+e.id))continue;
+      const source=String(e.sourcePackage||'').toLowerCase();
+      if(source.includes('wallet')||source.includes('google'))continue;
+      const d=localDraft({...e,source:'bank'});
+      const full=(String(e.title||'')+' '+String(e.text||'')).toLowerCase();
+      if(!['c6','xp','caju','carbon'].includes(d.account)||d.type!=='d'||!Number.isSafeInteger(e.amountCents)||e.amountCents<=0||e.amountCents>100000000||!validISO(d.day))continue;
+      if(e.direction!=='expense'||/transfer[eê]ncia entre|entre minhas contas|conta pr[oó]pria|estorno|cancelad|agendad|autoriza[cç][aã]o|tentativa|negad|saldo dispon[ií]vel|fatura fechada|limite dispon[ií]vel/.test(full))continue;
+      if(!/compra|pagamento realizado|pix enviado|d[eé]bito realizado|voc[eê] pagou|transa[cç][aã]o aprovada/.test(full))continue;
+      if(d.account==='carbon'&&!/cart[aã]o|cr[eé]dito|carbon/.test(full))continue;
+      if(d.account==='caju'&&!/compra|pagamento realizado|d[eé]bito realizado|transa[cç][aã]o aprovada/.test(full))continue;
+      // Never deduplicate independent purchases solely by amount or calendar day.
+      const entry={id:NID,d:d.day,n:d.name,t:'d',v:e.amountCents,a:d.account,s:'r',c:'out',sub:'',captureId:'bank:'+e.id,reviewPending:true,autoSource:'bank'};
+      L.push(entry);NID=nextId();changed=true;
+    }
+    if(changed){
+      if(!persistLedger()){ // No successful persistence means no automatic debit.
+        L=L.filter(x=>!(x.autoSource==='bank'&&x.reviewPending&&pending.some(e=>x.captureId==='bank:'+e.id)));
+        NID=nextId();
+        return;
+      }
+      draw();
+    }
+  }
   function rows(source){return source==='bank'?pending:waItems;}
   function captureKey(e){return e.source+':'+e.id;}
   function recorded(e){return L.find(x=>x.captureId===captureKey(e));}
   function normalized(source){return rows(source).map(e=>source==='bank'?{...e,source}:{id:e.messageId,title:e.kind==='audio'?'Áudio do WhatsApp':'Mensagem do WhatsApp',text:e.text,postedAt:e.postedAt,source,connection:e.connection,kind:e.kind,status:e.status||'pending',transcriptionError:e.transcriptionError});}
   function body(source){
     reviewItems=normalized(source);
-    return `<p class="m">Revise valor, conta e categoria antes de salvar. Limpar não exclui lançamentos.</p><div class="sp" style="gap:8px;margin:12px 0"><button class="bt" onclick="captureRefresh('${source}')">Atualizar</button><button class="bt" ${!reviewItems.length?'disabled':''} onclick="captureClear('${source}')">Limpar pendentes</button></div>${reviewItems.map((e,i)=>`<div class="c" style="margin:10px 0;padding:14px"><p><b>${safe(ST.hide?(e.kind==='audio'?'Áudio do WhatsApp':e.source==='bank'?'Notificação bancária':'Mensagem do WhatsApp'):(e.title||'Notificação bancária'))}</b></p><p class="m" style="overflow-wrap:anywhere">${safe(privacyText(e.text||(e.status==='processing'?'Transcrevendo áudio…':e.kind==='audio'?'Não foi possível transcrever.':' ')))}</p><p style="font-size:1.25em;margin:8px 0"><b>${safe(ST.hide?'R$ ••••':money(e.amountCents))}</b></p><p class="m">${safe(new Date(e.postedAt).toLocaleDateString('pt-BR'))}${recorded(e)?' · Já registrado':e.kind==='audio'?' · '+(e.status==='processing'?'Transcrevendo':e.status==='failed'?'Transcrição pendente':'Transcrito'):''}</p>${e.kind==='audio'&&e.status==='failed'?'<p class="m">'+safe(audioError(e.transcriptionError))+'</p>':''}<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">${e.status==='processing'?'<button class="bt" disabled>Transcrevendo…</button>':e.status==='failed'?`<button class="bt" onclick="captureRetryAudio(${i})">Tentar transcrição novamente</button>`:`<button class="bt p" onclick="captureOpen(${i})">${recorded(e)?'Concluir revisão':'Revisar e registrar'}</button>`}<button class="bt" onclick="captureDiscard(${i})">Dispensar</button></div></div>`).join('')||'<p>Nenhuma notificação pendente.</p>'}`;
+    return `<p class="m">Revise valor, conta e categoria antes de salvar. Limpar não exclui lançamentos.</p><div class="sp" style="gap:8px;margin:12px 0"><button class="bt" onclick="captureRefresh('${source}')">Atualizar</button><button class="bt" ${!reviewItems.length?'disabled':''} onclick="captureClear('${source}')">Limpar pendentes</button></div>${reviewItems.map((e,i)=>`<div class="c" style="margin:10px 0;padding:14px"><p><b>${safe(ST.hide?(e.kind==='audio'?'Áudio do WhatsApp':e.source==='bank'?'Notificação bancária':'Mensagem do WhatsApp'):(e.title||'Notificação bancária'))}</b></p><p class="m" style="overflow-wrap:anywhere">${safe(privacyText(e.text||(e.status==='processing'?'Transcrevendo áudio…':e.kind==='audio'?'Não foi possível transcrever.':' ')))}</p><p style="font-size:1.25em;margin:8px 0"><b>${safe(ST.hide?'R$ ••••':money(e.amountCents))}</b></p><p class="m">${safe(new Date(e.postedAt).toLocaleDateString('pt-BR'))}${recorded(e)?(recorded(e).reviewPending?' · Registrado automaticamente · Não conferido':' · Já registrado'):e.kind==='audio'?' · '+(e.status==='processing'?'Transcrevendo':e.status==='failed'?'Transcrição pendente':'Transcrito'):''}</p>${e.kind==='audio'&&e.status==='failed'?'<p class="m">'+safe(audioError(e.transcriptionError))+'</p>':''}<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">${e.status==='processing'?'<button class="bt" disabled>Transcrevendo…</button>':e.status==='failed'?`<button class="bt" onclick="captureRetryAudio(${i})">Tentar transcrição novamente</button>`:`<button class="bt p" onclick="captureOpen(${i})">${recorded(e)?'Concluir revisão':'Revisar e registrar'}</button>`}<button class="bt" onclick="captureDiscard(${i})">Dispensar</button></div></div>`).join('')||'<p>Nenhuma notificação pendente.</p>'}`;
   }
   window.reviewNativeNotifications=function(){window.meuAssessorAndroidAutoSync();activeSource='bank';modal('Notificações bancárias',body('bank'));MD='capture-inbox';};
   window.captureRefresh=async function(source,silent=false){if(loading)return;loading=true;if(source==='whatsapp')lastWaFetch=Date.now();try{if(source==='bank')window.meuAssessorAndroidAutoSync();else{const result=await api('/whatsapp/messages');waItems=Array.isArray(result.messages)?result.messages.filter(m=>typeof m.messageId==='string'&&typeof m.text==='string'&&Number.isFinite(m.postedAt)).slice(0,50).map(m=>({...m,connection:connectionGeneration})):[];}if(source==='bank'){window.reviewNativeNotifications();}else{AS='wa';draw();}}catch(error){if(silent){connectionMessage=error.message;if(TAB==='as'&&AS==='wa'&&!MD)draw();}else alert(error.message);}finally{loading=false;}};
@@ -2587,7 +2621,7 @@ html[data-tema] #app{padding-bottom:120px!important}
     if(busy)return;const event=reviewItems[index];if(!event)return;
     if(event.kind==='audio'&&event.status!=='pending'){alert('Aguarde a transcrição ou tente novamente antes de registrar.');return;}
     if(event.source!=='bank'&&!ST.msg){alert('Ative Registrar despesas por mensagem em Avisos para abrir rascunhos.');return;}
-    if(recorded(event)){if(confirm('Este evento já está registrado. Concluir a revisão sem criar outro lançamento?'))await complete([event],'recorded');return;}
+    if(recorded(event)){const entry=recorded(event);if(entry.reviewPending){if(confirm('Esta despesa já foi registrada provisoriamente e afetou o saldo. Confirmar os dados como estão? Para corrigir, edite o lançamento existente no histórico.')){entry.reviewPending=false;if(!persistLedger()){entry.reviewPending=true;alert('Não foi possível salvar a validação.');return;}await complete([event],'recorded');draw();}return;}if(confirm('Este evento já está registrado. Concluir a revisão sem criar outro lançamento?'))await complete([event],'recorded');return;}
     draft={event,data:localDraft(event)};
     if(event.kind==='audio'){
       busy=true;modal('Preparando rascunho do áudio',`<p>${safe(event.text)}</p><p class="m" style="margin-top:12px">A IA está identificando valor, conta e categoria. O lançamento será salvo somente após sua revisão.</p>`);MD='capture-preparing';
