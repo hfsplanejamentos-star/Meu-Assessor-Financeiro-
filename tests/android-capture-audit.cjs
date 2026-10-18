@@ -23,7 +23,7 @@ assert.match(queue, /MAX_ITEMS = 500/);
 );
 
 assert.doesNotMatch(captureUi, /Título bruto:|Texto bruto:|Texto detectado:|Título detectado:/);
-assert.match(captureUi, /\\\\nÚltimo pacote:|\\nÚltimo pacote:/);
-assert.match(listener, /remove\\(KEY_RAW_TEXT\\)/);
-assert.match(listener, /remove\\(KEY_TEXT\\)/);
+assert.ok(captureUi.includes('Último pacote:'));
+assert.ok(listener.includes('remove(KEY_RAW_TEXT)'));
+assert.ok(listener.includes('remove(KEY_TEXT)'));
 console.log('AUDITORIA CAPTURA ANDROID: APROVADA');
