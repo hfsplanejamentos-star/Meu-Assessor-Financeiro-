@@ -63,9 +63,7 @@ final class BankAllowlist {
             // Neon
             "br.com.neon",
 
-            // Google Wallet/Pay é intencionalmente excluído: capturamos apenas
-            // a notificação da instituição financeira autorizada.
-            "com.android.vending"
+            // Google Wallet/Pay e Play Store não são fontes bancárias autorizadas.
     ));
 
     static boolean contains(Context context, String packageName) {
