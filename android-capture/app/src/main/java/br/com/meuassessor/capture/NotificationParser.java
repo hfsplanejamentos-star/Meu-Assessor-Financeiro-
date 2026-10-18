@@ -52,7 +52,12 @@ final class NotificationParser {
         String clean = clean(value);
         Matcher matcher = MONEY.matcher(clean);
         while (matcher.find()) {
-            // Ignore only amounts explicitly introduced as account balance, not a purchase\n            // followed by a separate balance clause (common in Caju notifications).\n            int from = Math.max(0, matcher.start()-70);\n            String prefix = clean.substring(from, matcher.start());\n            if (Pattern.compile("(?i)\\\\bsaldo(?:\\\\s+(?:em|dispon[ií]vel(?:\\\\s+em)?))?[^R$0-9]{0,60}(?:R\\\\$|BRL)?\\\\s*$").matcher(prefix).find()) continue;
+            // The value immediately following "Compra de" is the transaction amount.
+            // Caju may include a separate "saldo em AUXÍLIO ... R$ ..." afterwards.
+            int from = Math.max(0, matcher.start()-70);
+            String prefix = clean.substring(from, matcher.start());
+            String tail = prefix.replaceAll("(?i).*\\\\b(?:compra\\\\s+de|pagamento\\\\s+de|valor\\\\s+de)\\\\s*$", "");
+            if (tail.matches("(?is).*\\\\bsaldo\\\\b[^0-9]*$")) continue;
             return parseCents(matcher.group(1));
         }
         return null;
