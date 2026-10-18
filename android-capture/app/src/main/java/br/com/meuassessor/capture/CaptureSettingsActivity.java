@@ -48,12 +48,19 @@ public final class CaptureSettingsActivity extends Activity {
             String result = d.getString(BankNotificationListener.KEY_RESULT, "");
             String recent = d.getString(BankNotificationListener.KEY_RECENT_PACKAGES, "");
             String direction = d.getString(BankNotificationListener.KEY_DIRECTION, "");
+            String bankPkg = d.getString(BankNotificationListener.KEY_BANK_PACKAGE, "");
+            String bankResult = d.getString(BankNotificationListener.KEY_BANK_RESULT, "");
+            long bankTime = d.getLong(BankNotificationListener.KEY_BANK_TIME, 0L);
+            String bankWhen = bankTime == 0L ? "—" : new java.text.SimpleDateFormat("dd/MM HH:mm", java.util.Locale.forLanguageTag("pt-BR")).format(new java.util.Date(bankTime));
             String amount = d.contains(BankNotificationListener.KEY_AMOUNT)
                     ? String.format(java.util.Locale.forLanguageTag("pt-BR"), "R$ %.2f", d.getLong(BankNotificationListener.KEY_AMOUNT,0L)/100.0)
                     : "—";
             diagnostic.setText(
                     "Listener conectado: " + (connected ? "SIM" : "NÃO") +
-                    "\nÚltimo pacote: " + pkg +
+                    "\nÚltimo banco autorizado: " + (bankPkg == null || bankPkg.isEmpty() ? "—" : bankPkg) +
+                    "\nÚltimo resultado bancário: " + (bankResult == null || bankResult.isEmpty() ? "—" : bankResult) +
+                    "\nHorário do último evento bancário: " + bankWhen +
+                    "\nÚltimo pacote (qualquer app): " + pkg +
                     "\nAplicativo autorizado: " + (allowed ? "SIM" : "NÃO") +
                     "\nFinanceira reconhecida: " + (financial ? "SIM" : "NÃO") +
                     "\nResultado: " + result +
