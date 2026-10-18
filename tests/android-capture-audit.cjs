@@ -7,6 +7,7 @@ const listener = read('android-capture/app/src/main/java/br/com/meuassessor/capt
 const parser = read('android-capture/app/src/main/java/br/com/meuassessor/capture/NotificationParser.java');
 const queue = read('android-capture/app/src/main/java/br/com/meuassessor/capture/EncryptedQueueStore.java');
 const allowlist = read('android-capture/app/src/main/java/br/com/meuassessor/capture/BankAllowlist.java');
+const captureUi = read('android-capture/app/src/main/java/br/com/meuassessor/capture/CaptureSettingsActivity.java');
 
 assert.match(manifest, /BIND_NOTIFICATION_LISTENER_SERVICE/);
 assert.doesNotMatch(manifest, /android\.permission\.INTERNET/);
@@ -21,4 +22,8 @@ assert.match(queue, /MAX_ITEMS = 500/);
   assert.ok(allowlist.includes(`"${pkg}"`), `pacote autorizado ausente: ${pkg}`)
 );
 
+assert.doesNotMatch(captureUi, /Título bruto:|Texto bruto:|Texto detectado:|Título detectado:/);
+assert.match(captureUi, /\\\\nÚltimo pacote:|\\nÚltimo pacote:/);
+assert.match(listener, /remove\\(KEY_RAW_TEXT\\)/);
+assert.match(listener, /remove\\(KEY_TEXT\\)/);
 console.log('AUDITORIA CAPTURA ANDROID: APROVADA');
