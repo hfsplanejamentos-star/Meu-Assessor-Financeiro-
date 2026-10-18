@@ -47,32 +47,19 @@ public final class CaptureSettingsActivity extends Activity {
             boolean connected = d.getBoolean(BankNotificationListener.KEY_CONNECTED, false);
             String result = d.getString(BankNotificationListener.KEY_RESULT, "");
             String recent = d.getString(BankNotificationListener.KEY_RECENT_PACKAGES, "");
-            String lastTitle = d.getString(BankNotificationListener.KEY_TITLE, "");
-            String lastText = d.getString(BankNotificationListener.KEY_TEXT, "");
-            String rawPkg = d.getString(BankNotificationListener.KEY_RAW_PACKAGE, "");
-            String rawTitle = d.getString(BankNotificationListener.KEY_RAW_TITLE, "");
-            String rawText = d.getString(BankNotificationListener.KEY_RAW_TEXT, "");
             String direction = d.getString(BankNotificationListener.KEY_DIRECTION, "");
             String amount = d.contains(BankNotificationListener.KEY_AMOUNT)
                     ? String.format(java.util.Locale.forLanguageTag("pt-BR"), "R$ %.2f", d.getLong(BankNotificationListener.KEY_AMOUNT,0L)/100.0)
                     : "—";
             diagnostic.setText(
                     "Listener conectado: " + (connected ? "SIM" : "NÃO") +
-                    "\\n\\nÚLTIMA NOTIFICAÇÃO RECEBIDA (antes do filtro)" +
-                    "\\nPacote bruto: " + (rawPkg == null || rawPkg.isEmpty() ? "—" : rawPkg) +
-                    "\\nTítulo bruto: " + (rawTitle == null || rawTitle.isEmpty() ? "—" : rawTitle) +
-                    "\\nTexto bruto: " + (rawText == null || rawText.isEmpty() ? "—" : rawText) +
-                    "\\n\\nRESULTADO DO FILTRO" +
-                    "\nFila criptografada: " + new EncryptedQueueStore(this).size() +
-                    "\n" +
-                    "Último pacote: " + pkg +
+                    "\nÚltimo pacote: " + pkg +
                     "\nAplicativo autorizado: " + (allowed ? "SIM" : "NÃO") +
                     "\nFinanceira reconhecida: " + (financial ? "SIM" : "NÃO") +
                     "\nResultado: " + result +
+                    "\nFila criptografada: " + new EncryptedQueueStore(this).size() +
                     "\nValor detectado: " + amount +
                     "\nDireção: " + (direction == null || direction.isEmpty() ? "—" : direction) +
-                    "\nTítulo detectado: " + (lastTitle == null || lastTitle.isEmpty() ? "—" : lastTitle) +
-                    "\nTexto detectado: " + (lastText == null || lastText.isEmpty() ? "—" : lastText) +
                     "\nPacotes recentes:\n" + (recent == null || recent.isEmpty() ? "—" : recent)
             );
         }
@@ -103,7 +90,7 @@ public final class CaptureSettingsActivity extends Activity {
         });
 
         TextView privacy = label(
-                "Diagnóstico seguro: de aplicativos não autorizados, somente o identificador do pacote é registrado. Conteúdo de notificações não autorizadas não é armazenado.",
+                "Diagnóstico seguro: mostra somente identificadores de aplicativos, estado da captura e valores financeiros reconhecidos. Não exibe textos de mensagens pessoais.",
                 14, Color.parseColor("#91A4BF"));
 
         root.addView(title, params(24));
