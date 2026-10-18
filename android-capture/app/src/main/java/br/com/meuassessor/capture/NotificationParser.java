@@ -56,8 +56,8 @@ final class NotificationParser {
             // Caju may include a separate "saldo em AUXÍLIO ... R$ ..." afterwards.
             int from = Math.max(0, matcher.start()-70);
             String prefix = clean.substring(from, matcher.start());
-            String tail = prefix.replaceAll("(?i).*\\\\b(?:compra\\\\s+de|pagamento\\\\s+de|valor\\\\s+de)\\\\s*$", "");
-            if (tail.matches("(?is).*\\\\bsaldo\\\\b[^0-9]*$")) continue;
+            String tail = prefix.replaceAll("(?i).*\\b(?:compra\\s+de|pagamento\\s+de|valor\\s+de)\\s*$", "");
+            if (tail.matches("(?is).*\\bsaldo\\b[^0-9]*$")) continue;
             return parseCents(matcher.group(1));
         }
         return null;
