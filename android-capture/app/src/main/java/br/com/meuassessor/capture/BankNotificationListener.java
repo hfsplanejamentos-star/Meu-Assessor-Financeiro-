@@ -14,7 +14,7 @@ public final class BankNotificationListener extends NotificationListenerService 
             KEY_FINANCIAL="last_financial", KEY_RESULT="last_result", KEY_TIME="last_time",
             KEY_CONNECTED="listener_connected", KEY_RECENT_PACKAGES="recent_packages",
             KEY_TITLE="last_title", KEY_TEXT="last_text", KEY_AMOUNT="last_amount", KEY_DIRECTION="last_direction",
-            KEY_REPORTED_BALANCE="last_reported_balance", KEY_RAW_PACKAGE="last_raw_package", KEY_RAW_TITLE="last_raw_title", KEY_RAW_TEXT="last_raw_text", KEY_RAW_TIME="last_raw_time";
+            KEY_REPORTED_BALANCE="last_reported_balance", KEY_BANK_PACKAGE="last_bank_package", KEY_BANK_RESULT="last_bank_result", KEY_BANK_TIME="last_bank_time", KEY_RAW_PACKAGE="last_raw_package", KEY_RAW_TITLE="last_raw_title", KEY_RAW_TEXT="last_raw_text", KEY_RAW_TIME="last_raw_time";
 
     @Override public void onListenerConnected() {
         super.onListenerConnected();
@@ -75,6 +75,7 @@ public final class BankNotificationListener extends NotificationListenerService 
         SharedPreferences.Editor x=getSharedPreferences(DIAG_PREFS,Context.MODE_PRIVATE).edit().putString(KEY_PACKAGE,pkg==null?"":pkg)
                 .putBoolean(KEY_ALLOWED,allowed).putBoolean(KEY_FINANCIAL,financial).putString(KEY_RESULT,result).putLong(KEY_TIME,System.currentTimeMillis())
                 .remove(KEY_TITLE).remove(KEY_TEXT).putString(KEY_DIRECTION,direction==null?"":direction);
+        if(allowed){x.putString(KEY_BANK_PACKAGE,pkg).putString(KEY_BANK_RESULT,result).putLong(KEY_BANK_TIME,System.currentTimeMillis());}
         if(amount==null)x.remove(KEY_AMOUNT);else x.putLong(KEY_AMOUNT,amount); if(reportedBalance==null)x.remove(KEY_REPORTED_BALANCE);else x.putLong(KEY_REPORTED_BALANCE,reportedBalance); x.apply();
     }
     private static String text(CharSequence v){return v==null?"":v.toString().replaceAll("\\s+"," ").trim();}
