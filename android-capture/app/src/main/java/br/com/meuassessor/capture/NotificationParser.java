@@ -38,8 +38,7 @@ final class NotificationParser {
         } else {
             direction = "unknown";
         }
-        long bucket = postedAt / 60_000L;
-        String id = sha256(sourcePackage + "|" + normalize(combined) + "|" + amount + "|" + bucket);
+        // Use the precise notification timestamp: separate identical purchases within\n        // the same minute must not share an ID. Near-immediate reposts are\n        // deduplicated by EncryptedQueueStore using the notification contents.\n        String id = sha256(sourcePackage + "|" + normalize(combined) + "|" + amount + "|" + postedAt);
         return new CapturedNotification(id, sourcePackage, safeTitle, safeText, amount, reportedBalance, direction, postedAt, System.currentTimeMillis());
     }
 
