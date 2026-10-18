@@ -70,11 +70,11 @@ final class EncryptedQueueStore {
 
         long priorTime = prior.optLong("postedAt", 0L);
         long delta = Math.abs(event.postedAt - priorTime);
-        if (delta > 120000L) return false;
+        // Only collapse immediate re-posts of the same notification. Separate\n        // purchases with equal value and merchant must remain independent.\n        if (delta > 3000L) return false;
 
         String current = fingerprint(event.title + " " + event.text);
         String previous = fingerprint(prior.optString("title") + " " + prior.optString("text"));
-        return !current.isEmpty() && current.equals(previous);
+        return !current.isEmpty() && current.equals(previous)\n                && safe(event.text).equals(safe(prior.optString("text")))\n                && safe(event.title).equals(safe(prior.optString("title")));
     }
 
     private static String safe(String value) {
