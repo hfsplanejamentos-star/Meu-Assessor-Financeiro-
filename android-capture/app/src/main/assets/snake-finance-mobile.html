@@ -2495,9 +2495,9 @@ html[data-tema] #app{padding-bottom:120px!important}
       for(const event of pending.slice(0,100)){
         if(!event||typeof event.id!=='string'||recorded({...event,source:'bank'}))continue;
         const d=localDraft(event),date=new Date(event.postedAt);
-        if(d.type!=='d'||!Number.isSafeInteger(event.amountCents)||event.amountCents<=0||
+        if(event.direction!=='expense'||d.type!=='d'||!Number.isSafeInteger(event.amountCents)||event.amountCents<=0||
            d.amount!==event.amountCents||!validISO(d.day)||!AC[d.account]||
-           !Number.isFinite(date.getTime()))continue;
+           !Number.isFinite(date.getTime())||date.getTime()>Date.now()+300000)continue;
         const raw=(String(event.title||'')+' '+String(event.text||'')).toLowerCase();
         if(/transfer[eê]ncia|entre contas|estorno|cancelad|fatura|pagamento de cart[aã]o|limite|saldo dispon[ií]vel/.test(raw))continue;
         const hint=window.SnakeWorkRules.classify({text:raw,account:d.account,amountCents:d.amount,weekday:date.getDay(),hour:date.getHours()});
