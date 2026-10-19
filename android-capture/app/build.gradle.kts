@@ -31,8 +31,8 @@ android {
     productFlavors {
         create("validation") {
             dimension = "distribution"
-            applicationIdSuffix = ".validation"
-            versionNameSuffix = "-xp-validation"
+            applicationIdSuffix = ".validation2"
+            versionNameSuffix = "-xp-validation2"
         }
         create("original") {
             dimension = "distribution"
