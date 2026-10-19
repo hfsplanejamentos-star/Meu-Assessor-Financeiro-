@@ -31,9 +31,11 @@ public class NotificationParserTest {
 
     @Test public void recognizesExpenseAndCreatesStableId() {
         CapturedNotification first = NotificationParser.parse("com.c6bank.app", "Pix enviado", "R$ 80,00 para Depósito do Latão", 1_000_000L);
-        CapturedNotification repeated = NotificationParser.parse("com.c6bank.app", "Pix enviado", "R$ 80,00 para Depósito do Latão", 1_000_500L);
+        CapturedNotification repeated = NotificationParser.parse("com.c6bank.app", "Pix enviado", "R$ 80,00 para Depósito do Latão", 1_000_000L);
         assertEquals(Long.valueOf(8000), first.amountCents);
         assertEquals("expense", first.direction);
         assertEquals(first.id, repeated.id);
+        CapturedNotification separate = NotificationParser.parse("com.c6bank.app", "Pix enviado", "R$ 80,00 para Depósito do Latão", 1_000_500L);
+        assertNotEquals(first.id, separate.id);
     }
 }
