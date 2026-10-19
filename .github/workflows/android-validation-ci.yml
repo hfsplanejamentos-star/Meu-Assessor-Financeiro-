@@ -36,6 +36,12 @@ jobs:
         run: gradle testOriginalDebugUnitTest testValidationDebugUnitTest --stacktrace
       - name: Build validation debug APK without release credentials
         run: gradle assembleValidationDebug --stacktrace
+      - name: Verify isolated validation package identity
+        run: |
+          APK="app/build/outputs/apk/validation/debug/app-validation-debug.apk"
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | grep -F "package: name='br.com.snakefinance.app.validation'"
+          sha256sum "$APK"
       - name: Upload validation test APK
         uses: actions/upload-artifact@v4
         with:
