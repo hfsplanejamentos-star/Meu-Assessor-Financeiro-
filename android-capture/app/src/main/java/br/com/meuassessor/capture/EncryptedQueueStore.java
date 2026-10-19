@@ -234,8 +234,13 @@ final class EncryptedQueueStore {
             output.flush();
             output.getFD().sync();
         }
-        if (!staged.renameTo(file)) {
-            throw new java.io.IOException("Could not atomically replace notification queue");
+        try {
+            java.nio.file.Files.move(staged.toPath(), file.toPath(),
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        } catch (java.nio.file.AtomicMoveNotSupportedException unsupported) {
+            // Never delete the original queue just to make a replacement succeed.
+            throw new java.io.IOException("Atomic queue replacement unavailable", unsupported);
         }
     }
 
