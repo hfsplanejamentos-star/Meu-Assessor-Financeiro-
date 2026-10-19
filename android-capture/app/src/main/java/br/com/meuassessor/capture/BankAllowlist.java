@@ -61,7 +61,7 @@ final class BankAllowlist {
             "br.com.uol.ps.myaccount",
 
             // Neon
-            "br.com.neon",
+            "br.com.neon"
 
             // Google Wallet/Pay e Play Store não são fontes bancárias autorizadas.
     ));
