@@ -122,8 +122,6 @@ public final class CaptureSettingsActivity extends Activity {
         addBankToggle(root, "PicPay", "com.picpay");
         addBankToggle(root, "PagBank", "br.com.uol.ps.myaccount");
         addBankToggle(root, "Neon", "br.com.neon");
-        addBankToggle(root, "Google Play", "com.android.vending");
-        addBankToggle(root, "Google Wallet", "com.google.android.apps.walletnfcrel");
 
         root.addView(permission, params(18));
         root.addView(privacy, params(18));
