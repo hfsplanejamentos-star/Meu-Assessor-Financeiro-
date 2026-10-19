@@ -1178,7 +1178,8 @@ html[data-tema] .settingsPop{top:122px!important;max-height:calc(100dvh - 145px)
 .noticeBody{display:grid;grid-template-columns:minmax(0,1fr) 36px;align-items:center;gap:12px;width:100%;padding:8px 14px 16px;background:transparent;border:0;text-align:left;color:#f5f5f5;cursor:pointer;font:inherit;line-height:1.5}.noticeMessage{font-size:14px;overflow-wrap:anywhere}.noticeMessage small{display:block;margin-top:7px;font-size:11px;color:#c8cbd0}.noticeArrow{display:grid;place-items:center;width:36px;height:36px;border:1px solid #ffe39c;border-radius:50%;background:linear-gradient(140deg,#efcd7b,#b68525);box-shadow:0 0 10px #e9bc5930;color:#fff}.noticeArrow svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.noticeHead .noticeSeverity{font-size:10px;color:#e8bc65}
 .alertRule{scroll-margin-top:184px}
 @media(max-width:350px){html[data-tema] #fixedTopShell .appHd{padding-inline:8px!important}.headerTop{gap:4px}.headerBrand{gap:6px}.headerBrand .snakeMark{--mark-size:40px}.snakeWordmark strong{font-size:15px}.headerBottom{gap:7px}.noticeHead .snakeWordmark strong{font-size:14px}}
-</style></head><body>
+</style><script src="snake-work-rules.js"></script>
+</head><body>
 <script id="snake-early-diagnostics">
 (function(){
  var caught=[];
@@ -2511,6 +2512,18 @@ html[data-tema] #app{padding-bottom:120px!important}
     const date=new Date(e.postedAt),day=Number.isFinite(date.getTime())?`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`:APP_TODAY;
     return {type:direction==='income'?'r':direction==='expense'?'d':'',amount:Number.isSafeInteger(amount)&&amount>0?amount:null,account,day,name:(text||e.title||'Gasto capturado').slice(0,250),category:'out',sub:''};
   }
+  function applyWorkRules(event,data){
+    if(!window.SnakeWorkRules||!data||data.type!=='d')return data;
+    const date=new Date(event.postedAt);
+    if(!Number.isFinite(date.getTime()))return data;
+    const hint=window.SnakeWorkRules.classify({
+      text:String(event.title||'')+' '+String(event.text||''),
+      account:data.account,amountCents:data.amount,
+      weekday:date.getDay(),hour:date.getHours()
+    });
+    if(hint&&CATDB[hint.category])return {...data,category:hint.category,sub:hint.sub};
+    return data;
+  }
   function audioError(code){return ({audio_not_configured:'A transcrição de áudio ainda precisa ser ativada no servidor.',unsupported_audio:'Formato não compatível. Envie um áudio gravado diretamente no WhatsApp.',audio_too_large:'O áudio excede 10 MB. Envie um trecho menor.',empty_transcript:'Não foi possível reconhecer a fala. Tente um áudio mais claro.',transcript_too_long:'A transcrição ficou muito longa. Envie um áudio mais curto.',media_unavailable:'O áudio não está disponível para download. Tente novamente ou reenvie.',audio_checksum_mismatch:'O arquivo recebido não passou na verificação. Reenvie o áudio.'})[code]||'A transcrição não foi concluída. Tente novamente.';}
   window.captureRetryAudio=async function(index){if(busy)return;const event=reviewItems[index];if(!event||event.kind!=='audio'||event.status!=='failed'||event.connection!==connectionGeneration)return;busy=true;try{await api('/whatsapp/retry','POST',{messageId:event.id});await window.captureRefresh('whatsapp');}catch(error){alert(error.message);}finally{busy=false;}};
   window.captureOpen=async function(index){
@@ -2518,7 +2531,7 @@ html[data-tema] #app{padding-bottom:120px!important}
     if(event.kind==='audio'&&event.status!=='pending'){alert('Aguarde a transcrição ou tente novamente antes de registrar.');return;}
     if(event.source!=='bank'&&!ST.msg){alert('Ative Registrar despesas por mensagem em Avisos para abrir rascunhos.');return;}
     if(recorded(event)){if(confirm('Este evento já está registrado. Concluir a revisão sem criar outro lançamento?'))await complete([event],'recorded');return;}
-    draft={event,data:localDraft(event)};
+    draft={event,data:applyWorkRules(event,localDraft(event))};
     if(event.kind==='audio'){
       busy=true;modal('Preparando rascunho do áudio',`<p>${safe(event.text)}</p><p class="m" style="margin-top:12px">A IA está identificando valor, conta e categoria. O lançamento será salvo somente após sua revisão.</p>`);MD='capture-preparing';
       try{const result=await api('/ai/finance','POST',{text:'Interprete como um único rascunho financeiro para revisão. Se houver vários gastos ou ambiguidade, peça esclarecimento: '+event.text,context:{today:draft.data.day,categories:aiContext().categories}});if(MD!=='capture-preparing'||draft?.event!==event)return;draft.data=applyAi(result,draft.data);}
