@@ -2483,7 +2483,37 @@ html[data-tema] #app{padding-bottom:120px!important}
     if(native&&!button){button=document.createElement('button');button.id='native-review';button.className='bt';button.style.cssText='position:fixed;right:12px;bottom:105px;z-index:40;max-width:220px';button.onclick=window.reviewNativeNotifications;document.body.appendChild(button);}
     if(button){button.textContent='Revisar notificações ('+pending.length+')';button.hidden=!pending.length||TAB==='as'||!!MD;}
     window.dispatchEvent(new CustomEvent('assessor-native-pending',{detail:{count:pending.length}}));
+    if(pending.length)autoPostWorkExpenses();
   };
+  // Auto-register only high-confidence work expenses. Keep notification pending for later review.
+  let autoCaptureBusy=false;
+  function autoPostWorkExpenses(){
+    if(autoCaptureBusy||!native||PERSIST_BLOCKED||!window.SnakeWorkRules)return;
+    autoCaptureBusy=true;
+    try{
+      let saved=0;
+      for(const event of pending.slice(0,100)){
+        if(!event||typeof event.id!=='string'||recorded({...event,source:'bank'}))continue;
+        const d=localDraft(event),date=new Date(event.postedAt);
+        if(d.type!=='d'||!Number.isSafeInteger(event.amountCents)||event.amountCents<=0||
+           d.amount!==event.amountCents||!validISO(d.day)||!AC[d.account]||
+           !Number.isFinite(date.getTime()))continue;
+        const raw=(String(event.title||'')+' '+String(event.text||'')).toLowerCase();
+        if(/transfer[eê]ncia|entre contas|estorno|cancelad|fatura|pagamento de cart[aã]o|limite|saldo dispon[ií]vel/.test(raw))continue;
+        const hint=window.SnakeWorkRules.classify({text:raw,account:d.account,amountCents:d.amount,weekday:date.getDay(),hour:date.getHours()});
+        if(!hint||hint.confidence!=='high'||!CATDB[hint.category])continue;
+        const key='bank:'+event.id;
+        // Same-value purchases are allowed, but a manually registered identical expense is held for review.
+        if(L.some(x=>x.captureId===key||(x.d===d.day&&x.a===d.account&&x.v===d.amount&&x.t==='d'&&String(x.n||'').trim().toLowerCase()===d.name.trim().toLowerCase())))continue;
+        const previous=L.slice(),oldId=NID;
+        L.push({id:NID,d:d.day,n:d.name,t:'d',v:d.amount,a:d.account,s:'r',c:hint.category,sub:hint.sub,captureId:key,autoCaptured:true,reviewPending:true});
+        NID=nextId();
+        if(!persistLedger()){L=previous;NID=oldId;break;}
+        saved++;
+      }
+      if(saved)draw();
+    }finally{autoCaptureBusy=false;}
+  }
   function rows(source){return source==='bank'?pending:waItems;}
   function captureKey(e){return e.source+':'+e.id;}
   function recorded(e){return L.find(x=>x.captureId===captureKey(e));}
