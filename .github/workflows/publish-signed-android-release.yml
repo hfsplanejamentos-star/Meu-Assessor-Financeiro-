@@ -54,21 +54,21 @@ jobs:
         run: node tests/snake-finance-regression.cjs
 
       - name: Tests
-        run: gradle testDebugUnitTest --stacktrace
+        run: gradle testOriginalDebugUnitTest testValidationDebugUnitTest --stacktrace
 
       - name: Build signed release
-        run: gradle assembleRelease --stacktrace
+        run: gradle assembleOriginalRelease --stacktrace
 
       - name: Verify APK signature
         run: |
-          APK="app/build/outputs/apk/release/app-release.apk"
+          APK="app/build/outputs/apk/original/release/app-original-release.apk"
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)"
           test -f "$APK"
           test -n "$APKSIGNER"
           "$APKSIGNER" verify --verbose --print-certs "$APK"
           AAPT="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -1)"
           "$AAPT" dump badging "$APK" | grep -E "^package:|^sdkVersion:|^targetSdkVersion:"
-          cp "$APK" "app/build/outputs/apk/release/Snake-Finance-v1.5.7.apk"
+          cp "$APK" "app/build/outputs/apk/original/release/Snake-Finance-v1.5.7.apk"
 
       - name: Upload signed APK
         uses: actions/upload-artifact@v4
