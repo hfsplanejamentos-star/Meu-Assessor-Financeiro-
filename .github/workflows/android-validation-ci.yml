@@ -34,6 +34,14 @@ jobs:
           gradle-version: "8.10.2"
       - name: Run both flavor unit test suites
         run: gradle testOriginalDebugUnitTest testValidationDebugUnitTest --stacktrace
+      - name: Preserve unit test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Snake-Finance-Android-Unit-Test-Reports
+          path: android-capture/app/build/test-results/**/TEST-*.xml
+          if-no-files-found: warn
+          retention-days: 14
       - name: Build validation debug APK without release credentials
         run: gradle assembleValidationDebug --stacktrace
       - name: Verify isolated validation package identity
