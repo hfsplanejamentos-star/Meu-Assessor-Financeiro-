@@ -226,12 +226,17 @@ final class EncryptedQueueStore {
                 wrapper.toString()
                         .getBytes(StandardCharsets.UTF_8);
 
-        FileOutputStream output =
-                new FileOutputStream(file);
-
-        output.write(data);
-        output.flush();
-        output.close();
+        // Write a complete encrypted snapshot before replacing the active queue.
+        // A failed write must not truncate the previous captured transactions.
+        File staged = new File(file.getParentFile(), FILE + ".tmp");
+        try (FileOutputStream output = new FileOutputStream(staged)) {
+            output.write(data);
+            output.flush();
+            output.getFD().sync();
+        }
+        if (!staged.renameTo(file)) {
+            throw new java.io.IOException("Could not atomically replace notification queue");
+        }
     }
 
     private SecretKey key() throws Exception {
