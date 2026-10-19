@@ -23,4 +23,24 @@ public class CajuNotificationParserTest {
         assertEquals(Long.valueOf(1900), b.amountCents);
         assertNotEquals(a.id, b.id);
     }
+
+    @Test public void identicalPurchasesInSameMinuteHaveDistinctIds() {
+        String title = "Pagamento aprovado";
+        String body = "Compra de R$ 17,00 em Padaria APROVADA no CRÉDITO, saldo R$ 50,00.";
+        long time = 1792342380000L;
+        CapturedNotification first = NotificationParser.parse("com.caju.employee", title, body, time);
+        CapturedNotification second = NotificationParser.parse("com.caju.employee", title, body, time + 10000L);
+        assertEquals(Long.valueOf(1700), first.amountCents);
+        assertEquals(Long.valueOf(1700), second.amountCents);
+        assertNotEquals(first.id, second.id);
+    }
+
+    @Test public void repeatedNotificationWithSameTimestampKeepsId() {
+        String title = "Pagamento aprovado";
+        String body = "Compra de R$ 17,00 em Padaria APROVADA no CRÉDITO.";
+        long time = 1792342380000L;
+        CapturedNotification first = NotificationParser.parse("com.caju.employee", title, body, time);
+        CapturedNotification repost = NotificationParser.parse("com.caju.employee", title, body, time);
+        assertEquals(first.id, repost.id);
+    }
 }
