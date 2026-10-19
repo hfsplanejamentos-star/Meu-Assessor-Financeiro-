@@ -1620,7 +1620,7 @@ function vGeral(){
   <div class="c v28Account cardEdit" onclick="openAccount('c6')">${tile('card',AC.c6[1])}<div><span class="m">C6 Débito</span><b>${brs(d.c6)}</b></div></div>
   <div class="c v28Account cardEdit" onclick="openAccount('carbon')">${tile('card',AC.carbon[1])}<div><span class="m">C6 Carbon · disponível</span><b>${brs(Math.max(0,ALERT_CFG.carbon.limit*100-creditUsed(alertRef(YM),ALERT_CFG.carbon)))}</b><small class="m">Em uso ${brs(creditUsed(alertRef(YM),ALERT_CFG.carbon))} · Limite ${brs(ALERT_CFG.carbon.limit*100)}</small></div></div>
   <div class="c v28Account cardEdit" onclick="openAccount('caju')">${tile('card',AC.caju[1])}<div><span class="m">Caju</span><b>${brs(d.cj)}</b></div></div>
-  <div class="c v28Account cardEdit" onclick="goTab('inv')"><div class="tl" style="background:#F2B705;color:#111;font-weight:800">XP</div><div><span class="m">XP · Metas</span><b>Metas</b></div></div>
+  <div class="c v28Account cardEdit" onclick="goTab('des')"><div class="tl" style="background:#F2B705;color:#111;font-weight:800">XP</div><div><span class="m">XP Infinite One · Débito</span><b>${brs(accountBalance('xp',monthEnd(YM)))}</b></div></div>
  </div></div>
  <div class="v30DailyShell">${graf7()}</div>
  ${v28CatDonut()}
@@ -2172,7 +2172,7 @@ detailModal=function(title,items){originalDetailModal(title,items);const mc=$('m
 const OVERVIEW_KEY='assessor_overview_v77';
 const OVERVIEW_ITEMS=[
  ['balance','Saldo disponível','Indicadores',true],['forecast','Saldo previsto','Indicadores',true],['expenses','Despesas realizadas','Indicadores',true],['pending','A pagar','Indicadores',true],
- ['bank_c6','C6 Débito','Contas',true],['bank_carbon','C6 Carbon','Contas',true],['bank_caju','Caju','Contas',true],['bank_xp','XP · Metas','Contas',true],
+ ['bank_c6','C6 Débito','Contas',true],['bank_carbon','C6 Carbon','Contas',true],['bank_caju','Caju','Contas',true],['bank_xp','XP Infinite One Débito','Contas',true],
  ['daily','Gastos por dia','Cards e gráficos',true],['categories','Gastos por categoria / conta / trabalho','Cards e gráficos',true],['distribution','Despesas do mês','Cards e gráficos',true],['caju_chart','Gastos Caju (mês atual)','Cards e gráficos',true],['recurring','Atuais e recorrentes','Cards e gráficos',true],['day','Despesas do dia','Cards e gráficos',true],['agenda','Agenda financeira','Cards e gráficos',true],['transactions','Últimas transações','Cards e gráficos',false],['commitments','Próximos compromissos','Cards e gráficos',false]
 ];
 OVERVIEW_ITEMS.push(['alerts','Alertas do assessor','Cards e gráficos',false],['invest_goals','Minhas metas','Investimentos',false],['invest_deposits','Total aportado','Investimentos',false],['invest_yield','Rendimento estimado','Investimentos',false],['invest_goaldate','Data da meta','Investimentos',false],['invest_chart','Projeção de investimentos','Investimentos',false],['invest_parameters','Parâmetros da projeção','Investimentos',false],['invest_monthly','Detalhamento mensal','Investimentos',false]);
