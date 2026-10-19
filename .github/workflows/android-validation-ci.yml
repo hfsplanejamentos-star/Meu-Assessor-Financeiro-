@@ -42,10 +42,11 @@ jobs:
           test -s "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | grep -F "package: name='br.com.snakefinance.app.validation'"
           sha256sum "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
       - name: Upload validation test APK
         uses: actions/upload-artifact@v4
         with:
-          name: Snake-Finance-XP-Validation-UNSIGNED-TEST
+          name: Snake-Finance-XP-Validation-DEBUG-SIGNED-TEST
           path: android-capture/app/build/outputs/apk/validation/debug/app-validation-debug.apk
           if-no-files-found: error
           retention-days: 14
