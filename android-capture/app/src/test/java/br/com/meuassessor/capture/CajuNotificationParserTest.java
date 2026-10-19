@@ -43,4 +43,16 @@ public class CajuNotificationParserTest {
         CapturedNotification repost = NotificationParser.parse("com.caju.employee", title, body, time);
         assertEquals(first.id, repost.id);
     }
+
+    @Test public void pixReceivedIsIncomeAndPixSentIsExpense() {
+        CapturedNotification received = NotificationParser.parse("com.c6bank.app",
+                "Você recebeu um Pix", "Pix recebido no valor de R$ 1,00.", 1792342380000L);
+        CapturedNotification sent = NotificationParser.parse("com.c6bank.app",
+                "Pix realizado", "Pix realizado de R$ 1,00.", 1792342381000L);
+        assertEquals("income", received.direction);
+        assertEquals("expense", sent.direction);
+        assertEquals(Long.valueOf(100), received.amountCents);
+        assertEquals(Long.valueOf(100), sent.amountCents);
+        assertNotEquals(received.id, sent.id);
+    }
 }
