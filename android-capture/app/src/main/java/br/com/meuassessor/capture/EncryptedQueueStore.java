@@ -70,9 +70,9 @@ final class EncryptedQueueStore {
 
         long priorTime = prior.optLong("postedAt", 0L);
         long delta = Math.abs(event.postedAt - priorTime);
-        // Only collapse immediate re-posts of the same notification. Separate
-        // purchases with equal value and merchant must remain independent.
-        if (delta > 3000L) return false;
+        // Only collapse exact reposts at the same notification timestamp.
+        // Different events with equal amount and merchant must be retained.
+        if (delta != 0L) return false;
 
         String current = fingerprint(event.title + " " + event.text);
         String previous = fingerprint(prior.optString("title") + " " + prior.optString("text"));
