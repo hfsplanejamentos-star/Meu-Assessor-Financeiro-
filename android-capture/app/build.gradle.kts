@@ -25,6 +25,21 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Separate validation build; never replace the installed original package.
+    // Signing certificate must still match the existing validation installation
+    // for an in-place upgrade.
+    productFlavors {
+        create("validation") {
+            dimension = "distribution"
+            applicationIdSuffix = ".validation"
+            versionNameSuffix = "-xp-validation"
+        }
+        create("original") {
+            dimension = "distribution"
+        }
+    }
+    flavorDimensions += "distribution"
+
     buildFeatures {
         buildConfig = true
     }
