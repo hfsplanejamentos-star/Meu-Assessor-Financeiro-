@@ -2560,7 +2560,7 @@ html[data-tema] #app{padding-bottom:120px!important}
     if(busy)return;const event=reviewItems[index];if(!event)return;
     if(event.kind==='audio'&&event.status!=='pending'){alert('Aguarde a transcrição ou tente novamente antes de registrar.');return;}
     if(event.source!=='bank'&&!ST.msg){alert('Ative Registrar despesas por mensagem em Avisos para abrir rascunhos.');return;}
-    if(recorded(event)){if(confirm('Este evento já está registrado. Concluir a revisão sem criar outro lançamento?'))await complete([event],'recorded');return;}
+    if(recorded(event)){if(confirm('Este evento já está registrado. Concluir a revisão sem criar outro lançamento?')){await complete([event],'recorded');const x=recorded(event);if(x&&x.reviewPending){x.reviewPending=false;persistLedger();draw();}}return;}
     draft={event,data:applyWorkRules(event,localDraft(event))};
     if(event.kind==='audio'){
       busy=true;modal('Preparando rascunho do áudio',`<p>${safe(event.text)}</p><p class="m" style="margin-top:12px">A IA está identificando valor, conta e categoria. O lançamento será salvo somente após sua revisão.</p>`);MD='capture-preparing';
