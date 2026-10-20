@@ -277,6 +277,28 @@ public final class MainActivity extends Activity {
     }
 
     private void loadDashboardHtml() {
+        // Official Rev. 0 must never replace its bundled dashboard with a
+        // stale cache or GitHub Pages. This changes HTML selection only:
+        // WebView localStorage, finance entries and bank data are untouched.
+        try (InputStream input = getAssets().open("snake-finance-mobile.html")) {
+            java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int count;
+            while ((count = input.read(buffer)) != -1) bytes.write(buffer, 0, count);
+            String bundled = bytes.toString("UTF-8");
+            if (!validDashboard(bundled)) {
+                throw new IllegalStateException("Invalid bundled dashboard");
+            }
+            showDashboard(bundled);
+        } catch (Exception failure) {
+            android.widget.Toast.makeText(this,
+                    "Falha no painel interno. Dados preservados.",
+                    android.widget.Toast.LENGTH_LONG).show();
+        }
+        return;
+    }
+
+    private void loadDashboardHtmlLegacyUnused() {
         String local = readCachedDashboard();
         if (local == null) {
             try (InputStream input = getAssets().open("snake-finance-mobile.html")) {
