@@ -13,6 +13,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.ScrollView;
 
 public final class CaptureSettingsActivity extends Activity {
     private TextView status;
@@ -22,7 +23,10 @@ public final class CaptureSettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        setContentView(buildScreen());
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        scroll.addView(buildScreen());
+        setContentView(scroll);
     }
 
     @Override
@@ -47,33 +51,29 @@ public final class CaptureSettingsActivity extends Activity {
             boolean connected = d.getBoolean(BankNotificationListener.KEY_CONNECTED, false);
             String result = d.getString(BankNotificationListener.KEY_RESULT, "");
             String recent = d.getString(BankNotificationListener.KEY_RECENT_PACKAGES, "");
-            String lastTitle = d.getString(BankNotificationListener.KEY_TITLE, "");
-            String lastText = d.getString(BankNotificationListener.KEY_TEXT, "");
-            String rawPkg = d.getString(BankNotificationListener.KEY_RAW_PACKAGE, "");
-            String rawTitle = d.getString(BankNotificationListener.KEY_RAW_TITLE, "");
-            String rawText = d.getString(BankNotificationListener.KEY_RAW_TEXT, "");
             String direction = d.getString(BankNotificationListener.KEY_DIRECTION, "");
+            String bankPkg = d.getString(BankNotificationListener.KEY_BANK_PACKAGE, "");
+            String bankResult = d.getString(BankNotificationListener.KEY_BANK_RESULT, "");
+            long bankTime = d.getLong(BankNotificationListener.KEY_BANK_TIME, 0L);
+            String bankWhen = bankTime == 0L ? "—" : new java.text.SimpleDateFormat("dd/MM HH:mm", java.util.Locale.forLanguageTag("pt-BR")).format(new java.util.Date(bankTime));
             String amount = d.contains(BankNotificationListener.KEY_AMOUNT)
                     ? String.format(java.util.Locale.forLanguageTag("pt-BR"), "R$ %.2f", d.getLong(BankNotificationListener.KEY_AMOUNT,0L)/100.0)
                     : "—";
             diagnostic.setText(
+                    "DIAGNÓSTICO BANCÁRIO\\n" +
                     "Listener conectado: " + (connected ? "SIM" : "NÃO") +
-                    "\\n\\nÚLTIMA NOTIFICAÇÃO RECEBIDA (antes do filtro)" +
-                    "\\nPacote bruto: " + (rawPkg == null || rawPkg.isEmpty() ? "—" : rawPkg) +
-                    "\\nTítulo bruto: " + (rawTitle == null || rawTitle.isEmpty() ? "—" : rawTitle) +
-                    "\\nTexto bruto: " + (rawText == null || rawText.isEmpty() ? "—" : rawText) +
-                    "\\n\\nRESULTADO DO FILTRO" +
-                    "\nFila criptografada: " + new EncryptedQueueStore(this).size() +
-                    "\n" +
+                    "\nÚltimo banco autorizado: " + (bankPkg == null || bankPkg.isEmpty() ? "—" : bankPkg) +
+                    "\nÚltimo resultado bancário: " + (bankResult == null || bankResult.isEmpty() ? "—" : bankResult) +
+                    "\nHorário do último evento bancário: " + bankWhen +
+                    "\n\\nÚLTIMA NOTIFICAÇÃO GERAL (não bancária quando ignorada)\\n" +
                     "Último pacote: " + pkg +
                     "\nAplicativo autorizado: " + (allowed ? "SIM" : "NÃO") +
                     "\nFinanceira reconhecida: " + (financial ? "SIM" : "NÃO") +
                     "\nResultado: " + result +
+                    "\nFila criptografada: " + new EncryptedQueueStore(this).size() +
                     "\nValor detectado: " + amount +
                     "\nDireção: " + (direction == null || direction.isEmpty() ? "—" : direction) +
-                    "\nTítulo detectado: " + (lastTitle == null || lastTitle.isEmpty() ? "—" : lastTitle) +
-                    "\nTexto detectado: " + (lastText == null || lastText.isEmpty() ? "—" : lastText) +
-                    "\nPacotes recentes:\n" + (recent == null || recent.isEmpty() ? "—" : recent)
+                    "\nPacotes recentes (somente identificadores):\\n" + (recent == null || recent.isEmpty() ? "—" : recent.replace("\\n", "\n"))
             );
         }
     }
@@ -82,7 +82,7 @@ public final class CaptureSettingsActivity extends Activity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setGravity(Gravity.CENTER_HORIZONTAL);
-        root.setPadding(dp(24), dp(48), dp(24), dp(24));
+        root.setPadding(dp(18), dp(24), dp(18), dp(24));
         root.setBackgroundColor(Color.parseColor("#061421"));
 
         TextView title = label("Snake Finance · Captura Android", 24, Color.WHITE);
@@ -103,7 +103,7 @@ public final class CaptureSettingsActivity extends Activity {
         });
 
         TextView privacy = label(
-                "Diagnóstico seguro: de aplicativos não autorizados, somente o identificador do pacote é registrado. Conteúdo de notificações não autorizadas não é armazenado.",
+                "Diagnóstico seguro: mostra somente identificadores de aplicativos, estado da captura e valores financeiros reconhecidos. Não exibe textos de mensagens pessoais.",
                 14, Color.parseColor("#91A4BF"));
 
         root.addView(title, params(24));
@@ -128,8 +128,6 @@ public final class CaptureSettingsActivity extends Activity {
         addBankToggle(root, "PicPay", "com.picpay");
         addBankToggle(root, "PagBank", "br.com.uol.ps.myaccount");
         addBankToggle(root, "Neon", "br.com.neon");
-        addBankToggle(root, "Google Play", "com.android.vending");
-        addBankToggle(root, "Google Wallet", "com.google.android.apps.walletnfcrel");
 
         root.addView(permission, params(18));
         root.addView(privacy, params(18));
@@ -158,7 +156,7 @@ public final class CaptureSettingsActivity extends Activity {
         view.setText(text);
         view.setTextSize(sp);
         view.setTextColor(color);
-        view.setGravity(Gravity.CENTER);
+        view.setGravity(Gravity.START);
         return view;
     }
 

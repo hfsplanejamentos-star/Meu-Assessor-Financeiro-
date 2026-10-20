@@ -38,8 +38,10 @@ final class NotificationParser {
         } else {
             direction = "unknown";
         }
-        long bucket = postedAt / 60_000L;
-        String id = sha256(sourcePackage + "|" + normalize(combined) + "|" + amount + "|" + bucket);
+        // Use the precise notification timestamp: separate identical purchases within
+        // the same minute must not share an ID. Near-immediate reposts are
+        // deduplicated by EncryptedQueueStore using the notification contents.
+        String id = sha256(sourcePackage + "|" + normalize(combined) + "|" + amount + "|" + postedAt);
         return new CapturedNotification(id, sourcePackage, safeTitle, safeText, amount, reportedBalance, direction, postedAt, System.currentTimeMillis());
     }
 
@@ -52,8 +54,12 @@ final class NotificationParser {
         String clean = clean(value);
         Matcher matcher = MONEY.matcher(clean);
         while (matcher.find()) {
-            int from = Math.max(0, matcher.start()-28), to = Math.min(clean.length(), matcher.end()+12);
-            if (Pattern.compile("(?i)saldo").matcher(clean.substring(from,to)).find()) continue;
+            // The value immediately following "Compra de" is the transaction amount.
+            // Caju may include a separate "saldo em AUXÍLIO ... R$ ..." afterwards.
+            int from = Math.max(0, matcher.start()-70);
+            String prefix = clean.substring(from, matcher.start());
+            String tail = prefix.replaceAll("(?i).*\\b(?:compra\\s+de|pagamento\\s+de|valor\\s+de)\\s*$", "");
+            if (tail.matches("(?is).*\\bsaldo\\b[^0-9]*$")) continue;
             return parseCents(matcher.group(1));
         }
         return null;

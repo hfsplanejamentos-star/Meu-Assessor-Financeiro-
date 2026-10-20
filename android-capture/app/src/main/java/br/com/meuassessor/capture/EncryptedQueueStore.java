@@ -70,11 +70,15 @@ final class EncryptedQueueStore {
 
         long priorTime = prior.optLong("postedAt", 0L);
         long delta = Math.abs(event.postedAt - priorTime);
-        if (delta > 120000L) return false;
+        // Only collapse exact reposts at the same notification timestamp.
+        // Different events with equal amount and merchant must be retained.
+        if (delta != 0L) return false;
 
         String current = fingerprint(event.title + " " + event.text);
         String previous = fingerprint(prior.optString("title") + " " + prior.optString("text"));
-        return !current.isEmpty() && current.equals(previous);
+        return !current.isEmpty() && current.equals(previous)
+                && safe(event.text).equals(safe(prior.optString("text")))
+                && safe(event.title).equals(safe(prior.optString("title")));
     }
 
     private static String safe(String value) {
@@ -222,12 +226,22 @@ final class EncryptedQueueStore {
                 wrapper.toString()
                         .getBytes(StandardCharsets.UTF_8);
 
-        FileOutputStream output =
-                new FileOutputStream(file);
-
-        output.write(data);
-        output.flush();
-        output.close();
+        // Write a complete encrypted snapshot before replacing the active queue.
+        // A failed write must not truncate the previous captured transactions.
+        File staged = new File(file.getParentFile(), FILE + ".tmp");
+        try (FileOutputStream output = new FileOutputStream(staged)) {
+            output.write(data);
+            output.flush();
+            output.getFD().sync();
+        }
+        try {
+            java.nio.file.Files.move(staged.toPath(), file.toPath(),
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        } catch (java.nio.file.AtomicMoveNotSupportedException unsupported) {
+            // Never delete the original queue just to make a replacement succeed.
+            throw new java.io.IOException("Atomic queue replacement unavailable", unsupported);
+        }
     }
 
     private SecretKey key() throws Exception {
