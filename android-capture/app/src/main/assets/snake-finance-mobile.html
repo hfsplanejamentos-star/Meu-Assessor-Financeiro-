@@ -2675,7 +2675,7 @@ html[data-tema] #app{padding-bottom:120px!important}
       const workday=Number.isFinite(posted.getTime())&&posted.getDay()>=2&&posted.getDay()<=4;
       const hour=posted.getHours();
       let category='out',context='Pessoal (provisório)';
-      if(['c6','xp'].includes(d.account)&&e.amountCents===600&&workday&&hour>=5&&hour<12&&/pix enviado|pagamento realizado/.test(full)){category='est';context='Trabalho · Estacionamento (sugerido)';}
+      if(['c6','xp'].includes(d.account)&&e.amountCents===600&&workday&&hour>=5&&hour<12&&/pix enviado|pagamento realizado/.test(full)&&/estacionamento|parking|zona azul|valdino/.test(full)){category='est';context='Trabalho · Estacionamento (sugerido)';}
       if(/abastec|combust[ií]vel|posto de gasolina/.test(full)){
         category='abs';
         context=d.account==='caju'?'Trabalho · Combustível (Caju Abastecimento)':'Pessoal · Combustível';
