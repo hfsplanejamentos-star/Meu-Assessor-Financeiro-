@@ -142,7 +142,13 @@ public final class MainActivity extends Activity {
                 splash.addView(approvedSplash, new FrameLayout.LayoutParams(-1, -1));
             }
         } catch (java.io.IOException missingApprovedSplash) {
-            // An absent asset must not crash app startup.
+            // Never show a screenshot with status bar or a blank black splash.
+            TextView fallback = new TextView(this);
+            fallback.setText("SNAKE FINANCE\nASSESSOR FINANCEIRO IA");
+            fallback.setTextColor(Color.rgb(229, 187, 98));
+            fallback.setTextSize(26);
+            fallback.setGravity(Gravity.CENTER);
+            splash.addView(fallback, new FrameLayout.LayoutParams(-1, -1));
         }
         root.addView(splash, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -290,6 +296,10 @@ public final class MainActivity extends Activity {
         }
         final String cached = local;
         if (cached != null) showDashboard(cached);
+
+        // Keep the signed validation dashboard stable instead of replacing
+        // it with a different public GitHub Pages version.
+        if (getPackageName().endsWith(".validation2") && cached != null) return;
 
         Executors.newSingleThreadExecutor().execute(() -> {
             HttpURLConnection connection = null;
