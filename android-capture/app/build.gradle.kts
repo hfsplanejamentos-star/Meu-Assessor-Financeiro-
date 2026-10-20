@@ -45,6 +45,17 @@ android {
         }
     }
 
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("original") { dimension = "distribution" }
+        create("validation2") {
+            dimension = "distribution"
+            applicationIdSuffix = ".validation2"
+            versionNameSuffix = "-rev0-validation"
+            resValue("string", "app_name", "Snake Finance Rev. 0 - Teste")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
