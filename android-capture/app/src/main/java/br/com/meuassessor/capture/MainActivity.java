@@ -283,6 +283,24 @@ public final class MainActivity extends Activity {
     }
 
     private void loadDashboardHtml() {
+        // Validation2 always loads packaged HTML, never stale cache or remote.
+        // Do not clear WebView localStorage; imported finance data must survive.
+        if (getPackageName().endsWith(".validation2")) {
+            try (InputStream input = getAssets().open("snake-finance-mobile.html")) {
+                java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+                byte[] buffer = new byte[8192];
+                int count;
+                while ((count = input.read(buffer)) != -1) bytes.write(buffer, 0, count);
+                String bundled = bytes.toString("UTF-8");
+                if (!validDashboard(bundled)) throw new IllegalStateException("HTML interno inválido");
+                showDashboard(bundled);
+            } catch (Exception failure) {
+                android.widget.Toast.makeText(this,
+                        "Falha ao carregar painel interno; dados preservados",
+                        android.widget.Toast.LENGTH_LONG).show();
+            }
+            return;
+        }
         String local = readCachedDashboard();
         if (local == null) {
             try (InputStream input = getAssets().open("snake-finance-mobile.html")) {
