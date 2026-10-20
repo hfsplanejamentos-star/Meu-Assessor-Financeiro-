@@ -13,6 +13,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.ScrollView;
 
 public final class CaptureSettingsActivity extends Activity {
     private TextView status;
@@ -22,7 +23,10 @@ public final class CaptureSettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        setContentView(buildScreen());
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        scroll.addView(buildScreen());
+        setContentView(scroll);
     }
 
     @Override
@@ -56,18 +60,20 @@ public final class CaptureSettingsActivity extends Activity {
                     ? String.format(java.util.Locale.forLanguageTag("pt-BR"), "R$ %.2f", d.getLong(BankNotificationListener.KEY_AMOUNT,0L)/100.0)
                     : "—";
             diagnostic.setText(
+                    "DIAGNÓSTICO BANCÁRIO\\n" +
                     "Listener conectado: " + (connected ? "SIM" : "NÃO") +
                     "\nÚltimo banco autorizado: " + (bankPkg == null || bankPkg.isEmpty() ? "—" : bankPkg) +
                     "\nÚltimo resultado bancário: " + (bankResult == null || bankResult.isEmpty() ? "—" : bankResult) +
                     "\nHorário do último evento bancário: " + bankWhen +
-                    "\nÚltimo pacote (qualquer app): " + pkg +
+                    "\n\\nÚLTIMA NOTIFICAÇÃO GERAL (não bancária quando ignorada)\\n" +
+                    "Último pacote: " + pkg +
                     "\nAplicativo autorizado: " + (allowed ? "SIM" : "NÃO") +
                     "\nFinanceira reconhecida: " + (financial ? "SIM" : "NÃO") +
                     "\nResultado: " + result +
                     "\nFila criptografada: " + new EncryptedQueueStore(this).size() +
                     "\nValor detectado: " + amount +
                     "\nDireção: " + (direction == null || direction.isEmpty() ? "—" : direction) +
-                    "\nPacotes recentes:\n" + (recent == null || recent.isEmpty() ? "—" : recent)
+                    "\nPacotes recentes (somente identificadores):\\n" + (recent == null || recent.isEmpty() ? "—" : recent.replace("\\n", "\n"))
             );
         }
     }
@@ -76,7 +82,7 @@ public final class CaptureSettingsActivity extends Activity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setGravity(Gravity.CENTER_HORIZONTAL);
-        root.setPadding(dp(24), dp(48), dp(24), dp(24));
+        root.setPadding(dp(18), dp(24), dp(18), dp(24));
         root.setBackgroundColor(Color.parseColor("#061421"));
 
         TextView title = label("Snake Finance · Captura Android", 24, Color.WHITE);
@@ -150,7 +156,7 @@ public final class CaptureSettingsActivity extends Activity {
         view.setText(text);
         view.setTextSize(sp);
         view.setTextColor(color);
-        view.setGravity(Gravity.CENTER);
+        view.setGravity(Gravity.START);
         return view;
     }
 
