@@ -1689,7 +1689,7 @@ function vGeral(){
  <div class="snakeApprovedTop"><div><p class="snakeApprovedCaption">Saldo projetado C6 + XP após faturas</p><p class="snakeApprovedAmount">${brl(snakeConsolidatedProjection(YM))} <span class="snakeApprovedEye" aria-hidden="true">◉</span></p></div><span class="snakeApprovedChip">Visão consolidada</span></div>
  <div class="snakeApprovedMetrics">
  <div onclick="event.stopPropagation();openProjectionDetail()"><span>Receitas previstas</span><b class="snakePositive">${brl(snakeC6Planned(YM,'r'))}</b></div>
- <div onclick="event.stopPropagation();openProjectionDetail()"><span>Despesas previstas (incl. fatura)</span><b class="snakeNegative">${brl(snakeC6Planned(YM,'d')+carbonInvoiceGross(YM))}</b></div>
+ <div onclick="event.stopPropagation();openProjectionDetail()"><span>Despesas Prev. + Faturas</span><b class="snakeNegative">${brl(snakeC6Planned(YM,'d')+carbonInvoiceGross(YM))}</b></div>
  <div onclick="event.stopPropagation();openProjectionDetail()"><span>A pagar (faturas)</span><b class="snakeWarning">${brl(carbonInvoiceGross(YM))}</b></div>
  <div onclick="event.stopPropagation();openProjectionDetail()"><span>Saldo projetado</span><b class="snakeCyan">${brl(snakeConsolidatedProjection(YM))}</b></div>
  </div></div>
