@@ -2663,6 +2663,8 @@ html[data-tema] #app{padding-bottom:120px!important}
       const d=localDraft({...e,source:'bank'});
       const full=(String(e.title||'')+' '+String(e.text||'')).toLowerCase();
       if(!['c6','xp','caju','carbon'].includes(d.account)||d.type!=='d'||!Number.isSafeInteger(e.amountCents)||e.amountCents<=0||e.amountCents>100000000||!validISO(d.day))continue;
+      const capturedAt=new Date(e.postedAt);
+      if(!Number.isFinite(capturedAt.getTime())||capturedAt.getTime()>Date.now()+300000)continue;
       if(e.direction!=='expense'||/transfer[eê]ncia entre|entre minhas contas|conta pr[oó]pria|estorno|cancelad|agendad|autoriza[cç][aã]o|tentativa|negad|saldo dispon[ií]vel|fatura fechada|limite dispon[ií]vel/.test(full))continue;
       if(!/compra|pagamento realizado|pix enviado|d[eé]bito realizado|voc[eê] pagou|transa[cç][aã]o aprovada/.test(full))continue;
       if(d.account==='carbon'&&!/cart[aã]o|cr[eé]dito|carbon/.test(full))continue;
@@ -2680,6 +2682,11 @@ html[data-tema] #app{padding-bottom:120px!important}
       }else if(d.account==='caju'){
         category='ali';context=workday&&hour>=11&&hour<=15?'Trabalho · Refeição (sugerido)':'Alimentação pessoal (sugerida)';
       }
+      // Keep ambiguous or personal purchases in the manual review inbox.
+      const isWorkParking=category==='est'&&context.startsWith('Trabalho');
+      const isWorkFuel=category==='abs'&&d.account==='caju';
+      const isWorkLunch=category==='ali'&&d.account==='caju'&&workday&&hour>=11&&hour<=15&&/almo[cç]o|refei[cç][aã]o|restaurante/.test(full);
+      if(!isWorkParking&&!isWorkFuel&&!isWorkLunch)continue;
       // Never deduplicate independent purchases solely by amount or calendar day.
       const entry={id:NID,d:d.day,n:d.name,t:'d',v:e.amountCents,a:d.account,s:'r',c:category,sub:'',ctx:context,captureId:'bank:'+e.id,reviewPending:true,autoSource:'bank'};
       L.push(entry);NID=nextId();changed=true;
