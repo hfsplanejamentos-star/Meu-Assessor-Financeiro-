@@ -56,12 +56,12 @@ jobs:
           s=p.read_text()
           old='applicationIdSuffix = ".validation2"'
           assert s.count(old)==1
-          p.write_text(s.replace(old,'applicationIdSuffix = ".validation2.a31r5"',1))
+          p.write_text(s.replace(old,'applicationIdSuffix = ".validation2.a31r6"',1))
           p=Path('android-capture/app/src/validation2/AndroidManifest.xml')
           p.parent.mkdir(parents=True, exist_ok=True)
           p.write_text('''<?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
-              <application android:label="Snake Finance Rev. 0 - Teste R5" tools:replace="android:label">
+              <application android:label="Snake Finance Rev. 0 - Teste R6" tools:replace="android:label">
                   <activity android:name="br.com.meuassessor.capture.MainActivity" android:launchMode="singleTop">
                       <intent-filter>
                           <action android:name="android.intent.action.SEND" />
@@ -88,8 +88,8 @@ jobs:
           APK="$(find android-capture/app/build/outputs/apk/validation2/debug -name '*.apk' -print -quit)"
           "$TOOLS/apksigner" verify --verbose --print-certs "$APK" | tee apk-signature.txt
           "$TOOLS/aapt" dump badging "$APK" | tee apk-badging.txt
-          grep -q "package: name='br.com.snakefinance.app.validation2.a31r5'" apk-badging.txt
-          grep -q "application-label:'Snake Finance Rev. 0 - Teste R5'" apk-badging.txt
+          grep -q "package: name='br.com.snakefinance.app.validation2.a31r6'" apk-badging.txt
+          grep -q "application-label:'Snake Finance Rev. 0 - Teste R6'" apk-badging.txt
           python3 - "$APK" <<'PY'
           import hashlib, sys, zipfile
           expected = '534fcd117dde793724a5852c765109420c2c7a02c31e270076ebcf91574df778'
