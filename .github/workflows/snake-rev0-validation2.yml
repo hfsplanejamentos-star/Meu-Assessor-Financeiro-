@@ -45,6 +45,35 @@ jobs:
       - name: Build validation2
         working-directory: android-capture
         run: gradle assembleValidation2Debug --no-daemon --stacktrace
+      - name: Verificar identidade assinatura e HTML do APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
+          TOOLS="$(find "$SDK/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          APK="$(find android-capture/app/build/outputs/apk/validation2/debug -name '*.apk' -print -quit)"
+          "$TOOLS/apksigner" verify --verbose --print-certs "$APK" | tee apk-signature.txt
+          "$TOOLS/aapt" dump badging "$APK" | tee apk-badging.txt
+          grep -q "package: name='br.com.snakefinance.app.validation2'" apk-badging.txt
+          python3 - "$APK" <<'PY'
+          import hashlib, sys, zipfile
+          expected = '534fcd117dde793724a5852c765109420c2c7a02c31e270076ebcf91574df778'
+          with zipfile.ZipFile(sys.argv[1]) as z:
+              actual = hashlib.sha256(z.read('assets/snake-finance-mobile.html')).hexdigest()
+          assert actual == expected, actual
+          print('APK HTML SHA-256:', actual)
+          PY
+          sha256sum "$APK" | tee apk-sha256.txt
+          printf '%s\n' "$GITHUB_SHA" > apk-source-commit.txt
+      - name: Upload verificacoes
+        uses: actions/upload-artifact@v4
+        with:
+          name: Snake-Finance-Rev0-Verificacoes
+          path: |
+            apk-signature.txt
+            apk-badging.txt
+            apk-sha256.txt
+            apk-source-commit.txt
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
