@@ -22,8 +22,19 @@ jobs:
           p=Path('android-capture/app/src/main/assets/snake-finance-mobile.html')
           s=p.read_text(encoding='utf-8')
           assert 'window.SNAKE_DISTRIBUTABLE=true' in s
-          assert 'snakeCarbonPaymentCandidates' in s, 'Auditoria 31 ainda não incorporada; compilação bloqueada'
+          assert __import__('hashlib').sha256(p.read_bytes()).hexdigest() == '534fcd117dde793724a5852c765109420c2c7a02c31e270076ebcf91574df778', 'HTML Auditoria 31 nao corresponde ao arquivo validado; compilacao bloqueada'
           print('Painel de conciliação presente')
+          PY
+      - name: Ajustar carregador para HTML Rev0
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('android-capture/app/src/main/java/br/com/meuassessor/capture/MainActivity.java')
+          s=p.read_text()
+          old='html.contains("Snake Finance Mobile — V84 · Visual aprovado")'
+          assert old in s, 'Carregador Android inesperado; revisão necessária'
+          s=s.replace(old,'html.contains("window.SNAKE_DISTRIBUTABLE=true")',1)
+          p.write_text(s)
           PY
       - name: Build validation2
         working-directory: android-capture
