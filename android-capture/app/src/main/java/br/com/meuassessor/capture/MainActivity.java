@@ -103,6 +103,8 @@ public final class MainActivity extends Activity {
     private ValueCallback<Uri[]> fileCallback;
     private Uri capturedImageUri;
     private boolean choosingJsonBackup;
+    private boolean deliveringBackup;
+    private static final String PENDING_IMPORT_FILE = "snake_backup_import_pending.json";
     private Bundle pendingState;
     private boolean authenticated;
     private boolean authenticationInProgress;
@@ -190,6 +192,8 @@ public final class MainActivity extends Activity {
         if (Build.VERSION.SDK_INT >= 35) root.requestApplyInsets();
         webView.setVisibility(View.INVISIBLE);
         pendingState = state;
+        if (state != null) choosingJsonBackup = state.getBoolean("choosing_json_backup", false);
+        receiveSharedBackup(getIntent());
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
@@ -209,6 +213,7 @@ public final class MainActivity extends Activity {
             if (controller != null) controller.show(android.view.WindowInsets.Type.statusBars());
         }
         webView.requestApplyInsets();
+        offerPendingBackup();
         FrameLayout splash = startupSplash;
         startupSplash = null;
         if (splash.getParent() instanceof ViewGroup) ((ViewGroup) splash.getParent()).removeView(splash);
@@ -423,6 +428,7 @@ public final class MainActivity extends Activity {
                 super.onPageFinished(view, url);
                 dashboardReady = true;
                 revealDashboardWhenReady();
+                offerPendingBackup();
                 if (showUpdatedDashboardNotice) {
                     showUpdatedDashboardNotice = false;
                     view.evaluateJavascript("(function(){var n=document.createElement('div');n.textContent='Snake Finance: painel atualizado pelo GitHub';n.style.cssText='position:fixed;bottom:80px;left:14px;right:14px;z-index:2147483647;background:#171717;color:#f1ce79;padding:14px;border:1px solid #b68d38;border-radius:12px;text-align:center;font:600 14px sans-serif;box-shadow:0 8px 24px #0008';document.body.appendChild(n);setTimeout(function(){n.remove()},6500)})()", null);
@@ -572,6 +578,119 @@ public final class MainActivity extends Activity {
         return value;
     }
 
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        receiveSharedBackup(intent);
+    }
+
+    private void receiveSharedBackup(Intent intent) {
+        if (intent == null || !Intent.ACTION_SEND.equals(intent.getAction())) return;
+        Uri uri;
+        if (Build.VERSION.SDK_INT >= 33) uri = intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri.class);
+        else uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+        if (uri == null && intent.getClipData() != null && intent.getClipData().getItemCount() > 0) {
+            uri = intent.getClipData().getItemAt(0).getUri();
+        }
+        // Never fetch network URLs or inspect arbitrary filesystem paths from an external intent.
+        if (uri == null || !"content".equals(uri.getScheme())) {
+            android.widget.Toast.makeText(this, "Compartilhe o arquivo JSON pelo gerenciador de arquivos",
+                    android.widget.Toast.LENGTH_LONG).show();
+            return;
+        }
+        intent.removeExtra(Intent.EXTRA_STREAM);
+        intent.setAction(Intent.ACTION_MAIN);
+        stageBackupUri(uri);
+    }
+
+    private void stageBackupUri(Uri uri) {
+        new Thread(() -> {
+            java.io.File staged = new java.io.File(getFilesDir(), PENDING_IMPORT_FILE);
+            java.io.File temp = new java.io.File(getFilesDir(), PENDING_IMPORT_FILE + ".tmp");
+            try {
+                synchronized (MainActivity.class) {
+                    try (java.io.InputStream input = getContentResolver().openInputStream(uri);
+                         java.io.FileOutputStream output = new java.io.FileOutputStream(temp)) {
+                        if (input == null) throw new java.io.IOException("Arquivo indisponível");
+                        byte[] chunk = new byte[8192];
+                        int n, total = 0;
+                        while ((n = input.read(chunk)) != -1) {
+                            total += n;
+                            if (total > 20 * 1024 * 1024) throw new java.io.IOException("O backup excede 20 MB");
+                            output.write(chunk, 0, n);
+                        }
+                        if (total == 0) throw new java.io.IOException("O arquivo está vazio (0 KB)");
+                        output.getFD().sync();
+                    }
+                    // Check JSON syntax before replacing an earlier pending import.
+                    String json = new String(java.nio.file.Files.readAllBytes(temp.toPath()), StandardCharsets.UTF_8);
+                    if (json.startsWith("\uFEFF")) json = json.substring(1);
+                    Object parsed = new org.json.JSONTokener(json).nextValue();
+                    if (!(parsed instanceof org.json.JSONObject) && !(parsed instanceof org.json.JSONArray))
+                        throw new java.io.IOException("Selecione um backup JSON válido");
+                    if (!temp.renameTo(staged)) throw new java.io.IOException("Não foi possível preparar a conferência");
+                }
+                runOnUiThread(this::offerPendingBackup);
+            } catch (Exception error) {
+                temp.delete();
+                runOnUiThread(() -> android.widget.Toast.makeText(this,
+                        "Importação não iniciada: " + error.getMessage(), android.widget.Toast.LENGTH_LONG).show());
+            }
+        }, "snake-backup-reader").start();
+    }
+
+    private void offerPendingBackup() {
+        if (!authenticatedForDisplay || !dashboardReady || deliveringBackup || isFinishing()) return;
+        java.io.File pending = new java.io.File(getFilesDir(), PENDING_IMPORT_FILE);
+        if (!pending.isFile()) return;
+        deliveringBackup = true;
+        new Thread(() -> {
+            try {
+                byte[] bytes = java.nio.file.Files.readAllBytes(pending.toPath());
+                String encoded = android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP);
+                runOnUiThread(() -> {
+                    if (isFinishing()) { deliveringBackup = false; return; }
+                    webView.evaluateJavascript("window.__snakeImportParts=[];true", ignored ->
+                            sendBackupChunk(encoded, 0, pending));
+                });
+            } catch (Exception error) {
+                runOnUiThread(() -> {
+                    deliveringBackup = false;
+                    android.widget.Toast.makeText(this, "Não foi possível ler o backup preparado",
+                            android.widget.Toast.LENGTH_LONG).show();
+                });
+            }
+        }, "snake-backup-preview").start();
+    }
+
+    private void sendBackupChunk(String encoded, int offset, java.io.File pending) {
+        if (isFinishing() || webView == null) { deliveringBackup = false; return; }
+        if (offset < encoded.length()) {
+            int end = Math.min(offset + 48000, encoded.length());
+            String part = encoded.substring(offset, end);
+            webView.evaluateJavascript("window.__snakeImportParts.push('" + part + "');true",
+                    result -> {
+                        if (!"true".equals(result)) { deliveringBackup = false; return; }
+                        sendBackupChunk(encoded, end, pending);
+                    });
+            return;
+        }
+        // Existing Auditoria 31 validators and explicit user confirmation still own all ledger writes.
+        String script = "(function(){try{if(typeof previewBackup!=='function')return false;" +
+                "var raw=atob(window.__snakeImportParts.join(''));" +
+                "var bytes=Uint8Array.from(raw,function(c){return c.charCodeAt(0)});" +
+                "var text=new TextDecoder('utf-8',{fatal:true}).decode(bytes).replace(/^\\uFEFF/,'');" +
+                "previewBackup(JSON.parse(text));return true;" +
+                "}catch(e){alert('Importação recusada: '+e.message);return false;}" +
+                "finally{delete window.__snakeImportParts}})()";
+        webView.evaluateJavascript(script, result -> {
+            deliveringBackup = false;
+            // The pending file is never an active ledger. Validation did not import any data yet.
+            pending.delete();
+        });
+    }
+
     private void cancelFileSelection(String message) {
         ValueCallback<Uri[]> callback = fileCallback;
         fileCallback = null;
@@ -584,6 +703,7 @@ public final class MainActivity extends Activity {
     @Override
     protected void onSaveInstanceState(Bundle state) {
         webView.saveState(state);
+        state.putBoolean("choosing_json_backup", choosingJsonBackup);
         if (capturedImageUri != null) state.putString("captured_image_uri", capturedImageUri.toString());
         super.onSaveInstanceState(state);
     }
@@ -662,6 +782,17 @@ public final class MainActivity extends Activity {
         if (requestCode == AppLock.REQUEST_DEVICE_CREDENTIAL) {
             if (resultCode == RESULT_OK) unlockApplication();
             else cancelAuthentication();
+            return;
+        }
+        if (requestCode == REQUEST_FILE && choosingJsonBackup) {
+            choosingJsonBackup = false;
+            ValueCallback<Uri[]> callback = fileCallback;
+            fileCallback = null;
+            capturedImageUri = null;
+            if (callback != null) callback.onReceiveValue(null);
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                stageBackupUri(data.getData());
+            }
             return;
         }
         if (requestCode == REQUEST_FILE) {
