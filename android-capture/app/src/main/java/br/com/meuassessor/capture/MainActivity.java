@@ -237,14 +237,14 @@ public final class MainActivity extends Activity {
         webView.setVisibility(View.VISIBLE);
         revealDashboardWhenReady();
 
-        if (pendingState == null) {
-            if (webView.getUrl() == null) loadDashboardHtml();
-        } else {
-            webView.restoreState(pendingState);
+        if (pendingState != null) {
             String savedImageUri = pendingState.getString("captured_image_uri");
             if (savedImageUri != null) capturedImageUri = Uri.parse(savedImageUri);
             pendingState = null;
         }
+        // Rebuild the bundled view; financial records persist in WebView localStorage.
+        // Serializing loadDataWithBaseURL history can put the full HTML in the Activity Bundle.
+        if (webView.getUrl() == null) loadDashboardHtml();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
                 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
@@ -369,6 +369,8 @@ public final class MainActivity extends Activity {
 
     private WebView buildWebView() {
         WebView value = new WebView(this);
+        value.setSaveEnabled(false);
+        value.setSaveFromParentEnabled(false);
         WebSettings settings = value.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -702,7 +704,8 @@ public final class MainActivity extends Activity {
 
     @Override
     protected void onSaveInstanceState(Bundle state) {
-        webView.saveState(state);
+        // Keep Activity state compact when DocumentsUI or the camera moves us to the background.
+        // Backup bytes and ledger data never belong in a Binder transaction.
         state.putBoolean("choosing_json_backup", choosingJsonBackup);
         if (capturedImageUri != null) state.putString("captured_image_uri", capturedImageUri.toString());
         super.onSaveInstanceState(state);
