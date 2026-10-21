@@ -1,6 +1,12 @@
 name: Snake Finance Rev0 APK validation2
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - snake-finance-oficial-rev-0
+    paths:
+      - 'android-capture/app/src/main/assets/snake-finance-mobile.html'
+      - '.github/workflows/snake-rev0-validation2.yml'
 jobs:
   build:
     runs-on: ubuntu-latest
