@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR"><head><script>window.SNAKE_DISTRIBUTABLE=true;</script><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Snake Finance Mobile — V84 · Visual aprovado</title>
+<title>Snake Finance Mobile — XP Infinite One · Validação</title>
 <style>
 :root{--bg:#060b19;--card:#0d1730;--br:#17406a;--tx:#e8f4ff;--mu:#8aa6c2;--a:#22d3ee;--onA:#04202a;--neg:#fb7185;--pos:#34d399;--warn:#fbbf24;--chip:#10305a;--track:#16254a;--hero:linear-gradient(135deg,#1e3fa0,#0d1730 62%);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
 :root[data-tema=limao]{--bg:#0a0a0a;--card:#141614;--br:#262a26;--tx:#f4f6f0;--mu:#9aa093;--a:#b8ff2c;--onA:#0a0a0a;--neg:#ff5d73;--pos:#4ade80;--chip:#25301a;--track:#262a26;--hero:linear-gradient(135deg,#3f5f10,#141614 62%)}
@@ -117,6 +117,27 @@ svg.pie,svg.donut,.pieChart,.donutChart,.pieLegend,.legendResponsive [data-cat],
   .bankGrid .big,.accountGrid .big,.balanceValue{font-size:1.55rem!important}
 }
 
+
+/* Bank identifiers embedded locally for offline use; not downloaded at runtime. */
+.snBankMark{display:inline-flex;justify-content:center;align-items:center;flex-shrink:0;width:36px;height:36px;border-radius:11px;font:900 13px/1 system-ui,-apple-system,sans-serif;letter-spacing:-.5px;background:#242424;color:#fbfbfb;box-shadow:inset 0 0 0 1px #ffffff29}
+.snBankMark[data-bank="caju"]{background:#f45135;color:white;font-weight:900;font-size:15px;letter-spacing:-1px}
+.snBankMark[data-bank="xp"]{background:#101010;color:#f2b705;font-size:18px;letter-spacing:-1.4px}
+.snBankMark[data-bank="carbon"]{background:#303030;color:#f5f5f5}
+
+/* V86 — layout fiel ao cartão aprovado; valores calculados, nunca fixos. */
+.snakeApprovedHero{background:linear-gradient(115deg,#123e4a 0%,#081b30 55%,#061628 100%)!important;color:#f6fbff!important;border:1px solid #1a6073!important;border-radius:28px!important;padding:22px 20px 20px!important;box-shadow:0 14px 32px #00162933!important;cursor:pointer}
+.snakeApprovedTop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;min-width:0}
+.snakeApprovedCaption{font-size:clamp(13px,3.2vw,20px);color:#e3eff4;margin:0 0 9px}
+.snakeApprovedAmount{font-size:clamp(29px,7.3vw,58px);line-height:1.06;font-weight:750;letter-spacing:-.035em;color:white;margin:0;white-space:nowrap}
+.snakeApprovedEye{font-size:.43em;font-weight:400;vertical-align:middle;margin-left:4px}
+.snakeApprovedChip{border:1px solid #19799d;border-radius:18px;padding:12px 14px;color:#55d9fa;background:linear-gradient(135deg,#0b3549,#0b263e);font-size:clamp(10px,2.7vw,16px);text-align:center;white-space:nowrap}
+.snakeApprovedMetrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid #527381;margin-top:27px;padding-top:19px;gap:0}
+.snakeApprovedMetrics>div{padding:0 10px;border-right:1px solid #527381;min-width:0;text-align:left}
+.snakeApprovedMetrics>div:first-child{padding-left:0}.snakeApprovedMetrics>div:last-child{border-right:0;padding-right:0}
+.snakeApprovedMetrics span{display:block;color:#f1f6f9;font-size:clamp(10px,2.5vw,16px);line-height:1.25;min-height:2.5em}
+.snakeApprovedMetrics b{display:block;margin-top:9px;font-size:clamp(11px,2.85vw,21px);white-space:nowrap;letter-spacing:-.035em}
+.snakePositive{color:#54ed99}.snakeNegative{color:#ff6b82}.snakeWarning{color:#ffc24c}.snakeCyan{color:#56d7ff}
+@media(max-width:430px){.snakeApprovedHero{padding:16px 12px!important;border-radius:22px!important}.snakeApprovedChip{padding:8px 7px}.snakeApprovedMetrics>div{padding:0 4px}.snakeApprovedMetrics{margin-top:20px;padding-top:14px}}
 </style><style>
 .addbar{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .addbar .bt{width:100%;font-weight:600}.addbar .inc{border-color:var(--pos);color:var(--pos)}.addbar .out{border-color:var(--neg);color:var(--neg)}
@@ -1178,6 +1199,38 @@ html[data-tema] .settingsPop{top:122px!important;max-height:calc(100dvh - 145px)
 .noticeBody{display:grid;grid-template-columns:minmax(0,1fr) 36px;align-items:center;gap:12px;width:100%;padding:8px 14px 16px;background:transparent;border:0;text-align:left;color:#f5f5f5;cursor:pointer;font:inherit;line-height:1.5}.noticeMessage{font-size:14px;overflow-wrap:anywhere}.noticeMessage small{display:block;margin-top:7px;font-size:11px;color:#c8cbd0}.noticeArrow{display:grid;place-items:center;width:36px;height:36px;border:1px solid #ffe39c;border-radius:50%;background:linear-gradient(140deg,#efcd7b,#b68525);box-shadow:0 0 10px #e9bc5930;color:#fff}.noticeArrow svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.noticeHead .noticeSeverity{font-size:10px;color:#e8bc65}
 .alertRule{scroll-margin-top:184px}
 @media(max-width:350px){html[data-tema] #fixedTopShell .appHd{padding-inline:8px!important}.headerTop{gap:4px}.headerBrand{gap:6px}.headerBrand .snakeMark{--mark-size:40px}.snakeWordmark strong{font-size:15px}.headerBottom{gap:7px}.noticeHead .snakeWordmark strong{font-size:14px}}
+</style><style id="snake-v87-mobile-fidelity">
+.snakeApprovedHero{background:linear-gradient(115deg,#123e4a,#081b30 58%,#061628)!important;color:#f6fbff!important;border:1px solid #1a6073!important;box-shadow:0 14px 32px #00162933!important}
+.snakeApprovedHero .snakeApprovedTop,.snakeApprovedHero .snakeApprovedMetrics{color:#f6fbff!important}
+.snakeApprovedHero .snakeApprovedAmount{color:#fff!important}
+.snakeApprovedHero .snakeApprovedMetrics{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important}
+.snakeApprovedHero .snakeApprovedMetrics b{font-size:clamp(10px,2.9vw,20px)!important;overflow-wrap:anywhere;white-space:normal!important}
+.snakeApprovedHero .snakeApprovedMetrics span{font-size:clamp(10px,2.5vw,16px)!important}
+@media(max-width:420px){.snakeApprovedHero{padding:16px 11px!important}.snakeApprovedTop{gap:6px}.snakeApprovedChip{font-size:10px!important;padding:9px 6px!important}.snakeApprovedAmount{font-size:clamp(24px,7vw,38px)!important}.snakeApprovedMetrics>div{padding:0 4px!important}}
+
+/* V88 — Tema limão: destaque financeiro integrado à paleta aprovada. */
+html[data-tema="limao"] .snakeApprovedHero,
+body[t="limao"] .snakeApprovedHero{
+ background:linear-gradient(120deg,#253c12 0%,#101e10 48%,#09140e 100%)!important;
+ border:1px solid rgba(184,255,44,.75)!important;
+ box-shadow:inset 0 0 24px rgba(184,255,44,.065),0 14px 32px rgba(0,0,0,.30)!important;
+ color:#f5ffe9!important;
+}
+html[data-tema="limao"] .snakeApprovedHero .snakeApprovedChip,
+body[t="limao"] .snakeApprovedHero .snakeApprovedChip{
+ background:linear-gradient(145deg,#284d17,#112719)!important;
+ color:#dcff9b!important;border:1px solid #a8ec35!important;
+}
+html[data-tema="limao"] .snakeApprovedHero .snakeApprovedAmount,
+body[t="limao"] .snakeApprovedHero .snakeApprovedAmount{color:#fff!important}
+html[data-tema="limao"] .snakeApprovedHero .snakeApprovedMetrics,
+body[t="limao"] .snakeApprovedHero .snakeApprovedMetrics{border-top-color:rgba(206,255,152,.34)!important}
+html[data-tema="limao"] .snakeApprovedHero .snakeApprovedMetrics>div,
+body[t="limao"] .snakeApprovedHero .snakeApprovedMetrics>div{border-right-color:rgba(206,255,152,.34)!important}
+html[data-tema="limao"] .snakeApprovedHero .snakeApprovedMetrics>div:last-child,
+body[t="limao"] .snakeApprovedHero .snakeApprovedMetrics>div:last-child{border-right:0!important}
+html[data-tema="limao"] .snakeApprovedHero .snakeApprovedMetrics>div:last-child b,
+body[t="limao"] .snakeApprovedHero .snakeApprovedMetrics>div:last-child b{color:#b8ff2c!important}
 </style></head><body>
 <script id="snake-early-diagnostics">
 (function(){
@@ -1220,7 +1273,7 @@ html[data-tema] .settingsPop{top:122px!important;max-height:calc(100dvh - 145px)
 </div>
 <div id="nav"></div>
 <script>
-let APP_NOW=new Date(),APP_TODAY=`${APP_NOW.getFullYear()}-${String(APP_NOW.getMonth()+1).padStart(2,'0')}-${String(APP_NOW.getDate()).padStart(2,'0')}`,HJ=APP_NOW.getDate();const OPENING_KEY='assessor_openings_v83';const OPENING_DEFAULTS={c6:0,caju:0,cajuFunds:0};function validateOpenings(v){if(!v||typeof v!=='object'||Array.isArray(v)||!['c6','caju','cajuFunds'].every(k=>Number.isSafeInteger(v[k])&&Math.abs(v[k])<=100000000000))throw Error('Saldos iniciais inválidos');return {c6:v.c6,caju:v.caju,cajuFunds:v.cajuFunds};}let OPENING_INVALID=false;let OPENING_CFG={...OPENING_DEFAULTS};try{const o=localStorage.getItem(OPENING_KEY);if(o)OPENING_CFG=validateOpenings(JSON.parse(o));}catch(e){OPENING_INVALID=true;setTimeout(()=>alert('Não foi possível ler os saldos iniciais. Importe um backup válido antes de lançar.'),50);}const ACC={c6:OPENING_CFG.c6,caju:OPENING_CFG.caju};
+let APP_NOW=new Date(),APP_TODAY=`${APP_NOW.getFullYear()}-${String(APP_NOW.getMonth()+1).padStart(2,'0')}-${String(APP_NOW.getDate()).padStart(2,'0')}`,HJ=APP_NOW.getDate();const OPENING_KEY='assessor_openings_v83';const OPENING_DEFAULTS={c6:0,caju:0,cajuFunds:0};function validateOpenings(v){if(!v||typeof v!=='object'||Array.isArray(v)||!['c6','caju','cajuFunds'].every(k=>Number.isSafeInteger(v[k])&&Math.abs(v[k])<=100000000000))throw Error('Saldos iniciais inválidos');return {c6:v.c6,caju:v.caju,cajuFunds:v.cajuFunds};}let OPENING_INVALID=false;let OPENING_CFG={...OPENING_DEFAULTS};try{const o=localStorage.getItem(OPENING_KEY);if(o)OPENING_CFG=validateOpenings(JSON.parse(o));}catch(e){OPENING_INVALID=true;setTimeout(()=>alert('Não foi possível ler os saldos iniciais. Importe um backup válido antes de lançar.'),50);}const XP_OPENING_KEY='snake_xp_opening_cents_v1';let XP_OPENING=0;try{const saved=localStorage.getItem(XP_OPENING_KEY);if(saved!==null){const parsed=Number(saved);if(Number.isSafeInteger(parsed)&&Math.abs(parsed)<=100000000000)XP_OPENING=parsed;}}catch(e){console.warn('Saldo inicial XP indisponível',e);}const ACC={c6:OPENING_CFG.c6,caju:OPENING_CFG.caju,xp:XP_OPENING};function setXPInitialBalance(){const raw=prompt('Saldo inicial XP (R$). Confirme o valor pelo extrato bancário.',(ACC.xp/100).toFixed(2).replace('.',','));if(raw===null)return;const cents=Math.round(Number(raw.trim().replace(/\./g,'').replace(',','.'))*100);if(!Number.isSafeInteger(cents)||Math.abs(cents)>100000000000){alert('Saldo XP inválido.');return;}try{localStorage.setItem(XP_OPENING_KEY,String(cents));ACC.xp=cents;draw();}catch(e){alert('Não foi possível salvar o saldo XP.');}}
 const LEDGER_KEY='assessor_tx_v43';
 function persistLedger(){if(PERSIST_BLOCKED)return false;const data=JSON.stringify(L);try{localStorage.setItem(LEDGER_KEY,data);}catch(e){alert('Não foi possível salvar os dados neste navegador. Exporte um backup antes de fechar o app.');return false;}try{localStorage.setItem('assessor_tx',data);}catch(e){}return true;}
 function nextId(){return L.reduce((max,x)=>Math.max(max,Number(x.id)||0),100)+1}
@@ -1228,7 +1281,8 @@ function nextId(){return L.reduce((max,x)=>Math.max(max,Number(x.id)||0),100)+1}
 const CAT={mor:['Moradia','home','#168BFF'],mer:['Mercado','cart','#FF7A00'],tra:['Transporte','car','#00C48C'],ali:['Alimentação','fork','#FFD000'],laz:['Lazer','game','#FF4FA3'],sau:['Saúde','heart','#00D68F'],con:['Contas','bulb','#8B5CFF'],out:['Outros','list','#E85D75'],mov:['Móveis','home','#9C6ADE'],pen:['Pensão','money','#00B8D9'],lav:['Lavanderia','shirt','#35C2FF'],abs:['Abastecimento','fuel','#FF4D4D'],cer:['Cerveja','beer','#F59E0B'],est:['Estacionamento','parking','#5B8CFF'],trab:['Trabalho','briefcase','#22D3EE']};
 const ORC={};
 const GR={Padaria:['#2a78d6','bread'],Mercado:['#eb6834','cart'],Restaurante:['#1baf7a','fork'],Delivery:['#6250d6','bag'],Cerveja:['#e87ba4','beer']};
-const AC={c6:['C6','#4a95ea'],caju:['Caju','#e87ba4'],carbon:['Carbon','#8b7cf0']};
+function bankMark(a){const name=a==='caju'?'caju':a==='xp'?'XP':a==='carbon'?'C6':'C6';return '<span class="snBankMark" data-bank="'+a+'" role="img" aria-label="'+({c6:'C6 Bank',carbon:'C6 Carbon',caju:'Caju',xp:'XP'}[a]||'Banco')+'">'+name+'</span>';}
+const AC={c6:['C6','#4a95ea'],caju:['Caju','#e87ba4'],carbon:['Carbon','#8b7cf0'],xp:['XP Infinite One Débito','#dedede']};
 const ICO={home:'M3 11l9-8 9 8M5 10v10h14V10',cart:'M3 4h2l2 11h11l2-8H6M9 20h.01M17 20h.01',car:'M5 16l1-6h12l1 6M4 16h16v3H4zM7 19v1M17 19v1',fork:'M7 3v8M4 3v5a3 3 0 006 0V3M17 3c-2 2-2 6 0 8v10',heart:'M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z',game:'M6 8h12a4 4 0 014 4v2a3 3 0 01-5 2l-1-1H8l-1 1a3 3 0 01-5-2v-2a4 4 0 014-4zM8 11v3M6.5 12.5h3',bulb:'M9 18h6M10 21h4M12 3a6 6 0 00-3 11v2h6v-2a6 6 0 00-3-11z',dots:'M5 12h.01M12 12h.01M19 12h.01',bread:'M4 10a4 4 0 014-4h8a4 4 0 014 4v8H4z',bag:'M6 8h12l1 12H5zM9 8a3 3 0 016 0',beer:'M6 6h9v14H6zM15 9h3v6h-3M9 6V4h3v2',list:'M5 6h14M5 12h14M5 18h14',rep:'M4 12a8 8 0 0114-5l2 2M20 12a8 8 0 01-14 5l-2-2M18 4v5h-5M6 20v-5h5',cal:'M5 5h14v15H5zM5 10h14M9 3v4M15 3v4',chat:'M4 5h16v11H9l-5 4z',grid:'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',card:'M3 6h18v12H3zM3 10h18',shirt:'M8 4l4 2 4-2 4 3-3 2v11H7V9L4 7z',fuel:'M5 3h10v18H5zM7 6h6v5H7zM15 8h2l2 2v7a2 2 0 01-2 2h-2',parking:'M7 20V4h6a5 5 0 010 10H7M7 14h6',briefcase:'M4 7h16v12H4zM9 7V5h6v2M4 12h16',money:'M4 7h16v10H4zM8 12h.01M16 12h.01M12 9a3 3 0 100 6 3 3 0 000-6z'};
 const L0=[];
 let L,TAB='ger',F='todas',AS='chat',SEL='2026-10-03',OPEN=0,TOAST='',LAST=0,CH,W,ST={fat:true,rec:true,hide:false,msg:true,res:true,dias:3},NID=100,MD=0;
@@ -1292,12 +1346,12 @@ const expenseBase=(status='r')=>ML().filter(x=>x.t==='d'&&(!status||x.s===status
 function isWork(x){return x&&x.c==='trab';}
 function catMeta(k){const c=CAT[k];if(c)return {name:c[0],icon:c[1],color:(typeof V35_COLORS!=='undefined'&&V35_COLORS[k])||c[2]};const d=CATDB[k];return {name:d?.name||k||'Outros',icon:'list',color:'#94A3B8'};}
 
-function pct(a){const t=a.reduce((s,x)=>s+x,0)||1,e=a.map(x=>x*100/t),f=e.map(Math.floor),r=100-f.reduce((s,x)=>s+x,0);e.map((x,i)=>[x-Math.floor(x),i]).sort((a,b)=>b[0]-a[0]).slice(0,r).forEach(o=>f[o[1]]++);return f;}
+function pct(a){const total=a.reduce((s,x)=>s+x,0);if(total<=0)return a.map(()=>0);const raw=a.map(x=>x*100/total),result=raw.map(Math.floor);let left=100-result.reduce((s,x)=>s+x,0);raw.map((v,i)=>({i,remainder:v-result[i]})).sort((a,b)=>b.remainder-a.remainder).slice(0,left).forEach(x=>result[x.i]++);return result;}
 function D(){const o={},cut=YM+'-31';
- o.c6=accountBalance('c6',cut,false);
+ o.c6=accountBalance('c6',cut,false);o.xp=accountBalance('xp',cut,false);o.availableDebit=o.c6+o.xp;
  const cajuFunds=cajuBalance(YM);
- o.cj=cajuFunds;
- o.tot=o.c6+o.cj;
+ o.cj=cajuFunds;const portions=cajuModalBalances(YM);o.cajuFood=portions.food;o.cajuFuel=portions.fuel;
+ o.tot=o.availableDebit; // Caju é benefício de alimentação; nunca integra saldo monetário.
  o.rec=smm(x=>x.s=='r'&&x.t=='r'&&x.a=='c6');o.des=smm(x=>x.s=='r'&&x.t=='d');o.pd=smm(x=>x.s=='p'&&x.t=='d');o.pt=smm(x=>x.s=='p'&&x.t=='t');o.pr=smm(x=>x.s=='p'&&x.t=='r');o.fim=projectedC6(YM);
  o.cg=smm(x=>x.a=='caju'&&x.s=='r'&&x.t=='d');o.rc=smm(x=>x.a=='caju'&&x.t=='r'&&x.s=='r');const recent=L.filter(x=>x.a==='caju'&&x.t==='d'&&x.s==='r'&&x.d>=dateOffset(alertRef(YM),-13)&&x.d<=alertRef(YM)).reduce((q,x)=>q+x.v,0);o.dura=recent>0?Math.max(0,Math.floor(o.cj/(recent/14))):null;
  o.fat=creditUsed(lastMonthDay(YM),ALERT_CFG.carbon);o.fp=smm(x=>x.ft&&x.s=='p');return o;}
@@ -1311,8 +1365,8 @@ function alerta(){if(!Object.keys(ORC).length)return 'Nenhum orçamento definido
 function vDia(){
  const now=new Date(),localYM=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`,
  today=`${localYM}-${String(now.getDate()).padStart(2,'0')}`,ref=YM===localYM?today:SEL;
- const it=ML().filter(x=>x.d===ref&&x.t==='d'&&x.s==='r'),pv=false,tot=it.reduce((q,x)=>q+x.v,0),invoiceDue=ref===YM+'-07'?carbonInvoiceGross(YM):0;
- return `<div class="c"><div class="sp"><p class="h">${pv?'Previsto para ':'Despesas do dia '}${dd(ref)}</p><b style="color:${pv?'var(--a)':'var(--neg)'}">${brl(tot)}</b></div>${invoiceDue>0?`<div class="r li catClick" onclick="openCarbonInvoice(YM)"><div class="f"><b>Fatura C6 Carbon</b><p class="m">Vencimento 07 · Total bruto de compras e parcelas · Toque para detalhes</p></div><b style="color:var(--warn)">${brl(invoiceDue)}</b></div>`:''}
+ const it=ML().filter(x=>x.d===ref&&x.t==='d'&&x.s==='r'),pv=false,tot=it.reduce((q,x)=>q+x.v,0),invoiceDue=ref===YM+'-12'?snakeCarbonInvoiceBalance(YM).due:0;
+ return `<div class="c"><div class="sp"><p class="h">${pv?'Previsto para ':'Despesas do dia '}${dd(ref)}</p><b style="color:${pv?'var(--a)':'var(--neg)'}">${brl(tot)}</b></div>${invoiceDue>0?`<div class="r li catClick" onclick="openCarbonInvoice(YM)"><div class="f"><b>Fatura C6 Carbon</b><p class="m">Vencimento 12 · Total bruto de compras e parcelas · Toque para detalhes</p></div><b style="color:var(--warn)">${brl(invoiceDue)}</b></div>`:''}
  ${it.length?it.map(x=>{const c=x.c&&CAT[x.c]?CAT[x.c]:CAT.out,cc=V35_COLORS[x.c]||c[2];return `<div class="r pr" onclick="openLanc(${x.id})">${tile(c[1],cc)}<div class="f"><p>${escapeHTML(x.n)}</p><p class="m">${escapeHTML(c[0])} · ${AC[x.a]?.[0]||x.a}${x.s==='p'?' · previsto':''}</p></div><b>${brl(x.v)}</b></div>`}).join(''):`<p class="m" style="padding:8px 0">Nenhuma despesa registrada hoje.</p>`}</div>`;
 }
 function pct100(vals){
@@ -1344,7 +1398,7 @@ function graf7(){
  const dots=a.map((z,i)=>`<circle cx="${xx(i)}" cy="${yy(smooth[i])}" r="3.7" fill="var(--card)" stroke="var(--a)" stroke-width="2.2" onclick="openDay('${z.d}')"/>`).join('');
  const values=a.map((z,i)=>z.v>0?`<text x="${xx(i)}" y="${Math.max(14,yy(smooth[i])-11)}" text-anchor="middle" font-size="9" font-weight="700" fill="var(--tx)">${brs(z.v)}</text>`:'').join('');
  const labels=a.map((z,i)=>`<text x="${xx(i)}" y="${H-8}" text-anchor="middle" font-size="10" fill="var(--mu)">${String(z.day).padStart(2,'0')}</text>`).join('');
- return `<div class="c"><div class="sp"><div><p class="h">Gastos por dia</p><p class="m">${YM===localToday().slice(0,7)?'Semana atual · segunda a domingo':'Semana final do mês · segunda a domingo'} · C6 + Caju + C6 Carbon</p></div><button class="bt" onclick="graphDetail('daily')" style="color:var(--a)">Ver detalhes ›</button></div><svg viewBox="0 0 ${W} ${H}" style="width:100%"><defs><linearGradient id="v40fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--a)" stop-opacity=".32"/><stop offset="75%" stop-color="var(--a)" stop-opacity=".07"/><stop offset="100%" stop-color="var(--a)" stop-opacity="0"/></linearGradient></defs>${grid}<path d="${area}" fill="url(#v40fade)" stroke="none"/><path d="${p}" fill="none" stroke="var(--a)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>${dots}${values}${labels}</svg></div>`;
+ return `<div class="c"><div class="sp"><div><p class="h">Gastos por dia</p><p class="m">${YM===localToday().slice(0,7)?'Semana atual · segunda a domingo':'Semana final do mês · segunda a domingo'} · C6 + XP + Caju + C6 Carbon</p></div><button class="bt" onclick="graphDetail('daily')" style="color:var(--a)">Ver detalhes ›</button></div><svg viewBox="0 0 ${W} ${H}" style="width:100%"><defs><linearGradient id="v40fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--a)" stop-opacity=".32"/><stop offset="75%" stop-color="var(--a)" stop-opacity=".07"/><stop offset="100%" stop-color="var(--a)" stop-opacity="0"/></linearGradient></defs>${grid}<path d="${area}" fill="url(#v40fade)" stroke="none"/><path d="${p}" fill="none" stroke="var(--a)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>${dots}${values}${labels}</svg></div>`;
 }
 function orcCard(){
  const t=cs('r'),ks=Object.keys(ORC).filter(k=>CAT[k]).sort((a,b)=>(t[b]/ORC[b])-(t[a]/ORC[a]));
@@ -1356,7 +1410,7 @@ function detailModal(title,items){
  $('md').innerHTML=`<div class="mc"><div class="sp"><div><p class="h" style="font-size:1.2em">${escapeHTML(title)}</p><p class="m">${items.length} lançamento(s) · ${BR(total)}</p></div><button class="bt" onclick="closeDay()">Fechar</button></div>
  ${items.length?items.slice().sort((a,b)=>b.d.localeCompare(a.d)).map(x=>`<div class="li" onclick="openLanc(${x.id})" style="cursor:pointer"><div><b>${escapeHTML(x.n)}</b><small>${new Date(x.d+'T12:00').toLocaleDateString('pt-BR')} · ${escapeHTML(catName(x.c))}${escapeHTML(x.sub?' › '+x.sub:'')} · ${AC[x.a]?.[0]||x.a} · ${x.s==='r'?'Realizado':'A efetivar'}</small></div><b>${x.t==='r'?'+':'-'}${BR(x.v)}</b></div>`).join(''):'<p class="m">Nenhum lançamento.</p>'}</div>`;
 }
-function openDailyDetail(){const ds=gastos7().map(x=>x.iso);detailModal('Gastos dos últimos 7 dias',L.filter(x=>x.t=='d'&&x.s=='r'&&ds.includes(x.d)&&['c6','caju','carbon'].includes(x.a)));}
+function openDailyDetail(){const ds=gastos7().map(x=>x.iso);detailModal('Gastos dos últimos 7 dias',L.filter(x=>x.t=='d'&&x.s=='r'&&ds.includes(x.d)&&['c6','caju','carbon','xp'].includes(x.a)));}
 function openCat(k){detailModal(catName(k),ML().filter(x=>x.t=='d'&&x.c==k));}
 function openLanc(id){
  const x=L.find(y=>y.id==id);if(!x)return;
@@ -1453,6 +1507,86 @@ function carbonInvoiceItems(ym=YM){
  return L.filter(x=>x.a==='carbon'&&x.t==='d'&&(x.comp||carbonInvoiceMonth(x.d)).slice(0,7)===ym);
 }
 function carbonInvoiceGross(ym=YM){return carbonInvoiceItems(ym).reduce((sum,x)=>sum+x.v,0);}
+/* Auditoria 25: somente pagamentos realizados, com vínculo explícito de fatura,
+   reduzem o saldo a pagar. Não infere vínculo por texto, valor ou proximidade. */
+function snakeCarbonLinkedPayments(ym){
+ return L.filter(x=>x.s==='r'&&validISO(x.d)&&
+  ((x.t==='t'&&x.to==='carbon'&&x.a!=='carbon')||(x.a==='carbon'&&x.t==='r'))&&
+  (x.invoiceId===ym||x.carbonInvoiceId===ym||x.linkedInvoiceId===ym));
+}
+function snakeCarbonInvoiceBalance(ym){
+ const gross=carbonInvoiceGross(ym),payments=snakeCarbonLinkedPayments(ym);
+ const paid=payments.reduce((sum,x)=>sum+x.v,0);
+ return {gross,paid,due:Math.max(0,gross-paid),overpayment:Math.max(0,paid-gross),paymentIds:payments.map(x=>x.id)};
+}
+
+/* Auditoria 18: alerta não destrutivo para pagamentos de fatura.
+   Sem vínculo documental com a fatura, não abatemos automaticamente seu bruto. */
+/* Auditoria 26: transferências reais para o Carbon também são candidatas
+   de conciliação; nunca vinculadas automaticamente a uma fatura histórica. */
+function snakeCarbonPaymentCandidates(ym){
+  return L.filter(x=>x.s==='r'&&validISO(x.d)&&x.d.slice(0,7)===ym&&(
+    (x.t==='t'&&x.to==='carbon'&&(x.a==='c6'||x.a==='xp'))||
+    (x.t==='d'&&x.a!=='carbon'&&
+      /(?:pagamento|pagar|quita[cç][aã]o|d[eé]bito).*?(?:fatura|cart[aã]o)|(?:fatura|cart[aã]o).*?(?:pagamento|paga|quita)/i.test(String(x.n||'')+' '+String(x.sub||'')))
+  ));
+}
+/* Diagnóstico somente leitura: dados insuficientes nunca geram baixa ou
+   liberação de limite por inferência. */
+/* Auditoria 31: candidatos históricos em janela de vencimento; apenas leitura.
+   O fechamento dia 4 e vencimento dia 12 não provam qual fatura foi paga.
+   Nunca associar automaticamente uma transferência histórica por proximidade. */
+function snakeCarbonHistoricalPaymentReview(ym){
+ const due=ym+'-12';
+ const start=dateOffset(due,-20),end=dateOffset(due,20);
+ const linked=new Set(snakeCarbonLinkedPayments(ym).map(x=>String(x.id)));
+ const candidates=L.filter(x=>x.s==='r'&&validISO(x.d)&&x.d>=start&&x.d<=end&&
+  ((x.t==='t'&&x.to==='carbon'&&(x.a==='c6'||x.a==='xp'))||
+   (x.t==='d'&&x.a!=='carbon'&&/(?:pagamento|quita[cç][aã]o).*?(?:fatura|cart[aã]o)|(?:fatura|cart[aã]o).*?(?:pagamento|quita)/i.test(String(x.n||''))))&&
+  !linked.has(String(x.id)));
+ return {ym,start,end,candidates:candidates.map(x=>({id:x.id,date:x.d,amount:x.v,origin:x.a,description:x.n||''})),
+  amount:candidates.reduce((sum,x)=>sum+x.v,0),requiresDocumentaryLink:candidates.length>0};
+}
+function snakeCarbonPaymentReconciliationAudit(ym){
+  const candidates=snakeCarbonPaymentCandidates(ym);
+  const linked=snakeCarbonLinkedPayments(ym);
+  const linkedIds=new Set(linked.map(x=>x.id));
+  const unlinked=candidates.filter(x=>!linkedIds.has(x.id));
+  const balance=snakeCarbonInvoiceBalance(ym);
+  return {month:ym,invoiceGross:balance.gross,linkedPaid:balance.paid,
+    invoiceOutstanding:balance.due,overpayment:balance.overpayment,
+    unlinkedCount:unlinked.length,unlinkedAmount:unlinked.reduce((v,x)=>v+x.v,0),
+    unlinkedIds:unlinked.map(x=>x.id),requiresReview:unlinked.length>0||balance.overpayment>0};
+}
+/* Auditoria 19: consistência não destrutiva de compras parceladas.
+   A compra deve ter uma parcela por competência e o total das parcelas
+   deve reproduzir exatamente o valor original, em centavos. */
+function snakeCarbonInstallmentAudit(){
+ const groups=new Map(),issues=[];
+ for(const x of L){
+  if(x.a!=='carbon'||x.t!=='d'||!x.installmentGroup)continue;
+  if(!groups.has(x.installmentGroup))groups.set(x.installmentGroup,[]);
+  groups.get(x.installmentGroup).push(x);
+ }
+ for(const [group,items] of groups){
+  const first=items[0],count=Number(first.installmentCount),total=Number(first.purchaseTotal);
+  const indices=new Set(items.map(x=>Number(x.installmentIndex)));
+  const months=new Set(items.map(x=>String(x.comp||'').slice(0,7)));
+  const sum=items.reduce((v,x)=>v+(Number(x.v)||0),0);
+  const valid=Number.isSafeInteger(count)&&count>0&&Number.isSafeInteger(total)&&
+   count===items.length&&indices.size===count&&months.size===count&&
+   items.every(x=>x.installmentCount===count&&x.purchaseTotal===total&&
+    Number.isSafeInteger(x.v)&&x.v>0&&x.installmentIndex>=1&&x.installmentIndex<=count)&&sum===total;
+  if(!valid)issues.push({group,ids:items.map(x=>x.id),count,total,sum});
+ }
+ return {groups:groups.size,issues,ok:issues.length===0};
+}
+function snakeCarbonInvoiceAudit(ym){
+ const gross=carbonInvoiceGross(ym);
+ const candidates=snakeCarbonPaymentCandidates(ym);
+ return {gross,candidates,possiblePayments:candidates.reduce((v,x)=>v+x.v,0),needsReview:gross>0&&candidates.length>0};
+}
+
 function openCarbonInvoice(ym=YM){
  const items=carbonInvoiceItems(ym);
  detailModal('Fatura C6 Carbon · '+monthName(ym),items);
@@ -1461,8 +1595,58 @@ function openCarbonInvoice(ym=YM){
   const note=document.createElement('p');
   note.className='m';
   note.style.cssText='margin:8px 0 12px;line-height:1.5';
-  note.textContent='Vencimento 07/'+ym.slice(5,7)+'/'+ym.slice(0,4)+' · Compras e parcelas vinculadas à fatura. Total bruto, sem descontar pagamentos; confira o valor líquido no banco antes de pagar.';
+  note.textContent='Vencimento 12/'+ym.slice(5,7)+'/'+ym.slice(0,4)+' · Compras e parcelas vinculadas à fatura. Total bruto, sem descontar pagamentos; confira o valor líquido no banco antes de pagar.';
+  note.textContent+=' Limite disponível considera apenas pagamentos realizados e identificados como transferência para o Carbon ou crédito no próprio Carbon.';
   header.after(note);
+  // Auditoria 29: mesma fonte de dados para fatura, pagamentos e limite.
+  const invoice=snakeCarbonInvoiceBalance(ym);
+  const paymentAudit=snakeCarbonPaymentReconciliationAudit(ym);
+  const consistency=snakeCarbonConsistencyAudit(ym);
+  const creditCfg=ALERT_CFG.carbon;
+  const credit=creditCfg?snakeCarbonLimitReconciliation(lastMonthDay(ym),creditCfg):null;
+  const reconciliation=document.createElement('section');
+  reconciliation.style.cssText='margin:10px 0;padding:12px;border:1px solid var(--a);border-radius:12px;line-height:1.6';
+  const heading=document.createElement('strong');heading.textContent='Conciliação da fatura';
+  reconciliation.append(heading);
+  const rows=[
+   ['Fatura bruta',invoice.gross],
+   ['Pagamentos vinculados',invoice.paid],
+   ['Saldo pendente',invoice.due]
+  ];
+  for(const [label,amount] of rows){
+   const line=document.createElement('div');
+   line.style.cssText='display:flex;justify-content:space-between;gap:10px';
+   const l=document.createElement('span');l.textContent=label;
+   const v=document.createElement('b');v.textContent=BR(amount);
+   line.append(l,v);reconciliation.append(line);
+  }
+  if(credit){
+   for(const [label,amount] of [['Limite utilizado',credit.used],['Limite disponível',credit.available]]){
+    const line=document.createElement('div');line.style.cssText='display:flex;justify-content:space-between;gap:10px';
+    const l=document.createElement('span');l.textContent=label;
+    const v=document.createElement('b');v.textContent=BR(amount);
+    line.append(l,v);reconciliation.append(line);
+   }
+  }
+  const history=snakeCarbonHistoricalPaymentReview(ym);
+  if(history.candidates.length){
+   const historyNote=document.createElement('p');historyNote.className='m';
+   historyNote.style.cssText='margin:8px 0;line-height:1.5';
+   historyNote.textContent='Pagamentos próximos ao vencimento, ainda sem vínculo documental: '+history.candidates.map(x=>'#'+x.id+' · '+x.date+' · '+BR(x.amount)).join(' | ')+'. Não foram abatidos nem liberaram limite.';
+   reconciliation.append(historyNote);
+  }
+  const issues=[];
+  if(paymentAudit.unlinkedCount)issues.push(paymentAudit.unlinkedCount+' pagamento(s) sem vínculo confirmado ('+BR(paymentAudit.unlinkedAmount)+')');
+  if(invoice.overpayment)issues.push('Pagamento superior à fatura: '+BR(invoice.overpayment));
+  if(consistency.warnings.length)issues.push(consistency.warnings.length+' alerta(s) de integridade');
+  if(issues.length){
+   const warning=document.createElement('p');warning.className='m';warning.style.color='var(--warn)';
+   warning.textContent='Conciliação pendente: '+issues.join('; ')+'. Nenhum lançamento foi alterado.';
+   reconciliation.append(warning);
+  }
+  note.after(reconciliation);
+  const audit=snakeCarbonInstallmentAudit();
+  if(!audit.ok){const warn=document.createElement('p');warn.className='m';warn.style.color='var(--warn)';warn.textContent='Atenção: '+audit.issues.length+' compra(s) parcelada(s) exigem conciliação de parcelas. Nenhum lançamento foi modificado.';note.after(warn);}
  }
 }
 function openPending(){
@@ -1496,7 +1680,7 @@ function openPending(){
  if(header)header.after(section);else modal.prepend(section);
 }
 
-function openEfet(id){const x=L.find(y=>y.id==id);MD='efet';$('md').style.display='flex';$('md').innerHTML=`<div class="mc"><div class="sp"><div><p class="h" style="font-size:1.2em">Efetivar recorrência</p><p class="m">${escapeHTML(x.n)}</p></div><button class="bt" onclick="closeDay()">Fechar</button></div><div class="fm"><label>Valor pago (R$)<input id="ev" inputmode="decimal" value="${(x.v/100).toFixed(2).replace('.',',')}"></label><label>Data de pagamento<input id="ed" type="number" min="1" max="31" value="${HJ}"></label><label>Conta / cartão<select id="ea"><option value="c6" ${x.a=='c6'?'selected':''}>C6</option><option value="caju" ${x.a=='caju'?'selected':''}>Caju</option><option value="carbon" ${x.a=='carbon'?'selected':''}>C6 Carbon</option></select></label><button class="bt p" onclick="confirmEfet(${id})">Confirmar efetivação</button></div></div>`;}
+function openEfet(id){const x=L.find(y=>y.id==id);MD='efet';$('md').style.display='flex';$('md').innerHTML=`<div class="mc"><div class="sp"><div><p class="h" style="font-size:1.2em">Efetivar recorrência</p><p class="m">${escapeHTML(x.n)}</p></div><button class="bt" onclick="closeDay()">Fechar</button></div><div class="fm"><label>Valor pago (R$)<input id="ev" inputmode="decimal" value="${(x.v/100).toFixed(2).replace('.',',')}"></label><label>Data de pagamento<input id="ed" type="number" min="1" max="31" value="${HJ}"></label><label>Conta / cartão<select id="ea"><option value="c6" ${x.a=='c6'?'selected':''}>C6</option><option value="caju" ${x.a=='caju'?'selected':''}>Caju</option><option value="carbon" ${x.a=='carbon'?'selected':''}>C6 Carbon</option><option value="xp" ${x.a=='xp'?'selected':''}>XP Infinite One Débito</option></select></label><button class="bt p" onclick="confirmEfet(${id})">Confirmar efetivação</button></div></div>`;}
 
 function toggleFab(){const e=$('fabMenu');if(e)e.classList.toggle('on');}
 
@@ -1505,26 +1689,36 @@ function vIni(dia=1){
  const pend=ML().filter(x=>x.s==='p'&&x.t==='d').slice().sort((a,b)=>(a.d||'').localeCompare(b.d||'')).slice(0,4);
  const ref=SEL&&SEL.startsWith(YM)?SEL:(YM+'-01');
  const hoje=ML().filter(x=>x.s==='r'&&x.t==='d'&&x.d===ref).reduce((a,x)=>a+x.v,0);
- const rows=real.map(x=>{const c=x.c&&CAT[x.c]?CAT[x.c]:CAT.out,cc=V35_COLORS[x.c]||c[2];return `<div class="v39row" onclick="openLanc(${x.id})">${tile(c[1],cc)}<div class="v39grow"><b>${escapeHTML(x.n||c[0])}</b><span>${x.d?dd(x.d):''} · ${x.a==='caju'?'Caju':x.a==='carbon'?'C6 Carbon':'C6 Débito'}</span></div><strong class="${x.t==='r'?'ok':'bad'}">${x.t==='r'?'+ ':'- '}${brl(x.v)}</strong></div>`}).join('');
+ const rows=real.map(x=>{const c=x.c&&CAT[x.c]?CAT[x.c]:CAT.out,cc=V35_COLORS[x.c]||c[2];return `<div class="v39row" onclick="openLanc(${x.id})">${tile(c[1],cc)}<div class="v39grow"><b>${escapeHTML(x.n||c[0])}</b><span>${x.d?dd(x.d):''} · ${x.a==='caju'?'Caju':x.a==='carbon'?'C6 Carbon':x.a==='xp'?'XP Infinite One Débito':'C6 Débito'}</span></div><strong class="${x.t==='r'?'ok':'bad'}">${x.t==='r'?'+ ':'- '}${brl(x.v)}</strong></div>`}).join('');
  const prs=pend.map(x=>{const c=x.c&&CAT[x.c]?CAT[x.c]:CAT.out,cc=V35_COLORS[x.c]||c[2];return `<div class="v39row" onclick="openLanc(${x.id})">${tile(c[1],cc)}<div class="v39grow"><b>${escapeHTML(x.n||c[0])}</b><span>Vence ${x.d?dd(x.d):''}</span></div><strong class="warn">${brl(x.v)}</strong></div>`}).join('');
  const alerts=financialAlerts(YM);
  return mesNav()+`<div class="v39inicio">
- <div class="v39hero"><div><span class="m">Disponível agora</span><div class="v39saldo">${brl(d.c6)}</div><span class="m">Visão operacional do mês</span></div><div class="v39today"><span>Dia selecionado</span><b>${brl(hoje)}</b><small>${dd(ref)}</small></div></div>
+ <div class="v39hero"><div><span class="m">Disponível agora · C6 + XP</span><div class="v39saldo">${brl(d.availableDebit)}</div><span class="m">Visão operacional do mês</span></div><div class="v39today"><span>Dia selecionado</span><b>${brl(hoje)}</b><small>${dd(ref)}</small></div></div>
  <div class="v39quick"><button onclick="openAdd&&openAdd('d')">＋<span>Despesa</span></button><button onclick="openAdd&&openAdd('r')">＋<span>Previsto</span></button><button onclick="goTab('inv')">＋<span>Meta</span></button></div>
  <div class="c v39card"><div class="sp"><div><p class="h">Próximos compromissos</p><p class="m">O que precisa da sua atenção</p></div><span class="m" style="color:var(--a)" onclick="TAB='rec';draw()">Ver todos ›</span></div>${prs||'<p class="m" style="padding-top:10px">Nenhuma despesa pendente.</p>'}</div>
- <div class="c v39card"><div class="sp"><div><p class="h">Últimas transações</p><p class="m">C6 + Caju + C6 Carbon</p></div><span class="m" style="color:var(--a)" onclick="TAB='des';draw()">Ver todas ›</span></div>${rows||'<p class="m" style="padding-top:10px">Nenhuma transação.</p>'}</div>
+ <div class="c v39card"><div class="sp"><div><p class="h">Últimas transações</p><p class="m">C6 + XP + Caju + C6 Carbon</p></div><span class="m" style="color:var(--a)" onclick="TAB='des';draw()">Ver todas ›</span></div>${rows||'<p class="m" style="padding-top:10px">Nenhuma transação.</p>'}</div>
  <div class="c v39card"><div class="sp"><div><p class="h">Alertas do Assessor</p><p class="m">Somente o que exige atenção</p></div><span class="v39snake">Snake Eyes</span></div>${alerts.length?alerts.map(a=>renderReviewAlert(a,'v39alert')).join(''):'<p class="m">Nenhum alerta ativo para este mês.</p>'}</div>
  </div>`;
 }
 function vDesp(){
- const cj=ML().filter(x=>x.a=='caju'&&x.s=='r'&&x.t=='d'),ac=['c6','caju','carbon'].map(a=>smm(x=>x.a==a&&x.s=='r'&&x.t=='d')),tot=ac.reduce((s,x)=>s+x,0),po=pct(ac);
+ const cj=ML().filter(x=>x.a=='caju'&&x.s=='r'&&x.t=='d'),ac=['c6','caju','carbon','xp'].map(a=>smm(x=>x.a==a&&x.s=='r'&&x.t=='d')),tot=ac.reduce((s,x)=>s+x,0),po=pct(ac);
  const gs=Object.keys(CAT).map(k=>[k,cj.filter(x=>x.c==k).reduce((sum,x)=>sum+x.v,0)]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
  const cgt=gs.reduce((sum,x)=>sum+x[1],0),pg=pct100(gs.map(x=>x[1])),rows=ML().filter(x=>x.s=='r'&&x.t=='d'&&(F=='todas'||x.a==F)).sort((a,b)=>String(b.d).localeCompare(String(a.d))||b.id-a.id).slice(0,7);let s2=0;
- return `<div class="c"><div class="sp"><p class="h">Despesas totais</p><p class="m">Realizado em ${monthName(YM)}</p></div><p class="big2">${brl(tot)}</p><div class="stk" style="margin-bottom:8px">${['c6','caju','carbon'].map((a,i)=>`<span style="width:${po[i]}%;background:${AC[a][1]}"></span>`).join('')}</div><div class="sp m" style="flex-wrap:wrap">${['c6','caju','carbon'].map((a,i)=>`<span>${AC[a][0]} ${brl(ac[i])} · ${po[i]}%</span>`).join('')}</div>
- <div class="fl">${['todas','c6','caju','carbon'].map(f=>`<button class="${F==f?'on':''}" onclick="F='${f}';draw()">${f=='todas'?'Todas':AC[f][0]}</button>`).join('')}</div>${rows.map(x=>`<div class="r li"><div class="f"><p>${escapeHTML(x.n)}</p><p class="m">${dd(x.d)} · ${(CAT[x.c]||CAT.out)[0]} ${chip(x.a)}</p></div><b style="color:var(--neg)">-${brl(x.v)}</b></div>`).join('')}</div>
+ return `<div class="c"><div class="sp"><p class="h">Despesas totais</p><p class="m">Realizado em ${monthName(YM)}</p></div><p class="big2">${brl(tot)}</p><div class="stk" style="margin-bottom:8px">${['c6','caju','carbon','xp'].filter((a,i)=>po[i]>0).map(a=>`<span style="width:${po[['c6','caju','carbon','xp'].indexOf(a)]}%;background:${AC[a][1]}"></span>`).join('')}</div><div class="sp m" style="flex-wrap:wrap">${['c6','caju','carbon','xp'].map((a,i)=>`<span>${AC[a][0]} ${brl(ac[i])} · ${po[i]}%</span>`).join('')}</div>
+ <div class="fl">${['todas','c6','caju','carbon','xp'].map(f=>`<button class="${F==f?'on':''}" onclick="F='${f}';draw()">${f=='todas'?'Todas':AC[f][0]}</button>`).join('')}</div>${rows.map(x=>`<div class="r li"><div class="f"><p>${escapeHTML(x.n)}</p><p class="m">${dd(x.d)} · ${(CAT[x.c]||CAT.out)[0]} ${chip(x.a)}</p></div><b style="color:var(--neg)">-${brl(x.v)}</b></div>`).join('')}</div>
  ${orcCard()}<div class="c"><div class="sp"><p class="h">Despesas Caju</p><p class="m">${monthName(YM)}</p></div><p class="m">Alimentação e benefício · ${brl(cgt)}</p><svg viewBox="0 0 240 240" style="width:min(100%,260px);aspect-ratio:1;display:block;margin:8px auto 12px" role="img" aria-label="Rosca das despesas do Caju por categoria">${ring(120,120,86,30,gs.map(x=>[catMeta(x[0]).color,x[1],`event.stopPropagation();openSlice('cajuCat','${x[0]}')`]),1)}<text x="120" y="118" text-anchor="middle" font-size="17" font-weight="600" fill="var(--tx)">${brl(cgt)}</text><text x="120" y="142" text-anchor="middle" font-size="13" fill="var(--mu)">Caju</text></svg>${gs.length?gs.map((x,i)=>{s2+=pg[i];const c=CAT[x[0]]||[catName(x[0]),'list','#94A3B8'];return `<div class="r pr catClick" onclick="openSlice('cajuCat','${x[0]}')">${tile(c[1],c[2])}<div class="f"><div class="sp"><span>${escapeHTML(c[0])}</span><b>${pg[i]}%</b></div><div class="bar"><i style="width:${pg[i]}%;background:${c[2]}"></i></div></div><span class="m w70">${brl(x[1])}</span></div>`}).join(''):'<p class="m" style="text-align:center;padding:12px 0">Sem despesas do Caju neste mês.</p>'}<div class="sp tot"><span class="h">Total</span><span><b>${s2}%</b> <span class="m">· ${brl(cgt)}</span></span></div></div>`;
 }
-function efet(id){const x=L.find(y=>y.id==id);if(!x)return;x.s='r';x.d=`${YM}-${String(HJ).padStart(2,'0')}`;persistLedger();LAST=id;OPEN=0;TOAST=`${escapeHTML(x.n)} efetivado · ${brl(x.v)}`;draw();}
+function efet(id){
+ const x=L.find(y=>y.id==id);
+ if(!x||x.t!=='d'||x.s!=='p'||!x.rc)return;
+ if(PERSIST_BLOCKED){alert('Armazenamento bloqueado. Não foi possível efetivar.');return;}
+ const previous={s:x.s,d:x.d};
+ const today=(typeof APP_TODAY==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(APP_TODAY))?APP_TODAY:new Date().toISOString().slice(0,10);
+ x.s='r';x.d=today;
+ if(!persistLedger()){x.s=previous.s;x.d=previous.d;return;}
+ LAST=id;OPEN=0;TOAST=`${escapeHTML(x.n)} efetivado · ${brl(x.v)}`;
+ draw();
+}
 
 function vRec(k=1){const d=D(),pend=ML().filter(x=>x.rc&&x.t==='d'&&x.s=='p').sort((a,b)=>String(a.d).localeCompare(String(b.d))||a.id-b.id),pp=pend.reduce((s,x)=>s+x.v,0),cr=cs('r'),cp=cs('p'),ks=Object.keys(CAT).filter(k=>cr[k]+cp[k]>0).sort((a,b)=>cr[b]+cp[b]-cr[a]-cp[a]),mx=Math.max(...ks.map(k=>cr[k]+cp[k]));
 return (k?`<div class="g3"><div class="c s"><p class="m">Realizado</p><p class="v" style="color:var(--neg)">${brs(d.des)}</p></div><div class="c s"><p class="m">A efetivar</p><p class="v" style="color:var(--a)">${brs(pp)}</p></div><div class="c s"><p class="m">Total do mês</p><p class="v">${brs(d.des+d.pd)}</p></div></div>`:'')+`
@@ -1546,8 +1740,26 @@ function resetLay(){LAY=def();svL();draw();}
 
 let V29_EXP_VIEW='cat';
 const V35_COLORS={"ali": "#FF4D67", "cer": "#F5C542", "fuel": "#FF8A34", "parking": "#22D3EE", "air": "#A78BFA", "sau": "#34D399", "pen": "#F472B6", "mov": "#C08457", "out": "#94A3B8", "trans": "#3B82F6", "mor": "#8B5CF6", "com": "#14B8A6", "laz": "#EC4899"};
+/* R105: compras no crédito aparecem no mês da compra; parcelas ficam nas faturas. */
+function v105ExpensePurchases(){
+ const base=L.filter(x=>x.t==='d'&&x.s==='r'&&x.a!=='carbon'&&typeof x.d==='string'&&x.d.slice(0,7)===YM);
+ const credit=L.filter(x=>x.a==='carbon'&&x.t==='d'&&x.s==='r'&&typeof x.d==='string'&&x.d.slice(0,7)===YM);
+ const groups=new Set();
+ const purchases=[];
+ credit.forEach(x=>{
+   const group=x.installmentGroup;
+   if(group){
+     if(groups.has(group))return;
+     groups.add(group);
+     const parts=L.filter(z=>z.a==='carbon'&&z.t==='d'&&z.installmentGroup===group);
+     const total=parts.reduce((sum,z)=>sum+(Number(z.v)||0),0);
+     purchases.push({...x,v:total||Number(x.purchaseTotal)||x.v,n:String(x.n||'Compra').replace(/ \(\d+\/\d+\)$/,'')});
+   }else purchases.push(x);
+ });
+ return base.concat(purchases);
+}
 function v29ExpenseGroups(mode=V29_EXP_VIEW){
- const xs=expenseBase('r');
+ const xs=v105ExpensePurchases();
  const m={};
  xs.forEach(x=>{
    let k,n,col;
@@ -1564,7 +1776,7 @@ function v29ExpenseGroups(mode=V29_EXP_VIEW){
    }
    if(!m[k])m[k]={key:k,name:n,color:col,value:0};m[k].value+=x.v;
  });
- return Object.values(m).sort((a,b)=>b.value-a.value);
+ if(mode==='acc'){const names={c6:'C6 Débito',caju:'Caju',carbon:'C6 Carbon',xp:'XP Infinite One'};const colors={c6:'#b8ff2c',caju:'#ff405b',carbon:'#00a8ff',xp:'#f2b705'};for(const k of Object.keys(names))if(!m[k])m[k]={key:k,name:names[k],color:colors[k],value:0};}return Object.values(m).sort((a,b)=>b.value-a.value);
 }
 function v29SetExpenseView(mode){
  V29_EXP_VIEW=mode;
@@ -1572,7 +1784,7 @@ function v29SetExpenseView(mode){
  if(el)el.outerHTML=v28CatDonut();
 }
 function v29OpenExpenseGroup(mode,key){
- let xs=expenseBase('r');
+ let xs=v105ExpensePurchases();
  if(mode==='acc')xs=xs.filter(x=>(x.a||'out')===key);
  else if(mode==='ctx')xs=xs.filter(x=>(isWork(x)?'work':'personal')===key);
  else xs=xs.filter(x=>(x.c||'out')===key);
@@ -1591,7 +1803,7 @@ function v29CajuCard(){
 function v28CatDonut(){
  const a=v29ExpenseGroups(),tot=a.reduce((z,x)=>z+x.value,0);
  const labels={cat:'Gastos por categoria',acc:'Gastos por conta',ctx:'Trabalho × pessoal'};
- return `<div class="c" id="v29ExpenseCard"><div class="v28Title"><div><p class="h">${labels[V29_EXP_VIEW]}</p><p class="v28SectionHint">Uma única base de despesas · muda apenas a visão</p></div><span class="m" style="color:var(--a)" onclick="detailModal('Despesas realizadas',expenseBase('r'))">Ver todos ›</span></div>
+ return `<div class="c" id="v29ExpenseCard"><div class="v28Title"><div><p class="h">${labels[V29_EXP_VIEW]}</p><p class="v28SectionHint">Compras pela data da transação · parcelas nas faturas</p></div><span class="m" style="color:var(--a)" onclick="detailModal('Compras e despesas do mês',v105ExpensePurchases())">Ver todos ›</span></div>
  <div class="v28DonutWrap"><svg viewBox="0 0 240 240" style="width:100%;max-width:185px;margin:auto">${ring(120,120,82,31,a.map(x=>[x.color,x.value,`event.stopPropagation();v29OpenExpenseGroup('${V29_EXP_VIEW}','${x.key}')`]),1)}<text x="120" y="116" text-anchor="middle" font-size="17" font-weight="700" fill="var(--tx)">${brs(tot)}</text><text x="120" y="140" text-anchor="middle" font-size="12" fill="var(--mu)">realizado</text></svg>
  <div class="v28Legend">${a.slice(0,8).map(x=>`<div class="v28LegendRow" onclick="v29OpenExpenseGroup('${V29_EXP_VIEW}','${x.key}')"><i style="background:${x.color}"></i><span>${escapeHTML(x.name)}</span><b>${brs(x.value)}</b></div>`).join('')}</div></div>
  <div class="v29Tabs"><button class="${V29_EXP_VIEW==='cat'?'on':''}" onclick="v29SetExpenseView('cat')">Por categoria</button><button class="${V29_EXP_VIEW==='acc'?'on':''}" onclick="v29SetExpenseView('acc')">Por conta</button><button class="${V29_EXP_VIEW==='ctx'?'on':''}" onclick="v29SetExpenseView('ctx')">Trabalho × pessoal</button></div></div>`;
@@ -1610,16 +1822,53 @@ function v28Agenda(){
  <div class="v28AgendaStrip">${ns.map(n=>`<button class="${n===base?'on':''}" onclick="openDay('${YM}-${String(n).padStart(2,'0')}')">${String(n).padStart(2,'0')}</button>`).join('')}</div>
  ${rows.map(x=>`<div class="r li" onclick="openLanc(${x.id})" style="cursor:pointer"><div class="f"><p>${escapeHTML(x.n)}</p><p class="m">${dd(x.d)} · ${x.s==='r'?'Realizado':'Previsto'}</p></div><b style="color:${x.t==='r'?'var(--pos)':'var(--neg)'}">${x.t==='r'?'+':'-'}${brs(x.v)}</b></div>`).join('')}</div>`;
 }
+/* Auditoria 15: reconcilia valores do card sem alterar o ledger. */
+/* Auditoria 22: diagnóstico financeiro somente leitura. Não altera L nem ACC. */
+function snakeFinancialIntegrityAudit(ym=YM){
+ const issues=[];
+ const transfers=L.filter(x=>x.t==='t'&&x.s==='r'&&((x.a==='c6'&&x.to==='xp')||(x.a==='xp'&&x.to==='c6')));
+ for(const x of transfers){
+  const origin=accountDelta(x,x.a),destination=accountDelta(x,x.to);
+  if(origin+destination!==0||origin!==-x.v||destination!==x.v)
+   issues.push({type:'transfer_balance',id:x.id,origin,destination});
+ }
+ const candidatePayments=snakeCarbonPaymentCandidates(ym);
+ const linked=candidatePayments.filter(x=>x.invoiceId===ym||x.carbonInvoiceId===ym||x.linkedInvoiceId===ym);
+ const unlinked=candidatePayments.filter(x=>!x.invoiceId&&!x.carbonInvoiceId&&!x.linkedInvoiceId);
+ const duplicateIds=new Set(),seen=new Set();
+ for(const x of L){if(x.captureId){if(seen.has(x.captureId))duplicateIds.add(x.captureId);seen.add(x.captureId);}}
+ if(duplicateIds.size)issues.push({type:'duplicate_capture_ids',count:duplicateIds.size});
+ if(unlinked.length)issues.push({type:'carbon_payments_unlinked',count:unlinked.length,amount:unlinked.reduce((v,x)=>v+x.v,0)});
+ const rec=snakeProjectionReconciliation(ym);
+ return {month:ym,consolidated:accountBalance('c6',ym+'-31',false)+accountBalance('xp',ym+'-31',false),
+  transfersChecked:transfers.length,paymentsLinked:linked.length,paymentsUnlinked:unlinked.length,
+  invoiceGross:rec.invoice,plannedRevenue:rec.revenue,plannedExpenses:rec.pending,
+  projected:rec.projected,bridge:rec.bridge,issues};
+}
+function snakeProjectionReconciliation(ym){
+ const revenue=snakeC6Planned(ym,'r');
+ const pending=snakeC6Planned(ym,'d');
+ const invoice=snakeCarbonInvoiceBalance(ym).due;
+ const projected=snakeConsolidatedProjection(ym);
+ const periodNet=revenue-pending-invoice;
+ const bridge=projected-periodNet;
+ return {revenue,pending,invoice,projected,periodNet,bridge};
+}
 function vGeral(){
- const d=D();
+ const d=D(),pr=snakeProjectionReconciliation(YM);
  return mesNav()+`
- <div class="c v28Hero cardEdit" onclick="openAccount('c6')"><div class="sp"><div><p class="m">Saldo disponível</p><p class="big">${brl(d.c6)}</p></div><span class="ch">Visão consolidada</span></div>
- <div class="v28Metrics"><div onclick="event.stopPropagation();openProjectionDetail()"><span class="m">Previsto</span><b style="color:var(--pos)">${brs(projectedC6(YM))}</b></div><div onclick="event.stopPropagation();detailModal('Despesas realizadas',expenseBase('r'))"><span class="m">Despesas do mês</span><b style="color:var(--neg)">${brs(d.des)}</b></div><div onclick="event.stopPropagation();openPending()"><span class="m">A pagar</span><b style="color:var(--warn)">${brs(d.pd+d.pt+carbonInvoiceGross(YM))}</b></div></div></div>
+ <div class="c v28Hero snakeApprovedHero cardEdit" onclick="openProjectionDetail()">
+ <div class="snakeApprovedTop"><div><p class="snakeApprovedCaption">Saldo projetado C6 + XP após faturas</p><p class="snakeApprovedAmount">${brl(pr.projected)} <span class="snakeApprovedEye" aria-hidden="true">◉</span></p></div><span class="snakeApprovedChip">Visão consolidada</span></div>
+ <div class="snakeApprovedMetrics">
+ <div onclick="event.stopPropagation();openProjectionDetail()"><span>Receitas previstas</span><b class="snakePositive">${brl(pr.revenue)}</b></div>
+ <div onclick="event.stopPropagation();openProjectionDetail()"><span>Despesas Prev. + Fatura</span><b class="snakeNegative">${brl(pr.pending+pr.invoice)}</b></div>
+ <div onclick="event.stopPropagation();openProjectionDetail()"><span>A pagar (faturas)</span><b class="snakeWarning">${brl(carbonInvoiceGross(YM))}</b></div>
+ <div onclick="event.stopPropagation();openProjectionDetail()"><span>Saldo projetado</span><b class="snakeCyan">${brl(pr.projected)}</b></div>
+ </div><div class="m" style="margin-top:10px;padding:0 5px;font-size:12px;line-height:1.5" onclick="event.stopPropagation();openProjectionDetail()">Resultado das receitas e despesas previstas do mês: <b>${brl(pr.periodNet)}</b>. Saldo anterior e outros movimentos acumulados: <b>${brl(pr.bridge)}</b>. Toque para conciliar. A fatura já está incluída em “Despesas Prev. + Fatura”. ${snakeCarbonInvoiceAudit(YM).needsReview?"⚠ Possível pagamento de fatura já realizado: conciliar antes de confiar no saldo projetado.":""}</div></div>
  <div class="c"><div class="v28Title"><p class="h">Minhas contas</p><span class="m">Toque para detalhes</span></div><div class="v28Accounts">
-  <div class="c v28Account cardEdit" onclick="openAccount('c6')">${tile('card',AC.c6[1])}<div><span class="m">C6 Débito</span><b>${brs(d.c6)}</b></div></div>
-  <div class="c v28Account cardEdit" onclick="openAccount('carbon')">${tile('card',AC.carbon[1])}<div><span class="m">C6 Carbon · disponível</span><b>${brs(Math.max(0,ALERT_CFG.carbon.limit*100-creditUsed(alertRef(YM),ALERT_CFG.carbon)))}</b><small class="m">Em uso ${brs(creditUsed(alertRef(YM),ALERT_CFG.carbon))} · Limite ${brs(ALERT_CFG.carbon.limit*100)}</small></div></div>
-  <div class="c v28Account cardEdit" onclick="openAccount('caju')">${tile('card',AC.caju[1])}<div><span class="m">Caju</span><b>${brs(d.cj)}</b></div></div>
-  <div class="c v28Account cardEdit" onclick="goTab('inv')"><div class="tl" style="background:#F2B705;color:#111;font-weight:800">XP</div><div><span class="m">XP · Metas</span><b>Metas</b></div></div>
+  <div class="c v28Account cardEdit" onclick="openAccount('c6')">${bankMark('c6')}<div><span class="m">C6 Débito</span><b>${brs(d.c6)}</b></div></div><div class="c v28Account cardEdit" onclick="openAccount('xp')">${bankMark('xp')}<div><span class="m">XP Infinite One Débito</span><b>${brs(d.xp)}</b><small class="m" onclick="event.stopPropagation();setXPInitialBalance()" style="text-decoration:underline;cursor:pointer">Definir saldo inicial</small></div></div>
+  <div class="c v28Account cardEdit" onclick="openAccount('carbon')">${bankMark('carbon')}<div><span class="m">C6 Carbon · disponível</span><b>${brs(Math.max(0,ALERT_CFG.carbon.limit*100-creditUsed(alertRef(YM),ALERT_CFG.carbon)))}</b><small class="m">Em uso ${brs(creditUsed(alertRef(YM),ALERT_CFG.carbon))} · Limite ${brs(ALERT_CFG.carbon.limit*100)}</small></div></div>
+  <div class="c v28Account cardEdit" onclick="openAccount('caju')">${bankMark('caju')}<div><span class="m">Caju</span><b>${brs(d.cj)}</b></div></div>
  </div></div>
  <div class="v30DailyShell">${graf7()}</div>
  ${v28CatDonut()}
@@ -1811,11 +2060,27 @@ function v64ToggleQuick(){
  if(f) f.classList.toggle('open',q.classList.contains('open'));
 }
 
-function draw(){ensureRecurrences(YM);updateMonthBar();const AUD=auditEngine();if(!AUD.ok)console.error('AUDITORIA FINANCEIRA',AUD);const t=TABS.find(x=>x[0]==TAB)||TABS[0];$('v').innerHTML=t[3]();const main=TABS.filter(x=>MAIN_TABS.includes(x[0]));$('nav').innerHTML=main.map(x=>`<button class="${x[0]==TAB?'on':''}" onclick="TAB='${x[0]}';closeMore();draw();window.scrollTo(0,0)">${x[0]==='inv'?v62InvestmentIcon():I(x[2],'currentColor',22)}${x[1]}</button>`).join('')+`<button class="${['rec','as'].includes(TAB)?'on':''}" onclick="toggleMore()">${I('dots','currentColor',22)}Mais</button><div id="moreMenu" class="moreMenu"><button onclick="TAB='rec';closeMore();draw()">↻ Recorrentes</button><button onclick="TAB='as';closeMore();draw()">▢ Assessor</button></div><button id="fabAdd" aria-label="Adicionar receita ou despesa" onclick="v64ToggleQuick()"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 4v16M4 12h16"/></svg></button>`;if(MD&&/^\d{4}-\d{2}-\d{2}$/.test(String(MD)))renderMd();setTimeout(()=>{bindGraphs();applyLayout();bindCardNavigation();v64CleanMore();},0);}
+function syncNativeFinancialAlerts(){
+ const bridge=window.AndroidBridge||window.AndroidApp;
+ if(!bridge||typeof bridge.showFinancialAlert!=='function'||PERSIST_BLOCKED)return;
+ if(YM!==APP_TODAY.slice(0,7))return;
+ let alerts=[];try{alerts=financialAlerts(YM)}catch(e){console.warn('Alertas indisponíveis',e);return;}
+ for(const a of alerts){
+  if(!a||!a.key||a.severity!=='critical')continue;
+  const key='snake_native_'+APP_TODAY+'_'+a.key;
+  try{
+   if(localStorage.getItem(key)==='sent')continue;
+   const text=ST.hide?'Existe um alerta financeiro importante. Abra o Snake Finance para conferir.':String(a.text||'');
+   const delivered=bridge.showFinancialAlert(String(a.key), 'Snake Finance · Atenção', text, 2);
+   if(delivered===true)localStorage.setItem(key,'sent');
+  }catch(e){console.warn('Falha ao solicitar aviso Android',e);}
+ }
+}
+function draw(){ensureRecurrences(YM);updateMonthBar();const AUD=auditEngine();if(!AUD.ok)console.error('AUDITORIA FINANCEIRA',AUD);syncNativeFinancialAlerts();const t=TABS.find(x=>x[0]==TAB)||TABS[0];$('v').innerHTML=t[3]();const main=TABS.filter(x=>MAIN_TABS.includes(x[0]));$('nav').innerHTML=main.map(x=>`<button class="${x[0]==TAB?'on':''}" onclick="TAB='${x[0]}';closeMore();draw();window.scrollTo(0,0)">${x[0]==='inv'?v62InvestmentIcon():I(x[2],'currentColor',22)}${x[1]}</button>`).join('')+`<button class="${['rec','as'].includes(TAB)?'on':''}" onclick="toggleMore()">${I('dots','currentColor',22)}Mais</button><div id="moreMenu" class="moreMenu"><button onclick="TAB='rec';closeMore();draw()">↻ Recorrentes</button><button onclick="TAB='as';closeMore();draw()">▢ Assessor</button></div><button id="fabAdd" aria-label="Adicionar receita ou despesa" onclick="v64ToggleQuick()"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 4v16M4 12h16"/></svg></button>`;if(MD&&/^\d{4}-\d{2}-\d{2}$/.test(String(MD)))renderMd();setTimeout(()=>{bindGraphs();applyLayout();bindCardNavigation();v64CleanMore();},0);}
 function openDay(n){SEL=n;MD=n;draw();}
 function closeDay(){MD=0;$('md').style.display='none';$('md').innerHTML='';document.querySelector('.catFab')?.classList.remove('modalHidden');}
 function renderMd(){
- const n=MD,it=L.filter(x=>x.d===n).sort((a,b)=>(a.s==b.s?0:a.s=='r'?-1:1)||a.id-b.id),invoiceDue=n===YM+'-07'?carbonInvoiceGross(YM):0,dt=new Date(n+'T12:00:00'),wd=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'][dt.getDay()],S=f=>it.filter(f).reduce((sum,x)=>sum+x.v,0);
+ const n=MD,it=L.filter(x=>x.d===n).sort((a,b)=>(a.s==b.s?0:a.s=='r'?-1:1)||a.id-b.id),invoiceDue=n===YM+'-12'?carbonInvoiceGross(YM):0,dt=new Date(n+'T12:00:00'),wd=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'][dt.getDay()],S=f=>it.filter(f).reduce((sum,x)=>sum+x.v,0);
  $('md').style.display='flex';$('md').innerHTML=`<div class="mc"><div class="sp"><div><p class="h" style="font-size:1.2em;text-transform:capitalize">${wd}</p><p class="m">${dd(n)}${n===APP_TODAY?' · hoje':''}</p></div><button class="bt" onclick="closeDay()">Fechar</button></div>
  <div class="g3" style="margin:12px 0"><div class="c s"><p class="m">Realizado</p><p class="v" style="color:var(--neg)">${brl(S(x=>x.t=='d'&&x.s=='r'))}</p></div><div class="c s"><p class="m">Previsto</p><p class="v" style="color:var(--a)">${brl(S(x=>x.s=='p'&&x.t!='r'))}</p></div><div class="c s"><p class="m">Previsto</p><p class="v" style="color:var(--pos)">${brl(S(x=>x.t=='r'))}</p></div></div>
  ${it.length?it.map(x=>{const c=x.c?(CAT[x.c]||[catName(x.c),'list','#94A3B8']):(x.t=='r'?['Receita','list','#34d399']:['Fatura','card','#8d9ab6']);return `<div class="r li catClick" onclick="openLanc(${x.id})">${tile(c[1],c[2])}<div class="f"><p>${escapeHTML(x.n)}</p><p class="m">${escapeHTML(c[0])} · ${AC[x.a][0]} <span class="cp" style="background:var(--chip);color:${x.s=='p'?'var(--a)':'var(--mu)'}">${x.s=='p'?'previsto':'realizado'}</span></p></div><div style="text-align:right"><b style="color:${x.t=='r'?'var(--pos)':'var(--neg)'}">${x.t=='r'?'+':'-'}${brl(x.v)}</b>${x.s=='p'&&x.t=='d'?`<br><button class="bt p" style="padding:4px 12px;margin-top:4px" onclick="event.stopPropagation();openEfet(${x.id})">Efetivar</button>`:''}</div></div>`}).join(''):'<p class="m" style="padding:14px 0;text-align:center">Nenhum lançamento neste dia.</p>'}</div>`;
@@ -1828,9 +2093,9 @@ function openAdd(tipo){
  <label>Descrição<input id="an" placeholder="${desp?'Ex.: Combustível':'Ex.: Salário'}"></label>
  <label>Valor (R$)<input id="av" inputmode="decimal" placeholder="0,00"></label>
  <label>Data<input id="ad" type="date" value="${YM}-${String(YM==='2026-10'?HJ:1).padStart(2,'0')}"></label>
- <label>Conta<select id="aa">${desp?'<option value="c6">C6</option><option value="caju">Caju</option><option value="carbon">C6 Carbon</option>':'<option value="c6">C6</option><option value="caju">Caju</option>'}</select></label>
+ <label>Conta<select id="aa">${desp?'<option value="c6">C6</option><option value="caju">Caju</option><option value="carbon">C6 Carbon</option><option value="xp">XP Infinite One Débito</option>':'<option value="c6">C6</option><option value="caju">Caju</option><option value="xp">XP Infinite One Débito</option>'}</select></label>
  ${desp?`<label>Categoria<select id="ac" onchange="if($('asub'))$('asub').innerHTML=subOptions(this.value)">${cats}</select></label><label>Subcategoria<select id="asub">${subOptions(Object.keys(CAT)[0])}</select></label>`:''}
- ${desp?'<div id="carbonParcelBox" style="display:none"><label>Quantidade de parcelas<input id="carbonInstallments" type="number" min="1" max="120" step="1" value="1"></label><p class="m">C6 Carbon: fechamento dia 5 · vencimento dia 7. O valor informado é o total da compra; as parcelas aparecem nos meses das respectivas faturas.</p></div>':''}
+ ${desp?'<div id="carbonParcelBox" style="display:none"><label>Quantidade de parcelas<input id="carbonInstallments" type="number" min="1" max="120" step="1" value="1"></label><p class="m">C6 Carbon: fechamento dia 4 · vencimento dia 12. O valor informado é o total da compra; as parcelas aparecem nos meses das respectivas faturas.</p></div>':''}
  <label>Status<select id="as2"><option value="r">Realizado</option><option value="p">Previsto</option></select></label>
  <button class="bt p" onclick="saveAdd('${tipo}')">Salvar ${desp?'despesa':'receita'}</button></div></div>`;
  if(desp){const account=$('aa'),box=$('carbonParcelBox');const toggle=()=>{box.style.display=account.value==='carbon'?'block':'none'};account.addEventListener('change',toggle);toggle();}
@@ -1850,7 +2115,7 @@ function saveAdd(tipo){
   const amount=base+(i<extra?1:0);
   const x={id:NID++,d:dia,n:carbon&&count>1?nome+' ('+(i+1)+'/'+count+')':nome,t:tipo,v:amount,a,s:s2};
   if(tipo==='d'){x.c=$('ac').value;x.sub=$('asub')?.value||'';}
-  if(carbon){x.comp=addInvoiceMonths(firstMonth,i)+'-01';x.invoiceDue=addInvoiceMonths(firstMonth,i)+'-07';x.installmentGroup=group;x.installmentIndex=i+1;x.installmentCount=count;x.purchaseTotal=valor;}
+  if(carbon){x.comp=addInvoiceMonths(firstMonth,i)+'-01';x.invoiceDue=addInvoiceMonths(firstMonth,i)+'-12';x.installmentGroup=group;x.installmentIndex=i+1;x.installmentCount=count;x.purchaseTotal=valor;}
   return x;
  });
  L.push(...entries);NID=nextId();
@@ -1861,6 +2126,40 @@ function saveAdd(tipo){
 document.addEventListener('keydown',e=>{if(e.key=='Escape')closeDay();});
 function rst(){alert('Restaurar dados de exemplo está desativado para proteger seus lançamentos.');return;}
 function rstDisabledLegacy(){if(!confirm('Restaurar a base de exemplo substitui seus lançamentos. Exporte um backup primeiro. Continuar?'))return;saveSafetyBackup();PERSIST_BLOCKED=false;closeDay();L=JSON.parse(JSON.stringify(L0));persistLedger();YM='2026-10';SEL=APP_TODAY.startsWith(YM)?APP_TODAY:`${YM}-01`;OPEN=0;TOAST='';LAST=0;NID=nextId();migrateWorkCategory();CATDB=completeBackupCategories(CATDB,L).categories;wInit();cInit();draw();}
+
+function seedConfirmedSchedule(){
+ if(PERSIST_BLOCKED||!Array.isArray(L))return false;
+ const specs=[
+ ['Salário','r',1010450,1,'out','salario'],
+ ['Pensão','d',150000,5,'pen','pensao'],
+ ['Aluguel','d',125000,5,'mor','aluguel'],
+ ['Móveis','d',36800,5,'mov','moveis'],
+ ['C4 Cactus','d',100000,10,'tra','c4cactus'],
+ ['Plano TIM','d',7990,10,'con','tim'],
+ ['Conta de Luz','d',15000,10,'con','luz'],
+ ['Internet','d',8990,20,'con','internet']
+ ];
+ const norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+ const aliases={salario:['salario'],pensao:['pensao'],aluguel:['aluguel'],moveis:['moveis','emprestimo'],c4cactus:['c4cactus','prestacaodocarro'],tim:['planotim','tim'],luz:['contadeluz','luz','enel'],internet:['internet']};
+ const present=(ym,type,key,amount)=>L.some(x=>String(x.comp||x.d||'').startsWith(ym)&&x.a==='c6'&&x.t===type&&(aliases[key]||[key]).some(a=>norm(x.n).startsWith(a))&&(type==='d'||!norm(x.n).includes('13')));
+ const entries=[];
+ for(let ym='2026-11';ym<='2027-06';ym=addMonthsYM(ym,1)){
+   for(const [n,t,v,day,c,key] of specs){
+     if(key==='moveis'&&ym>'2027-05')continue;
+     if(present(ym,t,key,v))continue;
+     entries.push({d:ym+'-'+String(day).padStart(2,'0'),comp:ym+'-01',n,t,v,a:'c6',s:'p',c,rc:true,dv:day,series:'confirmed-'+key});
+   }
+ }
+ for(const [d,v,part] of [['2026-11-30',226667,1],['2026-12-21',157843,2]]){
+   const ym=d.slice(0,7);
+   if(L.some(x=>x.t==='r'&&x.a==='c6'&&String(x.comp||x.d||'').startsWith(ym)&&(/13[ºo°]?|decimo terceiro/i.test(x.n||'')||x.series==='confirmed-13-'+part)&&x.v===v))continue;
+   entries.push({d,comp:ym+'-01',n:'13º salário — '+part+'ª parcela',t:'r',v,a:'c6',s:'p',c:'out',rc:false,series:'confirmed-13-'+part});
+ }
+ if(!entries.length)return false;
+ const before=L.slice();let id=nextId();for(const x of entries)L.push({id:id++,...x});
+ if(!persistLedger()){L=before;return false;}NID=nextId();return true;
+}
+
 function boot(){
  try{
  const currentRaw=localStorage.getItem(LEDGER_KEY);
@@ -1879,7 +2178,7 @@ function boot(){
  catch(e){L=[];PERSIST_BLOCKED=true;setTimeout(()=>alert('Os dados salvos não puderam ser lidos. Nada foi sobrescrito. Exporte um backup em Configurações e importe uma cópia válida.'),20);}
  YM=APP_TODAY.slice(0,7);if(!L.some(x=>(x.comp||x.d||'').startsWith(YM)))YM='2026-10';
  SEL=APP_TODAY.startsWith(YM)?APP_TODAY:`${YM}-01`;try{migrateLegacyPayment();NID=nextId();migrateWorkCategory();
- CATDB=completeBackupCategories(CATDB,L).categories;wInit();cInit();draw();
+ CATDB=completeBackupCategories(CATDB,L).categories;seedConfirmedSchedule();wInit();cInit();draw();
 }catch(err){
  PERSIST_BLOCKED=true;
  console.error('Snake Finance: falha de montagem; nenhuma gravação financeira autorizada',err);
@@ -2091,10 +2390,16 @@ function cajuBalance(ym){
  }
  return balance;
 }
+// Internal benefit allocation only: never increases Caju's account balance.
+const CAJU_FUEL_TARGET_CENTS=50000;
+function cajuFuelSpent(ym){return L.filter(x=>x.a==='caju'&&x.t==='d'&&x.s==='r'&&cajuCompetence(x)<=ym&&(x.c==='abs'||x.cajuMode==='fuel')).reduce((a,x)=>a+x.v,0);}
+function cajuModalBalances(ym){const total=cajuBalance(ym);const reserved=total+cajuFuelSpent(ym)>=CAJU_FUEL_TARGET_CENTS?CAJU_FUEL_TARGET_CENTS:0; // No partial diversion of food benefits while below the full R$500 target.
+ const fuel=Math.max(0,reserved-cajuFuelSpent(ym));return {total,food:total-fuel,fuel,target:CAJU_FUEL_TARGET_CENTS,unallocated:CAJU_FUEL_TARGET_CENTS-reserved};}
 function openCajuSettings(){
  const cfg=CAJU_CFG[YM];const prev=cfg&&Number.isInteger(cfg.opening)?cfg.opening:(YM==='2026-10'?ORIGINAL_FUNDS:YM<'2026-10'?0:cajuBalance(monthBefore(YM)));
  const actual=ML().filter(x=>x.a==='caju'&&x.t==='r'&&x.s==='r').reduce((q,x)=>q+x.v,0);
- modal('Caju · '+monthName(YM),`<p class="m">${YM==='2026-10'&&!cfg?'Informe o saldo anterior e a recarga do mês, ou importe seu backup completo.':'Saldo anterior + recarga do mês − despesas realizadas.'}</p><div class="fm"><label>${YM==='2026-10'&&!cfg?'Saldo inicial conciliado':'Saldo anterior (R$)'}<input id="cj_open" value="${(prev/100).toFixed(2).replace('.',',')}" inputmode="decimal"></label><label>Recarga do mês (R$)<input id="cj_reload" value="${((actual||(cfg?cfg.reload:0))/100).toFixed(2).replace('.',',')}" inputmode="decimal"></label><button class="bt p" onclick="saveCajuSettings()">Salvar</button><button class="bt" onclick="resetCajuSettings()">Usar saldo anterior calculado</button></div>`);
+ const split=cajuModalBalances(YM);
+ modal('Caju · '+monthName(YM),`<div class="c" style="margin-bottom:12px"><b>Benefícios Caju — total ${brl(split.total)}</b><p>Alimentação: ${brl(split.food)}</p><p>Abastecimento: ${brl(split.fuel)}</p><p class="m">Reserva-alvo R$ 500,00, transferida internamente do saldo existente. Parcela ainda não coberta: ${brl(split.unallocated)}. Não há criação de saldo.</p></div><p class="m">${YM==='2026-10'&&!cfg?'Informe o saldo anterior e a recarga do mês, ou importe seu backup completo.':'Saldo anterior + recarga do mês − despesas realizadas.'}</p><div class="fm"><label>${YM==='2026-10'&&!cfg?'Saldo inicial conciliado':'Saldo anterior (R$)'}<input id="cj_open" value="${(prev/100).toFixed(2).replace('.',',')}" inputmode="decimal"></label><label>Recarga do mês (R$)<input id="cj_reload" value="${((actual||(cfg?cfg.reload:0))/100).toFixed(2).replace('.',',')}" inputmode="decimal"></label><button class="bt p" onclick="saveCajuSettings()">Salvar</button><button class="bt" onclick="resetCajuSettings()">Usar saldo anterior calculado</button></div>`);
 }
 function saveCajuSettings(){const opening=moneyInput($('cj_open').value),reload=moneyInput($('cj_reload').value);if(!Number.isInteger(opening)||!Number.isInteger(reload)||reload<0){alert('Revise os valores.');return;}
  CAJU_CFG[YM]={opening,reload};
@@ -2103,8 +2408,31 @@ function saveCajuSettings(){const opening=moneyInput($('cj_open').value),reload=
  localStorage.setItem(CAJU_CFG_KEY,JSON.stringify(CAJU_CFG));closeModal();draw();}
 function resetCajuSettings(){delete CAJU_CFG[YM];localStorage.setItem(CAJU_CFG_KEY,JSON.stringify(CAJU_CFG));closeModal();draw();}
 function projectedC6(ym){return accountBalance('c6',ym+'-31',true)}
+/* V89: a projeção consolidada usa C6 e XP; fatura apenas uma vez. */
+/* Approved Rev.0: Nov 13º included 26/11 onward; Dec included 21/12 onward.
+   Apply identical visibility to the revenue card and consolidated projection. */
+function snakeThirteenthHidden(ym,asOf){
+ const cutoffs={'2026-11':'2026-11-26','2026-12':'2026-12-21'};
+ return Object.prototype.hasOwnProperty.call(cutoffs,ym)&&asOf<cutoffs[ym];
+}
+function snakeConsolidatedProjection(ym){
+ const asOf=new Date().toLocaleDateString('en-CA');
+ const restrict13=snakeThirteenthHidden(ym,asOf);
+ const hidden13=restrict13?L.filter(x=>x.a==='c6'&&x.t==='r'&&x.s==='p'&&(x.comp||x.d).slice(0,7)===ym&&snakeIsThirteenth(x)).reduce((sum,x)=>sum+(Number(x.v)||0),0):0;
+ return projectedC6(ym)+accountBalance('xp',ym+'-31',true)-snakeCarbonInvoiceBalance(ym).due-hidden13;
+}
+/* Rev.0 validation: 13º visible from 26 Nov 2026 and 21 Dec 2026, respectively.
+   Does not mutate the ledger, payment dates, or realized revenue. */
+function snakeIsThirteenth(x){return /13[ºo°]?\s*(?:sal[aá]rio)?|d[eé]cimo\s+terceiro/i.test(String(x.n||''))||/^confirmed-13-/.test(String(x.series||''));}
+function snakeC6PlannedAt(ym,type,asOf){
+ const date=/^\d{4}-\d{2}-\d{2}$/.test(String(asOf||''))?String(asOf):new Date().toLocaleDateString('en-CA');
+ const restricted=snakeThirteenthHidden(ym,date);
+ return L.filter(x=>x.a==='c6'&&x.s==='p'&&x.t===type&&(x.comp||x.d).slice(0,7)===ym&&!(type==='r'&&restricted&&snakeIsThirteenth(x))).reduce((sum,x)=>sum+(Number(x.v)||0),0);
+}
+function snakeC6Planned(ym,type){return snakeC6PlannedAt(ym,type,new Date().toLocaleDateString('en-CA'));}
 function recurrenceKey(x){const n=String(x.n||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();const key=x.series||(/pensao/.test(n)?'pension':/aluguel/.test(n)?'rent':/conta de luz|enel|energia eletrica/.test(n)?'power':/internet/.test(n)?'internet':/plano tim/.test(n)?'tim':n);return key+'|'+x.t;}
 function ensureRecurrences(ym){
+ const originalRecurrenceCount=L.length,originalRecurrenceNid=NID;
  if(!/^\d{4}-\d{2}$/.test(ym)||ym<'2027-01'||ym>'2036-12'||PERSIST_BLOCKED)return;
  let changed=false;
  for(let m='2027-01';m<=ym;m=addMonthsYM(m,1)){
@@ -2115,7 +2443,7 @@ function ensureRecurrences(ym){
    L.push({...t,id:nextId(),series:t.series||key.slice(0,key.lastIndexOf('|')),d:m+'-'+String(day).padStart(2,'0'),comp:m+'-01',s:'p',dv:day});changed=true;
   }
  }
- if(changed){NID=nextId();persistLedger();}
+ if(changed){NID=nextId();if(!persistLedger()){L.splice(originalRecurrenceCount);NID=originalRecurrenceNid;}}
 }
 function dailyWindow(){
  const [y,m]=YM.split('-').map(Number);
@@ -2154,7 +2482,13 @@ function addUserCat(){const rows=loadUserCats();rows.push(['Nova categoria',[],'
 for(const key of Object.keys(CAT))if(!CATDB[key])delete CAT[key];for(const [key,cat] of Object.entries(CATDB)){const old=CAT[key]||[cat.name,'list','#94A3B8'];CAT[key]=[cat.name||old[0],old[1],old[2]];}
 window.snakeSafeNavigate=function(target){const tabs={despesas:'des',recorrentes:'rec',investimentos:'inv',agenda:'ag',transacoes:'ini',contas:'ger'};if(target==='caju'){openAccount('caju');return true;}if(tabs[target]){goTab(tabs[target]);return true;}return false;};
 
-function openProjectionDetail(){const d=D(),pending=L.filter(x=>x.a==='c6'&&x.s==='p'&&x.d<=YM+'-31'),credit=pending.filter(x=>x.t==='r').reduce((q,x)=>q+x.v,0),debit=pending.filter(x=>x.t!=='r').reduce((q,x)=>q+x.v,0);modal('Projeção C6',`<div class="li"><span>Saldo realizado</span><b>${brl(d.c6)}</b></div><div class="li"><span>Entradas previstas</span><b>${brl(credit)}</b></div><div class="li"><span>Saídas previstas</span><b>${brl(debit)}</b></div><div class="li"><span>Saldo previsto</span><b>${brl(projectedC6(YM))}</b></div><button class="bt" onclick="detailModal('Pendências C6',L.filter(x=>x.a==='c6'&&x.s==='p'&&x.d<=YM+'-31'))">Ver lançamentos</button>`);}
+function openProjectionDetail(){
+ const d=D(), invoice=carbonInvoiceGross(YM);
+ const credit=snakeC6Planned(YM,'r'), debit=snakeC6Planned(YM,'d');
+ const projected=snakeConsolidatedProjection(YM),rec=snakeProjectionReconciliation(YM);
+ modal('Projeção C6 + XP · '+monthName(YM),`<div class="li"><span>Saldo realizado C6</span><b>${brl(d.c6)}</b></div><div class="li"><span>Saldo realizado XP</span><b>${brl(d.xp)}</b></div><div class="li"><span>Entradas previstas C6 (mês)</span><b>${brl(credit)}</b></div><div class="li"><span>Saídas previstas C6 (mês)</span><b>${brl(debit)}</b></div><div class="li"><span>Fatura C6 Carbon (bruta)</span><b>${brl(invoice)}</b></div><div class="li"><span>Total saídas previstas (mês)</span><b>${brl(debit+invoice)}</b></div><div class="li"><span>Resultado líquido previsto do mês</span><b>${brl(rec.periodNet)}</b></div><div class="li"><span>Saldo anterior e outros movimentos acumulados (diferença de conciliação)</span><b>${brl(rec.bridge)}</b></div><div class="li"><span>Saldo consolidado projetado após fatura</span><b>${brl(projected)}</b></div><p class="m">Saldo projetado considera o histórico e as pendências até o fim do mês; entradas e saídas acima mostram somente o mês selecionado. A fatura é bruta, pode incluir valores já pagos e não registra pagamento automaticamente.</p>${snakeCarbonInvoiceAudit(YM).needsReview?`<p class="m" style="color:var(--warn)">Atenção: ${snakeCarbonInvoiceAudit(YM).candidates.length} lançamento(s) realizado(s) com descrição compatível com pagamento de cartão/fatura, total ${brl(snakeCarbonInvoiceAudit(YM).possiblePayments)}. O saldo projetado pode estar descontando pagamento e fatura bruta. Confira a vinculação antes de abater; nenhum lançamento foi alterado.</p>`:''}<button class="bt" onclick="openPending()">Ver compromissos e fatura</button>`);
+}
+
 function updateMonthBar(){let shell=$('fixedTopShell');if(!shell){shell=document.createElement('div');shell.id='fixedTopShell';document.body.appendChild(shell);}const hd=document.querySelector('#app .appHd');if(hd)shell.appendChild(hd);let bar=$('monthControl');if(!bar){bar=document.createElement('div');bar.id='monthControl';bar.className='monthbar';shell.appendChild(bar);}bar.innerHTML=`<button type="button" aria-label="Mês anterior" onclick="shiftMonth(-1)">‹</button><div class="pill">${monthName(YM)}</div><button type="button" aria-label="Próximo mês" onclick="shiftMonth(1)">›</button>`;}
 function migrateLegacyPayment(){}
 const dayClose=closeDay;
@@ -2171,7 +2505,7 @@ detailModal=function(title,items){originalDetailModal(title,items);const mc=$('m
 const OVERVIEW_KEY='assessor_overview_v77';
 const OVERVIEW_ITEMS=[
  ['balance','Saldo disponível','Indicadores',true],['forecast','Saldo previsto','Indicadores',true],['expenses','Despesas realizadas','Indicadores',true],['pending','A pagar','Indicadores',true],
- ['bank_c6','C6 Débito','Contas',true],['bank_carbon','C6 Carbon','Contas',true],['bank_caju','Caju','Contas',true],['bank_xp','XP · Metas','Contas',true],
+ ['bank_c6','C6 Débito','Contas',true],['bank_carbon','C6 Carbon','Contas',true],['bank_caju','Caju','Contas',true],['bank_xp','XP Infinite One Débito','Contas',true],
  ['daily','Gastos por dia','Cards e gráficos',true],['categories','Gastos por categoria / conta / trabalho','Cards e gráficos',true],['distribution','Despesas do mês','Cards e gráficos',true],['caju_chart','Gastos Caju (mês atual)','Cards e gráficos',true],['recurring','Atuais e recorrentes','Cards e gráficos',true],['day','Despesas do dia','Cards e gráficos',true],['agenda','Agenda financeira','Cards e gráficos',true],['transactions','Últimas transações','Cards e gráficos',false],['commitments','Próximos compromissos','Cards e gráficos',false]
 ];
 OVERVIEW_ITEMS.push(['alerts','Alertas do assessor','Cards e gráficos',false],['invest_goals','Minhas metas','Investimentos',false],['invest_deposits','Total aportado','Investimentos',false],['invest_yield','Rendimento estimado','Investimentos',false],['invest_goaldate','Data da meta','Investimentos',false],['invest_chart','Projeção de investimentos','Investimentos',false],['invest_parameters','Parâmetros da projeção','Investimentos',false],['invest_monthly','Detalhamento mensal','Investimentos',false]);
@@ -2254,21 +2588,70 @@ function dateOffset(iso,days){const d=new Date(iso+'T12:00');d.setDate(d.getDate
 function lastMonthDay(ym){return ym+'-'+String(new Date(+ym.slice(0,4),+ym.slice(5),0).getDate()).padStart(2,'0');}
 function alertRef(ym){const today=localToday();return ym===today.slice(0,7)?today:ym<today.slice(0,7)?lastMonthDay(ym):ym+'-01';}
 function fixedExpenseKey(x){const n=String(x.n||'').toLowerCase();if(x.c==='pen'||/pens[aã]o/.test(n))return 'pension';if((x.c==='mor'&&/aluguel/.test(n))||/aluguel/.test(n))return 'rent';if(/conta de luz|\benel\b|energia el[eé]trica/.test(n))return 'power';if(/plano tim/.test(n))return 'tim';if(/internet/.test(n))return 'internet';if(x.rc&&x.t==='d')return recurrenceKey(x);return null;}
-function creditUsed(ref,cfg){
- let used=Math.round(cfg.opening*100);
- const items=L.filter(x=>x.s==='r'&&validISO(x.d)&&x.d<=ref).slice().sort((a,b)=>a.d.localeCompare(b.d)||((a.t==='d'?0:1)-(b.t==='d'?0:1)));
- for(const x of items){
-  if(x.a==='carbon'&&(x.t==='d'||x.t==='i'||x.t==='inv'))used+=x.v;
-  else if(x.a==='carbon'&&x.t==='r')used=Math.max(0,used-x.v);
-  else if(x.t==='t'&&x.to==='carbon'&&x.a!=='carbon')used=Math.max(0,used-x.v);
- }
- return Math.max(0,used);
+/* Auditoria 20: conciliação informativa do limite e dos pagamentos.
+   Uma transferência efetivada para Carbon reduz o limite utilizado; não é
+   compra nova. Candidatos em débito não reduzem o limite sem vínculo. */
+function snakeCarbonLimitReconciliation(ref,cfg){
+ const limit=Math.round(cfg.limit*100),opening=Math.round(cfg.opening*100);
+ const purchases=L.filter(x=>x.s==='r'&&validISO(x.d)&&x.d<=ref&&x.a==='carbon'&&['d','i','inv'].includes(x.t));
+ const payments=L.filter(x=>x.s==='r'&&validISO(x.d)&&x.d<=ref&&
+   ((x.t==='t'&&x.to==='carbon'&&x.a!=='carbon')||(x.a==='carbon'&&x.t==='r')));
+ const sum=xs=>xs.reduce((a,x)=>a+x.v,0);
+ const used=creditUsed(ref,cfg);
+ const candidates=snakeCarbonPaymentCandidates(ref.slice(0,7));
+ return {limit,opening,purchases:sum(purchases),payments:sum(payments),used,
+   available:Math.max(0,limit-used),overLimit:used>limit,
+   possibleUnlinkedPayments:candidates.filter(x=>!x.invoicePaymentId&&!x.linkedTransferId).map(x=>x.id),
+   note:'Pagamentos sem vínculo de fatura confirmado permanecem pendentes e não liberam limite automaticamente.'};
 }
+/* Auditoria 27: somente pagamentos com conciliação explícita liberam limite.
+   A ausência de vínculo mantém a dívida sob revisão, sem modificar o extrato. */
+function snakeCarbonPaymentIsLinked(x){
+ return Boolean(x.invoicePaymentId||x.linkedTransferId||x.invoiceId||x.carbonInvoiceId||x.linkedInvoiceId);
+}
+function snakeCarbonCreditLedger(ref,cfg){
+ const opening=Math.round((Number(cfg.opening)||0)*100);
+ let used=opening,purchases=0,applied=0,unlinked=0;
+ const items=L.filter(x=>x.s==='r'&&validISO(x.d)&&x.d<=ref)
+   .slice().sort((a,b)=>a.d.localeCompare(b.d)||((a.t==='d'?0:1)-(b.t==='d'?0:1)));
+ for(const x of items){
+  if(x.a==='carbon'&&(x.t==='d'||x.t==='i'||x.t==='inv')){
+   used+=x.v;purchases+=x.v;
+  }else if((x.a==='carbon'&&x.t==='r')||(x.t==='t'&&x.to==='carbon'&&x.a!=='carbon')){
+   if(snakeCarbonPaymentIsLinked(x)){
+    const reduction=Math.min(Math.max(0,used),x.v);
+    used-=reduction;applied+=reduction;
+   }else unlinked+=x.v;
+  }
+ }
+ return {used:Math.max(0,used),opening,purchases,applied,unlinked};
+}
+function creditUsed(ref,cfg){return snakeCarbonCreditLedger(ref,cfg).used;}
+/* Auditoria 28: diagnóstico não destrutivo de consistência do Carbon.
+   Não vincula automaticamente pagamentos históricos nem altera o razão. */
+function snakeCarbonConsistencyAudit(ym=YM){
+ const invoice=snakeCarbonInvoiceBalance(ym);
+ const linked=snakeCarbonLinkedPayments(ym);
+ const seen=new Map(),warnings=[];
+ for(const x of linked){
+  const key=[x.d,x.v,x.a,x.to||'',x.captureId||''].join('|');
+  if(seen.has(key))warnings.push({code:'possible_duplicate_payment',ids:[seen.get(key),x.id],amount:x.v});
+  else seen.set(key,x.id);
+ }
+ if(invoice.overpayment>0)warnings.push({code:'payment_exceeds_invoice',amount:invoice.overpayment});
+ const mismatched=linked.filter(x=>x.invoiceId&&x.carbonInvoiceId&&x.invoiceId!==x.carbonInvoiceId);
+ if(mismatched.length)warnings.push({code:'conflicting_invoice_links',ids:mismatched.map(x=>x.id)});
+ const missing=linked.filter(x=>!Number.isSafeInteger(x.v)||x.v<=0);
+ if(missing.length)warnings.push({code:'invalid_payment_amount',ids:missing.map(x=>x.id)});
+ return {ym,invoice,linkedPayments:linked.length,warnings,requiresReview:warnings.length>0};
+}
+
+
 function financialAlerts(ym=YM){
  const ref=alertRef(ym),historicalOrCurrent=ym<=localToday().slice(0,7),end=lastMonthDay(ym),sum=a=>a.reduce((q,x)=>q+x.v,0),month=L.filter(x=>(x.comp||x.d||'').startsWith(ym)),actual=month.filter(x=>x.s==='r'&&x.d<=ref),pending=month.filter(x=>x.s==='p'),list=[];
- const d={c6:accountBalance('c6',ref,false)},out=(key,severity,text,items=[])=>list.push({key,severity,text,ids:items.map(x=>x.id)}),cfg=ALERT_CFG;
+ const d={c6:accountBalance('c6',ref,false),xp:accountBalance('xp',ref,false)},out=(key,severity,text,items=[])=>list.push({key,severity,text,ids:items.map(x=>x.id)}),cfg=ALERT_CFG;
  if(cfg.shortfall.enabled&&historicalOrCurrent){const due=L.filter(x=>x.a==='c6'&&x.s==='p'&&x.t!=='r'&&validISO(x.d)&&x.d<=dateOffset(ref,cfg.shortfall.horizon));let balance=accountBalance('c6',ref,false);const cost=sum(due);if(cost>0&&balance<cost)out('shortfall','critical',`Saldo C6 ${brl(balance)} insuficiente para ${brl(cost)} em compromissos vencidos ou nos próximos ${cfg.shortfall.horizon} dias. Falta ${brl(cost-balance)}.`,due);}
- if(cfg.missing.enabled&&historicalOrCurrent){const labels={pension:'Pensão',rent:'Aluguel',power:'Conta de Luz'},fields={pension:'pensionDay',rent:'rentDay',power:'powerDay'};for(const key of Object.keys(labels)){const expected=pending.find(x=>fixedExpenseKey(x)===key),day=Math.min(cfg.missing[fields[key]],+end.slice(-2)),due=ym+'-'+String(day).padStart(2,'0');if(ref>dateOffset(due,cfg.missing.grace)&&!actual.some(x=>x.t==='d'&&fixedExpenseKey(x)===key))out('missing','critical',`${labels[key]} sem pagamento registrado após ${dd(due)} (${cfg.missing.grace} dias de tolerância). Confira se foi pago antes de efetivar ou lançar.`,expected?[expected]:[]);}}
+ if(historicalOrCurrent){const xpDue=L.filter(x=>x.a==='xp'&&x.s==='p'&&x.t!=='r'&&validISO(x.d)&&x.d<=dateOffset(ref,7));const xpNeed=sum(xpDue);const xpBalance=accountBalance('xp',ref,false);if(xpDue.length&&xpBalance<xpNeed)out('xp_shortfall','critical','XP Infinite One: saldo insuficiente para compromissos dos próximos 7 dias.',xpDue);if(xpBalance<100000&&L.some(x=>x.a==='xp'))out('xp_low','warning','XP Infinite One: saldo inferior a R$ 1.000.');}if(cfg.missing.enabled&&historicalOrCurrent){const labels={pension:'Pensão',rent:'Aluguel',power:'Conta de Luz'},fields={pension:'pensionDay',rent:'rentDay',power:'powerDay'};for(const key of Object.keys(labels)){const expected=pending.find(x=>fixedExpenseKey(x)===key),day=Math.min(cfg.missing[fields[key]],+end.slice(-2)),due=ym+'-'+String(day).padStart(2,'0');if(ref>dateOffset(due,cfg.missing.grace)&&!actual.some(x=>x.t==='d'&&fixedExpenseKey(x)===key))out('missing','critical',`${labels[key]} sem pagamento registrado após ${dd(due)} (${cfg.missing.grace} dias de tolerância). Confira se foi pago antes de efetivar ou lançar.`,expected?[expected]:[]);}}
  if(cfg.carbon.enabled){const used=creditUsed(ref,cfg.carbon),pct=used/(cfg.carbon.limit*100)*100;if(pct>=cfg.carbon.warning)out('carbon',pct>=cfg.carbon.critical?'critical':'warning',`C6 Carbon: ${pct.toFixed(1).replace('.',',')}% do limite usado (${brl(used)} de ${brl(cfg.carbon.limit*100)}). Faixa ${pct>=cfg.carbon.critical?'crítica':'de atenção'}.`,L.filter(x=>x.a==='carbon'&&x.t==='d'&&x.s==='r'&&x.d<=ref));}
  if(cfg.caju.enabled){const balance=cajuBalance(ym),start=dateOffset(ref,1-cfg.caju.lookback),tx=L.filter(x=>x.a==='caju'&&x.t==='d'&&x.s==='r'&&x.d>=start&&x.d<=ref),rate=sum(tx)/cfg.caju.lookback,days=rate>0?Math.max(0,balance/rate):null;if(balance<cfg.caju.minimum*100||(days!==null&&days<cfg.caju.days))out('caju',balance<0?'critical':'warning',`Caju disponível: ${brl(balance)}.${days===null?' Sem gastos suficientes para estimar a duração.':` Duração estimada: ${Math.floor(days)} dia(s), com média de ${brl(rate)} por dia nos últimos ${cfg.caju.lookback} dias.`}`,tx);}
  if(cfg.overspend.enabled){const expenses=actual.filter(x=>x.t==='d'),keys=[...new Set(expenses.map(x=>x.c||'out'))];for(const k of keys){const xs=expenses.filter(x=>(x.c||'out')===k),value=sum(xs),budget=ORC[k];if(value<cfg.overspend.minimum*100)continue;if(budget&&value>=budget*cfg.overspend.budgetPct/100){out('overspend','warning',`${escapeHTML(catName(k))} atingiu ${Math.round(value/budget*100)}% do orçamento (${brl(value)} de ${brl(budget)}).`,xs);continue;}const previous=[];for(let i=1;i<=cfg.overspend.history;i++){const m=addMonthsYM(ym,-i),data=L.filter(x=>x.t==='d'&&x.s==='r'&&(x.comp||x.d||'').startsWith(m));if(data.length)previous.push(sum(data.filter(x=>(x.c||'out')===k)));}if(previous.length>=cfg.overspend.minHistory){const avg=previous.reduce((a,v)=>a+v,0)/previous.length;if(avg>0&&value>avg*cfg.overspend.factor/100)out('overspend','warning',`${escapeHTML(catName(k))}: ${brl(value)} supera ${cfg.overspend.factor}% da média mensal (${brl(avg)}) de ${previous.length} meses anteriores com dados.`,xs);}}
@@ -2313,9 +2696,9 @@ function completeBackupCategories(categories,ledger){
  }
  return {categories:cats,recovered,missing:[...missing]};
 }
-function backupState(){const storage={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if((k.startsWith('assessor_')||['lay','tema'].includes(k))&&!/backup|pre_import/.test(k))storage[k]=localStorage.getItem(k);}Object.assign(storage,{[OPENING_KEY]:JSON.stringify(OPENING_CFG),[GOAL_STORE]:JSON.stringify(INVEST_GOALS),assessor_inv_v82:JSON.stringify(INV_CFG),[CATSTORE]:JSON.stringify(completeBackupCategories(CATDB,L).categories),[CAJU_CFG_KEY]:JSON.stringify(CAJU_CFG),[ALERT_KEY]:JSON.stringify(ALERT_CFG),[NOTICE_KEY]:JSON.stringify(ST),[OVERVIEW_KEY]:JSON.stringify(OVERVIEW_VISIBLE),assessor_budgets_v82:JSON.stringify(ORC)});return {schema:'snake-finance-backup',version:2,app:'v82-android',createdAt:new Date().toISOString(),ledger:L,storage};}
+function backupState(){const storage={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if((k.startsWith('assessor_')||k===XP_OPENING_KEY||['lay','tema'].includes(k))&&!/backup|pre_import/.test(k))storage[k]=localStorage.getItem(k);}Object.assign(storage,{[XP_OPENING_KEY]:String(ACC.xp),[OPENING_KEY]:JSON.stringify(OPENING_CFG),[GOAL_STORE]:JSON.stringify(INVEST_GOALS),assessor_inv_v82:JSON.stringify(INV_CFG),[CATSTORE]:JSON.stringify(completeBackupCategories(CATDB,L).categories),[CAJU_CFG_KEY]:JSON.stringify(CAJU_CFG),[ALERT_KEY]:JSON.stringify(ALERT_CFG),[NOTICE_KEY]:JSON.stringify(ST),[OVERVIEW_KEY]:JSON.stringify(OVERVIEW_VISIBLE),assessor_budgets_v82:JSON.stringify(ORC)});return {schema:'snake-finance-backup',version:2,app:'v82-android',createdAt:new Date().toISOString(),ledger:L,storage};}
 function saveSafetyBackup(){try{localStorage.setItem('assessor_pre_import_v82',JSON.stringify(backupState()))}catch(e){throw Error('Sem espaço para backup de segurança. Exporte um backup antes de continuar.');}}
-function exportBackup(){const native=window.AndroidBridge||window.AndroidApp;if(native&&typeof native.exportBackup==='function'){native.exportBackup(JSON.stringify(backupState(),null,2),'Snake_Finance_Backup_'+localToday()+'.json');return;}const blob=new Blob([JSON.stringify(backupState(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Snake_Finance_Backup_'+localToday()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+function exportBackup(){const native=window.AndroidBridge||window.AndroidApp;const payload=JSON.stringify(backupState(),null,2);if(payload.length<100)throw Error('Backup vazio: operação cancelada');if(native&&typeof native.exportBackup==='function'){native.exportBackup(payload,'Snake_Finance_Backup_'+localToday()+'.json');return;}const blob=new Blob([JSON.stringify(backupState(),null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Snake_Finance_Backup_'+localToday()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 function exportPreservedLedger(){const native=window.AndroidBridge||window.AndroidApp;if(native&&typeof native.exportPreservedLedger==='function')native.exportPreservedLedger();else alert('Cópia interna não disponível nesta versão.');}
 function exportRawRecovery(){
  const storage={};
@@ -2329,10 +2712,24 @@ function exportRawRecovery(){
  a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();
  setTimeout(()=>URL.revokeObjectURL(a.href),30000);
 }
-function openBackupPanel(){document.getElementById('settingsPop')?.classList.remove('on');modal('Backup e importação',`<p class="m">Exporte no arquivo anterior e importe neste. O backup inclui lançamentos, saldos iniciais, categorias, metas, alertas e preferências deste navegador. Guarde o JSON em local privado.</p><button class="bt p" onclick="exportBackup()">Exportar backup completo</button><button class="bt" onclick="exportRawRecovery()">Resgate de emergência · exportar armazenamento original sem alterar dados</button><button class="bt" onclick="exportPreservedLedger()">Exportar cópia interna preservada (se disponível)</button><label class="fm">Importar JSON<input type="file" accept=".json,application/json" onchange="readBackupFile(this.files[0])"></label><p class="m">A importação valida os dados antes de substituir. Uma cópia local de segurança é criada. Bases legadas em lista importam somente lançamentos.</p><button class="bt" onclick="restoreSafetyBackup()">Revisar última cópia de segurança</button>`);}
+function diagnoseNativeBackup(){const bridge=window.AndroidBridge||window.AndroidApp;if(!bridge||typeof bridge.backupExportDiagnostics!=='function')return alert('Diagnóstico disponível apenas no APK de validação atualizado.');try{const x=JSON.parse(bridge.backupExportDiagnostics());alert('Cópia interna: '+x.internalBytes+' bytes\\nTamanho verificado na exportação: '+x.savedBytes+' bytes\\nArquivo no destino agora: '+(x.destinationBytesNow===undefined?'não acessível':x.destinationBytesNow)+' bytes'+(x.destinationError?'\\n'+x.destinationError:''));}catch(e){alert('Não foi possível conferir o backup.');}}
+function retryNativeBackup(){const bridge=window.AndroidBridge||window.AndroidApp;if(!bridge||typeof bridge.exportStagedBackupAgain!=='function')return alert('Recuperação disponível apenas no APK de validação atualizado.');bridge.exportStagedBackupAgain();}
+function openBackupPanel(){document.getElementById('settingsPop')?.classList.remove('on');modal('Backup e importação',`<p class="m">Exporte no arquivo anterior e importe neste. O backup inclui lançamentos, saldos iniciais, categorias, metas, alertas e preferências deste navegador. Guarde o JSON em local privado.</p><button class="bt p" onclick="exportBackup()">Exportar backup completo</button><button class="bt" onclick="diagnoseNativeBackup()">Verificar destino do último backup Android</button><button class="bt" onclick="retryNativeBackup()">Salvar novamente a cópia interna preservada</button><button class="bt" onclick="exportRawRecovery()">Resgate de emergência · exportar armazenamento original sem alterar dados</button><button class="bt" onclick="exportPreservedLedger()">Exportar cópia interna preservada (se disponível)</button><label class="fm">Importar JSON<input type="file" accept=".json,application/json" onchange="readBackupFile(this.files[0])"></label><p class="m">A importação valida os dados antes de substituir. Uma cópia local de segurança é criada. Bases legadas em lista importam somente lançamentos.</p><button class="bt" onclick="restoreSafetyBackup()">Revisar última cópia de segurança</button>`);}
 let BACKUP_PENDING=null;
-async function readBackupFile(file){if(!file)return;if(file.size>20*1024*1024)return alert('Arquivo maior que 20 MB.');try{previewBackup(JSON.parse(await file.text()))}catch(e){BACKUP_PENDING=null;alert('Importação recusada: '+e.message);}}
-function previewBackup(data){BACKUP_PENDING=null;const isLegacy=Array.isArray(data);const legacyObject=!isLegacy&&data&&typeof data==='object'&&data.schema!=='snake-finance-backup';let legacyLedger=null,legacyStorage={};if(legacyObject){legacyLedger=Array.isArray(data.ledger)?data.ledger:Array.isArray(data.transactions)?data.transactions:Array.isArray(data.lancamentos)?data.lancamentos:Array.isArray(data.data)?data.data:null;const src=data.storage||data.localStorage||data.preferences||data.config||{};if(src&&typeof src==='object'&&!Array.isArray(src))for(const[k,v]of Object.entries(src))legacyStorage[k]=typeof v==='string'?v:JSON.stringify(v);if(!legacyLedger)throw Error('Formato legado reconhecido, mas não encontrei a lista de lançamentos.');}if(!isLegacy&&!legacyObject&&(data?.schema!=='snake-finance-backup'||![1,2].includes(data.version)||!data.storage||typeof data.storage!=='object'||Array.isArray(data.storage)))throw Error('Formato de backup não reconhecido');const ledger=validateLedger(isLegacy?data:legacyObject?legacyLedger:data.ledger),storage=isLegacy?{}:legacyObject?legacyStorage:{...data.storage};for(const [key,value]of Object.entries(storage)){if((!key.startsWith('assessor_')&&!['lay','tema'].includes(key))||typeof value!=='string'||value.length>20000000)throw Error('Preferência inválida');validatePreference(key,value);}if(!isLegacy&&!legacyObject&&data.version===2&&!storage[OPENING_KEY])throw Error('Backup incompleto: faltam saldos iniciais');if(window.SNAKE_DISTRIBUTABLE&&!storage[OPENING_KEY]&&!legacyObject&&!isLegacy)throw Error('Para migrar ao Android, exporte um backup completo no HTML atualizado. Backups antigos não incluem os saldos iniciais.');const resolved=completeBackupCategories(storage[CATSTORE]?JSON.parse(storage[CATSTORE]):CATDB,ledger);
+async function readBackupFile(file){
+ if(!file)return;
+ if(file.size===0)return alert('O JSON selecionado está vazio (0 KB). Selecione uma cópia válida.');
+ if(file.size>20*1024*1024)return alert('Arquivo maior que 20 MB.');
+ try{
+  // Android WebView on older builds may expose a File without file.text().
+  const raw=typeof file.text==='function'?await file.text():await new Promise((resolve,reject)=>{
+   const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error||new Error('Falha ao abrir arquivo Android'));reader.readAsText(file,'UTF-8');
+  });
+  if(!raw||!String(raw).trim())throw Error('O arquivo selecionado não contém dados');
+  previewBackup(JSON.parse(String(raw).replace(/^\uFEFF/,'')));
+ }catch(e){BACKUP_PENDING=null;alert('Importação recusada: '+(e?.message||String(e)));}
+}
+function previewBackup(data){BACKUP_PENDING=null;const isLegacy=Array.isArray(data);const legacyObject=!isLegacy&&data&&typeof data==='object'&&data.schema!=='snake-finance-backup';let legacyLedger=null,legacyStorage={};if(legacyObject){legacyLedger=Array.isArray(data.ledger)?data.ledger:Array.isArray(data.transactions)?data.transactions:Array.isArray(data.lancamentos)?data.lancamentos:Array.isArray(data.data)?data.data:null;const src=data.storage||data.localStorage||data.preferences||data.config||{};if(src&&typeof src==='object'&&!Array.isArray(src))for(const[k,v]of Object.entries(src))legacyStorage[k]=typeof v==='string'?v:JSON.stringify(v);if(!legacyLedger)throw Error('Formato legado reconhecido, mas não encontrei a lista de lançamentos.');}if(!isLegacy&&!legacyObject&&(data?.schema!=='snake-finance-backup'||![1,2].includes(data.version)||!data.storage||typeof data.storage!=='object'||Array.isArray(data.storage)))throw Error('Formato de backup não reconhecido');const ledger=validateLedger(isLegacy?data:legacyObject?legacyLedger:data.ledger),storage=isLegacy?{}:legacyObject?legacyStorage:{...data.storage};for(const [key,value]of Object.entries(storage)){if((!key.startsWith('assessor_')&&key!==XP_OPENING_KEY&&!['lay','tema'].includes(key))||typeof value!=='string'||value.length>20000000)throw Error('Preferência inválida');validatePreference(key,value);}if(storage[XP_OPENING_KEY]!==undefined){const xp=Number(storage[XP_OPENING_KEY]);if(!Number.isSafeInteger(xp)||Math.abs(xp)>100000000000)throw Error('Saldo inicial XP inválido');}if(!isLegacy&&!legacyObject&&data.version===2&&!storage[OPENING_KEY])throw Error('Backup incompleto: faltam saldos iniciais');if(window.SNAKE_DISTRIBUTABLE&&!storage[OPENING_KEY]&&!legacyObject&&!isLegacy)throw Error('Para migrar ao Android, exporte um backup completo no HTML atualizado. Backups antigos não incluem os saldos iniciais.');const resolved=completeBackupCategories(storage[CATSTORE]?JSON.parse(storage[CATSTORE]):CATDB,ledger);
  if(resolved.missing.length)throw Error('Categorias não encontradas: '+resolved.missing.join(', ')+'. Exporte novamente na versão de origem com essas categorias cadastradas.');
  if(!isLegacy||resolved.recovered.length)storage[CATSTORE]=JSON.stringify(resolved.categories);
  BACKUP_PENDING={ledger,storage};modal('Conferir importação',`<p>${ledger.length} lançamentos validados.</p><p class="m">${(isLegacy||legacyObject)?'Base legada reconhecida: os dados compatíveis serão migrados e as preferências ausentes serão preservadas.':'Backup completo: também substitui as preferências incluídas.'} Confira a origem do arquivo e seus totais após importar.</p>${resolved.recovered.length?'<p>Categorias padrão recuperadas: '+resolved.recovered.map(k=>escapeHTML(resolved.categories[k].name)).join(', ')+'.</p>':''}<button class="bt p" onclick="applyBackup()">Importar dados validados</button><button class="bt" onclick="BACKUP_PENDING=null;closeModal()">Cancelar</button>`);return BACKUP_PENDING;}
@@ -2350,7 +2747,13 @@ function applyBackup(){
  try{
   saveSafetyBackup();written.add('assessor_pre_import_v82');
   for(const[k,v]of Object.entries(pending.storage))if(!['assessor_tx','assessor_tx_v43','assessor_pre_import_v82'].includes(k))write(k,v);
-  write(LEDGER_KEY,JSON.stringify(pending.ledger));write('assessor_tx',JSON.stringify(pending.ledger));
+  if(pending.storage[XP_OPENING_KEY]===undefined)write(XP_OPENING_KEY,'0');write(LEDGER_KEY,JSON.stringify(pending.ledger));write('assessor_tx',JSON.stringify(pending.ledger));
+  // Reopen the actual persisted data before authorizing any financial writes.
+  const verified=validateLedger(JSON.parse(localStorage.getItem(LEDGER_KEY)||'null'));
+  if(verified.length!==pending.ledger.length||verified.some((x,i)=>JSON.stringify(x)!==JSON.stringify(pending.ledger[i])))throw Error('Os lançamentos gravados não conferem com o backup importado');
+  const storedOpenings=localStorage.getItem(OPENING_KEY);
+  if(!storedOpenings)throw Error('Saldos iniciais não foram gravados');
+  validateOpenings(JSON.parse(storedOpenings));
   PERSIST_BLOCKED=false;reloadDashboardView();BACKUP_PENDING=null;
  }catch(e){
   for(const k of written)try{if(Object.hasOwn(before,k))localStorage.setItem(k,before[k]);else localStorage.removeItem(k);}catch(_){}
@@ -2359,7 +2762,7 @@ function applyBackup(){
  }
 }
 // Independent consistency checks replace historical self-comparisons.
-function auditEngine(){let valid=true;try{validateLedger(L)}catch(e){valid=false}const d=D(),cut=YM+'-31',actual=L.filter(x=>x.s==='r'&&validISO(x.d)&&x.d<=cut),pending=L.filter(x=>x.s==='p'&&validISO(x.d)&&x.d<=cut);let actualCash=ACC.c6,pendingCash=0;for(const x of actual){if(x.bal===false)continue;if(x.a==='c6')actualCash+=x.t==='r'?x.v:-x.v;if(x.t==='t'&&x.to==='c6'&&x.a!=='c6')actualCash+=x.v;}for(const x of pending){if(x.bal===false)continue;if(x.a==='c6')pendingCash+=x.t==='r'?x.v:-x.v;if(x.t==='t'&&x.to==='c6'&&x.a!=='c6')pendingCash+=x.v;}const checks={estrutura:valid,categoriasValidas:L.every(x=>x.t!=='d'||Boolean(CATDB[x.c]||CAT[x.c])),saldoC6:d.c6===actualCash,projecaoC6:d.fim===actualCash+pendingCash,saldoFinito:[d.c6,d.cj,d.fim,d.fat].every(Number.isSafeInteger),transferenciaNaoDespesa:d.des===ML().filter(x=>x.s==='r'&&x.t==='d').reduce((q,x)=>q+x.v,0),semDemonstracao:!ML().some(x=>/^DEMO /.test(x.n||''))};return {ok:Object.values(checks).every(Boolean),checks,saldoC6:d.c6,saldoCaju:d.cj,previstoC6:d.fim};};
+function auditEngine(){let valid=true;try{validateLedger(L)}catch(e){valid=false}const d=D(),cut=YM+'-31',actual=L.filter(x=>x.s==='r'&&validISO(x.d)&&x.d<=cut),pending=L.filter(x=>x.s==='p'&&validISO(x.d)&&x.d<=cut);let actualCash=ACC.c6,pendingCash=0;for(const x of actual){if(x.bal===false)continue;if(x.a==='c6')actualCash+=x.t==='r'?x.v:-x.v;if(x.t==='t'&&x.to==='c6'&&x.a!=='c6')actualCash+=x.v;}for(const x of pending){if(x.bal===false)continue;if(x.a==='c6')pendingCash+=x.t==='r'?x.v:-x.v;if(x.t==='t'&&x.to==='c6'&&x.a!=='c6')pendingCash+=x.v;}let actualXP=ACC.xp;for(const x of actual){if(x.bal===false)continue;if(x.a==='xp')actualXP+=x.t==='r'?x.v:-x.v;if(x.t==='t'&&x.to==='xp'&&x.a!=='xp')actualXP+=x.v;}const checks={estrutura:valid,categoriasValidas:L.every(x=>x.t!=='d'||Boolean(CATDB[x.c]||CAT[x.c])),saldoC6:d.c6===actualCash,projecaoC6:d.fim===actualCash+pendingCash,saldoXP:d.xp===actualXP,saldoConsolidado:d.availableDebit===actualCash+actualXP,saldoFinito:[d.c6,d.xp,d.availableDebit,d.cj,d.fim,d.fat].every(Number.isSafeInteger),transferenciaNaoDespesa:d.des===ML().filter(x=>x.s==='r'&&x.t==='d').reduce((q,x)=>q+x.v,0),semDemonstracao:!ML().some(x=>/^DEMO /.test(x.n||''))};return {ok:Object.values(checks).every(Boolean),checks,saldoC6:d.c6,saldoXP:d.xp,saldoDebitoConsolidado:d.availableDebit,saldoCaju:d.cj,previstoC6:d.fim};};
 const LAYOUT_V82='assessor_layout_v82';
 function layoutStorage(){try{const o=JSON.parse(localStorage.getItem(LAYOUT_V82)||'{}');return o&&typeof o==='object'&&!Array.isArray(o)?o:{}}catch(e){return {}}}
 function saveLayout(){const state=layoutStorage(),cards=layoutCards().map((c,i)=>({id:c.dataset.oid||'card-'+i,h:c.style.minHeight||''}));const present=new Set(cards.map(x=>x.id)),prior=state[TAB]||[];state[TAB]=cards.concat(prior.filter(x=>!present.has(x.id)));try{localStorage.setItem(LAYOUT_V82,JSON.stringify(state))}catch(e){alert('Layout não salvo.')}};
@@ -2478,18 +2881,118 @@ html[data-tema] #app{padding-bottom:120px!important}
   };
   window.meuAssessorAndroidAutoSync=function(){
     if(native)try{const rows=JSON.parse(bridge.getPendingNotifications());pending=Array.isArray(rows)?rows.filter(e=>e&&typeof e.id==='string'&&e.id.length<=256).slice(0,500):[];}catch{connectionMessage='Não foi possível ler as notificações.';}
+    safeAutoRegisterBankExpenses();
     let button=document.getElementById('native-review');
     if(native&&!button){button=document.createElement('button');button.id='native-review';button.className='bt';button.style.cssText='position:fixed;right:12px;bottom:105px;z-index:40;max-width:220px';button.onclick=window.reviewNativeNotifications;document.body.appendChild(button);}
     if(button){button.textContent='Revisar notificações ('+pending.length+')';button.hidden=!pending.length||TAB==='as'||!!MD;}
     window.dispatchEvent(new CustomEvent('assessor-native-pending',{detail:{count:pending.length}}));
   };
+  // High-confidence opt-in rules for automatic provisional expenses.
+  // Wallet, transfers, credits and ambiguous text remain in the manual review queue.
+  const AUTO_SAFE_KEY='snake_auto_safe_v1';
+  let autoSafeEnabled=true;
+  try{autoSafeEnabled=localStorage.getItem(AUTO_SAFE_KEY)!=='off';}catch(e){autoSafeEnabled=false;}
+  window.setSafeAutoCapture=function(enabled){autoSafeEnabled=!!enabled;try{localStorage.setItem(AUTO_SAFE_KEY,autoSafeEnabled?'on':'off');}catch(e){alert('Não foi possível salvar a preferência.');return;}window.meuAssessorAndroidAutoSync();};
+  function safeAutoRegisterBankExpenses(){
+    if(!autoSafeEnabled||!native||PERSIST_BLOCKED||busy||!Array.isArray(pending))return;
+    let changed=false;
+    const previousLedger=L.slice(),previousId=NID;
+    for(const e of pending.slice(0,50)){
+      if(!e||typeof e.id!=='string'||!e.id||L.some(x=>x.captureId==='bank:'+e.id))continue;
+      const source=String(e.sourcePackage||'').toLowerCase();
+      // Segurança Rev.0: somente fontes bancárias explicitamente autorizadas.
+      const authorizedBankPackages=new Set(['com.c6bank.app','br.com.xp.carteira','com.caju.employee','br.com.itau']);
+      if(!authorizedBankPackages.has(source))continue;
+      // Auditoria 09: impedir auto-registro se a captura pode ser o mesmo pagamento
+      // emitido novamente com outro ID. Manter evento original para revisão.
+      const normalizedMerchant=String(e.merchant||e.title||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+      const eventTime=Date.parse(e.postedAt);
+      if(!Number.isFinite(eventTime)||!normalizedMerchant)continue;
+      const probableRepeat=L.some(x=>x.autoSource==='bank'&&x.v===e.amountCents&&x.captureId!=='bank:'+e.id&&
+        String(x.n||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim()===normalizedMerchant&&
+        Number.isFinite(Date.parse(x.autoPostedAt))&&Math.abs(Date.parse(x.autoPostedAt)-eventTime)<=120000);
+      if(probableRepeat)continue;
+      const d=localDraft({...e,source:'bank'});
+      const full=(String(e.title||'')+' '+String(e.text||'')).toLowerCase();
+      if(!['c6','xp','caju','carbon'].includes(d.account)||d.type!=='d'||!Number.isSafeInteger(e.amountCents)||e.amountCents<=0||e.amountCents>100000000||!validISO(d.day))continue;
+      // Transferências próprias: um único registro movimenta as duas contas,
+      // sem receita/despesa. Só automatizar com origem e destino explícitos.
+      if(/\\b(?:transfer[eê]ncia|pix enviado|pix realizado)\\b/.test(full)&&
+         /\\b(?:minhas contas|contas pr[oó]prias|mesma titularidade|entre minhas contas)\\b/.test(full)&&
+         !/estorno|cancelad|agendad|autoriza[cç][aã]o|tentativa|negad/.test(full)){
+        const mentionsC6=/\\bc6(?: bank)?\\b/.test(full);
+        const mentionsXP=/\\bxp(?: infinite one)?\\b/.test(full);
+        const from=source==='com.c6bank.app'?'c6':source==='br.com.xp.carteira'?'xp':null;
+        const to=from==='c6'?'xp':from==='xp'?'c6':null;
+        // A instituição que emitiu o aviso precisa ser a conta de saída.
+        // Avisos de recebimento ficam para conciliação manual.
+        const outgoing=e.direction==='expense'&&d.account===from&&/pix enviado|transfer[eê]ncia enviada|transferiu|voc[eê] enviou/.test(full);
+        if(outgoing&&from&&to&&mentionsC6&&mentionsXP&&Number.isSafeInteger(e.amountCents)&&e.amountCents>0&&validISO(d.day)){
+          const near=L.some(x=>x.t==='t'&&x.a===from&&x.to===to&&x.v===e.amountCents&&x.d===d.day&&
+            (!x.autoPostedAt||!Number.isFinite(Date.parse(x.autoPostedAt))||Math.abs(Date.parse(x.autoPostedAt)-eventTime)<=120000));
+          if(!near){
+            L.push({id:NID,d:d.day,n:'Transferência própria C6 ↔ XP',t:'t',
+              v:e.amountCents,a:from,to,s:'r',c:'out',ctx:'Transferência entre contas próprias',
+              captureId:'bank:'+e.id,reviewPending:true,autoSource:'bank',autoPostedAt:e.postedAt});
+            NID=nextId();changed=true;
+          }
+        }
+        continue;
+      }
+      // Não classificar Pix/transferência genérica como despesa: pode ser movimentação própria.
+      // Uma notificação de crédito da outra instituição também não deve gerar novo lançamento.
+      if(/pix enviado|pix recebido|pix realizado|transfer[eê]ncia|transferido|transferiu|entre minhas contas|contas pr[oó]prias/.test(full))continue;
+      if(e.direction!=='expense'||/estorno|cancelad|agendad|autoriza[cç][aã]o|tentativa|negad|saldo dispon[ií]vel|fatura fechada|limite dispon[ií]vel/.test(full))continue;
+      if(!/compra|pagamento realizado|pix enviado|d[eé]bito realizado|voc[eê] pagou|transa[cç][aã]o aprovada/.test(full))continue;
+      // Não confiar apenas no texto da notificação para identificar conta/cartão.
+      if(d.account==='carbon'&&source!=='com.c6bank.app')continue;
+      if(d.account==='c6'&&source!=='com.c6bank.app')continue;
+      if(d.account==='xp'&&source!=='br.com.xp.carteira')continue;
+      if(d.account==='caju'&&source!=='com.caju.employee')continue;
+      if(d.account==='carbon'&&!/cart[aã]o|cr[eé]dito|carbon/.test(full))continue;
+      if(d.account==='caju'&&!/compra|pagamento realizado|d[eé]bito realizado|transa[cç][aã]o aprovada/.test(full))continue;
+      // Não debitar automaticamente lançamentos ambíguos. Somente regras explícitas.
+      const hasParking=/estacionamento|parking|\bpark\b/.test(full);
+      const hasFuel=/abastecimento|combust[ií]vel|posto de gasolina/.test(full);
+      const hasCajuMeal=/alimenta[cç][aã]o|refei[cç][aã]o/.test(full);
+      if(d.account==='caju'&&!((hasFuel&&!hasCajuMeal)||(hasCajuMeal&&!hasFuel)))continue;
+      if(['c6','xp'].includes(d.account)&&!hasFuel&&!hasParking)continue;
+      if(d.account==='carbon'&&!hasFuel)continue;
+      // Context is a suggestion only; the original transaction stays reviewable.
+      const posted=new Date(e.postedAt);
+      const workday=Number.isFinite(posted.getTime())&&posted.getDay()>=2&&posted.getDay()<=4;
+      const hour=posted.getHours();
+      let category='out',context='Pessoal (provisório)';
+      if(['c6','xp'].includes(d.account)&&e.amountCents===600&&workday&&hour>=5&&hour<12&&/estacionamento|parking|\bpark\b/.test(full)&&/pix enviado|pagamento realizado|d[eé]bito realizado/.test(full)){category='est';context='Trabalho · Estacionamento (sugerido)';}
+      // Caju: sem indicação explícita da carteira, manter a despesa em revisão.
+      if(d.account==='caju'&&!/alimenta[cç][aã]o|refei[cç][aã]o|abastecimento|combust[ií]vel/.test(full))continue;
+      if(/abastec|combust[ií]vel|posto de gasolina/.test(full)){
+        category='abs';
+        if(d.account==='caju'&&!/abastecimento|combust[ií]vel/.test(full))continue;
+        context=d.account==='caju'?'Trabalho · Combustível (Caju Abastecimento)':'Pessoal · Combustível';
+      }else if(d.account==='caju'){
+        category='ali';context=workday&&hour>=11&&hour<=15?'Trabalho · Refeição (sugerido)':'Alimentação pessoal (sugerida)';
+      }
+      // Never deduplicate independent purchases solely by amount or calendar day.
+      const entry={id:NID,d:d.day,n:d.name,t:'d',v:e.amountCents,a:d.account,s:'r',c:category,sub:'',ctx:context,captureId:'bank:'+e.id,reviewPending:true,autoSource:'bank',autoPostedAt:e.postedAt};
+      L.push(entry);NID=nextId();changed=true;
+    }
+    if(changed){
+      if(!persistLedger()){ // No successful persistence means no automatic debit.
+        L=previousLedger;
+        NID=previousId;
+        return;
+      }
+      draw();
+    }
+  }
   function rows(source){return source==='bank'?pending:waItems;}
   function captureKey(e){return e.source+':'+e.id;}
   function recorded(e){return L.find(x=>x.captureId===captureKey(e));}
   function normalized(source){return rows(source).map(e=>source==='bank'?{...e,source}:{id:e.messageId,title:e.kind==='audio'?'Áudio do WhatsApp':'Mensagem do WhatsApp',text:e.text,postedAt:e.postedAt,source,connection:e.connection,kind:e.kind,status:e.status||'pending',transcriptionError:e.transcriptionError});}
   function body(source){
     reviewItems=normalized(source);
-    return `<p class="m">Revise valor, conta e categoria antes de salvar. Limpar não exclui lançamentos.</p><div class="sp" style="gap:8px;margin:12px 0"><button class="bt" onclick="captureRefresh('${source}')">Atualizar</button><button class="bt" ${!reviewItems.length?'disabled':''} onclick="captureClear('${source}')">Limpar pendentes</button></div>${reviewItems.map((e,i)=>`<div class="c" style="margin:10px 0;padding:14px"><p><b>${safe(ST.hide?(e.kind==='audio'?'Áudio do WhatsApp':e.source==='bank'?'Notificação bancária':'Mensagem do WhatsApp'):(e.title||'Notificação bancária'))}</b></p><p class="m" style="overflow-wrap:anywhere">${safe(privacyText(e.text||(e.status==='processing'?'Transcrevendo áudio…':e.kind==='audio'?'Não foi possível transcrever.':' ')))}</p><p style="font-size:1.25em;margin:8px 0"><b>${safe(ST.hide?'R$ ••••':money(e.amountCents))}</b></p><p class="m">${safe(new Date(e.postedAt).toLocaleDateString('pt-BR'))}${recorded(e)?' · Já registrado':e.kind==='audio'?' · '+(e.status==='processing'?'Transcrevendo':e.status==='failed'?'Transcrição pendente':'Transcrito'):''}</p>${e.kind==='audio'&&e.status==='failed'?'<p class="m">'+safe(audioError(e.transcriptionError))+'</p>':''}<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">${e.status==='processing'?'<button class="bt" disabled>Transcrevendo…</button>':e.status==='failed'?`<button class="bt" onclick="captureRetryAudio(${i})">Tentar transcrição novamente</button>`:`<button class="bt p" onclick="captureOpen(${i})">${recorded(e)?'Concluir revisão':'Revisar e registrar'}</button>`}<button class="bt" onclick="captureDiscard(${i})">Dispensar</button></div></div>`).join('')||'<p>Nenhuma notificação pendente.</p>'}`;
+    return `<p class="m">Revise valor, conta e categoria antes de salvar. Limpar não exclui lançamentos.</p><div class="sp" style="gap:8px;margin:12px 0"><button class="bt" onclick="captureRefresh('${source}')">Atualizar</button><button class="bt" ${!reviewItems.length?'disabled':''} onclick="captureClear('${source}')">Limpar pendentes</button></div>${reviewItems.map((e,i)=>`<div class="c" style="margin:10px 0;padding:14px"><p><b>${safe(ST.hide?(e.kind==='audio'?'Áudio do WhatsApp':e.source==='bank'?'Notificação bancária':'Mensagem do WhatsApp'):(e.title||'Notificação bancária'))}</b></p><p class="m" style="overflow-wrap:anywhere">${safe(privacyText(e.text||(e.status==='processing'?'Transcrevendo áudio…':e.kind==='audio'?'Não foi possível transcrever.':' ')))}</p><p style="font-size:1.25em;margin:8px 0"><b>${safe(ST.hide?'R$ ••••':money(e.amountCents))}</b></p><p class="m">${safe(new Date(e.postedAt).toLocaleDateString('pt-BR'))}${recorded(e)?(recorded(e).reviewPending?' · Registrado automaticamente · Não conferido':' · Já registrado'):e.kind==='audio'?' · '+(e.status==='processing'?'Transcrevendo':e.status==='failed'?'Transcrição pendente':'Transcrito'):''}</p>${e.kind==='audio'&&e.status==='failed'?'<p class="m">'+safe(audioError(e.transcriptionError))+'</p>':''}<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">${e.status==='processing'?'<button class="bt" disabled>Transcrevendo…</button>':e.status==='failed'?`<button class="bt" onclick="captureRetryAudio(${i})">Tentar transcrição novamente</button>`:`<button class="bt p" onclick="captureOpen(${i})">${recorded(e)?'Concluir revisão':'Revisar e registrar'}</button>`}<button class="bt" onclick="captureDiscard(${i})">Dispensar</button></div></div>`).join('')||'<p>Nenhuma notificação pendente.</p>'}`;
   }
   window.reviewNativeNotifications=function(){window.meuAssessorAndroidAutoSync();activeSource='bank';modal('Notificações bancárias',body('bank'));MD='capture-inbox';};
   window.captureRefresh=async function(source,silent=false){if(loading)return;loading=true;if(source==='whatsapp')lastWaFetch=Date.now();try{if(source==='bank')window.meuAssessorAndroidAutoSync();else{const result=await api('/whatsapp/messages');waItems=Array.isArray(result.messages)?result.messages.filter(m=>typeof m.messageId==='string'&&typeof m.text==='string'&&Number.isFinite(m.postedAt)).slice(0,50).map(m=>({...m,connection:connectionGeneration})):[];}if(source==='bank'){window.reviewNativeNotifications();}else{AS='wa';draw();}}catch(error){if(silent){connectionMessage=error.message;if(TAB==='as'&&AS==='wa'&&!MD)draw();}else alert(error.message);}finally{loading=false;}};
@@ -2507,7 +3010,7 @@ html[data-tema] #app{padding-bottom:120px!important}
     const text=String(e.text||''),full=(e.title+' '+text).toLowerCase();let amount=e.amountCents;
     if(!Number.isSafeInteger(amount)){const match=[...text.matchAll(/(?:R\$\s*)?(\d{1,3}(?:\.\d{3})*,\d{2}|\d+,\d{2})(?!\d)/g)];if(match.length===1)amount=Math.round(Number(match[0][1].replace(/\./g,'').replace(',','.'))*100);}
     const direction=['expense','income'].includes(e.direction)?e.direction:/\b(recebi|recebido|salário|salario|entrada)\b/.test(full)?'income':/\b(gastei|paguei|compra|comprou|pagamento|despesa|débito|debito)\b/.test(full)?'expense':'unknown';
-    const account=/caju/.test(full+' '+(e.sourcePackage||''))?'caju':/c6/.test(full+' '+(e.sourcePackage||''))?(/carbon|cart[aã]o|cr[eé]dito/.test(full)?'carbon':'c6'):'';
+    const src=String(e.sourcePackage||'').toLowerCase();const isWallet=src.includes('walletnfcrel');const account=/caju/.test(full+' '+src)?'caju':/c6/.test(full+' '+src)?(/carbon|cart[aã]o|cr[eé]dito/.test(full)?'carbon':'c6'):/\bxp\b|xpinc|br\.com\.xp|com\.xp/.test(full+' '+src)?'xp':'';
     const date=new Date(e.postedAt),day=Number.isFinite(date.getTime())?`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`:APP_TODAY;
     return {type:direction==='income'?'r':direction==='expense'?'d':'',amount:Number.isSafeInteger(amount)&&amount>0?amount:null,account,day,name:(text||e.title||'Gasto capturado').slice(0,250),category:'out',sub:''};
   }
@@ -2517,7 +3020,7 @@ html[data-tema] #app{padding-bottom:120px!important}
     if(busy)return;const event=reviewItems[index];if(!event)return;
     if(event.kind==='audio'&&event.status!=='pending'){alert('Aguarde a transcrição ou tente novamente antes de registrar.');return;}
     if(event.source!=='bank'&&!ST.msg){alert('Ative Registrar despesas por mensagem em Avisos para abrir rascunhos.');return;}
-    if(recorded(event)){if(confirm('Este evento já está registrado. Concluir a revisão sem criar outro lançamento?'))await complete([event],'recorded');return;}
+    if(recorded(event)){const entry=recorded(event);if(entry.reviewPending){draft={event,data:{type:entry.t,amount:entry.v,account:entry.a,day:entry.d,name:entry.n,category:entry.c||'out',sub:entry.sub||'',to:entry.to||''}};showDraft();return;}if(confirm('Este evento já está registrado. Concluir a revisão sem criar outro lançamento?'))await complete([event],'recorded');return;}
     draft={event,data:localDraft(event)};
     if(event.kind==='audio'){
       busy=true;modal('Preparando rascunho do áudio',`<p>${safe(event.text)}</p><p class="m" style="margin-top:12px">A IA está identificando valor, conta e categoria. O lançamento será salvo somente após sua revisão.</p>`);MD='capture-preparing';
@@ -2530,26 +3033,35 @@ html[data-tema] #app{padding-bottom:120px!important}
   };
   function showDraft(){
     if(!draft)return;const d=draft.data;
-    modal(draft.event.kind==='audio'?'Revisar gasto do áudio':'Revisar gasto capturado',`<p class="m">${safe(draft.event.source==='bank'?'Notificação bancária':'Mensagem do WhatsApp')} · Confirme os dados abaixo.</p>${draft.event.kind==='audio'?'<div class="c" style="margin:12px 0"><b>Transcrição do áudio</b><p style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:130px;overflow:auto">'+safe(draft.event.text)+'</p><p class="m">Confira a transcrição e as sugestões antes de salvar.</p></div>':''}${draft.note?'<p class="m">'+safe(draft.note)+'</p>':''}<div class="fm"><label>Tipo<select id="capture-type"><option value="">Selecione</option><option value="d" ${d.type==='d'?'selected':''}>Despesa</option><option value="r" ${d.type==='r'?'selected':''}>Receita</option></select></label><label>Descrição<input id="capture-name" maxlength="250" value="${safe(d.name)}"></label><label>Valor (R$)<input id="capture-amount" inputmode="decimal" value="${d.amount?(d.amount/100).toFixed(2).replace('.',','):''}"></label><label>Data<input id="capture-date" type="date" value="${safe(d.day)}"></label><label>Conta<select id="capture-account"><option value="">Selecione a conta</option>${['c6','caju','carbon'].map(k=>`<option value="${k}" ${d.account===k?'selected':''}>${safe(AC[k][0])}</option>`).join('')}</select></label><label>Categoria<select id="capture-category" onchange="document.getElementById('capture-sub').innerHTML=subOptions(this.value)">${Object.keys(CATDB).map(k=>`<option value="${safe(k)}" ${d.category===k?'selected':''}>${safe(catName(k))}</option>`).join('')}</select></label><label>Subcategoria<select id="capture-sub">${subOptions(d.category)}</select></label><p class="m">Receitas não recebem categoria de despesa. Você pode corrigir todos os campos.</p>${config.configured?'<button class="bt" onclick="captureClassify()">Sugerir categoria com IA</button>':''}</div><div class="captureActions" style="position:sticky;bottom:-16px;padding:12px 0;background:var(--card);display:grid;gap:8px;z-index:2"><button id="capture-save" class="bt p" onclick="captureSave()">Salvar lançamento</button><button class="bt" onclick="closeDay()">Cancelar e manter pendente</button></div>`);MD='capture-draft';
+    modal(draft.event.kind==='audio'?'Revisar gasto do áudio':'Revisar gasto capturado',`<p class="m">${safe(draft.event.source==='bank'?'Notificação bancária':'Mensagem do WhatsApp')} · Confirme os dados abaixo.</p>${draft.event.kind==='audio'?'<div class="c" style="margin:12px 0"><b>Transcrição do áudio</b><p style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:130px;overflow:auto">'+safe(draft.event.text)+'</p><p class="m">Confira a transcrição e as sugestões antes de salvar.</p></div>':''}${draft.note?'<p class="m">'+safe(draft.note)+'</p>':''}<div class="fm"><label>Tipo<select id="capture-type"><option value="">Selecione</option><option value="d" ${d.type==='d'?'selected':''}>Despesa</option><option value="r" ${d.type==='r'?'selected':''}>Receita</option><option value="t" ${d.type==='t'?'selected':''}>Transferência</option></select></label><label>Descrição<input id="capture-name" maxlength="250" value="${safe(d.name)}"></label><label>Valor (R$)<input id="capture-amount" inputmode="decimal" value="${d.amount?(d.amount/100).toFixed(2).replace('.',','):''}"></label><label>Data<input id="capture-date" type="date" value="${safe(d.day)}"></label><label>Conta<select id="capture-account"><option value="">Selecione a conta</option>${['c6','caju','carbon','xp'].map(k=>`<option value="${k}" ${d.account===k?'selected':''}>${safe(AC[k][0])}</option>`).join('')}</select></label><label id="capture-destination-label" style="display:${d.type==='t'?'block':'none'}">Conta de destino<select id="capture-destination"><option value="">Selecione o destino</option>${['c6','caju','carbon','xp'].map(k=>`<option value="${k}" ${d.to===k?'selected':''}>${safe(AC[k][0])}</option>`).join('')}</select></label><label>Categoria<select id="capture-category" onchange="document.getElementById('capture-sub').innerHTML=subOptions(this.value)">${Object.keys(CATDB).map(k=>`<option value="${safe(k)}" ${d.category===k?'selected':''}>${safe(catName(k))}</option>`).join('')}</select></label><label>Subcategoria<select id="capture-sub">${subOptions(d.category)}</select></label><p class="m">Receitas não recebem categoria de despesa. Você pode corrigir todos os campos.</p>${config.configured?'<button class="bt" onclick="captureClassify()">Sugerir categoria com IA</button>':''}</div><div class="captureActions" style="position:sticky;bottom:-16px;padding:12px 0;background:var(--card);display:grid;gap:8px;z-index:2"><button id="capture-save" class="bt p" onclick="captureSave()">Salvar lançamento</button><button class="bt" onclick="closeDay()">Cancelar e manter pendente</button></div>`);MD='capture-draft';
+    document.getElementById('capture-type').addEventListener('change',e=>{document.getElementById('capture-destination-label').style.display=e.target.value==='t'?'block':'none';});
     if(d.sub){document.getElementById('capture-sub').value=d.sub;}
   }
-  function readDraft(){const value=document.getElementById('capture-amount').value.trim().replace(/\./g,'').replace(',','.');return {type:document.getElementById('capture-type').value,name:document.getElementById('capture-name').value.trim(),amount:Math.round(Number(value)*100),day:document.getElementById('capture-date').value,account:document.getElementById('capture-account').value,category:document.getElementById('capture-category').value,sub:document.getElementById('capture-sub').value};}
+  function readDraft(){const value=document.getElementById('capture-amount').value.trim().replace(/\./g,'').replace(',','.');return {type:document.getElementById('capture-type').value,name:document.getElementById('capture-name').value.trim(),amount:Math.round(Number(value)*100),day:document.getElementById('capture-date').value,account:document.getElementById('capture-account').value,to:document.getElementById('capture-destination').value,category:document.getElementById('capture-category').value,sub:document.getElementById('capture-sub').value};}
   window.captureSave=async function(){
     if(busy||!draft)return;const event=draft.event,d=readDraft();
-    if(!['r','d'].includes(d.type)||!d.name||!Number.isSafeInteger(d.amount)||d.amount<=0||!validISO(d.day)||!AC[d.account]||(d.type==='r'&&d.account==='carbon')||(d.type==='d'&&!CATDB[d.category])){alert('Confirme tipo, descrição, valor, data, conta e categoria.');return;}
+    if(!['r','d','t'].includes(d.type)||!d.name||!Number.isSafeInteger(d.amount)||d.amount<=0||!validISO(d.day)||!AC[d.account]||(d.type==='r'&&d.account==='carbon')||(d.type==='d'&&!CATDB[d.category])||(d.type==='t'&&(!AC[d.to]||d.to===d.account))){alert('Confirme tipo, descrição, valor, data, conta e categoria.');return;}
     if(event.source==='whatsapp'&&event.connection!==connectionGeneration){alert('A conexão mudou. Atualize a lista antes de continuar.');return;}
     // Mesmo valor não significa duplicidade: Pix, débito e compras distintas podem coincidir.
     // Bloqueio automático só pelo identificador imutável da captura; coincidências financeiras viram aviso de revisão.
-    const duplicate=L.filter(x=>x.d===d.day&&x.a===d.account&&x.v===d.amount&&x.t===d.type);
+    const duplicate=L.filter(x=>x.d===d.day&&x.a===d.account&&x.v===d.amount&&x.t===d.type);const crossSourceMatch=L.filter(x=>x.d===d.day&&x.v===d.amount&&x.t===d.type&&x.captureId&&((String(x.captureId).startsWith('bank:')&&event.source==='bank')||(String(x.captureId).startsWith('bank:')&&event.source==='whatsapp')));
     const exactCapture=recorded(event);
-    if(!exactCapture&&duplicate.length){const sameText=duplicate.some(x=>String(x.n||'').trim().toLowerCase()===d.name.trim().toLowerCase());if(sameText&&!confirm(`Existe um lançamento muito semelhante (mesma data, conta, valor e descrição). Registrar mesmo assim?`))return;}
+    if(!exactCapture&&crossSourceMatch.length&&event.source==='bank'&&String(event.sourcePackage||'').includes('walletnfcrel')){if(!confirm('Existe movimentação bancária de mesmo valor e data. Confira estabelecimento e cartão antes de registrar o evento do Google Wallet. Continuar?'))return;}if(!exactCapture&&duplicate.length){const sameText=duplicate.some(x=>String(x.n||'').trim().toLowerCase()===d.name.trim().toLowerCase());if(sameText&&!confirm(`Existe um lançamento muito semelhante (mesma data, conta, valor e descrição). Registrar mesmo assim?`))return;}
     busy=true;const button=document.getElementById('capture-save');if(button)button.disabled=true;
     try{
-      if(!recorded(event)){
+      const existing=recorded(event);
+      if(existing&&existing.reviewPending){
+        if(PERSIST_BLOCKED)throw Error('Importe um backup válido antes de confirmar.');
+        const snapshot={...existing};
+        Object.assign(existing,{d:d.day,n:d.name,t:d.type,v:d.amount,a:d.account,s:'r',c:d.type==='d'?d.category:'out',sub:d.type==='d'?d.sub:'',reviewPending:false});
+        if(d.type==='t'){existing.to=d.to;existing.ctx='Transferência';}else{delete existing.to;delete existing.ctx;}
+        if(!persistLedger()){Object.keys(existing).forEach(k=>delete existing[k]);Object.assign(existing,snapshot);throw Error('A correção não foi salva. A revisão permanece pendente.');}
+        YM=d.day.slice(0,7);SEL=d.day;
+      } else if(!recorded(event)){
         if(PERSIST_BLOCKED)throw Error('Importe um backup válido antes de registrar.');
         const before=L.slice(),oldId=NID;
         const x={id:NID,d:d.day,n:d.name,t:d.type,v:d.amount,a:d.account,s:'r',captureId:captureKey(event)};
-        if(d.type==='d'){x.c=d.category;x.sub=d.sub;}
+        if(d.type==='d'){x.c=d.category;x.sub=d.sub;}if(d.type==='t'){x.to=d.to;x.c='out';x.ctx='Transferência';}
         L.push(x);NID=nextId();
         if(!persistLedger()){L=before;NID=oldId;throw Error('O lançamento não foi salvo. A notificação continua pendente.');}
         YM=d.day.slice(0,7);SEL=d.day;
@@ -2561,7 +3073,7 @@ html[data-tema] #app{padding-bottom:120px!important}
   function applyAi(result,current){
     if(result?.intent!=='transaction'||!result.draft||typeof result.draft.value!=='number'||!Number.isFinite(result.draft.value)||!Number.isSafeInteger(Math.round(Math.abs(result.draft.value)*100))||Math.abs(result.draft.value)<=0||!validISO(result.draft.date)||typeof result.draft.desc!=='string'||result.draft.desc.length>250)throw Error('A IA não identificou um lançamento válido. Revise os dados manualmente.');
     const r=result.draft,category=Object.keys(CATDB).find(k=>k===r.cat||catName(k).toLowerCase()===String(r.cat).toLowerCase())||'out';
-    return {...current,account:['c6','caju','carbon'].includes(r.account)?r.account:current.account,type:r.value<0?'d':'r',name:r.desc,amount:Math.round(Math.abs(r.value)*100),day:r.date,category,sub:CATDB[category]?.subs?.includes(r.sub)?r.sub:''};
+    return {...current,account:['c6','caju','carbon','xp'].includes(r.account)?r.account:current.account,type:r.value<0?'d':'r',name:r.desc,amount:Math.round(Math.abs(r.value)*100),day:r.date,category,sub:CATDB[category]?.subs?.includes(r.sub)?r.sub:''};
   }
   function aiContext(){return {today:APP_TODAY,month:YM,summary:{unit:'centavos de real',...D(),byCategory:cs('r')},categories:Object.keys(CATDB).map(k=>({id:k,name:catName(k),subs:CATDB[k].subs||[]}))};}
   window.captureClassify=async function(){if(busy||!draft)return;busy=true;const current=readDraft(),event=draft.event;try{const result=await api('/ai/finance','POST',{text:'Interprete esta mensagem como um rascunho para revisão: '+String(event.text||event.title).slice(0,3500),context:{today:current.day,categories:aiContext().categories}});if(MD!=='capture-draft'||draft?.event!==event)return;draft.data=applyAi(result,current);showDraft();}catch(error){alert(error.message);}finally{busy=false;}};
@@ -2614,3 +3126,6 @@ html[data-tema] #app{padding-bottom:120px!important}
 function closeHeaderNav(){document.getElementById('headerNav')?.classList.remove('on');document.getElementById('headerMenuButton')?.setAttribute('aria-expanded','false');}
 function toggleHeaderNav(){v65CloseQuick();document.getElementById('settingsPop')?.classList.remove('on');closeMore();const menu=document.getElementById('headerNav'),opening=!menu.classList.contains('on');menu.innerHTML=TABS.map(x=>'<button type="button" data-header-tab="'+x[0]+'" onclick="closeHeaderNav();goTab(\''+x[0]+'\')">'+escapeHTML(x[1])+'</button>').join('');menu.classList.toggle('on',opening);document.getElementById('headerMenuButton').setAttribute('aria-expanded',String(opening));}
 function openAdvisorNotices(){closeHeaderNav();document.getElementById('settingsPop')?.classList.remove('on');AS='av';goTab('as');}
+</script>
+</body>
+</html>
