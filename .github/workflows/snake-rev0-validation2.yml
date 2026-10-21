@@ -42,6 +42,24 @@ jobs:
           s=s.replace(old,'html.contains("window.SNAKE_DISTRIBUTABLE=true")',1)
           p.write_text(s)
           PY
+      - name: Isolar identificacao e atualizacoes da versao de teste
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('android-capture/app/src/main/java/br/com/meuassessor/capture/UpdateChecker.java')
+          s=p.read_text()
+          old='static void check(Activity activity) {'
+          assert old in s
+          s=s.replace(old,old+'\n        if (!"br.com.snakefinance.app".equals(activity.getPackageName())) return;',1)
+          p.write_text(s)
+          p=Path('android-capture/app/src/validation2/AndroidManifest.xml')
+          p.parent.mkdir(parents=True, exist_ok=True)
+          p.write_text('''<?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+              <application android:label="Snake Finance Rev. 0 - Teste" tools:replace="android:label" />
+          </manifest>
+          ''')
+          PY
       - name: Build validation2
         working-directory: android-capture
         run: gradle assembleValidation2Debug --no-daemon --stacktrace
@@ -55,6 +73,7 @@ jobs:
           "$TOOLS/apksigner" verify --verbose --print-certs "$APK" | tee apk-signature.txt
           "$TOOLS/aapt" dump badging "$APK" | tee apk-badging.txt
           grep -q "package: name='br.com.snakefinance.app.validation2'" apk-badging.txt
+          grep -q "application-label:'Snake Finance Rev. 0 - Teste'" apk-badging.txt
           python3 - "$APK" <<'PY'
           import hashlib, sys, zipfile
           expected = '534fcd117dde793724a5852c765109420c2c7a02c31e270076ebcf91574df778'
