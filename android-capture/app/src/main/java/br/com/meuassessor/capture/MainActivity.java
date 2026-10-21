@@ -102,6 +102,7 @@ public final class MainActivity extends Activity {
     private boolean authenticatedForDisplay = false;
     private ValueCallback<Uri[]> fileCallback;
     private Uri capturedImageUri;
+    private boolean choosingJsonBackup;
     private Bundle pendingState;
     private boolean authenticated;
     private boolean authenticationInProgress;
@@ -113,6 +114,10 @@ public final class MainActivity extends Activity {
         super.onCreate(state);
         // Hide real Android status icons only while the startup screen is visible.
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            android.view.WindowInsetsController controller = getWindow().getInsetsController();
+            if (controller != null) controller.hide(android.view.WindowInsets.Type.statusBars());
+        }
         webView = buildWebView();
         String nativeVersion = getSharedPreferences("native_runtime", MODE_PRIVATE)
                 .getString("web_cache_version", "");
@@ -136,7 +141,28 @@ public final class MainActivity extends Activity {
                 getAssets().open("snake_splash_aprovada.jpg"));
             if (splashBitmap != null) {
                 ImageView approvedSplash = new ImageView(this);
-                approvedSplash.setImageBitmap(splashBitmap);
+                // Display the approved artwork without the phone chrome captured in its source.
+                // Source bytes and the approved logo remain unchanged.
+                approvedSplash.setImageDrawable(new android.graphics.drawable.Drawable() {
+                    private final android.graphics.Paint paint = new android.graphics.Paint(
+                            android.graphics.Paint.ANTI_ALIAS_FLAG | android.graphics.Paint.FILTER_BITMAP_FLAG);
+                    @Override public void draw(android.graphics.Canvas canvas) {
+                        android.graphics.Rect source = new android.graphics.Rect(0,
+                                Math.round(splashBitmap.getHeight() * 0.045f),
+                                Math.round(splashBitmap.getWidth() * 0.965f), splashBitmap.getHeight());
+                        android.graphics.Rect bounds = getBounds();
+                        float scale = Math.min((float) bounds.width() / source.width(),
+                                (float) bounds.height() / source.height());
+                        float width = source.width() * scale, height = source.height() * scale;
+                        float left = bounds.left + (bounds.width() - width) / 2f;
+                        float top = bounds.top + (bounds.height() - height) / 2f;
+                        canvas.drawBitmap(splashBitmap, source,
+                                new android.graphics.RectF(left, top, left + width, top + height), paint);
+                    }
+                    @Override public void setAlpha(int alpha) { paint.setAlpha(alpha); }
+                    @Override public void setColorFilter(android.graphics.ColorFilter filter) { paint.setColorFilter(filter); }
+                    @Override public int getOpacity() { return android.graphics.PixelFormat.OPAQUE; }
+                });
                 approvedSplash.setBackgroundColor(Color.BLACK);
                 approvedSplash.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 splash.addView(approvedSplash, new FrameLayout.LayoutParams(-1, -1));
@@ -178,6 +204,11 @@ public final class MainActivity extends Activity {
         if (!authenticatedForDisplay || !dashboardReady || startupSplash == null) return;
         // Restore the system status bar for normal dashboard use.
         getWindow().getDecorView().setSystemUiVisibility(0);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            android.view.WindowInsetsController controller = getWindow().getInsetsController();
+            if (controller != null) controller.show(android.view.WindowInsets.Type.statusBars());
+        }
+        webView.requestApplyInsets();
         FrameLayout splash = startupSplash;
         startupSplash = null;
         if (splash.getParent() instanceof ViewGroup) ((ViewGroup) splash.getParent()).removeView(splash);
@@ -458,6 +489,31 @@ public final class MainActivity extends Activity {
                     FileChooserParams params) {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = callback;
+                choosingJsonBackup = false;
+                for (String accept : params.getAcceptTypes()) {
+                    if (accept != null && accept.toLowerCase(java.util.Locale.ROOT).contains("json")) {
+                        choosingJsonBackup = true;
+                        break;
+                    }
+                }
+                if (choosingJsonBackup) {
+                    // JSON backups go directly to DocumentsUI, without camera/gallery intents.
+                    capturedImageUri = null;
+                    Intent backup = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    backup.addCategory(Intent.CATEGORY_OPENABLE);
+                    backup.setType("*/*");
+                    backup.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    try {
+                        startActivityForResult(backup, REQUEST_FILE);
+                    } catch (android.content.ActivityNotFoundException missingProvider) {
+                        backup.setAction(Intent.ACTION_GET_CONTENT);
+                        try { startActivityForResult(backup, REQUEST_FILE); }
+                        catch (Exception error) { cancelFileSelection("Não foi possível abrir o seletor de arquivos"); }
+                    } catch (Exception error) {
+                        cancelFileSelection("Não foi possível abrir o seletor de arquivos");
+                    }
+                    return true;
+                }
 
                 Intent files = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 files.addCategory(Intent.CATEGORY_OPENABLE);
@@ -514,6 +570,15 @@ public final class MainActivity extends Activity {
             }
         });
         return value;
+    }
+
+    private void cancelFileSelection(String message) {
+        ValueCallback<Uri[]> callback = fileCallback;
+        fileCallback = null;
+        choosingJsonBackup = false;
+        capturedImageUri = null;
+        if (callback != null) callback.onReceiveValue(null);
+        android.widget.Toast.makeText(this, message, android.widget.Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -600,23 +665,34 @@ public final class MainActivity extends Activity {
             return;
         }
         if (requestCode == REQUEST_FILE) {
-            Uri[] result = null;
-            if (resultCode == RESULT_OK) {
-                result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
-                if ((result == null || result.length == 0) && capturedImageUri != null) {
-                    result = new Uri[]{capturedImageUri};
-                } else if (capturedImageUri != null) {
-                    getContentResolver().delete(capturedImageUri, null, null);
-                }
-            } else if (capturedImageUri != null) {
-                getContentResolver().delete(capturedImageUri, null, null);
-            }
-            if (result != null && result.length > 0 && result[0] != null) {
-                recognizeImageText(result[0]);
-            }
-            if (fileCallback != null) fileCallback.onReceiveValue(result);
+            ValueCallback<Uri[]> callback = fileCallback;
             fileCallback = null;
-            capturedImageUri = null;
+            boolean jsonBackup = choosingJsonBackup;
+            choosingJsonBackup = false;
+            Uri[] result = null;
+            try {
+                if (resultCode == RESULT_OK) {
+                    result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+                    if (!jsonBackup && (result == null || result.length == 0) && capturedImageUri != null) {
+                        result = new Uri[]{capturedImageUri};
+                    }
+                }
+                if (capturedImageUri != null && (result == null || result.length == 0
+                        || !capturedImageUri.equals(result[0]))) {
+                    try { getContentResolver().delete(capturedImageUri, null, null); }
+                    catch (Exception ignored) { /* Cleanup cannot interrupt an import. */ }
+                }
+                if (result != null && result.length > 0 && result[0] != null && !jsonBackup) {
+                    recognizeImageText(result[0]);
+                }
+            } catch (Exception error) {
+                result = null;
+                android.widget.Toast.makeText(this, "Não foi possível abrir o arquivo selecionado",
+                        android.widget.Toast.LENGTH_LONG).show();
+            } finally {
+                capturedImageUri = null;
+                if (callback != null) callback.onReceiveValue(result);
+            }
             return;
         }
         if (requestCode == REQUEST_VOICE && resultCode == RESULT_OK && data != null) {
@@ -665,3 +741,4 @@ public final class MainActivity extends Activity {
                 null));
     }
 }
+
