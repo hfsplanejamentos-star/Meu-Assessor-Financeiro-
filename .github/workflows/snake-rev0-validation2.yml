@@ -1,0 +1,36 @@
+name: Snake Finance Rev0 APK validation2
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - name: Validar painel embarcado
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('android-capture/app/src/main/assets/snake-finance-mobile.html')
+          s=p.read_text(encoding='utf-8')
+          assert 'window.SNAKE_DISTRIBUTABLE=true' in s
+          assert 'snakeCarbonPaymentCandidates' in s, 'Auditoria 31 ainda não incorporada; compilação bloqueada'
+          print('Painel de conciliação presente')
+          PY
+      - name: Build validation2
+        working-directory: android-capture
+        run: gradle assembleValidation2Debug --no-daemon --stacktrace
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Snake-Finance-Rev0-Validacao-APK
+          path: android-capture/app/build/outputs/apk/validation2/debug/*.apk
+          if-no-files-found: error
