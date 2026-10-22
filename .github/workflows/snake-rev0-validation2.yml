@@ -29,7 +29,7 @@ jobs:
           p=Path('android-capture/app/src/main/assets/snake-finance-mobile.html')
           s=p.read_text(encoding='utf-8')
           assert 'window.SNAKE_DISTRIBUTABLE=true' in s
-          assert __import__('hashlib').sha256(p.read_bytes()).hexdigest() == '6951f2017dd36cb2b03e736382b63d32b82b2ccf917b26f987332b740ecd4f80', 'HTML Rev0 revisao funcional 1.5.13 nao corresponde ao arquivo validado; compilacao bloqueada'
+          assert __import__('hashlib').sha256(p.read_bytes()).hexdigest() == '9f50c4323c69e09dfc5a3e3d1b5c35a100fa5bf63468aac1e7ed3b0b7cc317fe', 'HTML Rev0 revisao funcional 1.5.14 nao corresponde ao arquivo validado; compilacao bloqueada'
           print('Painel de conciliação presente')
           PY
       - name: Ajustar carregador para HTML Rev0
@@ -58,8 +58,8 @@ jobs:
           old='applicationIdSuffix = ".validation2"'
           assert s.count(old)==1
           s=s.replace(old,'applicationIdSuffix = ".rev0"',1)
-          s=s.replace('versionCode = 31','versionCode = 37',1)
-          s=s.replace('versionName = "1.5.7"','versionName = "1.5.13"',1)
+          s=s.replace('versionCode = 31','versionCode = 38',1)
+          s=s.replace('versionName = "1.5.7"','versionName = "1.5.14"',1)
           s=s.replace('versionNameSuffix = "-rev0-validation"','versionNameSuffix = "-rev0"',1)
           s=s.replace('isMinifyEnabled = true','isMinifyEnabled = false',1)
           s=s.replace('isShrinkResources = true','isShrinkResources = false',1)
@@ -113,14 +113,14 @@ jobs:
           APK="$(find android-capture/app/build/outputs/apk/validation2/release -name '*unsigned.apk' -print -quit)"
           test -n "$APK"
           "$TOOLS/aapt" dump badging "$APK" | tee apk-badging.txt
-          grep -q "package: name='br.com.snakefinance.app.rev0' versionCode='37'" apk-badging.txt
+          grep -q "package: name='br.com.snakefinance.app.rev0' versionCode='38'" apk-badging.txt
           if grep -q '^application-debuggable' apk-badging.txt; then exit 1; fi
           python3 - "$APK" <<'PY'
           import hashlib, sys, zipfile
           with zipfile.ZipFile(sys.argv[1]) as z:
               actual = hashlib.sha256(z.read('assets/snake-finance-mobile.html')).hexdigest()
-          assert actual == '6951f2017dd36cb2b03e736382b63d32b82b2ccf917b26f987332b740ecd4f80', actual
-          print('HTML Rev0 revisao funcional 1.5.13 confirmado:', actual)
+          assert actual == '9f50c4323c69e09dfc5a3e3d1b5c35a100fa5bf63468aac1e7ed3b0b7cc317fe', actual
+          print('HTML Rev0 revisao funcional 1.5.14 confirmado:', actual)
           PY
           mkdir -p signing-tools
           cp "$TOOLS/lib/apksigner.jar" signing-tools/
@@ -139,5 +139,5 @@ jobs:
             apk-badging.txt
             release-input-sha256.txt
             apk-source-commit.txt
-            Snake_Finance_1.5.13_*.png
+            Snake_Finance_1.5.14_*.png
           if-no-files-found: error
