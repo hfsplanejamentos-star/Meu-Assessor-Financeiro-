@@ -129,3 +129,15 @@ export const listChanges = internalQuery({
     }));
   },
 });
+
+
+export const findPotentialDuplicates = internalQuery({
+  args: { ownerHash: v.string(), amountCents: v.number(), from: v.number(), to: v.number() },
+  returns: v.array(v.object({eventId:v.string(),sourcePackage:v.string(),title:v.string(),text:v.string(),amountCents:v.optional(v.number()),direction,postedAt:v.number()})),
+  handler: async (ctx, args) => {
+    const rows = await ctx.db.query("notificationEvents")
+      .withIndex("by_owner_and_amount_and_posted_at", q => q.eq("ownerHash", args.ownerHash).eq("amountCents", args.amountCents).gte("postedAt", args.from).lte("postedAt", args.to))
+      .take(100);
+    return rows.map(r => ({ eventId:r.eventId, sourcePackage:r.sourcePackage, title:r.title, text:r.text, ...(r.amountCents===undefined?{}:{amountCents:r.amountCents}), direction:r.direction, postedAt:r.postedAt }));
+  },
+});
