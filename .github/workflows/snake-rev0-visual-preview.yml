@@ -1,0 +1,67 @@
+name: Snake Finance visual preview
+on:
+  workflow_dispatch:
+  push:
+    branches: [snake-finance-oficial-rev-0]
+    paths: ['.github/workflows/snake-rev0-visual-preview.yml']
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install renderer
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Render visual proposal with example data
+        run: |
+          node - <<'JS'
+          const fs=require('fs');
+          const {chromium}=require('playwright');
+          (async()=>{
+           const html=fs.readFileSync('android-capture/app/src/main/assets/snake-finance-mobile.html','utf8');
+           const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+           const context=await browser.newContext({viewport:{width:393,height:886},deviceScaleFactor:2});
+           await context.addInitScript(()=>{
+             if(location.pathname!='/app')return;
+             const ledger=[{id:1,d:'2026-11-01',t:'r',v:100000,a:'c6',c:'out',n:'Exemplo visual',s:'r',bal:false}];
+             localStorage.setItem('assessor_tx_v43',JSON.stringify(ledger));
+             localStorage.setItem('assessor_tx',JSON.stringify(ledger));
+             localStorage.setItem('assessor_openings_v83',JSON.stringify({c6:100000,caju:50000,cajuFunds:50000}));
+             localStorage.setItem('snake_xp_opening_cents_v1','0');
+             localStorage.setItem('assessor_active_month','2026-11');
+             localStorage.setItem('tema','ciano');
+           });
+           const wrapper='<!doctype html><meta charset="utf-8"><style>*{box-sizing:border-box}body{margin:0;background:#000;color:#fff;font:13px Arial}.status{height:30px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;background:#070604}.status svg{vertical-align:middle}iframe{width:393px;height:798px;display:block;border:0}.sysnav{height:24px;background:#070604;display:flex;align-items:center;justify-content:center}.sysnav span{display:block;background:#ddd;width:110px;height:4px;border-radius:3px}.caption{height:34px;display:grid;place-content:center;color:#bcb7a9;font-size:11px}</style><div class="status"><b>21:58</b><span><svg width="39" height="13" viewBox="0 0 39 13" fill="none" stroke="white"><path d="M1 11V8h2v3zm5 0V5h2v6zm5 0V2h2v9z" fill="white" stroke="none"/><rect x="19" y="2" width="16" height="9" rx="2"/><path d="M37 5v3"/><rect x="21" y="4" width="5" height="5" fill="#d9b866" stroke="none"/></svg> 33%</span></div><iframe id="app" src="/app"></iframe><div class="sysnav"><span></span></div><div class="caption">PRÉVIA VISUAL • DADOS DE EXEMPLO</div>';
+           await context.route('**/*',async route=>{
+             const u=new URL(route.request().url());
+             if(u.hostname==='snake-preview.local')await route.fulfill({contentType:'text/html',body:u.pathname==='/app'?html:wrapper});
+             else await route.abort();
+           });
+           const page=await context.newPage();
+           page.on('dialog',d=>d.dismiss());
+           page.on('pageerror',e=>console.log('PAGE:',e.message));
+           await page.goto('https://snake-preview.local/',{waitUntil:'load'});
+           const frame=page.frameLocator('#app');
+           await frame.locator('#v').waitFor({state:'visible'});
+           await page.waitForTimeout(1500);
+           const actual=page.frames().find(f=>f.url().endsWith('/app'));
+           await actual.evaluate(()=>{YM='2026-11';TAB='ger';closeDay();draw();window.scrollTo(0,0)});
+           await page.waitForTimeout(500);
+           const bounds=await page.locator('#app').boundingBox();
+           if(bounds.y!==30||bounds.y+bounds.height!==828)throw Error('Incorrect preview frame boundaries');
+           await page.screenshot({path:'Snake_Finance_Visual_Cabecalho_Proposto.png'});
+           console.log('Rendered approved HTML with separate 30px status and 24px navigation frames; example data only.');
+           await browser.close();
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Snake-Finance-Visual-Preview
+          path: Snake_Finance_Visual_Cabecalho_Proposto.png
+          if-no-files-found: error
