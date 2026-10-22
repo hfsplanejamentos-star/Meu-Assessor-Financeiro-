@@ -3,6 +3,8 @@ import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { classifyByRules, redactForAi, type Classification, type Direction } from "./notificationClassifier";
 
+import { assistantKeyMatches } from "./assistantAccess";
+
 const http = httpRouter();
 const legacyCors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type, X-Sync-Key", "Access-Control-Allow-Methods": "GET, POST, OPTIONS" };
 const allowedPackages = new Set([
@@ -128,16 +130,35 @@ http.route({ path: "/notifications/changes", method: "GET", handler: httpAction(
   return json({ ok: true, events, serverTime: Date.now() }, 200, headers);
 }) });
 
+async function assistantAccess(req: Request): Promise<{ error: string; status: number } | null> {
+  const expected = process.env.ASSISTANT_SYNC_KEY;
+  if (!expected || expected.length < 32) return { error: "service_not_configured", status: 503 };
+  return await assistantKeyMatches(syncKey(req), expected) ? null : { error: "invalid_sync_key", status: 401 };
+}
+
+http.route({ path: "/integrations/status", method: "OPTIONS", handler: httpAction(async (_ctx, req) => new Response(null, { status: 204, headers: secureCors(req) })) });
+http.route({ path: "/integrations/status", method: "GET", handler: httpAction(async (_ctx, req) => {
+  const denied = await assistantAccess(req);
+  if (denied) return json({ ok: false, error: denied.error }, denied.status, secureCors(req));
+  return json({ ok: true, protocol: 1, ai: Boolean(process.env.OPENAI_API_KEY), whatsapp: false, audio: false }, 200, secureCors(req));
+}) });
+
 http.route({ path: "/ai/finance", method: "OPTIONS", handler: httpAction(async (_ctx, req) => new Response(null, { status: 204, headers: secureCors(req) })) });
 http.route({ path: "/ai/finance", method: "POST", handler: httpAction(async (ctx, req) => {
   const headers = secureCors(req);
+  const denied = await assistantAccess(req);
+  if (denied) return json({ ok: false, error: denied.error }, denied.status, headers);
   const hash = await ownerHash(req);
   if (!hash) return json({ ok: false, error: "invalid_sync_key" }, 401, headers);
   const now = Date.now();
   const rate = await ctx.runMutation(internal.notificationEvents.consumeRateLimit, { ownerHash: hash, now });
   if (!rate.allowed) return json({ ok: false, error: "rate_limited", retryAfterMs: rate.retryAfterMs }, 429, headers);
-  const body = await req.json();
+  const raw = await req.text();
+  if (raw.length > 100000) return json({ ok: false, error: "payload_too_large" }, 413, headers);
+  let body: any;
+  try { body = JSON.parse(raw); } catch { return json({ ok: false, error: "invalid_json" }, 400, headers); }
   const text = String(body?.text || "").trim();
+  if (text.length > 3500) return json({ ok: false, error: "invalid_payload" }, 400, headers);
   if (!text) return json({ ok: false, error: "missing_text" }, 400, headers);
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return json({ ok: false, error: "ai_not_configured" }, 503, headers);
@@ -150,3 +171,4 @@ http.route({ path: "/ai/finance", method: "POST", handler: httpAction(async (ctx
 }) });
 
 export default http;
+
