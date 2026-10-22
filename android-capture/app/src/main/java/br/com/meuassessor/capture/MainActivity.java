@@ -324,7 +324,33 @@ public final class MainActivity extends Activity {
                     android.widget.Toast.LENGTH_LONG).show();
             return;
         }
-        webView.loadDataWithBaseURL(APP_BASE_URL, html, "text/html", "UTF-8", APP_URL);
+        webView.loadDataWithBaseURL(APP_BASE_URL, withGraphPresentation(html), "text/html", "UTF-8", APP_URL);
+    }
+
+
+    private String withGraphPresentation(String html) {
+        // Keep the audited financial HTML asset intact; add only chart presentation.
+        try (InputStream input = getAssets().open("snake-graphs-3d.js")) {
+            java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int count;
+            while ((count = input.read(buffer)) != -1) bytes.write(buffer, 0, count);
+            String script = bytes.toString("UTF-8");
+            return html.replace("</body>", "<script>" + script + "</script></body>");
+        } catch (java.io.IOException error) {
+            return html;
+        }
+    }
+
+    private InputStream bundledDashboardStream() throws java.io.IOException {
+        try (InputStream input = getAssets().open("snake-finance-mobile.html")) {
+            java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int count;
+            while ((count = input.read(buffer)) != -1) bytes.write(buffer, 0, count);
+            return new java.io.ByteArrayInputStream(
+                    withGraphPresentation(bytes.toString("UTF-8")).getBytes(StandardCharsets.UTF_8));
+        }
     }
 
     private void loadDashboardHtml() {
@@ -469,7 +495,7 @@ public final class MainActivity extends Activity {
                 try {
                     return new WebResourceResponse("text/html", "UTF-8", 200, "OK",
                             java.util.Collections.singletonMap("Cache-Control", "no-store"),
-                            getAssets().open("snake-finance-mobile.html"));
+                            bundledDashboardStream());
                 } catch (java.io.IOException error) {
                     return new WebResourceResponse("text/plain", "UTF-8", 500, "Internal Server Error",
                             java.util.Collections.singletonMap("Cache-Control", "no-store"),
