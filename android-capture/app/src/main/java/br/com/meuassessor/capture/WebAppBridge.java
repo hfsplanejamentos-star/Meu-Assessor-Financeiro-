@@ -10,9 +10,27 @@ import org.json.JSONObject;
 
 final class WebAppBridge {
     private final MainActivity activity;
+    private final IntegrationClient integration;
 
     WebAppBridge(MainActivity activity) {
         this.activity = activity;
+        this.integration = new IntegrationClient(activity);
+    }
+
+    void close() { integration.close(); }
+
+    @JavascriptInterface
+    public String getIntegrationConfig() { return integration.config(); }
+
+    @JavascriptInterface
+    public boolean saveIntegrationConfig(String url, String key) { return integration.save(url, key); }
+
+    @JavascriptInterface
+    public boolean clearIntegrationConfig() { return integration.clear(); }
+
+    @JavascriptInterface
+    public void integrationRequest(String id, String path, String method, String body) {
+        integration.request(id, path, method, body);
     }
 
     @JavascriptInterface
@@ -207,7 +225,10 @@ final class WebAppBridge {
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "pt-BR");
             intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Diga o lançamento financeiro");
-            activity.startActivityForResult(intent, MainActivity.REQUEST_VOICE);
+            try { activity.startActivityForResult(intent, MainActivity.REQUEST_VOICE); }
+            catch (android.content.ActivityNotFoundException unavailable) {
+                android.widget.Toast.makeText(activity, "Reconhecimento de voz indisponível neste aparelho", android.widget.Toast.LENGTH_LONG).show();
+            }
         });
     }
 
