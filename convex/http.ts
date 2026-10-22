@@ -180,7 +180,12 @@ http.route({ path: "/ai/finance", method: "POST", handler: httpAction(async (ctx
   if (!apiKey) return json({ ok: false, error: "ai_not_configured" }, 503, headers);
   const prompt = ["Você é o motor de interpretação do Meu Assessor Financeiro.", "Responda SOMENTE JSON válido.", "Nunca execute transações. Apenas interprete ou responda.", "Para lançamento: {intent:'transaction',draft:{date:'YYYY-MM-DD',value:number,cat:string,sub:string,desc:string,status:'draft'}}.", "Despesa deve ter value negativo; receita positivo.", "Para pergunta: {intent:'answer',answer:string}.", "Contexto financeiro:", JSON.stringify(body?.context || {}), "Usuário:", text].join("\n");
   const response = await fetch("https://api.openai.com/v1/responses", { method: "POST", headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" }, body: JSON.stringify({ model: "gpt-5-mini", input: prompt }) });
-  if (!response.ok) return json({ ok: false, error: "provider_error", status: response.status }, 502, headers);
+  if (!response.ok) {
+    let providerCode = "unknown";
+    try { const failure: any = await response.json(); const code = String(failure?.error?.code || failure?.error?.type || "unknown"); if (/^[a-zA-Z0-9_]{1,80}$/.test(code)) providerCode = code; } catch {}
+    console.warn("assistant_provider_error", response.status, providerCode);
+    return json({ ok: false, error: "provider_error", status: response.status, providerCode }, 424, headers);
+  }
   const data: any = await response.json();
   const output = String(data?.output_text || data?.output?.flatMap((item: any) => item.content || []).map((item: any) => item.text || "").join("") || "").trim();
   try { return json(JSON.parse(output), 200, headers); } catch { return json({ intent: "answer", answer: output }, 200, headers); }
