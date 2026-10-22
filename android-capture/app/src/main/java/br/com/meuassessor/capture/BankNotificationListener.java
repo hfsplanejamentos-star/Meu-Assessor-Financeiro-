@@ -18,6 +18,7 @@ public final class BankNotificationListener extends NotificationListenerService 
 
     @Override public void onListenerConnected() {
         super.onListenerConnected();
+        scrubLegacyDiagnostics(this);
         getSharedPreferences(DIAG_PREFS,Context.MODE_PRIVATE).edit().putBoolean(KEY_CONNECTED,true)
                 .putString(KEY_RESULT,"Serviço conectado e aguardando notificação").putLong(KEY_TIME,System.currentTimeMillis()).apply();
     }
@@ -30,10 +31,13 @@ public final class BankNotificationListener extends NotificationListenerService 
     @Override public void onNotificationPosted(StatusBarNotification status) {
         if(status==null)return;
         String pkg=status.getPackageName(); rememberPackage(pkg);
+        saveRawDiagnostic(pkg, "", "", status.getPostTime());
+        boolean allowed=BankAllowlist.contains(this,pkg);
+        if(!allowed){saveDiagnostic(pkg,false,false,"Ignorada: aplicativo não autorizado","","",null,null,"");return;}
         Notification n=status.getNotification();
         String title="",body="";
         if(n!=null){
-            Bundle e=n.extras;
+            Bundle e=n.extras == null ? Bundle.EMPTY : n.extras;
             title=first(e,Notification.EXTRA_TITLE,Notification.EXTRA_TITLE_BIG);
             body=joinUnique(
                     text(e.getCharSequence(Notification.EXTRA_BIG_TEXT)),
@@ -43,9 +47,6 @@ public final class BankNotificationListener extends NotificationListenerService 
                     lines(e.getCharSequenceArray(Notification.EXTRA_TEXT_LINES))
             );
         }
-        saveRawDiagnostic(pkg,title,body,status.getPostTime());
-        boolean allowed=BankAllowlist.contains(this,pkg);
-        if(!allowed){saveDiagnostic(pkg,false,false,"Ignorada: aplicativo não autorizado",title,body,null,null,"");return;}
         if(n==null){saveDiagnostic(pkg,true,false,"Ignorada: notificação sem conteúdo",title,body,null,null,"");return;}
         boolean financial=NotificationParser.looksFinancial(title,body);
         CapturedNotification event=NotificationParser.parse(pkg,title,body,status.getPostTime());
@@ -69,13 +70,25 @@ public final class BankNotificationListener extends NotificationListenerService 
         StringBuilder out=new StringBuilder();int count=0;for(String item:items){if(count++>=12)break;if(out.length()>0)out.append('\n');out.append(item);}
         p.edit().putString(KEY_RECENT_PACKAGES,out.toString()).apply();
     }
+    static void scrubLegacyDiagnostics(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(DIAG_PREFS, Context.MODE_PRIVATE);
+        SharedPreferences.Editor edit = prefs.edit().remove(KEY_RAW_TITLE).remove(KEY_RAW_TEXT);
+        String pkg = prefs.getString(KEY_PACKAGE, "");
+        if (!BankAllowlist.contains(context, pkg)) {
+            edit.remove(KEY_TITLE).remove(KEY_TEXT).remove(KEY_AMOUNT)
+                    .remove(KEY_REPORTED_BALANCE).remove(KEY_DIRECTION)
+                    .putBoolean(KEY_ALLOWED, false).putBoolean(KEY_FINANCIAL, false);
+        }
+        edit.apply();
+    }
     static void reconnect(Context c){requestRebind(new ComponentName(c,BankNotificationListener.class));}
-    private void saveRawDiagnostic(String pkg,String title,String body,long postedAt){getSharedPreferences(DIAG_PREFS,Context.MODE_PRIVATE).edit().putString(KEY_RAW_PACKAGE,pkg==null?"":pkg).putString(KEY_RAW_TITLE,title==null?"":title).putString(KEY_RAW_TEXT,body==null?"":body).putLong(KEY_RAW_TIME,postedAt).apply();}
+    private void saveRawDiagnostic(String pkg,String title,String body,long postedAt){getSharedPreferences(DIAG_PREFS,Context.MODE_PRIVATE).edit().putString(KEY_RAW_PACKAGE,pkg==null?"":pkg).remove(KEY_RAW_TITLE).remove(KEY_RAW_TEXT).putLong(KEY_RAW_TIME,postedAt).apply();}
     private void saveDiagnostic(String pkg,boolean allowed,boolean financial,String result,String title,String body,Long amount,Long reportedBalance,String direction){
         SharedPreferences.Editor x=getSharedPreferences(DIAG_PREFS,Context.MODE_PRIVATE).edit().putString(KEY_PACKAGE,pkg==null?"":pkg)
                 .putBoolean(KEY_ALLOWED,allowed).putBoolean(KEY_FINANCIAL,financial).putString(KEY_RESULT,result).putLong(KEY_TIME,System.currentTimeMillis())
-                .putString(KEY_TITLE,title==null?"":title).putString(KEY_TEXT,body==null?"":body).putString(KEY_DIRECTION,direction==null?"":direction);
+                .putString(KEY_TITLE,CapturePrivacyPolicy.allowedContent(pkg,allowed,title)).putString(KEY_TEXT,CapturePrivacyPolicy.allowedContent(pkg,allowed,body)).putString(KEY_DIRECTION,direction==null?"":direction);
         if(amount==null)x.remove(KEY_AMOUNT);else x.putLong(KEY_AMOUNT,amount); if(reportedBalance==null)x.remove(KEY_REPORTED_BALANCE);else x.putLong(KEY_REPORTED_BALANCE,reportedBalance); x.apply();
     }
     private static String text(CharSequence v){return v==null?"":v.toString().replaceAll("\\s+"," ").trim();}
 }
+
