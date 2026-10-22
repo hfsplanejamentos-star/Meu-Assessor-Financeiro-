@@ -1,4 +1,4 @@
-name: Snake Finance Rev0 APK validation2
+name: Snake Finance Rev0 release preparation
 on:
   workflow_dispatch:
   push:
@@ -56,12 +56,18 @@ jobs:
           s=p.read_text()
           old='applicationIdSuffix = ".validation2"'
           assert s.count(old)==1
-          p.write_text(s.replace(old,'applicationIdSuffix = ".validation2.a31r6"',1))
+          s=s.replace(old,'applicationIdSuffix = ".rev0"',1)
+          s=s.replace('versionCode = 31','versionCode = 32',1)
+          s=s.replace('versionName = "1.5.7"','versionName = "1.5.8"',1)
+          s=s.replace('versionNameSuffix = "-rev0-validation"','versionNameSuffix = "-rev0"',1)
+          s=s.replace('isMinifyEnabled = true','isMinifyEnabled = false',1)
+          s=s.replace('isShrinkResources = true','isShrinkResources = false',1)
+          p.write_text(s)
           p=Path('android-capture/app/src/validation2/AndroidManifest.xml')
           p.parent.mkdir(parents=True, exist_ok=True)
           p.write_text('''<?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
-              <application android:label="Snake Finance Rev. 0 - Teste R6" tools:replace="android:label">
+              <application android:label="Snake Finance Rev. 0" tools:replace="android:label">
                   <activity android:name="br.com.meuassessor.capture.MainActivity" android:launchMode="singleTop">
                       <intent-filter>
                           <action android:name="android.intent.action.SEND" />
@@ -76,42 +82,41 @@ jobs:
           </manifest>
           ''')
           PY
-      - name: Build validation2
+      - name: Build unsigned release
         working-directory: android-capture
-        run: gradle assembleValidation2Debug --no-daemon --stacktrace
-      - name: Verificar identidade assinatura e HTML do APK
+        run: gradle assembleValidation2Release --no-daemon --stacktrace
+      - name: Verificar release e preparar ferramentas de assinatura
         shell: bash
         run: |
           set -euo pipefail
           SDK="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
           TOOLS="$(find "$SDK/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
-          APK="$(find android-capture/app/build/outputs/apk/validation2/debug -name '*.apk' -print -quit)"
-          "$TOOLS/apksigner" verify --verbose --print-certs "$APK" | tee apk-signature.txt
+          APK="$(find android-capture/app/build/outputs/apk/validation2/release -name '*unsigned.apk' -print -quit)"
+          test -n "$APK"
           "$TOOLS/aapt" dump badging "$APK" | tee apk-badging.txt
-          grep -q "package: name='br.com.snakefinance.app.validation2.a31r6'" apk-badging.txt
-          grep -q "application-label:'Snake Finance Rev. 0 - Teste R6'" apk-badging.txt
+          grep -q "package: name='br.com.snakefinance.app.rev0' versionCode='32'" apk-badging.txt
+          if grep -q '^application-debuggable' apk-badging.txt; then exit 1; fi
           python3 - "$APK" <<'PY'
           import hashlib, sys, zipfile
-          expected = '534fcd117dde793724a5852c765109420c2c7a02c31e270076ebcf91574df778'
           with zipfile.ZipFile(sys.argv[1]) as z:
               actual = hashlib.sha256(z.read('assets/snake-finance-mobile.html')).hexdigest()
-          assert actual == expected, actual
-          print('APK HTML SHA-256:', actual)
+          assert actual == '534fcd117dde793724a5852c765109420c2c7a02c31e270076ebcf91574df778', actual
+          print('HTML Auditoria 31 confirmado:', actual)
           PY
-          sha256sum "$APK" | tee apk-sha256.txt
+          mkdir -p signing-tools
+          cp "$TOOLS/lib/apksigner.jar" signing-tools/
+          cp "$TOOLS/zipalign" signing-tools/
+          cp "$TOOLS/aapt" signing-tools/
+          sha256sum "$APK" signing-tools/* > release-input-sha256.txt
           printf '%s\n' "$GITHUB_SHA" > apk-source-commit.txt
-      - name: Upload verificacoes
+      - name: Upload preparacao para assinatura permanente
         uses: actions/upload-artifact@v4
         with:
-          name: Snake-Finance-Rev0-Verificacoes
+          name: Snake-Finance-Rev0-Release-Preparacao
           path: |
-            apk-signature.txt
+            android-capture/app/build/outputs/apk/validation2/release/*unsigned.apk
+            signing-tools/
             apk-badging.txt
-            apk-sha256.txt
+            release-input-sha256.txt
             apk-source-commit.txt
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Snake-Finance-Rev0-Validacao-APK
-          path: android-capture/app/build/outputs/apk/validation2/debug/*.apk
           if-no-files-found: error
