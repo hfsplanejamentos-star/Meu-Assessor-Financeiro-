@@ -28,7 +28,7 @@ jobs:
           p=Path('android-capture/app/src/main/assets/snake-finance-mobile.html')
           s=p.read_text(encoding='utf-8')
           assert 'window.SNAKE_DISTRIBUTABLE=true' in s
-          assert __import__('hashlib').sha256(p.read_bytes()).hexdigest() == '534fcd117dde793724a5852c765109420c2c7a02c31e270076ebcf91574df778', 'HTML Auditoria 31 nao corresponde ao arquivo validado; compilacao bloqueada'
+          assert __import__('hashlib').sha256(p.read_bytes()).hexdigest() == '11adce1fbf8366dc1c9bb20a381fd19aac061163ea66c8b3572d4f0681704463', 'HTML Rev0 revisao funcional 1.5.12 nao corresponde ao arquivo validado; compilacao bloqueada'
           print('Painel de conciliação presente')
           PY
       - name: Ajustar carregador para HTML Rev0
@@ -57,8 +57,8 @@ jobs:
           old='applicationIdSuffix = ".validation2"'
           assert s.count(old)==1
           s=s.replace(old,'applicationIdSuffix = ".rev0"',1)
-          s=s.replace('versionCode = 31','versionCode = 35',1)
-          s=s.replace('versionName = "1.5.7"','versionName = "1.5.11"',1)
+          s=s.replace('versionCode = 31','versionCode = 36',1)
+          s=s.replace('versionName = "1.5.7"','versionName = "1.5.12"',1)
           s=s.replace('versionNameSuffix = "-rev0-validation"','versionNameSuffix = "-rev0"',1)
           s=s.replace('isMinifyEnabled = true','isMinifyEnabled = false',1)
           s=s.replace('isShrinkResources = true','isShrinkResources = false',1)
@@ -89,6 +89,7 @@ jobs:
         run: |
           npm install --no-save playwright@1.56.1
           npx playwright install --with-deps chromium
+          TZ=America/Sao_Paulo node android-capture/tools/test-functional-rev0.cjs android-capture/app/src/main/assets/snake-finance-mobile.html
           node android-capture/tools/verify-graphs-3d.cjs
       - name: Build unsigned release
         working-directory: android-capture
@@ -102,14 +103,14 @@ jobs:
           APK="$(find android-capture/app/build/outputs/apk/validation2/release -name '*unsigned.apk' -print -quit)"
           test -n "$APK"
           "$TOOLS/aapt" dump badging "$APK" | tee apk-badging.txt
-          grep -q "package: name='br.com.snakefinance.app.rev0' versionCode='35'" apk-badging.txt
+          grep -q "package: name='br.com.snakefinance.app.rev0' versionCode='36'" apk-badging.txt
           if grep -q '^application-debuggable' apk-badging.txt; then exit 1; fi
           python3 - "$APK" <<'PY'
           import hashlib, sys, zipfile
           with zipfile.ZipFile(sys.argv[1]) as z:
               actual = hashlib.sha256(z.read('assets/snake-finance-mobile.html')).hexdigest()
-          assert actual == '534fcd117dde793724a5852c765109420c2c7a02c31e270076ebcf91574df778', actual
-          print('HTML Auditoria 31 confirmado:', actual)
+          assert actual == '11adce1fbf8366dc1c9bb20a381fd19aac061163ea66c8b3572d4f0681704463', actual
+          print('HTML Rev0 revisao funcional 1.5.12 confirmado:', actual)
           PY
           mkdir -p signing-tools
           cp "$TOOLS/lib/apksigner.jar" signing-tools/
@@ -128,5 +129,5 @@ jobs:
             apk-badging.txt
             release-input-sha256.txt
             apk-source-commit.txt
-            Snake_Finance_1.5.11_*.png
+            Snake_Finance_1.5.12_*.png
           if-no-files-found: error
