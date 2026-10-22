@@ -1,0 +1,8 @@
+{
+  "applicationId": "br.com.snakefinance.app.rev0",
+  "certificateSha256": "61f8bbc409d5f210d8c1aaec19ccce27827672cdc241296ce30bdf99ed321ff1",
+  "firstVersionCode": 32,
+  "buildFlavor": "validation2Release",
+  "privateKeyBackupName": "Snake_Finance_Rev0_Assinatura_Permanente_Privada.zip",
+  "policy": "Sign every update with the existing private key. Never regenerate or publish it. CI builds unsigned APKs; final signing occurs with the retained private key. This package installs beside the original and R6; migrate using a current backup."
+}
