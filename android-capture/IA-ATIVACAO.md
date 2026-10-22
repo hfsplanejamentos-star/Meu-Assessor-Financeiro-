@@ -34,3 +34,7 @@ Os testes usam respostas simuladas para conferir conexão, ditado, revisão e gr
 - A chamada real ao provedor retornou HTTP 401 com código `invalid_api_key`. Portanto, a variável `OPENAI_API_KEY` existe, mas a credencial cadastrada não foi aceita. A IA ainda não deve ser anunciada como funcional.
 - Para concluir, substituir `OPENAI_API_KEY` diretamente no ambiente Convex por uma chave válida do projeto OpenAI autorizado e repetir os testes de resposta e rascunho. Depois, informar no APK a chave de conexão `ASSISTANT_SYNC_KEY` (não a chave OpenAI).
 - A chave temporária de implantação foi revogada ao final. WhatsApp não foi ativado nem testado para envio nesta tarefa.
+
+### Reteste após substituição da chave OpenAI
+
+O teste mais recente deixou de retornar `invalid_api_key`. O provedor agora retorna HTTP 429 com código `credit_balance_exhausted`: o saldo pré-pago da organização da API está esgotado. É necessário regularizar o saldo na conta OpenAI e repetir os testes reais de resposta e rascunho. Não foi gravado nenhum lançamento financeiro. A integração permanece publicada; não é necessário gerar outro APK para regularizar o saldo do provedor.
