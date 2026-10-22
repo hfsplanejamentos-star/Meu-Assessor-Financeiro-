@@ -28,3 +28,12 @@ env.safeAutoRegisterBankExpenses();assert.equal(env.L.length,3,'No duplicate on 
 env.pending=[event('generic','com.c6bank.app','Pix enviado pessoa desconhecida',900)];env.safeAutoRegisterBankExpenses();assert.equal(env.L.length,3,'Ambiguous Pix remains in review');
 const before=JSON.stringify(env.L);env.persistLedger=()=>false;env.pending=[event('rollback','com.c6bank.app','Compra combustível posto de gasolina',10000)];env.safeAutoRegisterBankExpenses();assert.equal(JSON.stringify(env.L),before,'Persistence rollback');
 console.log('PASS: parser, Caju competence and balances, chronological cash-flow, own transfers both directions, parking, ambiguous Pix, resync and rollback.');
+
+// Future invoice installments still commit credit at the original purchase date.
+vm.runInContext(between('function snakeCarbonPaymentIsLinked(','function creditUsed('),env);
+env.L=Array.from({length:3},(_,i)=>({id:i+1,a:'carbon',t:'d',s:'r',d:'2026-10-15',comp:env.addMonthsYM('2026-11',i)+'-01',v:30000}));
+assert.equal(env.snakeCarbonCreditLedger('2026-11-01',{opening:0}).used,90000);
+env.L.push({id:4,a:'c6',to:'carbon',t:'t',s:'r',d:'2026-11-12',v:30000,invoiceId:'2026-11'});
+assert.equal(env.snakeCarbonCreditLedger('2026-11-01',{opening:0}).used,90000);
+assert.equal(env.snakeCarbonCreditLedger('2026-11-12',{opening:0}).used,60000);
+console.log('PASS: Carbon counts future installments and releases credit only after linked payment date.');
