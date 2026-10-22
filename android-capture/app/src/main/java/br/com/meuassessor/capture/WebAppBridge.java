@@ -111,6 +111,7 @@ final class WebAppBridge {
 
     @JavascriptInterface
     public String captureDiagnostics() {
+        BankNotificationListener.scrubLegacyDiagnostics(activity);
         android.content.SharedPreferences d = activity.getSharedPreferences(
                 BankNotificationListener.DIAG_PREFS, android.content.Context.MODE_PRIVATE);
         try {
@@ -189,4 +190,5 @@ final class WebAppBridge {
         });
     }
 }
+
 
