@@ -109,6 +109,7 @@ public final class MainActivity extends Activity {
     private boolean authenticated;
     private boolean authenticationInProgress;
     private boolean queueReceiverRegistered;
+    private WebAppBridge appBridge;
     private final android.content.BroadcastReceiver queueReceiver = new android.content.BroadcastReceiver(){ @Override public void onReceive(android.content.Context context, android.content.Intent intent){ if(webView!=null) webView.post(() -> webView.evaluateJavascript("window.meuAssessorAndroidAutoSync&&window.meuAssessorAndroidAutoSync()", null)); }};
 
     @Override
@@ -223,6 +224,14 @@ public final class MainActivity extends Activity {
         super.onResume();
         if (webView != null) webView.post(() -> webView.evaluateJavascript(
                 "window.snakeRefreshToday&&window.snakeRefreshToday(true)", null));
+    }
+
+    void deliverIntegrationResult(String encoded) {
+        runOnUiThread(() -> {
+            if (webView == null || isFinishing() || isDestroyed()) return;
+            webView.evaluateJavascript("(function(){try{var r=JSON.parse(decodeURIComponent(escape(atob('"
+                    + encoded + "'))));window.dispatchEvent(new CustomEvent('snake-integration-result',{detail:r}));}catch(e){}})()", null);
+        });
     }
 
     private void revealDashboardWhenReady() {
@@ -415,7 +424,7 @@ public final class MainActivity extends Activity {
     }
 
     @Override
-    protected void onDestroy(){ if(queueReceiverRegistered){try{unregisterReceiver(queueReceiver);}catch(Exception ignored){}queueReceiverRegistered=false;} super.onDestroy(); }
+    protected void onDestroy(){ if(appBridge!=null)appBridge.close(); if(queueReceiverRegistered){try{unregisterReceiver(queueReceiver);}catch(Exception ignored){}queueReceiverRegistered=false;} super.onDestroy(); }
 
     @Override
     protected void onStart() {
@@ -439,6 +448,7 @@ public final class MainActivity extends Activity {
         settings.setUserAgentString(settings.getUserAgentString() + " MeuAssessorAndroid/1.0");
 
         WebAppBridge bridge = new WebAppBridge(this);
+        appBridge = bridge;
         value.addJavascriptInterface(bridge, "AndroidBridge");
         value.addJavascriptInterface(bridge, "AndroidApp");
         // Pull-to-refresh only from the top of the dashboard, not inside a modal.
