@@ -320,7 +320,8 @@ public final class MainActivity extends Activity {
 
     private void showDashboard(String html) {
         if (!validDashboard(html)) {
-            webView.loadUrl(APP_URL);
+            android.widget.Toast.makeText(this, "Painel interno inválido. Dados preservados.",
+                    android.widget.Toast.LENGTH_LONG).show();
             return;
         }
         webView.loadDataWithBaseURL(APP_BASE_URL, html, "text/html", "UTF-8", APP_URL);
@@ -346,6 +347,14 @@ public final class MainActivity extends Activity {
                     android.widget.Toast.LENGTH_LONG).show();
         }
         return;
+    }
+
+    void reloadBundledDashboard() {
+        runOnUiThread(() -> {
+            if (webView == null || isFinishing()) return;
+            webView.stopLoading();
+            loadDashboardHtml();
+        });
     }
 
     private void requestNativePermissions() {
@@ -426,7 +435,7 @@ public final class MainActivity extends Activity {
                                         android.widget.Toast.makeText(MainActivity.this,
                                             "Atualizando Snake Finance…",
                                             android.widget.Toast.LENGTH_SHORT).show();
-                                        value.reload();
+                                        reloadBundledDashboard();
                                     }
                                 });
                         }
@@ -454,35 +463,34 @@ public final class MainActivity extends Activity {
             @Override
             public WebResourceResponse shouldInterceptRequest(
                     WebView view, WebResourceRequest request) {
-                Uri uri = request.getUrl();
-                String host = uri.getHost() == null ? "" : uri.getHost();
-                String path = uri.getPath() == null ? "" : uri.getPath();
                 if (!request.isForMainFrame()
-                        || !"hfsplanejamentos-star.github.io".equalsIgnoreCase(host)
-                        || !(path.equals("/Meu-Assessor-Financeiro-/")
-                        || path.equals("/Meu-Assessor-Financeiro-/index.html"))) return null;
+                        || !DashboardUrlPolicy.isBundledDashboard(request.getUrl().toString())) return null;
+                // Browser reload/location.reload must resolve to the same signed asset as cold startup.
                 try {
-                    HttpURLConnection connection = (HttpURLConnection)
-                            new URL(uri.toString()).openConnection();
-                    connection.setConnectTimeout(12000);
-                    connection.setReadTimeout(20000);
-                    connection.setRequestProperty("Accept", "text/html,application/xhtml+xml");
-                    connection.setRequestProperty("Accept-Encoding", "identity");
-                    connection.setRequestProperty("Cache-Control", "no-cache");
-                    connection.connect();
-                    if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) return null;
-                    return new WebResourceResponse("text/html", "UTF-8", connection.getInputStream());
-                } catch (Exception ignored) {
-                    return null;
+                    return new WebResourceResponse("text/html", "UTF-8", 200, "OK",
+                            java.util.Collections.singletonMap("Cache-Control", "no-store"),
+                            getAssets().open("snake-finance-mobile.html"));
+                } catch (java.io.IOException error) {
+                    return new WebResourceResponse("text/plain", "UTF-8", 500, "Internal Server Error",
+                            java.util.Collections.singletonMap("Cache-Control", "no-store"),
+                            new java.io.ByteArrayInputStream(
+                                    "Falha no painel interno. Dados preservados.".getBytes(StandardCharsets.UTF_8)));
                 }
             }
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
-                String host = uri.getHost() == null ? "" : uri.getHost();
-                if ("hfsplanejamentos-star.github.io".equalsIgnoreCase(host)) return false;
-                startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                if (!request.isForMainFrame()) return false;
+                if (DashboardUrlPolicy.isBundledDashboard(uri.toString())) {
+                    reloadBundledDashboard();
+                    return true;
+                }
+                try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); }
+                catch (android.content.ActivityNotFoundException ignored) {
+                    android.widget.Toast.makeText(MainActivity.this, "Não foi possível abrir o link",
+                            android.widget.Toast.LENGTH_SHORT).show();
+                }
                 return true;
             }
         });
@@ -889,4 +897,5 @@ public final class MainActivity extends Activity {
                 null));
     }
 }
+
 
