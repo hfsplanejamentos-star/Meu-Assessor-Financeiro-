@@ -10,6 +10,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
     permissions:
       contents: read
     steps:
@@ -85,15 +86,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify 3D presentation in Chromium
+      - name: Install browser renderer
         run: |
           npm install --no-save playwright@1.56.1
           npx playwright install --with-deps chromium
+      - name: Verify finance and backend
+        run: |
           TZ=America/Sao_Paulo node android-capture/tools/test-functional-rev0.cjs android-capture/app/src/main/assets/snake-finance-mobile.html
           npm run typecheck
           npm run test:backend
           node --experimental-strip-types tests/test-assistant-access.mjs
-          node android-capture/tools/test-assistant-browser.cjs
+      - name: Verify assistant voice and confirmation
+        run: timeout 100s node android-capture/tools/test-assistant-browser.cjs
+      - name: Verify layout and daily filters
+        run: |
           node android-capture/tools/verify-graphs-3d.cjs
       - name: Build unsigned release
         working-directory: android-capture
