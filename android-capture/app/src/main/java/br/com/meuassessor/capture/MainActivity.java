@@ -218,6 +218,13 @@ public final class MainActivity extends Activity {
         }, 3000L);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (webView != null) webView.post(() -> webView.evaluateJavascript(
+                "window.snakeRefreshToday&&window.snakeRefreshToday(true)", null));
+    }
+
     private void revealDashboardWhenReady() {
         if (!authenticatedForDisplay || !dashboardReady || startupSplash == null) return;
         // Restore the system status bar for normal dashboard use.
@@ -524,6 +531,13 @@ public final class MainActivity extends Activity {
             @Override
             public void onPermissionRequest(PermissionRequest request) {
                 runOnUiThread(() -> {
+                    // Camera/microphone permission is scoped to the signed bundled dashboard origin.
+                    android.net.Uri origin = request.getOrigin();
+                    boolean trusted = origin != null && "https".equals(origin.getScheme())
+                            && "hfsplanejamentos-star.github.io".equals(origin.getHost())
+                            && (origin.getPort() == -1 || origin.getPort() == 443)
+                            && origin.getUserInfo() == null;
+                    if (!trusted) { request.deny(); return; }
                     ArrayList<String> granted = new ArrayList<>();
                     for (String resource : request.getResources()) {
                         if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)
@@ -923,5 +937,6 @@ public final class MainActivity extends Activity {
                 null));
     }
 }
+
 
 
