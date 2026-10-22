@@ -47,3 +47,12 @@ assert.equal(env.snakeCarbonCreditLedger('2026-10-14',{opening:0}).used,0,'Do no
 env.L.forEach(x=>x.s='p');assert.equal(env.snakeCarbonCreditLedger('2027-02-01',{opening:0}).used,0,'A wholly planned purchase does not consume actual credit');
 env.L[0].s='r';env.L[0].purchaseTotal=80000;assert.equal(env.snakeCarbonCreditLedger('2026-11-01',{opening:0}).used,30000,'Inconsistent metadata cannot invent debt');
 console.log('PASS: mixed-status installment groups commit once in full; planned purchases excluded; invalid groups remain reviewable; ledger unchanged.');
+
+// User example: BRL 2,500 limit; BRL 100 each in Nov, Dec and Jan.
+env.L=Array.from({length:3},(_,i)=>({id:101+i,a:'carbon',t:'d',s:i===0?'r':'p',d:i===0?'2026-10-22':env.addMonthsYM('2026-11',i)+'-01',comp:env.addMonthsYM('2026-11',i)+'-01',v:10000,installmentGroup:'nov-dec-jan',installmentIndex:i+1,installmentCount:3,purchaseTotal:30000}));
+const available=()=>250000-env.snakeCarbonCreditLedger('2026-11-30',{opening:0}).used;
+assert.equal(available(),220000,'All three open installments commit BRL 300');
+env.L.push({id:104,a:'c6',to:'carbon',t:'t',s:'p',d:'2026-11-12',v:10000,invoiceId:'2026-11'});
+assert.equal(available(),220000,'Planned invoice payment must not release credit');
+env.L[3].s='r';assert.equal(available(),230000,'Actual linked November payment releases BRL 100 once');
+console.log('PASS: exact user example: BRL 2,200 available before payment, planned payment unchanged, BRL 2,300 after actual November payment.');
