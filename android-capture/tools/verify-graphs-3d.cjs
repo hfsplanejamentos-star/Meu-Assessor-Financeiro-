@@ -64,6 +64,22 @@ const { chromium } = require('playwright');
     if(JSON.stringify(BACKUP_PENDING.ledger)!==JSON.stringify(L))throw Error('Backup round-trip preview');
     BACKUP_PENDING=null;closeDay();draw();
   });
+  await page.evaluate(() => {
+    const originalLedger=L.slice(),originalMonth=YM;
+    const rows=[{id:99001,a:'carbon',t:'d',s:'r',d:'2026-10-15',comp:'2026-11-01',v:30000,installmentIndex:1},{id:99002,a:'carbon',t:'d',s:'p',d:'2026-12-01',comp:'2026-12-01',v:30000,installmentIndex:2},{id:99003,a:'carbon',t:'d',s:'p',d:'2027-01-01',comp:'2027-01-01',v:30000,installmentIndex:3}].map(x=>({...x,n:'Parcelamento de teste',c:'out',installmentGroup:'browser-card-test',installmentCount:3,purchaseTotal:90000}));
+    L=L.concat(rows);YM='2026-11';draw();
+    const used=creditUsed(snakeCarbonCreditReference(YM),ALERT_CFG.carbon);
+    if(used!==90000||D().fat!==used)throw Error('Card debt must count all installment commitments');
+    const card=[...document.querySelectorAll('.v28Account')].find(e=>e.textContent.includes('C6 Carbon'));
+    if(!card||!card.textContent.includes(brs(Math.max(0,ALERT_CFG.carbon.limit*100-used))))throw Error('Card available limit mismatch');
+    openAccount('carbon');
+    if(!document.getElementById('md').textContent.includes('inclui parcelas futuras'))throw Error('Card detail equation missing');
+    closeDay();openCarbonInvoice(YM);
+    const text=document.getElementById('md').textContent;
+    if(!text.includes('Total ainda comprometido')||!text.includes(BR(used)))throw Error('Invoice must use the same credit source');
+    if(snakeCarbonInvoiceBalance(YM).gross!==30000)throw Error('Monthly invoice must stay separate from full credit commitment');
+    closeDay();L=originalLedger;YM=originalMonth;draw();
+  });
   assert(await page.evaluate(()=>window.snakeGraphs3DInstalled===true));
   assert(await page.locator('feSpecularLighting').count()>0,'Missing ring bevels');
   // Every existing section must continue to render without script failures.
@@ -75,12 +91,13 @@ const { chromium } = require('playwright');
   await page.waitForTimeout(200);
   await page.addStyleTag({content:'#nav{visibility:hidden!important}'});
   const graph=page.locator('#v .c').filter({hasText:'Gastos por dia'}).last();
-  if(await graph.count()) await graph.screenshot({path:'Snake_Finance_1.5.13_Gasto_Diario.png'});
+  if(await graph.count()) await graph.screenshot({path:'Snake_Finance_1.5.14_Gasto_Diario.png'});
   await page.addStyleTag({content:'#nav{visibility:visible!important}'});
   await page.evaluate(()=>window.scrollTo(0,0));
-  await page.screenshot({path:'Snake_Finance_1.5.13_Mobile_3D.png',fullPage:true});
+  await page.screenshot({path:'Snake_Finance_1.5.14_Mobile_3D.png',fullPage:true});
   assert.deepEqual(errors,[],'Browser JavaScript errors');
   console.log('PASS: ledger, balances, geometry, filters and detail popups, XP input, date refresh, backup preview, charts, sections and themes.');
   await browser.close();
 })().catch(error=>{console.error(error);process.exit(1)});
+
 
