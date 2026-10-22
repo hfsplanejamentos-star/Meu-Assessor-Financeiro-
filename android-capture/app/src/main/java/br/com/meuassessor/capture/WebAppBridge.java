@@ -16,6 +16,11 @@ final class WebAppBridge {
     }
 
     @JavascriptInterface
+    public void reloadDashboard() {
+        activity.reloadBundledDashboard();
+    }
+
+    @JavascriptInterface
     public void preserveLedgerSnapshot(String ledgerJson) {
         if (ledgerJson == null || ledgerJson.length() < 10) return;
         try {
@@ -184,3 +189,4 @@ final class WebAppBridge {
         });
     }
 }
+
