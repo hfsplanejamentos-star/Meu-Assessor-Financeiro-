@@ -3,6 +3,50 @@
   'use strict';
   if (window.snakeGraphs3DInstalled) return;
   window.snakeGraphs3DInstalled = true;
+
+  // One stable display color per category, including user-created categories.
+  // These are presentation metadata only: no ledger or storage writes.
+  const assignedCategoryColors = new Map();
+  const neutralCategoryColor = '#94A3B8';
+  const categoryPalette = {
+    mor:'#8B5CF6',mer:'#CCDA4B',tra:'#13A88A',ali:'#FF7A45',laz:'#EC4899',
+    sau:'#F3A6AE',con:'#D95E2B',out:'#94A3B8',mov:'#C08457',pen:'#C9A6FF',
+    lav:'#ADE2EE',abs:'#FF4D4D',cer:'#F5C542',est:'#A6B85C',trab:'#22D3EE'
+  };
+  function refreshCategoryColors() {
+    const keys = [...new Set([...Object.keys(CAT), ...Object.keys(CATDB)])].sort();
+    const used = new Set(assignedCategoryColors.values());
+    for (const key of keys) {
+      if (assignedCategoryColors.has(key)) continue;
+      const initial = categoryPalette[key] || V35_COLORS[key] || CAT[key]?.[2];
+      if (initial && (initial.toUpperCase() !== neutralCategoryColor || key === 'out') && !used.has(initial.toUpperCase())) {
+        assignedCategoryColors.set(key, initial.toUpperCase()); used.add(initial.toUpperCase());
+      }
+    }
+    for (const key of keys) {
+      if (assignedCategoryColors.has(key)) continue;
+      const name = String(CATDB[key]?.name || CAT[key]?.[0] || key).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const preferred = /vestuario|roupa/.test(name) ? '#4F8CFF' : /pessoal/.test(name) ? '#53C77E' : /abastecimento|combustivel/.test(name) ? '#FF8A34' : null;
+      let hash=2166136261; for (const char of key) hash=Math.imul(hash ^ char.charCodeAt(0),16777619)>>>0;
+      let color=preferred, attempt=0;
+      while (!color || used.has(color.toUpperCase())) {
+        const hue=(hash%360+attempt*137.508)%360, saturation=66, lightness=58;
+        const chroma=(1-Math.abs(2*lightness/100-1))*saturation/100, x=chroma*(1-Math.abs((hue/60)%2-1)), m=lightness/100-chroma/2;
+        const rgb=hue<60?[chroma,x,0]:hue<120?[x,chroma,0]:hue<180?[0,chroma,x]:hue<240?[0,x,chroma]:hue<300?[x,0,chroma]:[chroma,0,x];
+        color='#'+rgb.map(v=>Math.round((v+m)*255).toString(16).padStart(2,'0')).join('').toUpperCase(); attempt++;
+      }
+      assignedCategoryColors.set(key,color.toUpperCase()); used.add(color.toUpperCase());
+    }
+    for (const key of keys) {
+      const color=assignedCategoryColors.get(key);
+      V35_COLORS[key]=color;
+      if (CAT[key]) CAT[key][2]=color;
+    }
+  }
+  refreshCategoryColors();
+  const originalCategoryDraw=draw;
+  draw=function(){refreshCategoryColors();return originalCategoryDraw.apply(this,arguments);};
+
   let sequence = 0;
   ring = function (cx, cy, r, sw, values, opacity) {
     const total = values.reduce((sum, x) => sum + x[1], 0);
