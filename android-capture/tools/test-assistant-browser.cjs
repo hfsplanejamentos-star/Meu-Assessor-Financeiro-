@@ -1,5 +1,6 @@
 const fs=require('fs'),assert=require('node:assert/strict');
 const {chromium}=require('playwright');
+const watchdog=setTimeout(()=>{console.error('Assistant browser test timed out');process.exit(1)},90000);watchdog.unref();
 (async()=>{
  const base=fs.readFileSync('android-capture/app/src/main/assets/snake-finance-mobile.html','utf8');
  const layer=fs.readFileSync('android-capture/app/src/main/assets/snake-graphs-3d.js','utf8');
@@ -27,21 +28,21 @@ const {chromium}=require('playwright');
  });
  await ctx.route('**/*',route=>route.fulfill({contentType:'text/html',body:base.replace('</body>','<script>'+layer+'</script></body>')}));
  const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
- await page.goto('https://snake-test.local/assistant');
+ await page.goto('https://snake-test.local/assistant');console.log('IA test: page ready');
  await page.evaluate(async()=>{
   captureSettings();document.getElementById('capture-key').value='test-only-not-a-production-key-123456789';
-  await captureConnect();
+  await captureConnect();console.log('IA test: connected');
   if(!document.getElementById('capture-status').textContent.includes('IA: configurada'))throw Error('IA handshake');
   closeDay();const count=L.length,requests=window.assistantTestRequests.length;
-  captureVoice();
+  captureVoice();console.log('IA test: voice delivered');
   if(!document.getElementById('capture-question').value.includes('25,90'))throw Error('Voice text not delivered');
   if(window.assistantTestRequests.length!==requests||L.length!==count)throw Error('Voice must not send or save automatically');
-  await captureAsk();
+  await captureAsk();console.log('IA test: draft ready');
   if(MD!=='capture-draft'||L.length!==count)throw Error('IA must open a review draft');
-  await captureSave();
+  await captureSave();console.log('IA test: saved after confirmation');
   if(L.length!==count+1||L[L.length-1].v!==2590||L[L.length-1].a!=='caju')throw Error('Confirmed voice draft not saved');
   if(JSON.stringify(backupState()).includes('test-only-not-a-production-key'))throw Error('Credential leaked into backup');
  });
  assert.deepEqual(errors,[]);
- await browser.close();console.log('PASS: native bridge handshake, voice, IA draft, explicit save and secret exclusion from backups.');
+ await browser.close();clearTimeout(watchdog);console.log('PASS: native bridge handshake, voice, IA draft, explicit save and secret exclusion from backups.');
 })().catch(e=>{console.error(e);process.exit(1)});
