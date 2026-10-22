@@ -175,21 +175,35 @@ public final class MainActivity extends Activity {
         root.addView(splash, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
-        // Keep Android status/navigation bars outside the WebView content area.
-        // This prevents the status clock and icons from overlapping the dashboard header.
-        if (Build.VERSION.SDK_INT >= 35) {
-            root.setOnApplyWindowInsetsListener((view, insets) -> {
-                android.graphics.Insets bars = insets.getInsets(
-                        android.view.WindowInsets.Type.statusBars()
-                                | android.view.WindowInsets.Type.navigationBars());
-                // Inset only the dashboard: the startup splash must remain edge-to-edge.
-                // Padding the root also shifts/crops the splash and can expose status-bar artifacts.
-                webView.setPadding(bars.left, bars.top, bars.right, bars.bottom);
-                return insets;
-            });
+        // Fit the WebView frame between system bars. WebView padding does not
+        // reliably move position:fixed elements on recent Android WebView versions.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            getWindow().setDecorFitsSystemWindows(false);
         }
+        root.setOnApplyWindowInsetsListener((view, insets) -> {
+            int left, top, right, bottom;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                android.graphics.Insets bars = insets.getInsets(
+                        android.view.WindowInsets.Type.systemBars()
+                                | android.view.WindowInsets.Type.displayCutout());
+                left = bars.left; top = bars.top; right = bars.right; bottom = bars.bottom;
+            } else {
+                left = insets.getSystemWindowInsetLeft();
+                top = insets.getSystemWindowInsetTop();
+                right = insets.getSystemWindowInsetRight();
+                bottom = insets.getSystemWindowInsetBottom();
+            }
+            FrameLayout.LayoutParams layout = (FrameLayout.LayoutParams) webView.getLayoutParams();
+            if (layout.leftMargin != left || layout.topMargin != top
+                    || layout.rightMargin != right || layout.bottomMargin != bottom) {
+                layout.setMargins(left, top, right, bottom);
+                webView.setLayoutParams(layout);
+            }
+            webView.setPadding(0, 0, 0, 0);
+            return insets;
+        });
         setContentView(root);
-        if (Build.VERSION.SDK_INT >= 35) root.requestApplyInsets();
+        root.requestApplyInsets();
         webView.setVisibility(View.INVISIBLE);
         pendingState = state;
         if (state != null) choosingJsonBackup = state.getBoolean("choosing_json_backup", false);
