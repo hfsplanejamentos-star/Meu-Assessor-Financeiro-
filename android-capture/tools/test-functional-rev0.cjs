@@ -37,3 +37,13 @@ env.L.push({id:4,a:'c6',to:'carbon',t:'t',s:'r',d:'2026-11-12',v:30000,invoiceId
 assert.equal(env.snakeCarbonCreditLedger('2026-11-01',{opening:0}).used,90000);
 assert.equal(env.snakeCarbonCreditLedger('2026-11-12',{opening:0}).used,60000);
 console.log('PASS: Carbon counts future installments and releases credit only after linked payment date.');
+
+// Confirmed purchase with future installments still marked planned must commit its full total.
+env.L=[{id:1,a:'carbon',t:'d',s:'r',d:'2026-10-15',comp:'2026-11-01',v:30000,installmentGroup:'test-group',installmentIndex:1,installmentCount:3,purchaseTotal:90000},{id:2,a:'carbon',t:'d',s:'p',d:'2026-12-01',comp:'2026-12-01',v:30000,installmentGroup:'test-group',installmentIndex:2,installmentCount:3,purchaseTotal:90000},{id:3,a:'carbon',t:'d',s:'p',d:'2027-01-01',comp:'2027-01-01',v:30000,installmentGroup:'test-group',installmentIndex:3,installmentCount:3,purchaseTotal:90000}];
+const ledgerBefore=JSON.stringify(env.L);
+for(const date of ['2026-10-15','2026-11-01','2026-12-01','2027-01-01'])assert.equal(env.snakeCarbonCreditLedger(date,{opening:0}).used,90000,date);
+assert.equal(JSON.stringify(env.L),ledgerBefore,'Credit calculation must not edit future installment statuses');
+assert.equal(env.snakeCarbonCreditLedger('2026-10-14',{opening:0}).used,0,'Do not commit before purchase confirmation');
+env.L.forEach(x=>x.s='p');assert.equal(env.snakeCarbonCreditLedger('2027-02-01',{opening:0}).used,0,'A wholly planned purchase does not consume actual credit');
+env.L[0].s='r';env.L[0].purchaseTotal=80000;assert.equal(env.snakeCarbonCreditLedger('2026-11-01',{opening:0}).used,30000,'Inconsistent metadata cannot invent debt');
+console.log('PASS: mixed-status installment groups commit once in full; planned purchases excluded; invalid groups remain reviewable; ledger unchanged.');
