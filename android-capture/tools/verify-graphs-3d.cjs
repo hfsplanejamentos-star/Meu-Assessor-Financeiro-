@@ -34,6 +34,30 @@ const { chromium } = require('playwright');
   await page.evaluate(()=>{window.projectionCalcSafe=()=>({daily:D(),month:YM});});
   const after=await snapshot();
   assert.deepEqual(after,before,'Financial values or card geometry changed');
+  await page.evaluate(()=>{
+    const ledgerBefore=JSON.stringify(L),categoriesBefore=JSON.stringify(CATDB);
+    const storageBefore=JSON.stringify(Object.fromEntries(Object.keys(localStorage).sort().map(k=>[k,localStorage.getItem(k)])));
+    const originalCat=JSON.parse(JSON.stringify(CAT));
+    const extra=['review_vestuario','review_pessoal'];
+    try{
+      CATDB[extra[0]]={name:'Vestuário',subs:[]};CATDB[extra[1]]={name:'Pessoal',subs:[]};
+      extra.forEach(k=>CAT[k]=[CATDB[k].name,'list','#94A3B8']);draw();
+      const colors=Object.keys(CAT).map(k=>catMeta(k).color.toUpperCase());
+      if(new Set(colors).size!==colors.length)throw Error('Repeated category color');
+      if(extra.some(k=>catMeta(k).color.toUpperCase()==='#94A3B8'))throw Error('Custom categories still use generic gray');
+      const byKey=Object.fromEntries(Object.keys(CAT).map(k=>[k,catMeta(k).color]));
+      for(const theme of ['ciano','claro','limao']){setT(theme);draw();for(const k of Object.keys(CAT))if(catMeta(k).color!==byKey[k])throw Error('Category color changed with theme');}
+      for(const value of ['c6','caju','all']){setDailyGraphFilter('account',value);for(const k of Object.keys(CAT))if(catMeta(k).color!==byKey[k])throw Error('Category color changed with filter');}
+      if(JSON.stringify(L)!==ledgerBefore)throw Error('Category colors changed ledger');
+    }finally{
+      CATDB=JSON.parse(categoriesBefore);for(const k of Object.keys(CAT))delete CAT[k];Object.assign(CAT,originalCat);
+      const saved=JSON.parse(storageBefore);for(const k of Object.keys(localStorage))if(!(k in saved))localStorage.removeItem(k);for(const[k,v]of Object.entries(saved))localStorage.setItem(k,v);
+      setT(saved.tema||'ciano');draw();
+    }
+    if(JSON.stringify(CATDB)!==categoriesBefore||JSON.stringify(L)!==ledgerBefore)throw Error('Color fixture not restored');
+  });
+  console.log('PASS: distinct custom category colors, stable across themes and filters; ledger unchanged.');
+
   await page.evaluate(() => {
     const before=JSON.stringify(L);
     const day=L.find(x=>x.a==='caju'&&x.t==='d'&&x.s==='r').d;
@@ -91,10 +115,10 @@ const { chromium } = require('playwright');
   await page.waitForTimeout(200);
   await page.addStyleTag({content:'#nav{visibility:hidden!important}'});
   const graph=page.locator('#v .c').filter({hasText:'Gastos por dia'}).last();
-  if(await graph.count()) await graph.screenshot({path:'Snake_Finance_1.5.14_Gasto_Diario.png'});
+  if(await graph.count()) await graph.screenshot({path:'Snake_Finance_1.5.15_Gasto_Diario.png'});
   await page.addStyleTag({content:'#nav{visibility:visible!important}'});
   await page.evaluate(()=>window.scrollTo(0,0));
-  await page.screenshot({path:'Snake_Finance_1.5.14_Mobile_3D.png',fullPage:true});
+  await page.screenshot({path:'Snake_Finance_1.5.15_Mobile_3D.png',fullPage:true});
   assert.deepEqual(errors,[],'Browser JavaScript errors');
   console.log('PASS: ledger, balances, geometry, filters and detail popups, XP input, date refresh, backup preview, charts, sections and themes.');
   await browser.close();
