@@ -57,8 +57,8 @@ jobs:
           old='applicationIdSuffix = ".validation2"'
           assert s.count(old)==1
           s=s.replace(old,'applicationIdSuffix = ".rev0"',1)
-          s=s.replace('versionCode = 31','versionCode = 34',1)
-          s=s.replace('versionName = "1.5.7"','versionName = "1.5.10"',1)
+          s=s.replace('versionCode = 31','versionCode = 35',1)
+          s=s.replace('versionName = "1.5.7"','versionName = "1.5.11"',1)
           s=s.replace('versionNameSuffix = "-rev0-validation"','versionNameSuffix = "-rev0"',1)
           s=s.replace('isMinifyEnabled = true','isMinifyEnabled = false',1)
           s=s.replace('isShrinkResources = true','isShrinkResources = false',1)
@@ -82,6 +82,14 @@ jobs:
           </manifest>
           ''')
           PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify 3D presentation in Chromium
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+          node android-capture/tools/verify-graphs-3d.cjs
       - name: Build unsigned release
         working-directory: android-capture
         run: gradle testValidation2ReleaseUnitTest assembleValidation2Release --no-daemon --stacktrace
@@ -94,7 +102,7 @@ jobs:
           APK="$(find android-capture/app/build/outputs/apk/validation2/release -name '*unsigned.apk' -print -quit)"
           test -n "$APK"
           "$TOOLS/aapt" dump badging "$APK" | tee apk-badging.txt
-          grep -q "package: name='br.com.snakefinance.app.rev0' versionCode='34'" apk-badging.txt
+          grep -q "package: name='br.com.snakefinance.app.rev0' versionCode='35'" apk-badging.txt
           if grep -q '^application-debuggable' apk-badging.txt; then exit 1; fi
           python3 - "$APK" <<'PY'
           import hashlib, sys, zipfile
@@ -120,4 +128,5 @@ jobs:
             apk-badging.txt
             release-input-sha256.txt
             apk-source-commit.txt
+            Snake_Finance_1.5.11_*.png
           if-no-files-found: error
