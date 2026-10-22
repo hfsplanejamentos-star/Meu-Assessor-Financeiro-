@@ -16,6 +16,43 @@ final class WebAppBridge {
     }
 
     @JavascriptInterface
+    public boolean showFinancialAlert(String key, String title, String text, int severity) {
+        if (key == null || !key.matches("[a-z_]{1,64}") || text == null || text.length() > 4000) return false;
+        if (android.os.Build.VERSION.SDK_INT >= 33 && activity.checkSelfPermission(
+                android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) return false;
+        android.app.NotificationManager manager = (android.app.NotificationManager)
+                activity.getSystemService(android.content.Context.NOTIFICATION_SERVICE);
+        if (manager == null || !manager.areNotificationsEnabled()) return false;
+        final String channelId = "snake_financial_alerts";
+        if (android.os.Build.VERSION.SDK_INT >= 26) {
+            manager.createNotificationChannel(new android.app.NotificationChannel(channelId,
+                    "Alertas financeiros", android.app.NotificationManager.IMPORTANCE_HIGH));
+            android.app.NotificationChannel channel = manager.getNotificationChannel(channelId);
+            if (channel != null && channel.getImportance() == android.app.NotificationManager.IMPORTANCE_NONE) return false;
+        }
+        String day = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.ROOT).format(new java.util.Date());
+        android.content.SharedPreferences sent = activity.getSharedPreferences("financial_alerts_sent", android.content.Context.MODE_PRIVATE);
+        if (day.equals(sent.getString(key, ""))) return true;
+        android.content.Intent open = new android.content.Intent(activity, MainActivity.class);
+        open.setFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP | android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        android.app.PendingIntent pending = android.app.PendingIntent.getActivity(activity, 0, open,
+                android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE);
+        android.app.Notification.Builder builder = android.os.Build.VERSION.SDK_INT >= 26
+                ? new android.app.Notification.Builder(activity, channelId) : new android.app.Notification.Builder(activity);
+        builder.setSmallIcon(activity.getApplicationInfo().icon)
+                .setContentTitle("Snake Finance · Atenção").setContentText(text)
+                .setStyle(new android.app.Notification.BigTextStyle().bigText(text))
+                .setContentIntent(pending).setAutoCancel(true).setOnlyAlertOnce(true)
+                .setVisibility(android.app.Notification.VISIBILITY_PRIVATE)
+                .setPriority(android.app.Notification.PRIORITY_HIGH);
+        try {
+            manager.notify("financial:" + key, 9001, builder.build());
+            sent.edit().putString(key, day).apply();
+            return true;
+        } catch (RuntimeException denied) { return false; }
+    }
+
+    @JavascriptInterface
     public void reloadDashboard() {
         activity.reloadBundledDashboard();
     }
@@ -190,5 +227,6 @@ final class WebAppBridge {
         });
     }
 }
+
 
 
