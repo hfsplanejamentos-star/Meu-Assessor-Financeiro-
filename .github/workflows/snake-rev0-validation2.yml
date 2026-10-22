@@ -107,7 +107,8 @@ jobs:
           cp "$TOOLS/lib/apksigner.jar" signing-tools/
           cp "$TOOLS/zipalign" signing-tools/
           cp "$TOOLS/aapt" signing-tools/
-          sha256sum "$APK" signing-tools/* > release-input-sha256.txt
+          cp -R "$TOOLS/lib64" signing-tools/
+          sha256sum "$APK" signing-tools/apksigner.jar signing-tools/zipalign signing-tools/aapt signing-tools/lib64/* > release-input-sha256.txt
           printf '%s\n' "$GITHUB_SHA" > apk-source-commit.txt
       - name: Upload preparacao para assinatura permanente
         uses: actions/upload-artifact@v4
