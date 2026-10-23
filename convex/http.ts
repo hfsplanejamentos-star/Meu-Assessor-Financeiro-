@@ -1,3 +1,4 @@
+import { validOperation } from './ledgerProtocol';
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
@@ -156,7 +157,7 @@ http.route({ path: "/integrations/status", method: "OPTIONS", handler: httpActio
 http.route({ path: "/integrations/status", method: "GET", handler: httpAction(async (_ctx, req) => {
   const denied = await assistantAccess(req);
   if (denied) return json({ ok: false, error: denied.error }, denied.status, secureCors(req));
-  return json({ ok: true, protocol: 1, ai: Boolean(process.env.OPENAI_API_KEY), whatsapp: false, audio: false }, 200, secureCors(req));
+  return json({ ok: true, protocol: 1, ledgerSync: true, ledgerOwner: await ownerHash(req), ai: Boolean(process.env.OPENAI_API_KEY), whatsapp: false, audio: false }, 200, secureCors(req));
 }) });
 
 http.route({ path: "/ai/finance", method: "OPTIONS", handler: httpAction(async (_ctx, req) => new Response(null, { status: 204, headers: secureCors(req) })) });
@@ -251,3 +252,31 @@ http.route({ path: "/whatsapp/messages", method: "GET", handler: httpAction(asyn
 export default http;
 
 
+
+// Confirmed, append-only ledger operations. No state/backup replacement.
+for (const path of ['/ledger/submit','/ledger/changes']) {
+ http.route({path,method:'OPTIONS',handler:httpAction(async(_ctx,req)=>new Response(null,{status:204,headers:secureCors(req)}))});
+ http.route({path,method:'POST',handler:httpAction(async(ctx,req)=>{
+  const headers=secureCors(req),denied=await assistantAccess(req);
+  if(denied)return json({ok:false,error:denied.error},denied.status,headers);
+  const hash=await ownerHash(req);if(!hash)return json({ok:false,error:'invalid_sync_key'},401,headers);
+  const rate=await ctx.runMutation(internal.notificationEvents.consumeRateLimit,{ownerHash:hash,now:Date.now()});
+  if(!rate.allowed)return json({ok:false,error:'rate_limited'},429,headers);
+  let body:any;
+  try {const raw=await req.text();if(raw.length>60000)throw Error();body=JSON.parse(raw);}
+  catch{return json({ok:false,error:'invalid_request'},400,headers);}
+  try {
+   if(path==='/ledger/submit'){
+    if(!Array.isArray(body.operations)||body.operations.length<1||body.operations.length>50||!body.operations.every(validOperation))return json({ok:false,error:'invalid_operations'},400,headers);
+    const result=await ctx.runMutation(internal.ledgerSync.submit,{ownerHash:hash,operations:body.operations});
+    return json(result,200,headers);
+   }
+   if(body.cursor!==null&&(typeof body.cursor!=='string'||body.cursor.length>4000))return json({ok:false,error:'invalid_cursor'},400,headers);
+   const result=await ctx.runQuery(internal.ledgerSync.changes,{ownerHash:hash,cursor:body.cursor});
+   return json({ok:true,owner:hash,...result},200,headers);
+  }catch(error){
+   const conflict=String(error).includes('operation_conflict');
+   return json({ok:false,error:conflict?'operation_conflict':'invalid_request'},conflict?409:400,headers);
+  }
+ })});
+}
