@@ -113,6 +113,17 @@ const { chromium } = require('playwright');
   for(const theme of ['limao','claro','ciano']) await page.evaluate(theme=>setT(theme),theme);
   await page.evaluate(()=>{TAB='ger';draw();window.scrollTo(0,0)});
   await page.waitForTimeout(200);
+  // A status-bar safe-area inset must not create a second gap below the month.
+  const storedBeforeSpacing=await page.evaluate(()=>JSON.stringify({...localStorage}));
+  for (const inset of [0,47,24]) {
+    await page.evaluate(value=>{document.documentElement.style.paddingTop=value+'px';window.scrollTo(0,0);},inset);
+    await page.waitForTimeout(70);
+    const gap=await page.evaluate(()=>document.querySelector('#v').firstElementChild.getBoundingClientRect().top-document.getElementById('monthControl').getBoundingClientRect().bottom);
+    assert(Math.abs(gap-8)<1,'Duplicated safe-area gap: '+gap);
+  }
+  await page.evaluate(()=>document.documentElement.style.removeProperty('padding-top'));
+  await page.waitForTimeout(70);
+  assert.equal(await page.evaluate(()=>JSON.stringify({...localStorage})),storedBeforeSpacing);
   await page.addStyleTag({content:'#nav{visibility:hidden!important}'});
   const graph=page.locator('#v .c').filter({hasText:'Gastos por dia'}).last();
   if(await graph.count()) await graph.screenshot({path:'Snake_Finance_1.5.15_Gasto_Diario.png'});
