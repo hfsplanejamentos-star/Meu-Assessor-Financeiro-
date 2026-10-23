@@ -755,7 +755,12 @@ public final class MainActivity extends Activity {
                 "var raw=atob(window.__snakeImportParts.join(''));" +
                 "var bytes=Uint8Array.from(raw,function(c){return c.charCodeAt(0)});" +
                 "var text=new TextDecoder('utf-8',{fatal:true}).decode(bytes).replace(/^\\uFEFF/,'');" +
-                "previewBackup(JSON.parse(text));return true;" +
+                "var data=JSON.parse(text);" +
+                "if(data&&data.schema==='snake-finance-connection-v1'){" +
+                "if(typeof captureImportConnection!=='function')throw Error('Atualize o painel para importar a conexão.');" +
+                "if(typeof captureSettings==='function')captureSettings();" +
+                "captureImportConnection(new File([text],'Snake_Finance_Conexao_Privada.json',{type:'application/json'}));" +
+                "}else{previewBackup(data);}return true;" +
                 "}catch(e){alert('Importação recusada: '+e.message);return false;}" +
                 "finally{delete window.__snakeImportParts}})()";
         webView.evaluateJavascript(script, result -> {
