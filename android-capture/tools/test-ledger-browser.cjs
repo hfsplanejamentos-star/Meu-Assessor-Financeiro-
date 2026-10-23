@@ -17,7 +17,18 @@ await p.addInitScript(()=>{
  },window.testSync.delay);}};
 });
 await p.route('**/*',r=>r.request().isNavigationRequest()?r.fulfill({contentType:'text/html',body:html}):r.abort());await p.goto('https://sync-test.local/');await p.waitForTimeout(400);await p.evaluate(()=>closeModal());
-await p.evaluate(async()=>{captureSettings();await captureImportConnection(new File([JSON.stringify({schema:'snake-finance-connection-v1',url:'https://test.convex.site',key:'Aa1_-z'.repeat(8)})],'connection.json',{type:'application/json'}));});
+// Execute the exact JavaScript emitted after Android's JSON picker/chunk transport.
+const native=fs.readFileSync(process.argv[3]||'android-capture/app/src/main/java/br/com/meuassessor/capture/MainActivity.java','utf8');
+const block=native.slice(native.indexOf('String script = "(function(){try{if(typeof previewBackup'));
+const script=block.slice(0,block.indexOf(';\n        webView.evaluateJavascript')).match(/"(?:[^"\\]|\\.)*"/g).map(x=>JSON.parse(x)).join('');
+await p.evaluate(()=>{window.backupCalls=0;window.originalPreview=previewBackup;window.previewBackup=()=>{backupCalls++;};window.__snakeImportParts=[btoa(JSON.stringify({schema:'snake-finance-connection-v1',url:'https://test.convex.site',key:'Aa1_-z'.repeat(8)}))];});
+assert.equal(await p.evaluate(script),true);
+await p.waitForFunction(()=>testSync.configSaved===1);
+assert.equal(await p.evaluate(()=>backupCalls),0,'Connection must bypass financial backup parser');
+await p.evaluate(()=>{window.__snakeImportParts=[btoa(JSON.stringify({transactions:[]}))];});
+assert.equal(await p.evaluate(script),true);
+assert.equal(await p.evaluate(()=>backupCalls),1,'Backup must retain its original preview route');
+await p.evaluate(()=>{window.previewBackup=window.originalPreview;});
 assert.equal(await p.evaluate(()=>testSync.configSaved),1,'Connection file must accept printable ASCII credentials');
 await p.waitForTimeout(40);await p.evaluate(()=>closeModal());
 await p.evaluate(async()=>{captureSettings();await captureImportConnection(new File([JSON.stringify({schema:'snake-finance-connection-v1',url:'https://test.convex.site',key:'a'.repeat(32)+String.fromCharCode(10)})],'invalid.json',{type:'application/json'}));});
