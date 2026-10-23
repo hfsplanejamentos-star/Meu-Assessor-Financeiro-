@@ -3,10 +3,10 @@ const html=fs.readFileSync(process.argv[2]||'android-capture/app/src/main/assets
 (async()=>{const browser=await chromium.launch({headless:true,args:['--no-sandbox']});const p=await browser.newPage({viewport:{width:393,height:852}}),errors=[];p.on('pageerror',e=>errors.push(e.message));p.on('dialog',d=>d.type()==='confirm'?d.accept():d.dismiss());
 await p.addInitScript(()=>{
  localStorage.setItem('assessor_openings_v83',JSON.stringify({c6:0,caju:0,cajuFunds:0}));
- window.testSync={ops:[],offline:false,quota:false,cursorQuota:false,delay:1,calls:0,submits:0};
+ window.testSync={ops:[],offline:false,quota:false,cursorQuota:false,delay:1,calls:0,submits:0,configSaved:0};
  const old=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if((window.testSync.quota&&k==='assessor_tx_v43')||(window.testSync.cursorQuota&&k==='assessor_ledger_sync_v1'))throw new DOMException('quota','QuotaExceededError');return old.call(this,k,v);};
  if(!localStorage.getItem('assessor_tx_v43'))localStorage.setItem('assessor_tx_v43',JSON.stringify([{id:101,d:'2026-10-01',n:'Original sintético',t:'r',a:'c6',s:'r',v:100000}]));
- window.AndroidBridge={getPendingNotifications:()=> '[]',getIntegrationConfig:()=>JSON.stringify({url:'https://test.convex.site',configured:true}),clearIntegrationConfig:()=>true,
+ window.AndroidBridge={getPendingNotifications:()=> '[]',getIntegrationConfig:()=>JSON.stringify({url:'https://test.convex.site',configured:true}),clearIntegrationConfig:()=>true,saveIntegrationConfig:()=>{testSync.configSaved++;return true;},
  integrationRequest:(id,path,method,body)=>{window.testSync.calls++;setTimeout(()=>{
  let result={ok:true},status=200;
  if(window.testSync.offline){status=502;result={ok:false,error:'connection_failed'};}
@@ -17,6 +17,11 @@ await p.addInitScript(()=>{
  },window.testSync.delay);}};
 });
 await p.route('**/*',r=>r.request().isNavigationRequest()?r.fulfill({contentType:'text/html',body:html}):r.abort());await p.goto('https://sync-test.local/');await p.waitForTimeout(400);await p.evaluate(()=>closeModal());
+await p.evaluate(async()=>{captureSettings();await captureImportConnection(new File([JSON.stringify({schema:'snake-finance-connection-v1',url:'https://test.convex.site',key:'Aa1_-z'.repeat(8)})],'connection.json',{type:'application/json'}));});
+assert.equal(await p.evaluate(()=>testSync.configSaved),1,'Connection file must accept printable ASCII credentials');
+await p.waitForTimeout(40);await p.evaluate(()=>closeModal());
+await p.evaluate(async()=>{captureSettings();await captureImportConnection(new File([JSON.stringify({schema:'snake-finance-connection-v1',url:'https://test.convex.site',key:'a'.repeat(32)+String.fromCharCode(10)})],'invalid.json',{type:'application/json'}));});
+assert.equal(await p.evaluate(()=>testSync.configSaved),1,'Connection file must reject header-injection credentials');await p.evaluate(()=>closeModal());
 const baseline=await p.evaluate(()=>L.length);
 const op=(id,amount=1250)=>({operationId:'chatgpt:'+id,entry:{date:'2026-10-02',description:'Despesa '+id,amountCents:amount,type:'d',account:'carbon',category:'ali',categoryName:'Alimentação',subcategory:'Janta',context:'Pessoal'}});
 await p.evaluate(ops=>{testSync.ops=ops;},[op('a'),op('b',750)]);await p.evaluate(()=>captureSyncLedger(true,true));
