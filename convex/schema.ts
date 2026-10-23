@@ -1,7 +1,12 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+import { ledgerEntry } from './ledgerProtocol';
+
 export default defineSchema({
+  ledgerOperations: defineTable({ownerHash:v.string(),operationId:v.string(),entry:ledgerEntry,approvedAt:v.number()})
+    .index('by_owner_and_operation',['ownerHash','operationId'])
+    .index('by_owner',['ownerHash']),
   financeState: defineTable({
     ownerKey: v.string(),
     payload: v.any(),
