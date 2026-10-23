@@ -23,6 +23,7 @@ final class IntegrationPolicy {
 
     static boolean allowed(String path, String method) {
         return ("/integrations/status".equals(path) && "GET".equals(method))
-                || ("/ai/finance".equals(path) && "POST".equals(method));
+                || ("/ai/finance".equals(path) && "POST".equals(method))
+                || (("/ledger/changes".equals(path) || "/ledger/submit".equals(path)) && "POST".equals(method));
     }
 }
