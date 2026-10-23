@@ -7,6 +7,8 @@ on:
     paths:
       - 'android-capture/app/src/main/assets/snake-finance-mobile.html'
       - 'android-capture/app/src/main/assets/snake-graphs-3d.js'
+      - 'android-capture/app/src/main/java/br/com/meuassessor/capture/MainActivity.java'
+      - 'android-capture/tools/test-ledger-browser.cjs'
       - '.github/workflows/snake-rev0-validation2.yml'
 jobs:
   build:
@@ -31,6 +33,8 @@ jobs:
           s=p.read_text(encoding='utf-8')
           assert 'window.SNAKE_DISTRIBUTABLE=true' in s
           assert __import__('hashlib').sha256(p.read_bytes()).hexdigest() == 'e3866bae869fdc47083a35a7f292db401078a553e86f3c8660812c194c210ebd', 'HTML Rev0 revisao funcional 1.5.19 nao corresponde ao arquivo validado; compilacao bloqueada'
+          native=Path('android-capture/app/src/main/java/br/com/meuassessor/capture/MainActivity.java')
+          assert __import__('hashlib').sha256(native.read_bytes()).hexdigest() == 'd9a7628ba24831c487a73aa855b93424e6c5b995b7d70b919ce10bcf083df882', 'Seletor JSON nativo divergente'
           graph=Path('android-capture/app/src/main/assets/snake-graphs-3d.js')
           assert __import__('hashlib').sha256(graph.read_bytes()).hexdigest() == '6fb50fbcf783a342a9d75836de15bb3c7bdfba754cb532f4c28f2a83e6810d3d', 'Camada de cores aprovada divergente'
           print('Painel de conciliação e cores aprovadas presentes')
