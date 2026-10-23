@@ -16,6 +16,10 @@ public class IntegrationPolicyTest {
     }
     @Test public void arbitraryPathsAndMethodsAreDenied() {
         assertTrue(IntegrationPolicy.allowed("/ai/finance", "POST"));
+        assertTrue(IntegrationPolicy.allowed("/ledger/changes", "POST"));
+        assertTrue(IntegrationPolicy.allowed("/ledger/submit", "POST"));
+        assertFalse(IntegrationPolicy.allowed("/ledger/submit", "GET"));
+        assertFalse(IntegrationPolicy.allowed("/ledger/changes?owner=other", "POST"));
         assertTrue(IntegrationPolicy.allowed("/integrations/status", "GET"));
         assertFalse(IntegrationPolicy.allowed("/ai/finance", "GET"));
         assertFalse(IntegrationPolicy.allowed("https://other.test", "POST"));
