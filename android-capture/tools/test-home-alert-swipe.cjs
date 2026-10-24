@@ -1,4 +1,4 @@
-const fs=require('fs'),assert=require('node:assert/strict'),{chromium}=require('playwright');
+const fs=require('fs'),assert=require('node:assert/strict'),{chromium}=require(process.env.SNAKE_PLAYWRIGHT_MODULE||'playwright');
 const html=fs.readFileSync(process.argv[2]||'android-capture/app/src/main/assets/snake-finance-mobile.html','utf8');
 (async()=>{
  const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
@@ -8,7 +8,16 @@ const html=fs.readFileSync(process.argv[2]||'android-capture/app/src/main/assets
  async function fixture(){await p.evaluate(()=>{closeModal();YM='2026-11';window.fixtureAlerts=[{key:'carbon',severity:'warning',text:'Carbon atenção',ids:[1]},{key:'caju',severity:'warning',text:'Caju baixo',ids:[2]}];financialAlerts=()=>fixtureAlerts;window.opened=0;openAlertReview=()=>{opened++;};TAB='ini';draw();});}
  await p.goto('https://snake-test.local/');await p.waitForTimeout(100);await fixture();
  const snapshot=await p.evaluate(()=>JSON.stringify(L));
- async function swipe(direction,vertical=false,cancel=false){const el=p.locator('[data-home-alert]').first();await el.scrollIntoViewIfNeeded();const b=await el.boundingBox(),x=b.x+b.width/2,y=b.y+b.height/2;await p.evaluate(({x,y,direction,vertical,cancel})=>{const el=document.elementFromPoint(x,y);el.dispatchEvent(new PointerEvent('pointerdown',{pointerId:77,isPrimary:true,clientX:x,clientY:y,bubbles:true}));window.dispatchEvent(new PointerEvent('pointermove',{pointerId:77,isPrimary:true,clientX:x+(vertical?2:direction*120),clientY:y+(vertical?120:2),bubbles:true,cancelable:true}));window.dispatchEvent(new PointerEvent(cancel?'pointercancel':'pointerup',{pointerId:77,isPrimary:true,clientX:x+(vertical?2:direction*120),clientY:y+(vertical?120:2),bubbles:true}));},{x,y,direction,vertical,cancel});await p.waitForTimeout(50);}
+ const touch=await p.context().newCDPSession(p);
+ async function swipe(direction,vertical=false,cancel=false){
+  const el=p.locator('[data-home-alert]').first();await el.evaluate(el=>el.scrollIntoView({block:'center'}));await p.waitForTimeout(60);
+  const b=await el.boundingBox(),x=b.x+b.width/2,y=b.y+b.height/2;
+  assert(await el.evaluate((el,{x,y})=>el.contains(document.elementFromPoint(x,y)),{x,y}),'Gesture target must be visible below fixed controls');
+  await touch.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});
+  for(let i=1;i<=6;i++){await touch.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x+(vertical?2:direction*120)*i/6,y:y+(vertical?120:2)*i/6}]});await p.waitForTimeout(15);}
+  await touch.send('Input.dispatchTouchEvent',{type:cancel?'touchCancel':'touchEnd',touchPoints:[]});await p.waitForTimeout(80);
+ }
+
  assert.equal(await p.locator('[data-home-alert]').count(),2);
  await swipe(-1,true);assert.equal(await p.locator('[data-home-alert]').count(),2,'Vertical scroll must preserve alerts');
  await swipe(-1,false,true);assert.equal(await p.locator('[data-home-alert]').count(),2,'Canceled gesture must preserve alerts');
