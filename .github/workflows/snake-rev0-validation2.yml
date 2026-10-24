@@ -100,6 +100,7 @@ jobs:
       - name: Verify finance and backend
         run: |
           TZ=America/Sao_Paulo node android-capture/tools/test-functional-rev0.cjs android-capture/app/src/main/assets/snake-finance-mobile.html
+          node android-capture/tools/test-daily-purchase-date.cjs
           npm run typecheck
           npm run test:backend
           node --experimental-strip-types tests/test-assistant-access.mjs
