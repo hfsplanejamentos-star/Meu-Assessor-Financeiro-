@@ -160,3 +160,5 @@ jobs:
           if-no-files-found: error
 
 # November fixtures use XP; October remains historical.
+
+# Check compact-card rotation after explicit button visibility.
