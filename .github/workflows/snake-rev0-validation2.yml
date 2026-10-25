@@ -32,7 +32,7 @@ jobs:
           p=Path('android-capture/app/src/main/assets/snake-finance-mobile.html')
           s=p.read_text(encoding='utf-8')
           assert 'window.SNAKE_DISTRIBUTABLE=true' in s
-          assert __import__('hashlib').sha256(p.read_bytes()).hexdigest() == '995f7250a124c37e155b1c4ab0f25a6cb67c5ab8eeb8e92546ea13d202385bd8', 'HTML Rev0 revisao funcional 1.5.28 nao corresponde ao arquivo validado; compilacao bloqueada'
+          assert __import__('hashlib').sha256(p.read_bytes()).hexdigest() == '4c3f9ad2e64bf2a4292fd133549bad335d85f67419201a269aa958cc307d1d1a', 'HTML Rev0 revisao funcional 1.5.28 nao corresponde ao arquivo validado; compilacao bloqueada'
           native=Path('android-capture/app/src/main/java/br/com/meuassessor/capture/MainActivity.java')
           assert __import__('hashlib').sha256(native.read_bytes()).hexdigest() == '6332d51d46f8e4d4e4f0baaa1a514f490f3b4d287b2843d8846338ee77edf85a', 'Seletor JSON nativo divergente'
           graph=Path('android-capture/app/src/main/assets/snake-graphs-3d.js')
@@ -137,7 +137,7 @@ jobs:
               actual = hashlib.sha256(z.read('assets/snake-finance-mobile.html')).hexdigest()
               colors = hashlib.sha256(z.read('assets/snake-graphs-3d.js')).hexdigest()
           assert colors == '6fb50fbcf783a342a9d75836de15bb3c7bdfba754cb532f4c28f2a83e6810d3d', colors
-          assert actual == '995f7250a124c37e155b1c4ab0f25a6cb67c5ab8eeb8e92546ea13d202385bd8', actual
+          assert actual == '4c3f9ad2e64bf2a4292fd133549bad335d85f67419201a269aa958cc307d1d1a', actual
           print('HTML Rev0 revisao funcional 1.5.28 confirmado:', actual)
           PY
           mkdir -p signing-tools
