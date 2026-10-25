@@ -164,3 +164,5 @@ jobs:
 # Check compact-card rotation after explicit button visibility.
 
 # Exercise mobile taps directly, without desktop focus scrolling.
+
+# Position touch targets clear of the fixed Android navigation overlay.
