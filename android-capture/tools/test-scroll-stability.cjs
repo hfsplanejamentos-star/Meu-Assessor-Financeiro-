@@ -22,6 +22,7 @@ if(fs.existsSync(graphPath))html=html.replace('</body>','<script>'+fs.readFileSy
  // Background cancellation outside an alert or an organizer gesture is also a no-op.
  await p.evaluate(()=>window.dispatchEvent(new PointerEvent('pointercancel',{pointerId:999,bubbles:true})));
  assert.equal(await p.evaluate(()=>redrawCount),0);
+ await p.evaluate(()=>new Promise(resolve=>{let last=scrollY,stable=0,frames=0;function tick(){const y=scrollY;stable=Math.abs(y-last)<.5?stable+1:0;last=y;if(stable>=12||++frames>=180)resolve();else requestAnimationFrame(tick);}requestAnimationFrame(tick);}));
  const before=await p.evaluate(()=>({ym:YM,sel:SEL,tab:TAB,y:scrollY}));
  await p.evaluate(()=>{window.refreshBank=0;window.refreshRemote=0;window.meuAssessorAndroidAutoSync=()=>refreshBank++;window.captureSyncLedger=async()=>{refreshRemote++;await new Promise(r=>setTimeout(r,100));};});
  assert.equal(await p.evaluate(()=>snakeRefreshDashboard()),true);assert.equal(await p.evaluate(()=>snakeRefreshDashboard()),false);
