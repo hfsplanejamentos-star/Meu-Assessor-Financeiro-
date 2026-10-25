@@ -32,7 +32,7 @@ jobs:
           p=Path('android-capture/app/src/main/assets/snake-finance-mobile.html')
           s=p.read_text(encoding='utf-8')
           assert 'window.SNAKE_DISTRIBUTABLE=true' in s
-          assert __import__('hashlib').sha256(p.read_bytes()).hexdigest() == '8df4eabbb8b80f7c32ab0889a2d6a17187fdf2ad79149b4f9f2ce856a3ebe961', 'HTML Rev0 revisao funcional 1.5.29 nao corresponde ao arquivo validado; compilacao bloqueada'
+          assert __import__('hashlib').sha256(p.read_bytes()).hexdigest() == '5b6b9bb36f9fe32c9313b5a206b4fa99c1f6f6eb222e4a96f46648f500f6a932', 'HTML Rev0 revisao funcional 1.5.30 nao corresponde ao arquivo validado; compilacao bloqueada'
           native=Path('android-capture/app/src/main/java/br/com/meuassessor/capture/MainActivity.java')
           assert __import__('hashlib').sha256(native.read_bytes()).hexdigest() == '6332d51d46f8e4d4e4f0baaa1a514f490f3b4d287b2843d8846338ee77edf85a', 'Seletor JSON nativo divergente'
           graph=Path('android-capture/app/src/main/assets/snake-graphs-3d.js')
@@ -65,8 +65,8 @@ jobs:
           old='applicationIdSuffix = ".validation2"'
           assert s.count(old)==1
           s=s.replace(old,'applicationIdSuffix = ".rev0"',1)
-          s=s.replace('versionCode = 31','versionCode = 53',1)
-          s=s.replace('versionName = "1.5.7"','versionName = "1.5.29"',1)
+          s=s.replace('versionCode = 31','versionCode = 54',1)
+          s=s.replace('versionName = "1.5.7"','versionName = "1.5.30"',1)
           s=s.replace('versionNameSuffix = "-rev0-validation"','versionNameSuffix = "-rev0"',1)
           s=s.replace('isMinifyEnabled = true','isMinifyEnabled = false',1)
           s=s.replace('isShrinkResources = true','isShrinkResources = false',1)
@@ -118,6 +118,7 @@ jobs:
           timeout 60s node android-capture/tools/test-cdb-transition.cjs
           timeout 60s node android-capture/tools/test-account-invoices.cjs
           timeout 60s node android-capture/tools/test-reopen-seeds.cjs
+          timeout 60s node android-capture/tools/test-flow-details.cjs
       - name: Build unsigned release
         working-directory: android-capture
         run: gradle testValidation2ReleaseUnitTest assembleValidation2Release --no-daemon --stacktrace
@@ -130,7 +131,7 @@ jobs:
           APK="$(find android-capture/app/build/outputs/apk/validation2/release -name '*unsigned.apk' -print -quit)"
           test -n "$APK"
           "$TOOLS/aapt" dump badging "$APK" | tee apk-badging.txt
-          grep -q "package: name='br.com.snakefinance.app.rev0' versionCode='53'" apk-badging.txt
+          grep -q "package: name='br.com.snakefinance.app.rev0' versionCode='54'" apk-badging.txt
           if grep -q '^application-debuggable' apk-badging.txt; then exit 1; fi
           python3 - "$APK" <<'PY'
           import hashlib, sys, zipfile
@@ -138,8 +139,8 @@ jobs:
               actual = hashlib.sha256(z.read('assets/snake-finance-mobile.html')).hexdigest()
               colors = hashlib.sha256(z.read('assets/snake-graphs-3d.js')).hexdigest()
           assert colors == '6fb50fbcf783a342a9d75836de15bb3c7bdfba754cb532f4c28f2a83e6810d3d', colors
-          assert actual == '8df4eabbb8b80f7c32ab0889a2d6a17187fdf2ad79149b4f9f2ce856a3ebe961', actual
-          print('HTML Rev0 revisao funcional 1.5.29 confirmado:', actual)
+          assert actual == '5b6b9bb36f9fe32c9313b5a206b4fa99c1f6f6eb222e4a96f46648f500f6a932', actual
+          print('HTML Rev0 revisao funcional 1.5.30 confirmado:', actual)
           PY
           mkdir -p signing-tools
           cp "$TOOLS/lib/apksigner.jar" signing-tools/
