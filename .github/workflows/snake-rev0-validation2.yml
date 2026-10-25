@@ -158,3 +158,5 @@ jobs:
             apk-source-commit.txt
             Snake_Finance_1.5.*_*.png
           if-no-files-found: error
+
+# November fixtures use XP; October remains historical.
