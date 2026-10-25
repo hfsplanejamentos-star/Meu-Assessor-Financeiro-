@@ -172,3 +172,5 @@ jobs:
 # Position touch targets clear of the fixed Android navigation overlay.
 
 # Verify drill-down opens the existing transaction editor.
+
+# Goal cards remain independently editable; projection opening uses CDB only.
