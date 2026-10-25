@@ -162,3 +162,5 @@ jobs:
 # November fixtures use XP; October remains historical.
 
 # Check compact-card rotation after explicit button visibility.
+
+# Exercise mobile taps directly, without desktop focus scrolling.
