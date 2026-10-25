@@ -169,3 +169,5 @@ jobs:
 # Exercise mobile taps directly, without desktop focus scrolling.
 
 # Position touch targets clear of the fixed Android navigation overlay.
+
+# Verify drill-down opens the existing transaction editor.
