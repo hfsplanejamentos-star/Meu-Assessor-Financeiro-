@@ -1780,7 +1780,7 @@ function v105ExpensePurchases(){
 }
 function snakeAccountMonthExpenses(ym=YM){return L.filter(x=>x.t==='d'&&['r','p'].includes(x.s)&&['c6','xp','carbon','caju'].includes(x.a)&&(x.a==='carbon'?(x.comp||carbonInvoiceMonth(x.d)):(x.comp||x.d)).slice(0,7)===ym);}
 function v29ExpenseGroups(mode=V29_EXP_VIEW){
- const xs=mode==='acc'?snakeAccountMonthExpenses():v105ExpensePurchases();
+ const xs=snakeAccountMonthExpenses();
  const m={};
  xs.forEach(x=>{
    let k,n,col;
@@ -1805,7 +1805,7 @@ function v29SetExpenseView(mode){
  if(el)el.outerHTML=v28CatDonut();
 }
 function v29OpenExpenseGroup(mode,key){
- let xs=mode==='acc'?snakeAccountMonthExpenses():v105ExpensePurchases();
+ let xs=snakeAccountMonthExpenses();
  if(mode==='acc')xs=xs.filter(x=>(x.a||'out')===key);
  else if(mode==='ctx')xs=xs.filter(x=>(isWork(x)?'work':'personal')===key);
  else xs=xs.filter(x=>(x.c||'out')===key);
@@ -1824,8 +1824,8 @@ function v29CajuCard(){
 function v28CatDonut(){
  const a=v29ExpenseGroups(),tot=a.reduce((z,x)=>z+x.value,0);
  const labels={cat:'Gastos por categoria',acc:'Gastos por conta',ctx:'Trabalho × pessoal'};
- return `<div class="c" id="v29ExpenseCard"><div class="v28Title"><div><p class="h">${labels[V29_EXP_VIEW]}</p><p class="v28SectionHint">${V29_EXP_VIEW==='acc'?'Despesas do mês · realizadas e previstas':'Compras pela data da transação · parcelas nas faturas'}</p></div><span class="m" style="color:var(--a)" onclick="detailModal('Despesas do mês',V29_EXP_VIEW==='acc'?snakeAccountMonthExpenses():v105ExpensePurchases())">Ver todos ›</span></div>
- <div class="v28DonutWrap"><svg viewBox="0 0 240 240" style="width:100%;max-width:185px;margin:auto">${ring(120,120,82,31,a.map(x=>[x.color,x.value,`event.stopPropagation();v29OpenExpenseGroup('${V29_EXP_VIEW}','${x.key}')`]),1)}<text x="120" y="116" text-anchor="middle" font-size="17" font-weight="700" fill="var(--tx)">${brs(tot)}</text><text x="120" y="140" text-anchor="middle" font-size="12" fill="var(--mu)">${V29_EXP_VIEW==='acc'?'mês':'realizado'}</text></svg>
+ return `<div class="c" id="v29ExpenseCard"><div class="v28Title"><div><p class="h">${labels[V29_EXP_VIEW]}</p><p class="v28SectionHint">Despesas do mês · realizadas e previstas</p></div><span class="m" style="color:var(--a)" onclick="detailModal('Despesas do mês',snakeAccountMonthExpenses())">Ver todos ›</span></div>
+ <div class="v28DonutWrap"><svg viewBox="0 0 240 240" style="width:100%;max-width:185px;margin:auto">${ring(120,120,82,31,a.map(x=>[x.color,x.value,`event.stopPropagation();v29OpenExpenseGroup('${V29_EXP_VIEW}','${x.key}')`]),1)}<text x="120" y="116" text-anchor="middle" font-size="17" font-weight="700" fill="var(--tx)">${brs(tot)}</text><text x="120" y="140" text-anchor="middle" font-size="12" fill="var(--mu)">mês</text></svg>
  <div class="v28Legend">${a.slice(0,8).map(x=>`<div class="v28LegendRow" onclick="v29OpenExpenseGroup('${V29_EXP_VIEW}','${x.key}')"><i style="background:${x.color}"></i><span>${escapeHTML(x.name)}</span><b>${brs(x.value)}</b></div>`).join('')}</div></div>
  <div class="v29Tabs"><button class="${V29_EXP_VIEW==='cat'?'on':''}" onclick="v29SetExpenseView('cat')">Por categoria</button><button class="${V29_EXP_VIEW==='acc'?'on':''}" onclick="v29SetExpenseView('acc')">Por conta</button><button class="${V29_EXP_VIEW==='ctx'?'on':''}" onclick="v29SetExpenseView('ctx')">Trabalho × pessoal</button></div></div>`;
 }
