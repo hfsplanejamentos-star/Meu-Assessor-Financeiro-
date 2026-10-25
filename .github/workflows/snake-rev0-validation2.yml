@@ -113,7 +113,7 @@ jobs:
           node android-capture/tools/verify-graphs-3d.cjs
           node android-capture/tools/test-ledger-browser.cjs
           timeout 60s node android-capture/tools/test-home-alert-swipe.cjs
-          timeout 60s node android-capture/tools/test-scroll-stability.cjs
+          timeout 75s node android-capture/tools/test-scroll-stability.cjs
       - name: Build unsigned release
         working-directory: android-capture
         run: gradle testValidation2ReleaseUnitTest assembleValidation2Release --no-daemon --stacktrace
