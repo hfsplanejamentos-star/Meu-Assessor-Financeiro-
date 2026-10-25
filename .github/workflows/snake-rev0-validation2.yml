@@ -32,9 +32,9 @@ jobs:
           p=Path('android-capture/app/src/main/assets/snake-finance-mobile.html')
           s=p.read_text(encoding='utf-8')
           assert 'window.SNAKE_DISTRIBUTABLE=true' in s
-          assert __import__('hashlib').sha256(p.read_bytes()).hexdigest() == '95061efc7c556c359b51e9b1ea6d98683fccbceac15ee1836bca608cf9082607', 'HTML Rev0 revisao funcional 1.5.22 nao corresponde ao arquivo validado; compilacao bloqueada'
+          assert __import__('hashlib').sha256(p.read_bytes()).hexdigest() == 'b846dc6527f8a1a9c34fe085f9ead8c3e3cff5d582d50f6679bca48c42f4e157', 'HTML Rev0 revisao funcional 1.5.23 nao corresponde ao arquivo validado; compilacao bloqueada'
           native=Path('android-capture/app/src/main/java/br/com/meuassessor/capture/MainActivity.java')
-          assert __import__('hashlib').sha256(native.read_bytes()).hexdigest() == 'd9a7628ba24831c487a73aa855b93424e6c5b995b7d70b919ce10bcf083df882', 'Seletor JSON nativo divergente'
+          assert __import__('hashlib').sha256(native.read_bytes()).hexdigest() == '6332d51d46f8e4d4e4f0baaa1a514f490f3b4d287b2843d8846338ee77edf85a', 'Seletor JSON nativo divergente'
           graph=Path('android-capture/app/src/main/assets/snake-graphs-3d.js')
           assert __import__('hashlib').sha256(graph.read_bytes()).hexdigest() == '6fb50fbcf783a342a9d75836de15bb3c7bdfba754cb532f4c28f2a83e6810d3d', 'Camada de cores aprovada divergente'
           print('Painel de conciliação e cores aprovadas presentes')
@@ -65,8 +65,8 @@ jobs:
           old='applicationIdSuffix = ".validation2"'
           assert s.count(old)==1
           s=s.replace(old,'applicationIdSuffix = ".rev0"',1)
-          s=s.replace('versionCode = 31','versionCode = 46',1)
-          s=s.replace('versionName = "1.5.7"','versionName = "1.5.22"',1)
+          s=s.replace('versionCode = 31','versionCode = 47',1)
+          s=s.replace('versionName = "1.5.7"','versionName = "1.5.23"',1)
           s=s.replace('versionNameSuffix = "-rev0-validation"','versionNameSuffix = "-rev0"',1)
           s=s.replace('isMinifyEnabled = true','isMinifyEnabled = false',1)
           s=s.replace('isShrinkResources = true','isShrinkResources = false',1)
@@ -113,6 +113,7 @@ jobs:
           node android-capture/tools/verify-graphs-3d.cjs
           node android-capture/tools/test-ledger-browser.cjs
           timeout 60s node android-capture/tools/test-home-alert-swipe.cjs
+          timeout 60s node android-capture/tools/test-scroll-stability.cjs
       - name: Build unsigned release
         working-directory: android-capture
         run: gradle testValidation2ReleaseUnitTest assembleValidation2Release --no-daemon --stacktrace
@@ -125,7 +126,7 @@ jobs:
           APK="$(find android-capture/app/build/outputs/apk/validation2/release -name '*unsigned.apk' -print -quit)"
           test -n "$APK"
           "$TOOLS/aapt" dump badging "$APK" | tee apk-badging.txt
-          grep -q "package: name='br.com.snakefinance.app.rev0' versionCode='46'" apk-badging.txt
+          grep -q "package: name='br.com.snakefinance.app.rev0' versionCode='47'" apk-badging.txt
           if grep -q '^application-debuggable' apk-badging.txt; then exit 1; fi
           python3 - "$APK" <<'PY'
           import hashlib, sys, zipfile
@@ -133,8 +134,8 @@ jobs:
               actual = hashlib.sha256(z.read('assets/snake-finance-mobile.html')).hexdigest()
               colors = hashlib.sha256(z.read('assets/snake-graphs-3d.js')).hexdigest()
           assert colors == '6fb50fbcf783a342a9d75836de15bb3c7bdfba754cb532f4c28f2a83e6810d3d', colors
-          assert actual == '95061efc7c556c359b51e9b1ea6d98683fccbceac15ee1836bca608cf9082607', actual
-          print('HTML Rev0 revisao funcional 1.5.22 confirmado:', actual)
+          assert actual == 'b846dc6527f8a1a9c34fe085f9ead8c3e3cff5d582d50f6679bca48c42f4e157', actual
+          print('HTML Rev0 revisao funcional 1.5.23 confirmado:', actual)
           PY
           mkdir -p signing-tools
           cp "$TOOLS/lib/apksigner.jar" signing-tools/
@@ -153,5 +154,5 @@ jobs:
             apk-badging.txt
             release-input-sha256.txt
             apk-source-commit.txt
-            Snake_Finance_1.5.22_*.png
+            Snake_Finance_1.5.23_*.png
           if-no-files-found: error
