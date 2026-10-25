@@ -434,6 +434,7 @@ public final class MainActivity extends Activity {
 
     private WebView buildWebView() {
         WebView value = new WebView(this);
+        value.setBackgroundColor(Color.BLACK);
         value.setSaveEnabled(false);
         value.setSaveFromParentEnabled(false);
         WebSettings settings = value.getSettings();
@@ -451,41 +452,42 @@ public final class MainActivity extends Activity {
         appBridge = bridge;
         value.addJavascriptInterface(bridge, "AndroidBridge");
         value.addJavascriptInterface(bridge, "AndroidApp");
-        // Pull-to-refresh only from the top of the dashboard, not inside a modal.
-        // Reloading the WebView preserves the app's localStorage and ledger.
+        // Refresh data after release; never reload the WebView during a gesture.
         value.setOnTouchListener(new View.OnTouchListener() {
-            private float startY;
+            private float startX, startY;
             private boolean eligible;
-            private boolean fired;
+            private long lastRefresh;
             @Override public boolean onTouch(View view, MotionEvent event) {
                 switch (event.getActionMasked()) {
                     case MotionEvent.ACTION_DOWN:
+                        startX = event.getX();
                         startY = event.getY();
                         eligible = authenticated && !value.canScrollVertically(-1);
-                        fired = false;
                         break;
-                    case MotionEvent.ACTION_MOVE:
-                        if (eligible && !fired && event.getY() - startY > dp(120)) {
-                            fired = true;
-                            eligible = false;
+                    case MotionEvent.ACTION_POINTER_DOWN:
+                    case MotionEvent.ACTION_CANCEL:
+                        eligible = false;
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        float dx = event.getX() - startX, dy = event.getY() - startY;
+                        long now = android.os.SystemClock.elapsedRealtime();
+                        boolean refresh = eligible && dy > dp(120) && dy > Math.abs(dx) * 1.5f
+                                && now - lastRefresh > 1500;
+                        eligible = false;
+                        if (refresh) {
+                            lastRefresh = now;
                             value.evaluateJavascript(
                                 "(function(){var m=document.getElementById('md');" +
-                                "return !(m&&getComputedStyle(m).display!=='none')&&" +
-                                "!(document.scrollingElement&&document.scrollingElement.scrollTop>2);" +
-                                "})()",
+                                "if((m&&getComputedStyle(m).display!=='none')||" +
+                                "(document.scrollingElement&&document.scrollingElement.scrollTop>2))return false;" +
+                                "return !!(window.snakeRefreshDashboard&&window.snakeRefreshDashboard());})()",
                                 allowed -> {
                                     if ("true".equals(allowed) && authenticated) {
                                         android.widget.Toast.makeText(MainActivity.this,
-                                            "Atualizando Snake Finance…",
-                                            android.widget.Toast.LENGTH_SHORT).show();
-                                        reloadBundledDashboard();
+                                            "Atualizando dados…", android.widget.Toast.LENGTH_SHORT).show();
                                     }
                                 });
                         }
-                        break;
-                    case MotionEvent.ACTION_UP:
-                    case MotionEvent.ACTION_CANCEL:
-                        eligible = false;
                         break;
                 }
                 return false;
