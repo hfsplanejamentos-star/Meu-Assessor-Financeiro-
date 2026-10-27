@@ -17,6 +17,8 @@ import android.widget.ScrollView;
 import android.os.Build;
 
 public final class CaptureSettingsActivity extends Activity {
+    private final android.os.Handler handler=new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable refreshDiagnostics=new Runnable(){public void run(){refresh();handler.postDelayed(this,1500L);}};
     private TextView status;
     private TextView queue;
     private TextView diagnostic;
@@ -30,8 +32,11 @@ public final class CaptureSettingsActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        refresh();
+        BankNotificationListener.reconnect(this);
+        handler.post(refreshDiagnostics);
     }
+
+    @Override protected void onPause(){handler.removeCallbacks(refreshDiagnostics);super.onPause();}
 
     private void refresh() {
         boolean enabled = listenerEnabled();
@@ -72,7 +77,13 @@ public final class CaptureSettingsActivity extends Activity {
             }
             summary += "\n\nAplicativos recentes:\n" + (recent == null || recent.isEmpty() ? "—" : recent);
             diagnostic.setText(summary);
+
         }
+        String bank=d.getString(BankNotificationListener.KEY_BANK_PACKAGE, "");
+        String bankResult=d.getString(BankNotificationListener.KEY_BANK_RESULT, "");
+        long bankAt=d.getLong(BankNotificationListener.KEY_BANK_TIME,0L);
+        String when=bankAt>0?new java.text.SimpleDateFormat("dd/MM HH:mm:ss",java.util.Locale.forLanguageTag("pt-BR")).format(new java.util.Date(bankAt)):"—";
+        diagnostic.append("\n\nÚltimo banco detectado: "+(bank.isEmpty()?"nenhum desde esta atualização":bank)+"\nHorário: "+when+"\nResultado bancário: "+(bankResult.isEmpty()?"aguardando notificação do banco":bankResult));
     }
 
     private ScrollView buildScreen() {
@@ -95,7 +106,7 @@ public final class CaptureSettingsActivity extends Activity {
                 startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)));
 
         Button refresh = new Button(this);
-        refresh.setText("Atualizar diagnóstico");
+        refresh.setText("Recuperar notificações e atualizar diagnóstico");
         refresh.setOnClickListener(v -> {
             BankNotificationListener.reconnect(this);
             refresh();
@@ -181,4 +192,3 @@ public final class CaptureSettingsActivity extends Activity {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
 }
-
