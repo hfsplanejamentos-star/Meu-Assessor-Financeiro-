@@ -7,7 +7,7 @@ on:
     paths:
       - 'android-capture/app/src/main/assets/snake-finance-mobile.html'
       - 'android-capture/app/src/main/assets/snake-graphs-3d.js'
-      - 'android-capture/app/src/main/java/br/com/meuassessor/capture/MainActivity.java'
+      - 'android-capture/app/src/main/java/br/com/meuassessor/capture/*.java'
       - 'android-capture/tools/test-ledger-browser.cjs'
       - '.github/workflows/snake-rev0-validation2.yml'
 jobs:
@@ -32,12 +32,16 @@ jobs:
           p=Path('android-capture/app/src/main/assets/snake-finance-mobile.html')
           s=p.read_text(encoding='utf-8')
           assert 'window.SNAKE_DISTRIBUTABLE=true' in s
-          assert __import__('hashlib').sha256(p.read_bytes()).hexdigest() == 'c2fa8dbdfb442db57c3acef111c2742cfa1fbd9872e6a7eb87c2b78abd4fc082', 'HTML Rev0 revisao funcional 1.5.33 nao corresponde ao arquivo validado; compilacao bloqueada'
+          assert __import__('hashlib').sha256(p.read_bytes()).hexdigest() == 'c6ca9329db476b371899961def3911b04b940268e3efd2fcc05ca33c2d8ac76a', 'HTML Rev0 revisao funcional 1.5.34 nao corresponde ao arquivo validado; compilacao bloqueada'
           native=Path('android-capture/app/src/main/java/br/com/meuassessor/capture/MainActivity.java')
           assert __import__('hashlib').sha256(native.read_bytes()).hexdigest() == '6332d51d46f8e4d4e4f0baaa1a514f490f3b4d287b2843d8846338ee77edf85a', 'Seletor JSON nativo divergente'
           graph=Path('android-capture/app/src/main/assets/snake-graphs-3d.js')
           assert __import__('hashlib').sha256(graph.read_bytes()).hexdigest() == '6fb50fbcf783a342a9d75836de15bb3c7bdfba754cb532f4c28f2a83e6810d3d', 'Camada de cores aprovada divergente'
-          print('Painel de conciliação e cores aprovadas presentes')
+          assert __import__('hashlib').sha256(Path('android-capture/app/src/main/java/br/com/meuassessor/capture/BankNotificationListener.java').read_bytes()).hexdigest() == '41c5f5ff58fa56e41365eeda4896c4c58003fbbdb9c7eb54201511b3f66b6b0d', 'Bank capture source mismatch: BankNotificationListener.java'
+          assert __import__('hashlib').sha256(Path('android-capture/app/src/main/java/br/com/meuassessor/capture/CaptureSettingsActivity.java').read_bytes()).hexdigest() == 'a62d11f424121093a43025622e68842f1839789b5c6966309fb30958f14762d4', 'Bank capture source mismatch: CaptureSettingsActivity.java'
+          assert __import__('hashlib').sha256(Path('android-capture/app/src/main/java/br/com/meuassessor/capture/EncryptedQueueStore.java').read_bytes()).hexdigest() == '7db2dbbf78ad81eb415f2a7c01ca2314bc22527dc55a4a6ec8fb414bcd8a1b4a', 'Bank capture source mismatch: EncryptedQueueStore.java'
+          assert __import__('hashlib').sha256(Path('android-capture/app/src/main/java/br/com/meuassessor/capture/CaptureReplayGuard.java').read_bytes()).hexdigest() == '1177ae1f66a8b43a0635a26e482818ace636e8d049f2c636c4d9d45b9acec7cc', 'Bank capture source mismatch: CaptureReplayGuard.java'
+          print('Painel, captura bancária e cores aprovadas presentes')
           PY
       - name: Ajustar carregador para HTML Rev0
         run: |
@@ -65,8 +69,8 @@ jobs:
           old='applicationIdSuffix = ".validation2"'
           assert s.count(old)==1
           s=s.replace(old,'applicationIdSuffix = ".rev0"',1)
-          s=s.replace('versionCode = 31','versionCode = 57',1)
-          s=s.replace('versionName = "1.5.7"','versionName = "1.5.33"',1)
+          s=s.replace('versionCode = 31','versionCode = 58',1)
+          s=s.replace('versionName = "1.5.7"','versionName = "1.5.34"',1)
           s=s.replace('versionNameSuffix = "-rev0-validation"','versionNameSuffix = "-rev0"',1)
           s=s.replace('isMinifyEnabled = true','isMinifyEnabled = false',1)
           s=s.replace('isShrinkResources = true','isShrinkResources = false',1)
@@ -134,7 +138,7 @@ jobs:
           APK="$(find android-capture/app/build/outputs/apk/validation2/release -name '*unsigned.apk' -print -quit)"
           test -n "$APK"
           "$TOOLS/aapt" dump badging "$APK" | tee apk-badging.txt
-          grep -q "package: name='br.com.snakefinance.app.rev0' versionCode='57'" apk-badging.txt
+          grep -q "package: name='br.com.snakefinance.app.rev0' versionCode='58'" apk-badging.txt
           if grep -q '^application-debuggable' apk-badging.txt; then exit 1; fi
           python3 - "$APK" <<'PY'
           import hashlib, sys, zipfile
@@ -142,8 +146,8 @@ jobs:
               actual = hashlib.sha256(z.read('assets/snake-finance-mobile.html')).hexdigest()
               colors = hashlib.sha256(z.read('assets/snake-graphs-3d.js')).hexdigest()
           assert colors == '6fb50fbcf783a342a9d75836de15bb3c7bdfba754cb532f4c28f2a83e6810d3d', colors
-          assert actual == 'c2fa8dbdfb442db57c3acef111c2742cfa1fbd9872e6a7eb87c2b78abd4fc082', actual
-          print('HTML Rev0 revisao funcional 1.5.33 confirmado:', actual)
+          assert actual == 'c6ca9329db476b371899961def3911b04b940268e3efd2fcc05ca33c2d8ac76a', actual
+          print('HTML Rev0 revisao funcional 1.5.34 confirmado:', actual)
           PY
           mkdir -p signing-tools
           cp "$TOOLS/lib/apksigner.jar" signing-tools/
