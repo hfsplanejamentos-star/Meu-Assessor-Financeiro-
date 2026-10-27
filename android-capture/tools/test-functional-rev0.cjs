@@ -56,3 +56,7 @@ env.L.push({id:104,a:'c6',to:'carbon',t:'t',s:'p',d:'2026-11-12',v:10000,invoice
 assert.equal(available(),220000,'Planned invoice payment must not release credit');
 env.L[3].s='r';assert.equal(available(),230000,'Actual linked November payment releases BRL 100 once');
 console.log('PASS: exact user example: BRL 2,200 available before payment, planned payment unchanged, BRL 2,300 after actual November payment.');
+
+// Android bridge supplies postedAt as epoch milliseconds, not an ISO string.
+env.persistLedger=()=>true;env.L=[];env.pending=[{...event('native-timestamp','br.com.xp.carteira','Pix enviado estacionamento',600),postedAt:Date.parse('2026-10-22T08:00:00-03:00')}];env.safeAutoRegisterBankExpenses();assert.equal(env.L.length,1,'Native numeric postedAt must remain eligible for safe parking capture');assert.equal(env.L[0].a,'xp');assert.equal(env.L[0].c,'est');env.safeAutoRegisterBankExpenses();assert.equal(env.L.length,1,'Numeric timestamp resync must not duplicate');console.log('PASS: Android epoch timestamps accepted and deduplicated.');
+
