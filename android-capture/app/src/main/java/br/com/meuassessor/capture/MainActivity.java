@@ -223,7 +223,7 @@ public final class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (webView != null) webView.post(() -> webView.evaluateJavascript(
-                "window.snakeRefreshToday&&window.snakeRefreshToday(true)", null));
+                "window.snakeRefreshToday&&window.snakeRefreshToday(true);window.meuAssessorAndroidAutoSync&&window.meuAssessorAndroidAutoSync()", null));
     }
 
     void deliverIntegrationResult(String encoded) {
@@ -497,6 +497,7 @@ public final class MainActivity extends Activity {
             @Override public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 dashboardReady = true;
+                view.evaluateJavascript("window.meuAssessorAndroidAutoSync&&window.meuAssessorAndroidAutoSync()", null);
                 revealDashboardWhenReady();
                 offerPendingBackup();
                 if (showUpdatedDashboardNotice) {
