@@ -111,6 +111,7 @@ public final class BankNotificationListener extends NotificationListenerService 
         }
         edit.apply();
     }
+    static boolean isConnectedNow(){BankNotificationListener listener=active.get();return listener!=null&&listener.connected;}
     static void reconnect(Context c){
         BankNotificationListener listener=active.get();
         if(listener!=null&&listener.connected)new android.os.Handler(android.os.Looper.getMainLooper()).post(listener::recoverActiveNotifications);
