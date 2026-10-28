@@ -21,7 +21,7 @@ final class BankAllowlist {
      * sem armazenar o conteúdo de notificações de apps não autorizados.
      */
     private static final Set<String> DEFAULTS = new HashSet<>(Arrays.asList(
-            "com.c6bank.app", "br.com.xp.carteira", "com.caju.employee", "br.com.itau"
+            "com.c6bank.app", "br.com.xp.carteira", "br.com.ifood.benefits", "br.com.itau"
     ));
 
     static boolean contains(Context context, String packageName) {

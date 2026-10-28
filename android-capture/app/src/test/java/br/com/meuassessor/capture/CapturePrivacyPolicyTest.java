@@ -5,7 +5,7 @@ import static org.junit.Assert.*;
 
 public class CapturePrivacyPolicyTest {
     @Test public void onlyTheFourAuthorizedInstitutionsCanSupplyContent() {
-        for (String pkg : new String[]{"com.c6bank.app","br.com.xp.carteira","com.caju.employee","br.com.itau"}) {
+        for (String pkg : new String[]{"com.c6bank.app","br.com.xp.carteira","br.com.ifood.benefits","br.com.itau"}) {
             assertTrue(CapturePrivacyPolicy.isSupportedPackage(pkg));
             assertEquals("bank notification", CapturePrivacyPolicy.allowedContent(pkg,true,"bank notification"));
             assertEquals("", CapturePrivacyPolicy.allowedContent(pkg,false,"bank notification"));
@@ -15,7 +15,7 @@ public class CapturePrivacyPolicyTest {
     @Test public void otherAppsAndSimilarPackageNamesAreAlwaysRedacted() {
         for (String pkg : new String[]{null,"","com.whatsapp.w4b","com.openai.chatgpt",
                 "com.android.vending","com.google.android.apps.walletnfcrel",
-                "com.c6bank.app.attacker","example.caju","com.xp.fake","not.itau"}) {
+                "com.c6bank.app.attacker","com.caju.employee","br.com.ifood.benefits.attacker","br.com.brainweb.ifood","com.xp.fake","not.itau"}) {
             assertFalse(CapturePrivacyPolicy.isSupportedPackage(pkg));
             assertEquals("",CapturePrivacyPolicy.allowedContent(pkg,true,"private unrelated message"));
             assertEquals("",CapturePrivacyPolicy.allowedContent(pkg,false,"private unrelated message"));

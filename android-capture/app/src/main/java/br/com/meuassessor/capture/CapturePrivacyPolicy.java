@@ -7,7 +7,7 @@ final class CapturePrivacyPolicy {
     static boolean isSupportedPackage(String pkg) {
         return "com.c6bank.app".equals(pkg)
                 || "br.com.xp.carteira".equals(pkg)
-                || "com.caju.employee".equals(pkg)
+                || "br.com.ifood.benefits".equals(pkg)
                 || "br.com.itau".equals(pkg);
     }
 

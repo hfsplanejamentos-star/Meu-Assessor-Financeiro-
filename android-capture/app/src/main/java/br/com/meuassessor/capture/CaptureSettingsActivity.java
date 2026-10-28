@@ -133,7 +133,7 @@ public final class CaptureSettingsActivity extends Activity {
         root.addView(banksTitle, params(10));
         addBankToggle(root, "C6 Bank", "com.c6bank.app");
         addBankToggle(root, "XP", "br.com.xp.carteira");
-        addBankToggle(root, "Caju", "com.caju.employee");
+        addBankToggle(root, "iFood Benefícios", "br.com.ifood.benefits");
         addBankToggle(root, "Itaú", "br.com.itau");
 
         root.addView(permission, params(18));
