@@ -17,6 +17,8 @@ public final class BankNotificationListener extends NotificationListenerService 
             KEY_REPORTED_BALANCE="last_reported_balance", KEY_RAW_PACKAGE="last_raw_package", KEY_RAW_TITLE="last_raw_title", KEY_RAW_TEXT="last_raw_text", KEY_RAW_TIME="last_raw_time";
 
     static final String KEY_BANK_PACKAGE="bank_package", KEY_BANK_RESULT="bank_result", KEY_BANK_TIME="bank_time";
+    static final String KEY_INDIV_PACKAGE="individual_package", KEY_INDIV_POSTED="individual_posted",
+            KEY_INDIV_OBSERVED="individual_observed", KEY_INDIV_TRIGGER="individual_trigger";
     private static volatile java.lang.ref.WeakReference<BankNotificationListener> active = new java.lang.ref.WeakReference<>(null);
     private volatile boolean connected;
 
@@ -50,13 +52,16 @@ public final class BankNotificationListener extends NotificationListenerService 
             long now=System.currentTimeMillis();
             for(StatusBarNotification item:notifications) {
                 // Do not inspect content of other apps, summaries or old notifications.
-                if(item!=null&&BankAllowlist.contains(this,item.getPackageName())&&CaptureReplayGuard.canRecover(item.getPostTime(),now))onNotificationPosted(item);
+                if(item!=null&&BankAllowlist.contains(this,item.getPackageName())&&CaptureReplayGuard.canRecover(item.getPostTime(),now))handlePosted(item,"recuperação de avisos ativos");
             }
         } catch (RuntimeException error) {
             getSharedPreferences(DIAG_PREFS,Context.MODE_PRIVATE).edit().putString(KEY_BANK_RESULT,"Não foi possível consultar notificações visíveis; confira a permissão de acesso").apply();
         }
     }
     @Override public void onNotificationPosted(StatusBarNotification status) {
+        handlePosted(status,"entrega pelo Android");
+    }
+    private void handlePosted(StatusBarNotification status,String trigger) {
         if(status==null)return;
         String pkg=status.getPackageName(); rememberPackage(pkg);
         saveRawDiagnostic(pkg, "", "", status.getPostTime());
@@ -77,6 +82,10 @@ public final class BankNotificationListener extends NotificationListenerService 
         }
         if(n==null){saveDiagnostic(pkg,true,false,"Ignorada: notificação sem conteúdo",title,body,null,null,"");return;}
         if((n.flags&Notification.FLAG_GROUP_SUMMARY)!=0){saveDiagnostic(pkg,true,false,"Resumo agrupado ignorado; aguardando notificações individuais","","",null,null,"");return;}
+        // Metadata only: distinguish the original notification time from a later recovery scan.
+        getSharedPreferences(DIAG_PREFS,Context.MODE_PRIVATE).edit()
+                .putString(KEY_INDIV_PACKAGE,pkg).putLong(KEY_INDIV_POSTED,status.getPostTime())
+                .putLong(KEY_INDIV_OBSERVED,System.currentTimeMillis()).putString(KEY_INDIV_TRIGGER,trigger).apply();
         boolean financial=NotificationParser.looksFinancial(title,body);
         CapturedNotification event=NotificationParser.parse(pkg,title,body,status.getPostTime());
         if(!financial){
