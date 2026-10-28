@@ -84,7 +84,14 @@ public final class CaptureSettingsActivity extends Activity {
         long bankAt=d.getLong(BankNotificationListener.KEY_BANK_TIME,0L);
         String when=bankAt>0?new java.text.SimpleDateFormat("dd/MM HH:mm:ss",java.util.Locale.forLanguageTag("pt-BR")).format(new java.util.Date(bankAt)):"—";
         diagnostic.append("\n\nÚltimo banco detectado: "+(bank.isEmpty()?"nenhum desde esta atualização":bank)+"\nHorário: "+when+"\nResultado bancário: "+(bankResult.isEmpty()?"aguardando notificação do banco":bankResult));
+        String individual=d.getString(BankNotificationListener.KEY_INDIV_PACKAGE, "");
+        diagnostic.append("\n\nÚltimo aviso individual: "+(individual.isEmpty()?"nenhum registrado nesta versão":individual)
+                +"\nHorário original do aviso: "+diagnosticTime(d.getLong(BankNotificationListener.KEY_INDIV_POSTED,0L))
+                +"\nObservado pelo Snake: "+diagnosticTime(d.getLong(BankNotificationListener.KEY_INDIV_OBSERVED,0L))
+                +"\nOrigem da leitura: "+d.getString(BankNotificationListener.KEY_INDIV_TRIGGER,"—"));
     }
+
+    private static String diagnosticTime(long value){return value>0?new java.text.SimpleDateFormat("dd/MM HH:mm:ss",java.util.Locale.forLanguageTag("pt-BR")).format(new java.util.Date(value)):"—";}
 
     private ScrollView buildScreen() {
         LinearLayout root = new LinearLayout(this);
