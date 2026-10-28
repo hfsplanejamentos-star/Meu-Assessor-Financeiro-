@@ -52,7 +52,7 @@ public final class CaptureSettingsActivity extends Activity {
         } else {
             boolean allowed = d.getBoolean(BankNotificationListener.KEY_ALLOWED, false);
             boolean financial = d.getBoolean(BankNotificationListener.KEY_FINANCIAL, false);
-            boolean connected = d.getBoolean(BankNotificationListener.KEY_CONNECTED, false);
+            boolean connected = BankNotificationListener.isConnectedNow();
             String result = d.getString(BankNotificationListener.KEY_RESULT, "");
             String recent = d.getString(BankNotificationListener.KEY_RECENT_PACKAGES, "");
             String lastTitle = d.getString(BankNotificationListener.KEY_TITLE, "");
