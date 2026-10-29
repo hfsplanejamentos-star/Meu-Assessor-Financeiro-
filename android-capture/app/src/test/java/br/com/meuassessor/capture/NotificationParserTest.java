@@ -36,4 +36,13 @@ public class NotificationParserTest {
         assertEquals("expense", first.direction);
         assertEquals(first.id, repeated.id);
     }
+    @Test public void benefitTopupsAreNotAvailableBalanceSnapshots() {
+        for (String kind : new String[]{"Alimentação", "Refeição"}) {
+            CapturedNotification n = NotificationParser.parse("br.com.ifood.benefits", "Caiu o saldo!", "Você recebeu seu saldo " + kind + " no valor de R$ 120,00.", 2_000_000L);
+            assertEquals(Long.valueOf(12000), n.amountCents);
+            assertEquals("income", n.direction);
+            assertTrue(NotificationParser.looksFinancial(n.title, n.text));
+        }
+        assertNull(NotificationParser.extractTransactionAmountCents("Seu saldo disponível é R$ 120,00."));
+    }
 }

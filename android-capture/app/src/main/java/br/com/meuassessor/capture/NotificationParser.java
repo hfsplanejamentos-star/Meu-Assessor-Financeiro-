@@ -50,6 +50,9 @@ final class NotificationParser {
 
     static Long extractTransactionAmountCents(String value) {
         String clean = clean(value);
+        // "Você recebeu seu saldo ..." is a top-up, not a reported balance snapshot.
+        Matcher benefit = Pattern.compile("(?i)voc[eê] recebeu seu saldo (?:alimenta[cç][aã]o|refei[cç][aã]o) no valor de\\s*R\\$\\s*([0-9]{1,3}(?:\\.[0-9]{3})*,[0-9]{2}|[0-9]+,[0-9]{2})").matcher(clean);
+        if (benefit.find()) return parseCents(benefit.group(1));
         Matcher matcher = MONEY.matcher(clean);
         while (matcher.find()) {
             int from = Math.max(0, matcher.start()-28), to = Math.min(clean.length(), matcher.end()+12);
