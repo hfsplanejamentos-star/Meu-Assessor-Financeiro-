@@ -3187,7 +3187,7 @@ html[data-tema] #app{padding-bottom:120px!important}
         }
         continue;
       }
-      if(source==='com.c6bank.app'&&new Date(e.postedAt).toLocaleDateString('en-CA').slice(0,7)>='2026-11')continue; // C6/CDB/Carbon requires review; never infer an application from a bank notification.
+      if(source==='com.c6bank.app'&&localDraft(e).account==='c6'&&new Date(e.postedAt).toLocaleDateString('en-CA').slice(0,7)>='2026-11')continue; // C6/CDB/Carbon requires review; never infer an application from a bank notification.
       // Auditoria 09: impedir auto-registro se a captura pode ser o mesmo pagamento
       // emitido novamente com outro ID. Manter evento original para revisão.
       const normalizedMerchant=String(e.merchant||e.title||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
