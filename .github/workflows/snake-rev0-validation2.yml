@@ -32,7 +32,7 @@ jobs:
           p=Path('android-capture/app/src/main/assets/snake-finance-mobile.html')
           s=p.read_text(encoding='utf-8')
           assert 'window.SNAKE_DISTRIBUTABLE=true' in s
-          assert __import__('hashlib').sha256(p.read_bytes()).hexdigest() == '3b5fa11ec7a158e1a78459941d79c9dc66d6e6955a15468a2320ce10b3503c71', 'HTML Rev0 revisao funcional 1.5.43 nao corresponde ao arquivo validado; compilacao bloqueada'
+          assert __import__('hashlib').sha256(p.read_bytes()).hexdigest() == 'd3536382f16c72cf2e7c5e1c36949e04f3aea16c82eaefc1e1feb287e6088458', 'HTML Rev0 revisao funcional 1.5.44 nao corresponde ao arquivo validado; compilacao bloqueada'
           native=Path('android-capture/app/src/main/java/br/com/meuassessor/capture/MainActivity.java')
           assert __import__('hashlib').sha256(native.read_bytes()).hexdigest() == '1ebc636d20e336af17b027dfcb388a883f9284254ca64984b70624ea1127ac1b', 'Seletor JSON nativo divergente'
           graph=Path('android-capture/app/src/main/assets/snake-graphs-3d.js')
@@ -69,8 +69,8 @@ jobs:
           old='applicationIdSuffix = ".validation2"'
           assert s.count(old)==1
           s=s.replace(old,'applicationIdSuffix = ".rev0"',1)
-          s=s.replace('versionCode = 31','versionCode = 67',1)
-          s=s.replace('versionName = "1.5.7"','versionName = "1.5.43"',1)
+          s=s.replace('versionCode = 31','versionCode = 68',1)
+          s=s.replace('versionName = "1.5.7"','versionName = "1.5.44"',1)
           s=s.replace('versionNameSuffix = "-rev0-validation"','versionNameSuffix = "-rev0"',1)
           s=s.replace('isMinifyEnabled = true','isMinifyEnabled = false',1)
           s=s.replace('isShrinkResources = true','isShrinkResources = false',1)
@@ -139,7 +139,7 @@ jobs:
           APK="$(find android-capture/app/build/outputs/apk/validation2/release -name '*unsigned.apk' -print -quit)"
           test -n "$APK"
           "$TOOLS/aapt" dump badging "$APK" | tee apk-badging.txt
-          grep -q "package: name='br.com.snakefinance.app.rev0' versionCode='67'" apk-badging.txt
+          grep -q "package: name='br.com.snakefinance.app.rev0' versionCode='68'" apk-badging.txt
           if grep -q '^application-debuggable' apk-badging.txt; then exit 1; fi
           python3 - "$APK" <<'PY'
           import hashlib, sys, zipfile
@@ -147,8 +147,8 @@ jobs:
               actual = hashlib.sha256(z.read('assets/snake-finance-mobile.html')).hexdigest()
               colors = hashlib.sha256(z.read('assets/snake-graphs-3d.js')).hexdigest()
           assert colors == '6fb50fbcf783a342a9d75836de15bb3c7bdfba754cb532f4c28f2a83e6810d3d', colors
-          assert actual == '3b5fa11ec7a158e1a78459941d79c9dc66d6e6955a15468a2320ce10b3503c71', actual
-          print('HTML Rev0 revisao funcional 1.5.43 confirmado:', actual)
+          assert actual == 'd3536382f16c72cf2e7c5e1c36949e04f3aea16c82eaefc1e1feb287e6088458', actual
+          print('HTML Rev0 revisao funcional 1.5.44 confirmado:', actual)
           PY
           mkdir -p signing-tools
           cp "$TOOLS/lib/apksigner.jar" signing-tools/
