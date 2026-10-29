@@ -95,3 +95,14 @@ env.L=[];env.pending=[reload('equal-food','Alimentação',10000),reload('equal-m
 env.L=[];env.pending=[{...topups[0],sourcePackage:'com.unrelated.app'}, {...topups[1],id:'snapshot',text:'Seu saldo Refeição disponível é R$ 180,00.'}];env.safeAutoRegisterBankExpenses();assert.equal(env.L.length,0,'Snapshots and unsupported apps never create top-ups');
 env.pending=topups;env.persistLedger=()=>false;env.safeAutoRegisterBankExpenses();assert.equal(env.L.length,0,'Storage failure rolls both top-ups back');env.persistLedger=()=>true;
 console.log('PASS: both iFood benefit reloads, equal amounts, replay protection, preserved history, configured reload reconciliation, snapshots and rollback.');
+
+// The verified iFood benefit card identifies meals even when the push only names the merchant.
+for(const day of ['2026-10-27','2026-10-28','2026-10-29'])for(const time of ['08:00','12:00','18:00']){
+ env.L=[];env.pending=[{id:'ifood-'+day+'-'+time,sourcePackage:'br.com.ifood.benefits',title:'Compra aprovada',text:'Compra de R$ 30,00 em Restaurante Teste.',amountCents:3000,direction:'expense',postedAt:Date.parse(day+'T'+time+':00-03:00')}];env.safeAutoRegisterBankExpenses();assert.equal(env.L.length,1);assert.equal(env.L[0].c,'trab');assert.equal(env.L[0].sub,'Refeição');assert.equal(env.L[0].a,'caju');env.safeAutoRegisterBankExpenses();assert.equal(env.L.length,1);
+}
+for(const day of ['2026-10-26','2026-10-30','2026-10-31','2026-11-01']){
+ env.L=[];env.pending=[{id:'personal-'+day,sourcePackage:'br.com.ifood.benefits',title:'Compra aprovada',text:'Compra de R$ 30,00 em Restaurante Teste.',amountCents:3000,direction:'expense',postedAt:Date.parse(day+'T12:00:00-03:00')}];env.safeAutoRegisterBankExpenses();assert.equal(env.L.length,1);assert.equal(env.L[0].c,'ali');assert.equal(env.L[0].ctx,'Pessoal');
+}
+env.L=[];env.pending=[{id:'ifood-rejected',sourcePackage:'br.com.ifood.benefits',title:'Compra negada',text:'Compra de R$ 30,00 recusada.',amountCents:3000,direction:'expense',postedAt:Date.parse('2026-10-29T12:00:00-03:00')}];env.safeAutoRegisterBankExpenses();assert.equal(env.L.length,0);
+assert.equal(env.snakeAutoExpenseClass('caju',3000,'Compra em restaurante',Date.parse('2026-10-30T01:30:00Z'),false,'br.com.ifood.benefits').c,'trab','Thursday 22:30 Brazil remains Thursday');
+console.log('PASS: iFood merchant-only purchases auto-register as Trabalho/Refeição Tue/Wed/Thu all day, Pessoal other days; Brazil weekday, replay and denied purchases.');
