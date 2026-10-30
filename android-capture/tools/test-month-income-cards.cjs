@@ -11,4 +11,10 @@ await p.evaluate(()=>{L.filter(x=>x.id<=4).forEach(x=>x.s='p');});
 for(const month of ['2026-11','2026-12'])assert.deepEqual(await p.evaluate(month=>[snakeMonthlyFlow(month).incoming,snakeProjectionReconciliation(month).monthRevenue],month),[1010450,1010450],'Both cards exclude pending bonus before cutoff');
 await p.clock.setFixedTime(new Date('2026-12-21T15:00:00Z'));for(const [month,total]of [['2026-11',1237117],['2026-12',1168293]])assert.deepEqual(await p.evaluate(month=>[snakeMonthlyFlow(month).incoming,snakeProjectionReconciliation(month).monthRevenue],month),[total,total]);
 await p.evaluate(()=>{L.filter(x=>x.id<=4).forEach(x=>x.s='r');});for(const [month,total]of [['2026-11',1237117],['2026-12',1168293]]){const r=await p.evaluate(month=>snakeProjectionReconciliation(month),month);assert.equal(r.monthRevenue,total);assert.equal(r.plannedRevenue,0);assert.equal(r.receivedRevenue,total);}
+// A realized first installment with November competence but a December receipt belongs to December cash flow.
+await p.evaluate(()=>{ACC.xp=0;L=[{id:101,d:'2026-12-01',a:'xp',t:'r',s:'r',v:100000,n:'Salário teste'},{id:102,d:'2026-12-01',comp:'2026-11-01',a:'xp',t:'r',s:'r',v:20000,n:'13º salário · 1ª parcela'},{id:103,d:'2026-12-20',a:'xp',t:'r',s:'r',v:15000,n:'13º salário · 2ª parcela'}];YM='2026-12';draw();});
+const snapshot=await p.evaluate(()=>JSON.stringify(L));
+assert.deepEqual(await p.evaluate(()=>[snakeMonthlyFlow('2026-12').incoming,snakeProjectionReconciliation('2026-12').monthRevenue,snakeMonthlyFlow('2026-11').incoming]),[135000,135000,0]);
+await p.evaluate(()=>snakeFlowDetails(0));assert((await p.locator('#md').innerText()).includes('1ª parcela'));await p.evaluate(()=>closeModal());
+assert.equal(await p.evaluate(()=>JSON.stringify(L)),snapshot,'No new row, date change, or status change');
 assert.deepEqual(errors,[]);await b.close();console.log('PASS: hero DOM and flow share exact monthly income with mixed, all planned and all received status; 13th cutoff, received/pending drilldown, no Caju/CDB/transfers or ledger mutation.');})().catch(e=>{console.error(e);process.exit(1)});
