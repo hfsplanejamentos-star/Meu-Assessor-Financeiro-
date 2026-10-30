@@ -12,7 +12,7 @@ on:
       - '.github/workflows/snake-rev0-validation2.yml'
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
       contents: read
