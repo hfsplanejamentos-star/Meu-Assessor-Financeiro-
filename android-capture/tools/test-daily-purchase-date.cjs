@@ -10,3 +10,8 @@ const before=JSON.stringify(entries),card=vm.runInContext('vDia()',context);
 assert(card.includes('R$ 13.00'));assert(card.includes('Compra Carbon'));assert(!card.includes('Prevista'));assert(!card.includes('Outro dia'));assert.equal(JSON.stringify(entries),before);
 context.YM='2026-11';context.SEL='2026-11-23';assert(vm.runInContext('vDia()',context).includes('R$ 0.00'));
 console.log('PASS: actual-date Carbon expense remains visible despite future invoice; planned/other dates excluded; ledger unchanged.');
+
+const dailySource=html.slice(html.indexOf('function dailyWindow(){'),html.indexOf('function gastos7(){'));
+const daily={Date,YM:'2026-11',SEL:'2026-11-02',APP_TODAY:'2026-10-30',validISO:x=>/^\d{4}-\d{2}-\d{2}$/.test(x)};vm.createContext(daily);vm.runInContext(dailySource,daily);
+assert.deepEqual(Array.from(daily.dailyWindow()),['2026-11-02','2026-11-03','2026-11-04','2026-11-05','2026-11-06','2026-11-07','2026-11-08']);daily.SEL='2026-11-25';assert.equal(daily.dailyWindow()[0],'2026-11-23');daily.YM='2026-10';daily.SEL='2026-10-01';assert.equal(daily.dailyWindow()[0],'2026-10-26','Current month keeps current week');
+console.log('PASS: selected-day week for noncurrent months; current week retained; no forced month-end week.');
